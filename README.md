@@ -15,12 +15,12 @@ Zurfur Gui is a minimal GUI taking inspiration from WinForms, WPF, and Avalonia.
 It is a C# layer on top of Javascript's Canvas element.  It uses Canvas primatives
 to render shapes, images, and text (i.e. `HTMLCanvasElement.getContext().fillText`).
 
-    * Runs in a browser via WebAssembly [Click Here](https://gosub.com/zurfurgui)
-    * Runs natively on Windows to allow easy debugging
-    * Replacement for the [Avalonia Zurfur IDE](https://github.com/gosub-com/Zurfur)
-    * No inheritance
-    * Small download (use Javascript primitives as much as possible)
-    * Eventual import/export and code binding generation via JSON (no XML)
+* Runs in a browser via WebAssembly [Click Here](https://gosub.com/zurfurgui)
+* Runs natively on Windows to allow easy debugging
+* Replacement for the [Avalonia Zurfur IDE](https://github.com/gosub-com/Zurfur)
+* No inheritance
+* Small download (use Javascript primitives as much as possible)
+* Eventual import/export and code binding generation via JSON (no XML)
 
 
 
