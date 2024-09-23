@@ -15,12 +15,18 @@ public struct Size : IEquatable<Size>
     public static bool operator ==(Size a, Size b) => a.Equals(b);
     public static bool operator !=(Size a, Size b) => !a.Equals(b);
     public override string ToString() => FormattableString.Invariant($"{Width},{Height}");
+    public string ToString(string f) => FormattableString.Invariant($"{Width.ToString(f)},{Height.ToString(f)}");
     public override int GetHashCode()
     {
         var h = Width.GetHashCode();
         h += HashMix(h) + Height.GetHashCode();
         return HashMix(h);
     }
+    public static Size operator *(Size size, double scale)
+        => new Size(size.Width*scale, size.Height*scale);
+    public static Size operator*(double scale, Size size)
+        => new Size(scale*size.Width, scale*size.Height);
+
     public Size MaxZero => new Size(Math.Max(Width, 0), Math.Max(Height, 0));
 
     public Size Constrain(Size constraint)

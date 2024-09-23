@@ -73,25 +73,25 @@ public class View
 
 
     /// <summary>
-    /// Control is visible.
+    /// View is visible.
     /// TBD: Make this into a stylable property.
     /// </summary>
     public bool IsVisible { get; set; } = true;
 
     /// <summary>
-    /// Requested size of the control.  Nan means the control will auto-size.
+    /// Requested size of the view.  Nan means it will auto-size.
     /// TBD: Make this into a stylable property.
     /// </summary>
     public Size Size { get; set; } = new(double.NaN, double.NaN);
 
     /// <summary>
-    /// Requested maximum size of the control.
+    /// Requested maximum size of the view.
     /// TBD: Make this into a stylable property.
     /// </summary>
     public Size MaxSize { get; set; } = new(double.PositiveInfinity, double.PositiveInfinity);
 
     /// <summary>
-    /// Requested minimum size of the control
+    /// Requested minimum size of the view
     /// TBD: Make this into a stylable property.
     /// </summary>
     public Size MinSize { get; set; } = new();
@@ -101,7 +101,6 @@ public class View
     /// TBD: Make this into a stylable property.
     /// </summary>
     public HorizontalAlignment HorizontalAlignment { get; set; }
-
 
     /// <summary>
     /// Vertical alignment
@@ -133,7 +132,7 @@ public class View
             return;
         }
 
-        var controlSize = Control?.Measure(avaliable) ?? new();
+        var controlSize = Control?.MeasureView(avaliable) ?? new();
 
         // Size override
         var sizeOverride = Size;
@@ -142,15 +141,15 @@ public class View
         if (!double.IsNaN(sizeOverride.Height))
             controlSize.Height = sizeOverride.Height;
 
-        // MinSize override
-        var minSize = MinSize;
-        controlSize.Width = Math.Min(controlSize.Height, minSize.Width);
-        controlSize.Height = Math.Min(controlSize.Width, minSize.Height);
-        
-        // MaxSize override
+        // Max size override
         var maxSize = MaxSize;
-        controlSize.Width = Math.Max(controlSize.Width, maxSize.Width);
-        controlSize.Height = Math.Max(controlSize.Height, maxSize.Height);
+        controlSize.Width = Math.Min(controlSize.Width, maxSize.Width);
+        controlSize.Height = Math.Min(controlSize.Height, maxSize.Height);
+        
+        // Min  size override
+        var minSize = MinSize;
+        controlSize.Width = Math.Max(controlSize.Width, minSize.Width);
+        controlSize.Height = Math.Max(controlSize.Height, minSize.Height);
 
         // Min available
         controlSize.Width = Math.Min(controlSize.Width, avaliable.Width);
@@ -171,8 +170,6 @@ public class View
         if (!IsVisible)
             return;
 
-        Measure(finalRect.Size);
-
         var margin = Margin;
         var availableSize = finalRect.Size.Deflate(margin);
         var x = finalRect.X + margin.Left;
@@ -189,7 +186,7 @@ public class View
             height = Math.Min(height, DesiredSize.Height - margin.Top - margin.Bottom);
 
         if (Control != null)
-            (width, height) = Control.ArrangeChildren(new Size(width, height)).Constrain(new Size(width, height));
+            (width, height) = Control.ArrangeViews(new Size(width, height)).Constrain(new Size(width, height));
 
         switch (horizontalAlignment)
         {

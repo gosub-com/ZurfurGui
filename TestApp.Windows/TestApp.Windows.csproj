@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Library</OutputType>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
@@ -9,7 +9,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ZurfurGui\ZurfurGui.csproj" />
+    <ProjectReference Include="..\TestApp\TestApp.csproj" />
+    <ProjectReference Include="..\ZurfurGui.WinForms\ZurfurGui.WinForms.csproj" />
   </ItemGroup>
 
 </Project>

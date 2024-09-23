@@ -14,6 +14,7 @@ public class Point
     public static bool operator ==(Point a, Point b) => a.Equals(b);
     public static bool operator !=(Point a, Point b) => !a.Equals(b);
     public override string ToString() => FormattableString.Invariant($"{X},{Y}");
+    public string ToString(string f) => FormattableString.Invariant($"{X.ToString(f)},{Y.ToString(f)}");
     public override int GetHashCode()
     {
         var h = X.GetHashCode();

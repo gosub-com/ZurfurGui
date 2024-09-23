@@ -1,13 +1,11 @@
 ﻿<!DOCTYPE html>
 
-
 <!--
     This script fixes the base problem
     see: https://blog.elmah.io/how-to-fix-blazor-wasm-base-path-problems/
 -->
 <base />
 <script>
-    console.log("Loaded HTML");
     var path = window.location.pathname.split('/');
     var base = document.getElementsByTagName('base')[0];
     if (window.location.host.includes('localhost')) {
@@ -26,9 +24,11 @@
 
     <!-- Preload stuff ASAP -->
     <link rel="prefetch" href="./_framework/dotnet.native.wasm" /> <!-- BIG -->
-    <link rel="modulepreload" href="./main.js" />
+    <link rel="modulepreload" href="./ZurfurGui.js" />
     <link rel="modulepreload" href="./_framework/dotnet.js" />
     <link rel="prefetch" href="./_framework/blazor.boot.json" />
+
+    <!-- Splash screen css -->
     <style>
         .splash {
             position: absolute;
@@ -45,19 +45,32 @@
         .splash h2 {
             font-size: 2rem;
         }
-
     </style>
 </head>
+
+
 <body style="margin:0; overflow:hidden;">
+
+    <!-- Splash screen -->
     <div id="splash" class="splash">
         <h2 id="splash-text">Loading Zurfur Gui...</h2>
     </div>
+
+    <!-- Canvas to host main app -->
     <canvas id="canvasMain" style="margin:0;border: 0;width:800px;height:600px" />
 
+    <!-- Run main app -->
     <script type="module">
-        console.log("Loading app...")
-        import { start } from "./main.js";
-        await start();
+        console.log("Loading ZurfurGui app...")
+        try {
+            var module = await import("./ZurfurGui.js");
+            globalThis.ZurfurGui = module;
+            await module.ZurfurGuiRun("canvasMain");
+            document.getElementById("splash").remove();
+        }
+        catch (e) {
+            document.getElementById("splash-text").innerHTML = `ERROR: ${e.message}`;
+        }
     </script>
 </body>
 </html>

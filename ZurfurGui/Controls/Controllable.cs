@@ -34,15 +34,24 @@ public interface Controllable
 
     /// <summary>
     /// Returns the desired size of the control given the available screen size.
+    /// Called by View.Measure, should call View.Measure on child views.
     /// Similar to MeasureOverride in WPF
     /// </summary>
-    Size Measure(Size available);
+    Size MeasureView(Size available);
 
     /// <summary>
     /// Arrange the controls children.
     /// Similar to ArrangeOverride in WPF
     /// </summary>
-    Size ArrangeChildren(Size final);
+    Size ArrangeViews(Size final);
 
+    // Remind everone to delegate these properties to the View
+    public bool IsVisible { get; set; }
+    public Size Size { get; set; }
+    public Size MaxSize { get; set; }
+    public Size MinSize { get; set; }
+    public HorizontalAlignment HorizontalAlignment { get; set; }
+    public VerticalAlignment VerticalAlignment { get; set; }
+    public Thickness Margin { get; set; }
 }
 

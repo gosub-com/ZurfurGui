@@ -17,6 +17,8 @@ public struct Rect : IEquatable<Rect>
     public static bool operator ==(Rect a, Rect b) => a.Equals(b);
     public static bool operator !=(Rect a, Rect b) => !a.Equals(b);
     public override string ToString() => FormattableString.Invariant($"{X},{Y},{Width},{Height}");
+    public string ToString(string f) => FormattableString.Invariant(
+        $"{X.ToString(f)},{Y.ToString(f)},{Width.ToString(f)},{Height.ToString(f)}");
     public override int GetHashCode()
     {
         var h = X.GetHashCode();

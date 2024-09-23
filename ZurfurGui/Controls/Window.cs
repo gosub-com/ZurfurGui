@@ -29,17 +29,28 @@ public class Window : Controllable
     }
 
     /// <summary>
-    /// TBD: Todo
+    /// Same as canvas
     /// </summary>
-    public Size Measure(Size available)
+    public Size MeasureView(Size available)
     {
-        return available;
+        var windowMeasured = new Size();
+        foreach (var view in View.Views)
+        {
+            if (!view.IsVisible)
+                continue;
+
+            view.Measure(available);
+            var childMeasured = view.DesiredSize;
+            windowMeasured.Width = Math.Max(windowMeasured.Width, childMeasured.Width);
+            windowMeasured.Height = Math.Max(windowMeasured.Height, childMeasured.Height);
+        }
+        return windowMeasured;
     }
 
     /// <summary>
     /// A window puts all controls at (0,0), like a canvas.  Position can be controlled using margin.
     /// </summary>
-    public Size ArrangeChildren(Size final)
+    public Size ArrangeViews(Size final)
     {
         foreach (var view in View.Views)
             view.Arrange(new Rect(0, 0, 
@@ -47,4 +58,14 @@ public class Window : Controllable
 
         return final;
     }
+
+    // Forward View properties
+    public bool IsVisible { get => View.IsVisible; set => View.IsVisible = value; }
+    public Size Size { get => View.Size; set => View.Size = value; }
+    public Size MaxSize { get => View.Size; set => View.Size = value; }
+    public Size MinSize { get => View.Size; set => View.Size = value; }
+    public HorizontalAlignment HorizontalAlignment { get => View.HorizontalAlignment; set => View.HorizontalAlignment = value; }
+    public VerticalAlignment VerticalAlignment { get => View.VerticalAlignment; set => View.VerticalAlignment = value; }
+    public Thickness Margin { get => View.Margin; set => View.Margin = value; }
+
 }

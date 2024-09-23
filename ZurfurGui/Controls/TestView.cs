@@ -8,23 +8,24 @@
             {
                 Text = "Test",
                 Controls = [
-                    new Column() {
+                    new Column {
                         Controls = [
-                            new Button() { Text = "Test 1" },
-                            new Button() { Text = "Test 2" },
-                            new Row() {
+                            new Button { Text = "T 1" },
+                            new Button { Text = "Test 2" },
+                            new Row {
                                 Controls = [
-                                    new Button() { Text = "Row A"},
-                                    new Button() { Text = "Row B"},
-                                    new Button() { Text = "Row C"},
+                                    new Button { Text = "Row A"},
+                                    new Button { Text = "Row B"},
+                                    new Button { Text = "Row C"},
                                 ]
                             },
-                            new Button() { Text = "Test 3" },
-                            new Button() { Text = "Test 4" },
+                            new Button { Text = "Test 3", HorizontalAlignment = HorizontalAlignment.Right },
+                            new Button { Text = "Test 4" },
                         ]
                     },
                 ]
             };
+
 
             control.PopulateView();
 

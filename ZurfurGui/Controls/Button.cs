@@ -28,13 +28,22 @@ public class Button : Controllable
     /// <summary>
     /// Dummy measurement until we get fonts (20 pixels per character for now)
     /// </summary>
-    public Size Measure(Size available)
+    public Size MeasureView(Size available)
     {
         var lines = Text.Split("\n");
         var y = lines.Length;
         var x = lines.Max(l => l.Length);
         return new Size(20 * x, 20 * y);
     }
-    public Size ArrangeChildren(Size final) => final;
+    public Size ArrangeViews(Size final) => final;
 
+
+    // Forward View properties
+    public bool IsVisible { get => View.IsVisible; set => View.IsVisible = value; }
+    public Size Size { get => View.Size; set => View.Size = value; }
+    public Size MaxSize { get => View.Size; set => View.Size = value; }
+    public Size MinSize { get => View.Size; set => View.Size = value; }
+    public HorizontalAlignment HorizontalAlignment { get => View.HorizontalAlignment; set => View.HorizontalAlignment = value; }
+    public VerticalAlignment VerticalAlignment { get => View.VerticalAlignment; set => View.VerticalAlignment = value; }
+    public Thickness Margin { get => View.Margin; set => View.Margin = value; }
 }

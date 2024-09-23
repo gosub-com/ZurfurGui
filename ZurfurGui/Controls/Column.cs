@@ -34,7 +34,7 @@ public class Column : Controllable
     }
 
 
-    public Size Measure(Size available)
+    public Size MeasureView(Size available)
     {
         available.Height = double.PositiveInfinity;
         var columnMeasured = new Size();
@@ -45,6 +45,7 @@ public class Column : Controllable
                 continue;
 
             visibleCount++;
+            view.Measure(available);
             var childMeasured = view.DesiredSize;
             columnMeasured.Width = Math.Max(columnMeasured.Width, childMeasured.Width);
             columnMeasured.Height += childMeasured.Height;
@@ -53,7 +54,7 @@ public class Column : Controllable
         return columnMeasured;
     }
 
-    public Size ArrangeChildren(Size final)
+    public Size ArrangeViews(Size final)
     {
         var bounds = new Rect(0, 0, final.Width, final.Height);
         var spacing = Spacing;
@@ -66,5 +67,15 @@ public class Column : Controllable
         }
         return final;
     }
+
+    // Forward View properties
+    public bool IsVisible { get => View.IsVisible; set => View.IsVisible = value; }
+    public Size Size { get => View.Size; set => View.Size = value; }
+    public Size MaxSize { get => View.Size; set => View.Size = value; }
+    public Size MinSize { get => View.Size; set => View.Size = value; }
+    public HorizontalAlignment HorizontalAlignment { get => View.HorizontalAlignment; set => View.HorizontalAlignment = value; }
+    public VerticalAlignment VerticalAlignment { get => View.VerticalAlignment; set => View.VerticalAlignment = value; }
+    public Thickness Margin { get => View.Margin; set => View.Margin = value; }
+
 
 }
