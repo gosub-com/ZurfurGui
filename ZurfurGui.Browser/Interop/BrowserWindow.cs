@@ -8,8 +8,28 @@ using ZurfurGui.Platform;
 
 namespace ZurfurGui.Browser.Interop;
 
-internal class BrowserWindow(JSObject _js) : OsWindow
+internal partial class BrowserWindow : OsWindow
 {
+    JSObject _js;
+
+    [JSImport("globalThis.document.getElementById")]
+    public static partial JSObject? GetElementById(string elementId);
+
+    [JSImport("globalThis.ZurfurGui.getBrowserWindow")]
+    private static partial JSObject GetBrowserWindow();
+
+
+    public BrowserWindow(string canvasId)
+    {
+        _js = GetBrowserWindow();
+        PrimaryCanvas = new BrowserCanvas(GetElementById(canvasId)
+            ?? throw new Exception($"Expecting canvas DOM element with ID '{canvasId}'"), canvasId);
+    }
+
+
+    public OsCanvas PrimaryCanvas { get; private set; }
+
+
     public double DevicePixelRatio => _js.GetPropertyAsDouble("devicePixelRatio");
 
     /// <summary>

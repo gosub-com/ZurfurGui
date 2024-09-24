@@ -7,17 +7,12 @@ using System.Threading.Tasks;
 
 namespace ZurfurGui.Platform;
 
-public interface OsGlobal
-{
-    public OsWindow PrimaryWindow { get; }
-
-    public OsCanvas PrimaryCanvas { get; }
-}
-
 
 
 public interface OsWindow
 {
+    public OsCanvas PrimaryCanvas { get; }
+
     public double DevicePixelRatio { get; }
 
     /// <summary>

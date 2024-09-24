@@ -14,11 +14,10 @@ public static class BrowserStart
 
     public async static void StartRendering(string canvasId)
     {
-        var global = new BrowserGlobal(canvasId);
+        var window = new BrowserWindow(canvasId);
         var renderer = new Renderer();
 
-        var window = global.PrimaryWindow;
-        var canvas = global.PrimaryCanvas;
+        var canvas = window.PrimaryCanvas;
         var context = canvas.Context;
 
         ScaleAndRender();
@@ -58,7 +57,7 @@ public static class BrowserStart
             }
             context.PixelScale = px;
 
-            renderer.RenderFrame(global);
+            renderer.RenderFrame(window);
         }
 
     }

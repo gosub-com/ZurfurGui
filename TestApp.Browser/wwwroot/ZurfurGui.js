@@ -34,7 +34,7 @@ export async function ZurfurGuiRun(canvasId) {
 }
 
 export function fillText(context, text, x, y) { context.fillText(text, x, y); }
-export function window() { return globalThis.window; }
+export function getBrowserWindow() { return globalThis.window; }
 export function getBoundingClientRect(canvas) { return canvas.getBoundingClientRect(); }
 export function fillRect(context, x, y, width, height) { context.fillRect(x, y, width, height); }
 export function getContext(context, contextId) { return context.getContext(contextId); }

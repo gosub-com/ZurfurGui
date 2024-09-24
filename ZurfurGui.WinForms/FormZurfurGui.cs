@@ -7,7 +7,7 @@ namespace ZurfurGui.WinForms;
 
 public partial class FormZurfurGui : Form
 {
-    WinGlobal _global;
+    WinWindow _window;
     Renderer _render;
 
     double[] _mag = [0.25, 0.33, 0.5, 0.66, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
@@ -16,7 +16,7 @@ public partial class FormZurfurGui : Form
     public FormZurfurGui()
     {
         InitializeComponent();
-        _global = new WinGlobal(this, pictureMain);
+        _window = new WinWindow(this, pictureMain);
         _render = new Renderer();
         
         pictureMain.MouseWheel += PictureMain_MouseWheel;
@@ -60,12 +60,12 @@ public partial class FormZurfurGui : Form
 
     private void pictureMain_Paint(object sender, PaintEventArgs e)
     {
-        var context = _global.PrimaryCanvas.Context;
+        var context = _window.PrimaryCanvas.Context;
         context.PixelScale = _mag[_magIndex];
 
         // Hack the graphics into the context since Winforms requires us to use the supplied version
         ((WinContext)context)._graphics = e.Graphics;
 
-        _render.RenderFrame(_global);
+        _render.RenderFrame(_window);
     }
 }

@@ -7,8 +7,19 @@ using ZurfurGui.Platform;
 
 namespace ZurfurGui.WinForms.Interop;
 
-internal class WinWindow(Form _form, PictureBox _picture) : OsWindow
+internal class WinWindow : OsWindow
 {
+    Form _form;
+    PictureBox _picture;
+
+    public WinWindow(Form form, PictureBox canvas)
+    {
+        _form = form;
+        _picture = canvas;
+        PrimaryCanvas = new WinCanvas(canvas);
+    }
+
+    public OsCanvas PrimaryCanvas { get; private set; }
 
     public double DevicePixelRatio => 1;
 

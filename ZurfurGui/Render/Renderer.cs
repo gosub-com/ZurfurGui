@@ -13,7 +13,7 @@ public class Renderer
     int _fps;
     int _second;
 
-    public void RenderFrame(OsGlobal global)
+    public void RenderFrame(OsWindow window)
     {
         var timer = Stopwatch.StartNew();
 
@@ -26,8 +26,7 @@ public class Renderer
             _frameLastCountSecond = _frameCount;
         }
 
-        var window = global.PrimaryWindow;
-        var canvas = global.PrimaryCanvas;
+        var canvas = window.PrimaryCanvas;
         var context = canvas.Context;
 
 
