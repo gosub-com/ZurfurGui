@@ -2,13 +2,13 @@
 
 namespace ZurfurGui;
 
-public class Point
+public struct Point : IEquatable<Point>
 {
     public double X { get; set; }
     public double Y { get; set; }
 
     public Point() { }
-    public Point(double width, double height) { X = width; Y = height; }
+    public Point(double x, double y) { X = x; Y = y; }
     public bool Equals(Point v) => X == v.X && Y == v.Y;
     public override bool Equals(object? obj) => obj is Point v && Equals(v);
     public static bool operator ==(Point a, Point b) => a.Equals(b);
@@ -21,4 +21,22 @@ public class Point
         h += HashMix(h) + Y.GetHashCode();
         return HashMix(h);
     }
+    public static Point operator +(Point a, Point b)
+        => new Point(a.X+b.X, a.Y+b.Y);
+    public static Point operator -(Point a, Point b)
+        => new Point(a.X-b.X, a.Y-b.Y);
+    public static Point operator -(Point a)
+        => new Point(-a.X, -a.Y);
+    public static Point operator *(Point a, double scale)
+        => new Point(a.X*scale, a.Y*scale);
+    public static Point operator *(double scale, Point b)
+        => new Point(scale*b.X, scale*b.Y);
+    public static Point operator /(Point a, double scale)
+        => new Point(a.X/scale, a.Y/scale);
+    public static Point operator /(double scale, Point b)
+        => new Point(scale/b.X, scale/b.Y);
+
+    public Size MaxZero => new Size(Math.Max(X, 0), Math.Max(Y, 0));
+
+
 }

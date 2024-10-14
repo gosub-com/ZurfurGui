@@ -1,4 +1,6 @@
-﻿namespace ZurfurGui.Controls;
+﻿using ZurfurGui.Render;
+
+namespace ZurfurGui.Controls;
 
 public class Window : Controllable
 {
@@ -31,7 +33,7 @@ public class Window : Controllable
     /// <summary>
     /// Same as canvas
     /// </summary>
-    public Size MeasureView(Size available)
+    public Size MeasureView(Size available, MeasureContext measure)
     {
         var windowMeasured = new Size();
         foreach (var view in View.Views)
@@ -39,7 +41,7 @@ public class Window : Controllable
             if (!view.IsVisible)
                 continue;
 
-            view.Measure(available);
+            view.Measure(available, measure);
             var childMeasured = view.DesiredSize;
             windowMeasured.Width = Math.Max(windowMeasured.Width, childMeasured.Width);
             windowMeasured.Height = Math.Max(windowMeasured.Height, childMeasured.Height);
@@ -62,10 +64,10 @@ public class Window : Controllable
     // Forward View properties
     public bool IsVisible { get => View.IsVisible; set => View.IsVisible = value; }
     public Size Size { get => View.Size; set => View.Size = value; }
-    public Size MaxSize { get => View.Size; set => View.Size = value; }
-    public Size MinSize { get => View.Size; set => View.Size = value; }
-    public HorizontalAlignment HorizontalAlignment { get => View.HorizontalAlignment; set => View.HorizontalAlignment = value; }
-    public VerticalAlignment VerticalAlignment { get => View.VerticalAlignment; set => View.VerticalAlignment = value; }
+    public Size SizeMax { get => View.Size; set => View.Size = value; }
+    public Size SizeMin { get => View.Size; set => View.Size = value; }
+    public HorizontalAlignment AlignHorizontal { get => View.AlignHorizontal; set => View.AlignHorizontal = value; }
+    public VerticalAlignment AlignVertical { get => View.AlignVertical; set => View.AlignVertical = value; }
     public Thickness Margin { get => View.Margin; set => View.Margin = value; }
 
 }

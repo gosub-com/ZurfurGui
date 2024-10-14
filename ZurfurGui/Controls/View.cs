@@ -1,8 +1,9 @@
 ﻿using System.Diagnostics;
+using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
-public enum HorizontalAlignment
+public enum HorizontalAlignment : byte
 {
     Stretch,
     Left,
@@ -10,7 +11,7 @@ public enum HorizontalAlignment
     Right
 }
 
-public enum VerticalAlignment
+public enum VerticalAlignment : byte
 {
     Stretch,
     Top,
@@ -20,8 +21,6 @@ public enum VerticalAlignment
 
 public class View
 {
-
-
     /// <summary>
     /// Parent view
     /// </summary>
@@ -44,11 +43,9 @@ public class View
     public Size DesiredSize { get; private set; }
 
     /// <summary>
-    /// Bounds of view within parent (as caluclated by the measure pass)
+    /// Bounds of view within parent (as caluclated by the arrange pass)
     /// </summary>
     public Rect Bounds { get; private set; }
-
-    public View() { }
 
     public View(Controllable control)
     {
@@ -88,25 +85,25 @@ public class View
     /// Requested maximum size of the view.
     /// TBD: Make this into a stylable property.
     /// </summary>
-    public Size MaxSize { get; set; } = new(double.PositiveInfinity, double.PositiveInfinity);
+    public Size SizeMax { get; set; } = new(double.PositiveInfinity, double.PositiveInfinity);
 
     /// <summary>
     /// Requested minimum size of the view
     /// TBD: Make this into a stylable property.
     /// </summary>
-    public Size MinSize { get; set; } = new();
+    public Size SizeMin { get; set; } = new();
 
     /// <summary>
     /// Hoizontal alignment
     /// TBD: Make this into a stylable property.
     /// </summary>
-    public HorizontalAlignment HorizontalAlignment { get; set; }
+    public HorizontalAlignment AlignHorizontal { get; set; }
 
     /// <summary>
     /// Vertical alignment
     /// TBD: Make this into a stylable property.
     /// </summary>
-    public VerticalAlignment VerticalAlignment { get; set; }
+    public VerticalAlignment AlignVertical { get; set; }
 
     /// <summary>
     /// Margin
@@ -120,11 +117,10 @@ public class View
     /// of (0,0) and do not measure children (i.e. a control that adds extra views to the
     /// view tree takes responsibility for making sure measurement works for that control)
     /// The Size property (when not NAN) override the measurement.
-    /// The MaxSize and MinSize also override the measurement.
     /// MeasuredSize is guaranteed to fit inside available.
     /// Similar to MeasureCore in WPF
     /// </summary>
-    public void Measure(Size avaliable)
+    public void Measure(Size avaliable, MeasureContext measure)
     {
         if (!IsVisible)
         {
@@ -132,7 +128,7 @@ public class View
             return;
         }
 
-        var controlSize = Control?.MeasureView(avaliable) ?? new();
+        var controlSize = Control?.MeasureView(avaliable, measure) ?? new();
 
         // Size override
         var sizeOverride = Size;
@@ -142,12 +138,12 @@ public class View
             controlSize.Height = sizeOverride.Height;
 
         // Max size override
-        var maxSize = MaxSize;
+        var maxSize = SizeMax;
         controlSize.Width = Math.Min(controlSize.Width, maxSize.Width);
         controlSize.Height = Math.Min(controlSize.Height, maxSize.Height);
         
         // Min  size override
-        var minSize = MinSize;
+        var minSize = SizeMin;
         controlSize.Width = Math.Max(controlSize.Width, minSize.Width);
         controlSize.Height = Math.Max(controlSize.Height, minSize.Height);
 
@@ -177,11 +173,11 @@ public class View
         var width = availableSize.Width;
         var height = availableSize.Height;
 
-        var horizontalAlignment = HorizontalAlignment;
+        var horizontalAlignment = AlignHorizontal;
         if (horizontalAlignment != HorizontalAlignment.Stretch)
             width = Math.Min(width, DesiredSize.Width - margin.Left - margin.Right);
 
-        var verticalAlignment = VerticalAlignment;
+        var verticalAlignment = AlignVertical;
         if (verticalAlignment != VerticalAlignment.Stretch)
             height = Math.Min(height, DesiredSize.Height - margin.Top - margin.Bottom);
 

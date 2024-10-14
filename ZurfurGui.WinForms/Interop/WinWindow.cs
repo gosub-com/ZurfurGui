@@ -21,7 +21,7 @@ internal class WinWindow : OsWindow
 
     public OsCanvas PrimaryCanvas { get; private set; }
 
-    public double DevicePixelRatio => 1;
+    public double DevicePixelRatio { get; set; } = 1;
 
     public Size InnerSize => new Size(_picture.Width, _picture.Height);
 

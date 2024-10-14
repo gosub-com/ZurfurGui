@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text;
@@ -16,6 +17,9 @@ internal partial class BrowserCanvas : OsCanvas
     [JSImport("globalThis.ZurfurGui.getBoundingClientRect")]
     private static partial JSObject GetBoundingClientRect(JSObject canvas);
 
+    /// <summary>
+    /// Stores canvas size (pixels) in canvas.devicePixelWidth and canvas.devicePixelHeight whenever size changes
+    /// </summary>
     [JSImport("globalThis.ZurfurGui.observeCanvasDevicePixelSize")]
     private static partial JSObject ObserveCanvasDevicePixelSize(JSObject canvas);
 
@@ -52,22 +56,22 @@ internal partial class BrowserCanvas : OsCanvas
         set { _canvas.SetProperty("width", value.Width); _canvas.SetProperty("height", value.Height); }
     }
 
-    public Size ClientSize
+    public Size StyleSize
     {
         get
         {
             var r = GetBoundingClientRect(_canvas);
             return new Size(r.GetPropertyAsDouble("width"), r.GetPropertyAsDouble("height"));
         }
-    }
 
-    public void SetStyleSize(Size size)
-    { 
-        var style = _canvas.GetPropertyAsJSObject("style");
-        if (style == null)
-            throw new Exception("SetStyleSize: style was null");
-        style.SetProperty("width", $"{size.Width}px");
-        style.SetProperty("height", $"{size.Height}px");
+        set
+        {
+            var style = _canvas.GetPropertyAsJSObject("style");
+            if (style == null)
+                throw new Exception("SetStyleSize: style was null");
+            style.SetProperty("width", $"{value.Width}px");
+            style.SetProperty("height", $"{value.Height}px");
+        }
     }
 
     /// <summary>

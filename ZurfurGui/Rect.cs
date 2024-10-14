@@ -28,6 +28,22 @@ public struct Rect : IEquatable<Rect>
         return HashMix(h);
     }
     public Size Size => new Size(Width, Height);
-    public Point Location => new Point(X, Y);
+    public Point Position => new Point(X, Y);
+    public double Right => X + Width;
+    public double Bottom => Y + Height;
+
+    public Rect Intersect(Rect r)
+    {
+        var newX = Math.Max(r.X, X);
+        var newY = Math.Max(r.Y, Y);
+        var newRight = Math.Min(r.Right, Right);
+        var newBottom = Math.Min(r.Bottom, Bottom);
+        var width = newRight - newX;
+        var height = newBottom - newY;
+        if (width <= 0 || height <= 0)
+            return new();
+        return new Rect(newX, newY, width, height);
+    }
+
 
 }

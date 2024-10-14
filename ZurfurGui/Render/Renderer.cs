@@ -1,6 +1,6 @@
 ﻿
 using System.Diagnostics;
-
+using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 
 namespace ZurfurGui.Render;
@@ -8,12 +8,28 @@ namespace ZurfurGui.Render;
 
 public class Renderer
 {
+    OsWindow _window;
+    View _view;
+
     int _frameCount;
     int _frameLastCountSecond;
     int _fps;
     int _second;
+    long _totalMs;
+    long _avgMs;
 
-    public void RenderFrame(OsWindow window)
+
+    public Renderer(OsWindow window, Controllable control)
+    {
+        _window = window;
+        _view = View.BuildViewTree(control);
+        var windowSize = new Size(400, 500);
+        var windowPos = new Point(115, 175);
+        _view.Measure(windowSize, new MeasureContext(window.PrimaryCanvas.Context));
+        _view.Arrange(new Rect(windowPos, windowSize));
+    }
+
+    public void RenderFrame()
     {
         var timer = Stopwatch.StartNew();
 
@@ -24,21 +40,46 @@ public class Renderer
             _second = now.Second;
             _fps = _frameCount - _frameLastCountSecond;
             _frameLastCountSecond = _frameCount;
+            if (_fps != 0)
+                _avgMs = _totalMs / _fps;
+            _totalMs = 0;
         }
 
-        var canvas = window.PrimaryCanvas;
+
+        var context = _window.PrimaryCanvas.Context;
+        var renderContext = new RenderContext(context);
+        renderContext.PushOrigin(new(0, 0), _window.DevicePixelRatio);
+
+        var left = 15;
+        var top = 50;
+        var ls = 26;
+        RenderBackroundTest(renderContext, _window.PrimaryCanvas, left, top, ls);
+
+
+        RenderView(renderContext, _view, new Rect(0, 0, 10000, 10000));
+
+        var ms = timer.ElapsedMilliseconds;
+        _totalMs += ms;
+
+        renderContext.ClipRect(0, 0, 10000, 10000);
+        renderContext.FontName = "sans-serif";
+        renderContext.FontSize = 26;
+        renderContext.FillColor = new Color(0xC0, 0xC0, 0xF0);
+        renderContext.FillText($"|fps={_fps}, ms={_avgMs}, count={_frameCount}, {ms,-2}", left, top + 0 * ls);
+    }
+
+    private void RenderBackroundTest(RenderContext renderContext, OsCanvas canvas, int left, int top, int ls)
+    {
         var context = canvas.Context;
-
-
         var canvasDeviceSize = canvas.DeviceSize;
-        var canvasClientSize = canvas.ClientSize;
+        var canvasStyleSize = canvas.StyleSize;
 
-        context.FillColor = new Color(0x20, 0x20, 0x80); 
-        context.FillRect(0, 0, canvasClientSize.Width, canvasClientSize.Height);
+        renderContext.FillColor = new Color(0x20, 0x20, 0x80);
+        renderContext.FillRect(0, 0, canvasStyleSize.Width, canvasStyleSize.Height);
 
-        context.FillColor = new Color(0x80, 0x80, 0xF0);
-        context.Font = "sans-serif";
-        context.FontSize = 16;
+        renderContext.FillColor = new Color(0x80, 0x80, 0xF0);
+        renderContext.FontName = "sans-serif";
+        renderContext.FontSize = 16;
 
         for (var i = 0; i < 30; i++)
         {
@@ -46,51 +87,100 @@ public class Renderer
             {
                 var x = i * 50;
                 var y = j * 20;
-                context.FillText($"{x / 10},{y / 10}", x, y);
+                renderContext.FillText($"{x / 10},{y / 10}", x, y);
             }
         }
 
+        renderContext.FontName = "sans-serif";
+        renderContext.FontSize = 500;
+        renderContext.FillText($"M.M.", left, top + 17 * ls);
 
-        var left = 15;
-        var top = 50;
-        var ls = 26;
+        renderContext.FontName = "sans-serif";
+        renderContext.FontSize = 26;
+        renderContext.FillColor = new Color(0xC0, 0xC0, 0xF0);
 
-        context.Font = "sans-serif";
-        context.FontSize = 500;
-        context.FillText($"M.", left, top + 17 * ls);
+        renderContext.FillText($"|WPR={_window.DevicePixelRatio:F2}", left, top + 1 * ls);
+        renderContext.FillText($"|CDS={canvasDeviceSize:F2}, CSS={canvasStyleSize:F2}", left, top + 2 * ls);
 
+        renderContext.FillText($"│WIS={_window.InnerSize}, COS={canvas.DevicePixelSize?.ToString() ?? "?"}", left, top + 3 * ls);
+        renderContext.FillText($"│Screen size: ({_window.ScreenSize})", left, top + 4 * ls);
 
-        context.Font = "sans-serif";
-        context.FontSize = 26;
-        context.FillColor = new Color(0xC0, 0xC0, 0xF0);
-        context.FillText($"|FPS={_fps}, Count = {_frameCount}", left, top + 0*ls);
+        var sx = 500;
 
-        context.FillText($"|Window pixel ratio={window.DevicePixelRatio:F2}", left, top + 1*ls);
-        context.FillText($"|Canvas device size: ({canvasDeviceSize:F2}), pixel scale: ({context.PixelScale:F2})", left, top + 2*ls);
+        renderContext.LineWidth = 1;
+        renderContext.StrokeColor = Colors.Red;
+        renderContext.StrokeRect(10 + sx, 10, 50, 50);
 
-        context.FillText($"│Canvas client size: ({canvasClientSize:F2})", left, top + 3*ls);
-        context.FillText($"│Window inner size: ({window.InnerSize})", left, top + 4*ls);
-        context.FillText($"│Screen size: ({window.ScreenSize})", left, top +5*ls);
-        context.FillText($"Canvas on screen: ({canvas.DevicePixelSize?.ToString()??"?"})", left, top + 6*ls);
+        renderContext.LineWidth = 2;
+        renderContext.StrokeColor = Colors.Green;
+        renderContext.StrokeRect(60 + sx, 60, 50, 50);
 
-        context.FillText($"Time: {timer.ElapsedMilliseconds} ms", left, top + 10*ls);
+        renderContext.LineWidth = 3;
+        renderContext.StrokeColor = Colors.Blue;
+        renderContext.StrokeRect(110 + sx, 110, 50, 50);
 
-        var left2 = 600;
-        RealButtonAlphabetic(context, "Sans Topj", "sans-serif", 26, left2, top + 6 * ls);
-        RealButtonAlphabetic(context, "Arial Topj", "Arial", 26, left2, top + 8 * ls);
-        RealButtonAlphabetic(context, "﴿█j A﴿│|", "Arial", 26, left2, top + 10 * ls);
+        renderContext.LineWidth = 8;
+        renderContext.StrokeColor = new Color(255, 255, 0);
+        renderContext.StrokeRect(160 + sx, 60, 50, 50);
 
+        renderContext.LineWidth = 16;
+        renderContext.StrokeColor = new Color(255, 0, 255);
+        renderContext.StrokeRect(210 + sx, 10, 50, 50);
     }
 
-    static void RealButtonAlphabetic(OsContext context, string text, string font, double fontSize, double x, double y)
+    int ViewLevel(View view)
     {
-        context.Font = font;
-        context.FontSize = fontSize;
-        
-        var textWidth = context.MeasureTextWidth(text);
-        context.FillColor = new Color(0xE0, 0xE0, 0xE0);
-        context.FillRect(x, y, textWidth, fontSize);
-        context.FillColor = new Color(0x10, 0x10, 0x10);
-        context.FillText(text, x, y + fontSize);
+        int level = 0;
+        while (view.ParentView != null)
+        {
+            level++;
+            view = view.ParentView;
+        }
+        return level;
     }
+
+    void RenderView(RenderContext renderContext, View view, Rect clip)
+    {
+        var bounds = view.Bounds;
+
+        clip = clip.Intersect(bounds);
+        clip = new Rect(clip.Position - bounds.Position, clip.Size);
+
+
+        // Skip drawing when fully clipped
+        if (clip.Width <= 0 || clip.Height <= 0)
+            return;
+
+        renderContext.PushOrigin(bounds.Position, 1);
+
+        renderContext.ClipRect(clip.X, clip.Y, clip.Width, clip.Height);
+
+        var viewLevel = ViewLevel(view);
+        if (viewLevel == 0)
+            renderContext.FillColor = Colors.Yellow;
+        else if (viewLevel == 1)
+            renderContext.FillColor = Colors.Orange;
+        else if (viewLevel == 2)
+            renderContext.FillColor = Colors.Red;
+        else if (viewLevel == 3)
+            renderContext.FillColor = Colors.Green;
+        else if (viewLevel == 4)
+            renderContext.FillColor = Colors.Blue;
+        else
+            renderContext.FillColor = Colors.Black;
+        renderContext.FillRect(0, 0, bounds.Width, bounds.Height);
+
+        view.Control?.Render(renderContext);
+
+        foreach (var child in view.Views)
+        {
+            RenderView(renderContext, child, clip);
+        }
+
+
+
+        renderContext.PopOrigin();
+
+    }
+
 }

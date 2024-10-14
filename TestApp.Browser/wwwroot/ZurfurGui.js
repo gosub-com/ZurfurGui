@@ -37,9 +37,23 @@ export function fillText(context, text, x, y) { context.fillText(text, x, y); }
 export function getBrowserWindow() { return globalThis.window; }
 export function getBoundingClientRect(canvas) { return canvas.getBoundingClientRect(); }
 export function fillRect(context, x, y, width, height) { context.fillRect(x, y, width, height); }
-export function getContext(context, contextId) { return context.getContext(contextId); }
+export function strokeRect(context, x, y, width, height) { context.strokeRect(x, y, width, height); }
+export function getContext(canvas, contextId) {
+    var c = canvas.getContext(contextId);
+    c.save();
+    return c;
+}
 export function measureText(context, text) { return context.measureText(text); }
+export function clipRect(context, x, y, width, height) {
+    context.restore();
+    context.save();
+    context.beginPath();
+    context.rect(x, y, width, height);
+    context.clip();
+}
 
+
+// Stores canvas size (pixels) in canvas.devicePixelWidth and canvas.devicePixelHeight whenever size changes
 // https://web.dev/articles/device-pixel-content-box
 export function observeCanvasDevicePixelSize(canvas) {
     try {

@@ -5,6 +5,7 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 
 using ZurfurGui.Browser.Interop;
+using ZurfurGui.Controls;
 using ZurfurGui.Render;
 
 namespace ZurfurGui.Browser;
@@ -12,10 +13,10 @@ namespace ZurfurGui.Browser;
 public static class BrowserStart
 {
 
-    public async static void StartRendering(string canvasId)
+    public async static void StartRendering(string canvasId, Controllable control)
     {
         var window = new BrowserWindow(canvasId);
-        var renderer = new Renderer();
+        var renderer = new Renderer(window, control);
 
         var canvas = window.PrimaryCanvas;
         var context = canvas.Context;
@@ -40,7 +41,7 @@ public static class BrowserStart
 
         void ScaleAndRender()
         {
-            canvas.SetStyleSize(window.InnerSize);
+            canvas.StyleSize = window.InnerSize;
 
             // Canvas size scales by device pixels
             var px = window.DevicePixelRatio;
@@ -53,11 +54,10 @@ public static class BrowserStart
             else
             {
                 // Close enough
-                canvas.DeviceSize = px * canvas.ClientSize;
+                canvas.DeviceSize = px * canvas.StyleSize;
             }
-            context.PixelScale = px;
 
-            renderer.RenderFrame(window);
+            renderer.RenderFrame();
         }
 
     }

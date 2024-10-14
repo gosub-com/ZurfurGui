@@ -29,29 +29,18 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            button1 = new Button();
             pictureMain = new PictureBox();
             timer1 = new System.Windows.Forms.Timer(components);
             labelMag = new Label();
             ((System.ComponentModel.ISupportInitialize)pictureMain).BeginInit();
             SuspendLayout();
             // 
-            // button1
-            // 
-            button1.Location = new System.Drawing.Point(12, 12);
-            button1.Name = "button1";
-            button1.Size = new System.Drawing.Size(75, 23);
-            button1.TabIndex = 0;
-            button1.Text = "button1";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
-            // 
             // pictureMain
             // 
             pictureMain.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            pictureMain.Location = new System.Drawing.Point(12, 41);
+            pictureMain.Location = new System.Drawing.Point(12, 12);
             pictureMain.Name = "pictureMain";
-            pictureMain.Size = new System.Drawing.Size(954, 572);
+            pictureMain.Size = new System.Drawing.Size(954, 601);
             pictureMain.TabIndex = 1;
             pictureMain.TabStop = false;
             pictureMain.Paint += pictureMain_Paint;
@@ -64,14 +53,15 @@
             // 
             // labelMag
             // 
-            labelMag.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             labelMag.AutoSize = true;
+            labelMag.Font = new Font("Segoe UI", 16F);
             labelMag.ImageAlign = ContentAlignment.MiddleRight;
-            labelMag.Location = new System.Drawing.Point(851, 16);
+            labelMag.Location = new System.Drawing.Point(21, 22);
             labelMag.Name = "labelMag";
-            labelMag.Size = new System.Drawing.Size(115, 15);
+            labelMag.Size = new System.Drawing.Size(209, 30);
             labelMag.TabIndex = 2;
             labelMag.Text = "Magnification: 100%";
+            labelMag.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // FormZurfurGui
             // 
@@ -80,20 +70,16 @@
             ClientSize = new System.Drawing.Size(978, 625);
             Controls.Add(labelMag);
             Controls.Add(pictureMain);
-            Controls.Add(button1);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "FormZurfurGui";
             Text = "Zurfur Gui";
-            Load += FormZurfurGui_Load;
             ((System.ComponentModel.ISupportInitialize)pictureMain).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
-
-        private Button button1;
         private PictureBox pictureMain;
         private System.Windows.Forms.Timer timer1;
         private Label labelMag;

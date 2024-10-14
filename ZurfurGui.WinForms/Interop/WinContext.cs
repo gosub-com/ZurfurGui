@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Drawing.Drawing2D;
+
 using ZurfurGui.Platform;
+
 
 namespace ZurfurGui.WinForms.Interop;
 
@@ -27,53 +30,87 @@ internal class WinContext : OsContext
     const double TEXT_OFFSET_SCALE_Y = 0.075;
     const double TEXT_OFFSET_SCALE_X = 0.175;
 
-    /// <summary>
-    /// Fudge factor to get Winforms to measure the text the same as the browser
-    /// </summary>
-    const float TEXT_WIDTH_SCALE = 0.88f;
-
+    static System.Drawing.Color WinColor(Color c)
+        => System.Drawing.Color.FromArgb(c.A, c.R, c.G, c.B);
 
 
     public Graphics _graphics;
-    double _pixelScale = 1;
-    Color _color;
     Brush? _brush;
+    Pen? _pen;
     Font? _font;
+    GraphicsPath _path = new();
+
+    Color _fillColor = new Color(0, 0, 0);
+    Color _strokeColor = new Color(0, 0, 0);
+    double _lineWidth = 1;
     string _fontName = "Arial";
-    double _fontSize = 26;
+    double _fontSize = 16;
+
 
     public WinContext(Graphics graphics)
     {
         _graphics = graphics;
     }
 
-    public double PixelScale 
-    { 
-        get => _pixelScale; 
-        set
-        {
-            if (_pixelScale != value)
-            {
-                _pixelScale = value;
-                _font = null;
-            }
-        }
+    Font GetFont()
+    {
+        if (_font == null)
+            _font = new Font(_fontName, (float)(_fontSize * PIXEL_TO_POINT));
+        return _font;
     }
 
+    Brush GetBrush()
+    {
+        if (_brush == null)
+            _brush = new SolidBrush(WinColor(_fillColor));
+        return _brush;
+    }
+
+    Pen GetPen()
+    {
+        if (_pen == null)
+            _pen = new Pen(WinColor(_strokeColor), (float)(_lineWidth));
+        return _pen;
+    }
     public Color FillColor 
     {
-        get => _color;
+        get => _fillColor;
         set 
         { 
-            if (value != _color) 
+            if (value != _fillColor) 
             {
-                _color = value; 
+                _fillColor = value; 
                 _brush = null; 
             } 
         } 
     }
-    
-    public string Font 
+    public Color StrokeColor
+    {
+        get => _strokeColor;
+        set
+        {
+            if (value != _strokeColor)
+            {
+                _strokeColor = value;
+                _pen = null;
+            }
+        }
+    }
+
+    public double LineWidth
+    {
+        get => _lineWidth;
+        set
+        {
+            if (value != _lineWidth)
+            {
+                _lineWidth = value;
+                _pen = null;
+            }
+        }
+    }
+
+    public string FontName 
     {
         get => _fontName;
         set 
@@ -99,24 +136,16 @@ internal class WinContext : OsContext
         }
     }
 
-    Font GetFont()
-    {
-        if (_font == null)
-            _font = new Font(_fontName, (float)(_fontSize * PixelScale * PIXEL_TO_POINT));
-        return _font;
-    }
-
-    Brush GetBrush()
-    {
-        if (_brush == null)
-            _brush = new SolidBrush(System.Drawing.Color.FromArgb(_color.A, _color.R, _color.G, _color.B));
-        return _brush;
-    }
-
     public void FillRect(double x, double y, double width, double height)
     {
         _graphics.FillRectangle(GetBrush(), 
-            (float)(x*_pixelScale), (float)(y*_pixelScale), (float)(width*_pixelScale), (float)(height*_pixelScale));
+            (float)x, (float)y, (float)width, (float)height);
+    }
+
+    public void StrokeRect(double x, double y,double width,double height)
+    {
+        _graphics.DrawRectangle(GetPen(),
+            (float)x, (float)y, (float)width, (float)height);
     }
 
     public void FillText(string text, double x, double y)
@@ -124,11 +153,18 @@ internal class WinContext : OsContext
         y -= _fontSize;  // Draw at alphabetic base line
         y += _fontSize * TEXT_OFFSET_SCALE_Y;
         x -= _fontSize * TEXT_OFFSET_SCALE_X;
-        _graphics.DrawString(text, GetFont(), GetBrush(), (float)(x*_pixelScale), (float)(y*_pixelScale));
+        _graphics.DrawString(text, GetFont(), GetBrush(), (float)x, (float)y);
     }
 
     public double MeasureTextWidth(string text)
     {
-        return _graphics.MeasureString(text, GetFont()).Width* TEXT_WIDTH_SCALE / _pixelScale;
+        return TextRenderer.MeasureText(text, GetFont(), new System.Drawing.Size(0,0), 
+            TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
+    }
+
+    public void ClipRect(double x, double y, double width, double height)
+    {
+        _graphics.Clip = new Region(new RectangleF(
+            (float)x, (float)y, (float)width, (float)height));
     }
 }

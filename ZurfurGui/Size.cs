@@ -22,10 +22,20 @@ public struct Size : IEquatable<Size>
         h += HashMix(h) + Height.GetHashCode();
         return HashMix(h);
     }
-    public static Size operator *(Size size, double scale)
-        => new Size(size.Width*scale, size.Height*scale);
-    public static Size operator*(double scale, Size size)
-        => new Size(scale*size.Width, scale*size.Height);
+    public static Size operator +(Size a, Size b)
+        => new Size(a.Width+b.Width, a.Height+b.Height);
+    public static Size operator -(Size a, Size b)
+        => new Size(a.Width-b.Width, a.Height-b.Height);
+    public static Size operator -(Size a)
+        => new Size(-a.Width, -a.Height);
+    public static Size operator *(Size a, double scale)
+        => new Size(a.Width*scale, a.Height*scale);
+    public static Size operator *(double scale, Size b)
+        => new Size(scale*b.Width, scale*b.Height);
+    public static Size operator /(Size a, double scale)
+        => new Size(a.Width/scale, a.Height/scale);
+    public static Size operator /(double scale, Size b)
+        => new Size(scale/b.Width, scale/b.Height);
 
     public Size MaxZero => new Size(Math.Max(Width, 0), Math.Max(Height, 0));
 

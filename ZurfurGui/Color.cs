@@ -12,12 +12,24 @@ public readonly struct Color : IEquatable<Color>
     //      https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas
     readonly uint _rgba;
 
-    public uint Rgba => _rgba;
-
     public Color(int r, int g, int b, int a = 255) 
     {
-        _rgba = ((uint)(r&255) << 0) | ((uint)(g&255) << 8) | ((uint)(b&255) << 16) | (uint)((a&255) << 24);
+        _rgba = ((uint)r&255) | ((uint)(g&255) << 8) | ((uint)(b&255) << 16) | (uint)((a&255) << 24);
     }
+
+    Color(uint webHexColor)
+    {
+        _rgba = (webHexColor >> 16) & 0xFF
+            | (webHexColor & 0xFF00)
+            | ((webHexColor & 0xFF) << 16)
+            | 0xFF000000;
+    }
+
+    /// <summary>
+    /// Create an opaque color from web hexadecimal value, eg. red=0xFF0000, lime/green = 0x00FF00, blue = 0x0000FF
+    /// </summary>
+    public static Color FromHex(uint webHexColor)
+        => new Color(webHexColor);
 
     public int A => (int)((_rgba >> 24) & 0xff);
     public int B => (int)((_rgba >> 16) & 0xff);
@@ -31,5 +43,4 @@ public readonly struct Color : IEquatable<Color>
     public override string ToString() => $"{R},{G},{B},{A}";
     public override int GetHashCode() => HashMix((int)_rgba);
     public string CssColor => $"#{R:x2}{G:x2}{B:x2}{A:x2}";
-
 }

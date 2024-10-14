@@ -23,7 +23,7 @@ internal class WinCanvas : OsCanvas
     public Size DeviceSize 
     {
         get => new Size(_pictureBox.Width, _pictureBox.Height); 
-        set { }
+        set => throw new NotImplementedException();
     }
 
     public Rect GetBoundingClientRect()
@@ -31,9 +31,10 @@ internal class WinCanvas : OsCanvas
         return new Rect(new Point(_pictureBox.Left, _pictureBox.Top), DeviceSize);
     }
 
-    public Size ClientSize
+    public Size StyleSize
     {
         get => new Size(_pictureBox.Width, _pictureBox.Height);
+        set => throw new NotImplementedException();
     }
 
 }

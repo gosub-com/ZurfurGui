@@ -13,6 +13,9 @@ public interface OsWindow
 {
     public OsCanvas PrimaryCanvas { get; }
 
+    /// <summary>
+    /// Best guess as to how big a pixel should be on our device
+    /// </summary>
     public double DevicePixelRatio { get; }
 
     /// <summary>
@@ -56,28 +59,28 @@ public interface OsCanvas
     /// <summary>
     /// Size of canvas in CSS pixels
     /// </summary>
-    public Size ClientSize { get; }
+    public Size StyleSize { get; set; }
 
-    /// <summary>
-    /// Sets the canvas CSS pixel size
-    /// </summary>
-    public void SetStyleSize(Size size) => throw new NotImplementedException();
 }
 
 public interface OsContext
 {
-    public double PixelScale { get; set; }
+    public Color FillColor { get; set; }
+    public Color StrokeColor { get; set; }
+    public double LineWidth { get; set; }
+    public string FontName { set; get; }
+    public double FontSize { set; get; }
+
 
     public void FillRect(double x, double y, double width, double height);
+
+    public void StrokeRect(double x, double y, double width, double height);
 
     /// <summary>
     /// Draw at the alphabetic base line
     /// </summary>
     public void FillText(string text, double x, double y);
-    public Color FillColor { set; }
 
-    // TBD: Create a font type rather than just use string
-    public string Font {  set; get; }
-    public double FontSize { set; get; }
     public double MeasureTextWidth(string text);
+    public void ClipRect(double x, double y, double width, double height);
 }

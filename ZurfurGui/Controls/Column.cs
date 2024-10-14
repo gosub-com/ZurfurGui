@@ -1,4 +1,6 @@
-﻿namespace ZurfurGui.Controls;
+﻿using ZurfurGui.Render;
+
+namespace ZurfurGui.Controls;
 
 public class Column : Controllable
 {
@@ -18,7 +20,6 @@ public class Column : Controllable
 
     /// <summary>
     /// Space between elements
-    /// TBD: Make this into a stylable property.
     /// </summary>
     public double Spacing { get; set; } = 5.0;
 
@@ -34,7 +35,7 @@ public class Column : Controllable
     }
 
 
-    public Size MeasureView(Size available)
+    public Size MeasureView(Size available, MeasureContext measure)
     {
         available.Height = double.PositiveInfinity;
         var columnMeasured = new Size();
@@ -45,7 +46,7 @@ public class Column : Controllable
                 continue;
 
             visibleCount++;
-            view.Measure(available);
+            view.Measure(available, measure);
             var childMeasured = view.DesiredSize;
             columnMeasured.Width = Math.Max(columnMeasured.Width, childMeasured.Width);
             columnMeasured.Height += childMeasured.Height;
@@ -71,10 +72,10 @@ public class Column : Controllable
     // Forward View properties
     public bool IsVisible { get => View.IsVisible; set => View.IsVisible = value; }
     public Size Size { get => View.Size; set => View.Size = value; }
-    public Size MaxSize { get => View.Size; set => View.Size = value; }
-    public Size MinSize { get => View.Size; set => View.Size = value; }
-    public HorizontalAlignment HorizontalAlignment { get => View.HorizontalAlignment; set => View.HorizontalAlignment = value; }
-    public VerticalAlignment VerticalAlignment { get => View.VerticalAlignment; set => View.VerticalAlignment = value; }
+    public Size SizeMax { get => View.Size; set => View.Size = value; }
+    public Size SizeMin { get => View.Size; set => View.Size = value; }
+    public HorizontalAlignment AlignHorizontal { get => View.AlignHorizontal; set => View.AlignHorizontal = value; }
+    public VerticalAlignment AlignVertical { get => View.AlignVertical; set => View.AlignVertical = value; }
     public Thickness Margin { get => View.Margin; set => View.Margin = value; }
 
 
