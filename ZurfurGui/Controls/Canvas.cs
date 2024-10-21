@@ -1,12 +1,17 @@
-﻿using ZurfurGui.Render;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
-public class Window : Controllable
+public class Canvas : Controllable
 {
     List<Controllable> _controls = new();
 
-    public string Type => "Window";
+    public string Type => "Canvas";
     public string Name { get; init; } = "";
     public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
     public View View { get; private set; }
@@ -17,7 +22,7 @@ public class Window : Controllable
         init => _controls = value.ToList();
     }
 
-    public Window()
+    public Canvas()
     {
         View = new(this);
     }
@@ -31,7 +36,7 @@ public class Window : Controllable
     }
 
     /// <summary>
-    /// Same as canvas
+    /// Same as window
     /// </summary>
     public Size MeasureView(Size available, MeasureContext measure)
     {
@@ -50,7 +55,7 @@ public class Window : Controllable
     }
 
     /// <summary>
-    /// A window puts all controls at (0,0), like a canvas.  Position can be controlled using margin.
+    /// A canvas puts all controls at (0,0), like a window.  Position can be controlled using margin.
     /// </summary>
     public Size ArrangeViews(Size final)
     {
@@ -64,12 +69,10 @@ public class Window : Controllable
     public void Render(RenderContext context)
     {
         var BORDER_WIDTH = 4;
-        context.FillColor = Colors.LightGray;
         var r = new Rect(new(), View.Bounds.Size);
-        context.FillRect(r);
         context.LineWidth = BORDER_WIDTH;
-        context.StrokeColor = Colors.Navy;
-        r = r.Deflate(BORDER_WIDTH);
+        context.StrokeColor = Colors.Yellow;
+        r = r.Deflate(BORDER_WIDTH/2);
         context.StrokeRect(r);
     }
 

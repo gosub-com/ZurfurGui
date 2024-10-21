@@ -1,16 +1,18 @@
-﻿
-using System.Reflection.Emit;
-using ZurfurGui.Platform;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
-public class Label : Controllable
+public class Button : Controllable
 {
     // Expand lines over the size of the font itself
     const double LINE_SPACING = 1;
 
-    public string Type => "Label";
+    public string Type => "Button";
     public string Name { get; init; } = "";
     public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
     public View View { get; private set; }
@@ -25,7 +27,7 @@ public class Label : Controllable
     public string FontName { get; set; } = "Arial";
     public double FontSize { get; set; } = 16;
 
-    public Label()
+    public Button()
     {
         View = new(this);
     }
@@ -45,14 +47,12 @@ public class Label : Controllable
 
     public void Render(RenderContext context)
     {
+        context.FillColor = Colors.Gray;
+        context.FillRect(0, 0, View.Bounds.Width, View.Bounds.Height);
         context.FontName = FontName;
         context.FontSize = FontSize;
         context.FillColor = Colors.White;
         context.FillText(Text, 0, FontSize);
-
-        context.LineWidth = 1;
-        context.StrokeColor = Colors.Gray;
-        context.StrokeRect(0, 0, View.Bounds.Width, View.Bounds.Height);
     }
 
 
@@ -64,4 +64,5 @@ public class Label : Controllable
     public HorizontalAlignment AlignHorizontal { get => View.AlignHorizontal; set => View.AlignHorizontal = value; }
     public VerticalAlignment AlignVertical { get => View.AlignVertical; set => View.AlignVertical = value; }
     public Thickness Margin { get => View.Margin; set => View.Margin = value; }
+
 }

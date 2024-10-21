@@ -46,4 +46,25 @@ public struct Rect : IEquatable<Rect>
     }
 
 
+    public Rect Inflate(double thickness)
+    {
+        return Inflate(new Thickness(thickness));
+    }
+
+    public Rect Inflate(Thickness thickness)
+    {
+        return new Rect(new Point(X - thickness.Left, Y - thickness.Top), Size.Inflate(thickness));
+    }
+
+    public Rect Deflate(double thickness)
+    {
+        return Deflate(new Thickness(thickness));
+    }
+
+    public Rect Deflate(Thickness thickness)
+    {
+        return new Rect(new Point(X + thickness.Left, Y + thickness.Top), Size.Deflate(thickness));
+    }
+
+
 }

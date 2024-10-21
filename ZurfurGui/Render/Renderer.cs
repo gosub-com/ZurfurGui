@@ -18,13 +18,17 @@ public class Renderer
     long _totalMs;
     long _avgMs;
 
+    Size _mainWindowSize = new(double.NaN, double.NaN);
+
 
     public Renderer(OsWindow window, Controllable control)
     {
         _window = window;
         _view = View.BuildViewTree(control);
-        var windowSize = new Size(400, 500);
-        var windowPos = new Point(115, 175);
+        //var windowPos = new Point(115, 175);
+        //var windowSize = new Size(400, 500);
+        var windowPos = new Point(0, 0);
+        var windowSize = new Size(10000,10000);
         _view.Measure(windowSize, new MeasureContext(window.PrimaryCanvas.Context));
         _view.Arrange(new Rect(windowPos, windowSize));
     }
@@ -32,6 +36,14 @@ public class Renderer
     public void RenderFrame()
     {
         var timer = Stopwatch.StartNew();
+
+        if (_mainWindowSize != _window.PrimaryCanvas.DeviceSize)
+        {
+            _mainWindowSize = _window.PrimaryCanvas.DeviceSize;
+            //_view.Measure(_mainWindowSize, new MeasureContext(_window.PrimaryCanvas.Context));
+            //_view.Arrange(new Rect(new(0,0), _mainWindowSize));
+
+        }
 
         _frameCount++;
         var now = DateTime.UtcNow;
@@ -61,7 +73,7 @@ public class Renderer
         var ms = timer.ElapsedMilliseconds;
         _totalMs += ms;
 
-        renderContext.ClipRect(0, 0, 10000, 10000);
+        //renderContext.ClipRect(0, 0, 10000, 10000);
         renderContext.FontName = "sans-serif";
         renderContext.FontSize = 26;
         renderContext.FillColor = new Color(0xC0, 0xC0, 0xF0);
@@ -153,22 +165,8 @@ public class Renderer
 
         renderContext.PushOrigin(bounds.Position, 1);
 
-        renderContext.ClipRect(clip.X, clip.Y, clip.Width, clip.Height);
+        //renderContext.ClipRect(clip.X, clip.Y, clip.Width, clip.Height);
 
-        var viewLevel = ViewLevel(view);
-        if (viewLevel == 0)
-            renderContext.FillColor = Colors.Yellow;
-        else if (viewLevel == 1)
-            renderContext.FillColor = Colors.Orange;
-        else if (viewLevel == 2)
-            renderContext.FillColor = Colors.Red;
-        else if (viewLevel == 3)
-            renderContext.FillColor = Colors.Green;
-        else if (viewLevel == 4)
-            renderContext.FillColor = Colors.Blue;
-        else
-            renderContext.FillColor = Colors.Black;
-        renderContext.FillRect(0, 0, bounds.Width, bounds.Height);
 
         view.Control?.Render(renderContext);
 

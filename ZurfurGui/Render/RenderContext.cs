@@ -51,13 +51,20 @@ public class RenderContext
     public double FontSize { set { _context.FontSize = _scale * value; } }
     public void FillRect(double x, double y, double width, double height)
         => _context.FillRect(_scale * x + _origin.X, _scale * y + _origin.Y, _scale * width, _scale * height);
+    public void FillRect(Rect r)
+        => FillRect(r.X, r.Y, r.Width, r.Height);
     public void StrokeRect(double x, double y, double width, double height)
         => _context.StrokeRect(_scale * x + _origin.X, _scale * y + _origin.Y, _scale * width, _scale * height);
+    public void StrokeRect(Rect r)
+        => StrokeRect(r.X, r.Y, r.Width, r.Height);
     public void FillText(string text, double x, double y)
         => _context.FillText(text, _scale * x + _origin.X, _scale * y + _origin.Y);
+    public void FillText(string text, Point p)
+        => _context.FillText(text, p.X, p.Y);
     public void ClipRect(double x, double y, double width, double height)
         => _context.ClipRect(_scale * x + _origin.X, _scale * y + _origin.Y, _scale * width, _scale * height);
-
+    public void ClipRect(Rect r)
+        => ClipRect(r.X, r.Y, r.Width, r.Height);
 
 
 }

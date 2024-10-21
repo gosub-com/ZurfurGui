@@ -8,22 +8,25 @@ public class MainView
 {
     public static Controllable CreateView()
     {
-        return new Window {
+        var w1 = new Window {
             Name = "main",
             Text = "Test1",
-            SizeMin = new Size(0, 0),
+            Margin = new(115, 175, 0, 0),
+            Size = new(400, 500),
+            AlignHorizontal = HorizontalAlignment.Left,
+            AlignVertical = VerticalAlignment.Top,
             Controls = [
                 new Column {
                     Controls = [
-                        new Label { Name="", Text = "Button1", AlignHorizontal = HorizontalAlignment.Center },
-                        new Label { Name="", Text = "Test 3", AlignHorizontal = HorizontalAlignment.Center },
-                        new Label { Name="", Text = "Test 3", AlignHorizontal = HorizontalAlignment.Right },
-                        new Label { Name="", Text = "Test 3", AlignHorizontal = HorizontalAlignment.Left },
+                        new Button { Name="", Text = "Button1", AlignHorizontal = HorizontalAlignment.Center },
+                        new Button { Name="", Text = "Test 3", AlignHorizontal = HorizontalAlignment.Center },
+                        new Button { Name="", Text = "Test 3", AlignHorizontal = HorizontalAlignment.Right },
+                        new Button { Name="", Text = "Test 3", AlignHorizontal = HorizontalAlignment.Left },
                         new Row {
                             Controls = [
-                                new Label { Name="", Text = "Button A"},
-                                new Label { Name="", Text = "Button B"},
-                                new Label { Name="", Text = "Button C"},
+                                new Button { Name="", Text = "Button A"},
+                                new Button { Name="", Text = "Button B"},
+                                new Button { Name="", Text = "Button C"},
                             ]
                         },
                         new Row {
@@ -91,5 +94,56 @@ public class MainView
                 },
             ]
         };
+
+
+        var w2 = new Window
+        {
+            Margin = new(600, 175, 0, 0),
+            Size = new(300, 150),
+            AlignHorizontal = HorizontalAlignment.Left,
+            AlignVertical = VerticalAlignment.Top,
+
+            Controls = [
+                new Button { Text = "This Button Is a test", 
+                    AlignVertical = VerticalAlignment.Top,
+                    AlignHorizontal = HorizontalAlignment.Left,
+                    Size = new(100,100),
+                    Margin = new Thickness(250, 100, 0, 0),
+                },
+
+                new Window {
+                    AlignHorizontal = HorizontalAlignment.Left,
+                    AlignVertical = VerticalAlignment.Top,
+                    Margin = new Thickness(30, 30, 0, 0),
+                    Size = new(50,50),
+                },
+                new Label { Name="", Text = "TC", AlignHorizontal = HorizontalAlignment.Center, AlignVertical = VerticalAlignment.Top },
+                new Label { Name="", Text = "TS", AlignHorizontal = HorizontalAlignment.Stretch, AlignVertical = VerticalAlignment.Top },
+                new Label { Name="", Text = "TR", AlignHorizontal = HorizontalAlignment.Right, AlignVertical = VerticalAlignment.Top },
+                new Label { Name="", Text = "TL", AlignHorizontal = HorizontalAlignment.Left, AlignVertical = VerticalAlignment.Top },
+                new Label { Name="", Text = "Middle", AlignHorizontal = HorizontalAlignment.Center, AlignVertical = VerticalAlignment.Center },
+                new Label { Name="", Text = "CS", AlignHorizontal = HorizontalAlignment.Stretch, AlignVertical = VerticalAlignment.Center },
+                new Label { Name="", Text = "CR", AlignHorizontal = HorizontalAlignment.Right, AlignVertical = VerticalAlignment.Center },
+                new Label { Name="", Text = "CL", AlignHorizontal = HorizontalAlignment.Left, AlignVertical = VerticalAlignment.Center },
+                new Label { Name="", Text = "BC", AlignHorizontal = HorizontalAlignment.Center, AlignVertical = VerticalAlignment.Bottom },
+                new Label { Name="", Text = "BS", AlignHorizontal = HorizontalAlignment.Stretch, AlignVertical = VerticalAlignment.Bottom },
+                new Label { Name="", Text = "BR", AlignHorizontal = HorizontalAlignment.Right, AlignVertical = VerticalAlignment.Bottom },
+                new Label { Name="", Text = "BL", AlignHorizontal = HorizontalAlignment.Left, AlignVertical = VerticalAlignment.Bottom },
+            ]
+
+        };
+
+        var mainWindow = new Canvas(){
+            Margin = new(10, 10, 0, 0),
+            Size = new(1000, 700),
+            AlignHorizontal = HorizontalAlignment.Left,
+            AlignVertical = VerticalAlignment.Top,
+            Controls = [w1, w2]
+        };
+
+
+
+
+        return mainWindow;
     }
 }

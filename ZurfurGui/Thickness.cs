@@ -10,6 +10,7 @@ public struct Thickness : IEquatable<Thickness>
     public double Bottom { get; set; }
 
     public Thickness() { }
+    public Thickness(double size) { Left = size;  Top = size;  Right = size;  Bottom = size; }
     public Thickness(double left, double top, double right, double bottom) { Left = left; Top = top; Right = right; Bottom = bottom; }
     public bool Equals(Thickness v) => Left == v.Left && Top == v.Top && Right == v.Right && Bottom == v.Bottom;
     public override bool Equals(object? obj) => obj is Thickness v && Equals(v);

@@ -120,7 +120,7 @@ public class View
     /// MeasuredSize is guaranteed to fit inside available.
     /// Similar to MeasureCore in WPF
     /// </summary>
-    public void Measure(Size avaliable, MeasureContext measure)
+    public void Measure(Size available, MeasureContext measure)
     {
         if (!IsVisible)
         {
@@ -128,33 +128,34 @@ public class View
             return;
         }
 
-        var controlSize = Control?.MeasureView(avaliable, measure) ?? new();
+        var constrained = ApplyLayoutConstraints(this, available.Deflate(Margin));
+        var measured = Control?.MeasureView(constrained, measure) ?? new();
 
         // Size override
         var sizeOverride = Size;
         if (!double.IsNaN(sizeOverride.Width))
-            controlSize.Width = sizeOverride.Width;
+            measured.Width = sizeOverride.Width;
         if (!double.IsNaN(sizeOverride.Height))
-            controlSize.Height = sizeOverride.Height;
+            measured.Height = sizeOverride.Height;
 
         // Max size override
         var maxSize = SizeMax;
-        controlSize.Width = Math.Min(controlSize.Width, maxSize.Width);
-        controlSize.Height = Math.Min(controlSize.Height, maxSize.Height);
+        measured.Width = Math.Min(measured.Width, maxSize.Width);
+        measured.Height = Math.Min(measured.Height, maxSize.Height);
         
         // Min  size override
         var minSize = SizeMin;
-        controlSize.Width = Math.Max(controlSize.Width, minSize.Width);
-        controlSize.Height = Math.Max(controlSize.Height, minSize.Height);
+        measured.Width = Math.Max(measured.Width, minSize.Width);
+        measured.Height = Math.Max(measured.Height, minSize.Height);
 
         // Min available
-        controlSize.Width = Math.Min(controlSize.Width, avaliable.Width);
-        controlSize.Height = Math.Min(controlSize.Height, avaliable.Height);
+        measured.Width = Math.Min(measured.Width, available.Width);
+        measured.Height = Math.Min(measured.Height, available.Height);
 
-        if (double.IsNaN(controlSize.Width) || double.IsNaN(controlSize.Height))
+        if (double.IsNaN(measured.Width) || double.IsNaN(measured.Height))
             throw new InvalidOperationException("Received NAN in Measure");
 
-        DesiredSize = controlSize.MaxZero;
+        DesiredSize = measured.Inflate(Margin).MaxZero;
     }
 
     /// <summary>
@@ -170,28 +171,29 @@ public class View
         var availableSize = finalRect.Size.Deflate(margin);
         var x = finalRect.X + margin.Left;
         var y = finalRect.Y + margin.Top;
-        var width = availableSize.Width;
-        var height = availableSize.Height;
+        var size = availableSize;
 
         var horizontalAlignment = AlignHorizontal;
         if (horizontalAlignment != HorizontalAlignment.Stretch)
-            width = Math.Min(width, DesiredSize.Width - margin.Left - margin.Right);
+            size.Width = Math.Min(size.Width, DesiredSize.Width - margin.Left - margin.Right);
 
         var verticalAlignment = AlignVertical;
         if (verticalAlignment != VerticalAlignment.Stretch)
-            height = Math.Min(height, DesiredSize.Height - margin.Top - margin.Bottom);
+            size.Height = Math.Min(size.Height, DesiredSize.Height - margin.Top - margin.Bottom);
+
+        size = ApplyLayoutConstraints(this, size);
 
         if (Control != null)
-            (width, height) = Control.ArrangeViews(new Size(width, height)).Constrain(new Size(width, height));
+            size = Control.ArrangeViews(size).Constrain(size);
 
         switch (horizontalAlignment)
         {
             case HorizontalAlignment.Center:
             case HorizontalAlignment.Stretch:
-                x += (availableSize.Width - width) / 2;
+                x += (availableSize.Width - size.Width) / 2;
                 break;
             case HorizontalAlignment.Right:
-                x += availableSize.Width - width;
+                x += availableSize.Width - size.Width;
                 break;
         }
 
@@ -199,16 +201,35 @@ public class View
         {
             case VerticalAlignment.Center:
             case VerticalAlignment.Stretch:
-                y += (availableSize.Height - height) / 2;
+                y += (availableSize.Height - size.Height) / 2;
                 break;
             case VerticalAlignment.Bottom:
-                y += availableSize.Height - height;
+                y += availableSize.Height - size.Height;
                 break;
         }
 
-        Bounds = new Rect(x, y, width, height);
+        Bounds = new Rect(x, y, size.Width, size.Height);
     }
 
+    public static Size ApplyLayoutConstraints(View v, Size constraints)
+    {
+        var h = v.Size.Height;
+        var height = double.IsNaN(h) ? double.PositiveInfinity : h;
+        var maxHeight = Math.Max(Math.Min(height, v.SizeMax.Height), v.SizeMin.Height);
 
+        height = double.IsNaN(h) ? 0 : h;
+        var minHeight = Math.Max(Math.Min(maxHeight, height), v.SizeMin.Height);
+
+        var w = v.Size.Width;
+        var width = double.IsNaN(w) ? double.PositiveInfinity : w;
+        var maxWidth = Math.Max(Math.Min(width, v.SizeMax.Width), v.SizeMin.Width);
+
+        width = double.IsNaN(w) ? 0 : w;
+        var minWidth = Math.Max(Math.Min(maxWidth, width), v.SizeMin.Width);
+
+        return new Size(
+            Math.Clamp(constraints.Width, minWidth, maxWidth),
+            Math.Clamp(constraints.Height, minHeight, maxHeight));
+    }
 
 }
