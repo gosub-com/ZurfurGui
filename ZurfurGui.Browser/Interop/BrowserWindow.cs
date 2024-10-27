@@ -17,6 +17,9 @@ internal partial class BrowserWindow : OsWindow
 
     [JSImport("globalThis.ZurfurGui.getBrowserWindow")]
     private static partial JSObject GetBrowserWindow();
+    
+    [JSImport("globalThis.requestAnimationFrame")]
+    public static partial void RequestAnimationFrame([JSMarshalAs<JSType.Function>] Action callback);
 
 
     public BrowserWindow(string canvasId)

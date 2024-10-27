@@ -1,4 +1,5 @@
-﻿using ZurfurGui.Render;
+﻿using System.Reflection;
+using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
@@ -26,8 +27,40 @@ public class Window : Controllable
 
     public void PopulateView()
     {
+        var tileCanvas = new Canvas()
+        {
+            Margin = new(0),
+            Size = new(double.NaN, 20),
+            AlignVertical = VerticalAlignment.Top,
+            Controls = [
+                new Button() {
+                    Text = "Menu",
+                    AlignHorizontal = HorizontalAlignment.Left,
+                },
+                new Button() {
+                    Text = "X",
+                    AlignHorizontal = HorizontalAlignment.Right,
+                },
+                new Label() {
+                    Text = "Title",
+                    AlignHorizontal = HorizontalAlignment.Center,
+                },
+            ]
+        };
+
+        var clientCanvas = new Canvas()
+        {
+            Margin = new(0, 24, 0, 0),
+            Controls = _controls,
+        };
+
+        var borderCanvas = new Canvas() { 
+            Margin = new(5),
+            Controls = [tileCanvas,clientCanvas]
+        };
+
         View.Views.Clear();
-        View.Views.AddRange(_controls.Select(c => c.View));
+        View.Views.Add(borderCanvas.View);
     }
 
     /// <summary>
@@ -63,14 +96,9 @@ public class Window : Controllable
 
     public void Render(RenderContext context)
     {
-        var BORDER_WIDTH = 4;
         context.FillColor = Colors.LightGray;
         var r = new Rect(new(), View.Bounds.Size);
         context.FillRect(r);
-        context.LineWidth = BORDER_WIDTH;
-        context.StrokeColor = Colors.Navy;
-        r = r.Deflate(BORDER_WIDTH);
-        context.StrokeRect(r);
     }
 
     // Forward View properties

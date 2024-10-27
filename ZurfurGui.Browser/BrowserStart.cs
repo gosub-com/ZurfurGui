@@ -13,20 +13,21 @@ namespace ZurfurGui.Browser;
 public static class BrowserStart
 {
 
-    public async static void StartRendering(string canvasId, Controllable control)
+    public static void StartRendering(string canvasId, IEnumerable<Controllable> controls)
     {
         var window = new BrowserWindow(canvasId);
-        var renderer = new Renderer(window, control);
-
+        var renderer = new Renderer(window, controls);
         var canvas = window.PrimaryCanvas;
         var context = canvas.Context;
 
+        // On first render, allow an exception to percolate up and show an error message
         ScaleAndRender();
-        await Task.Delay(15);
-        while (true)
+        BrowserWindow.RequestAnimationFrame(RetryScaleAndRender);
+        return;
+
+
+        void RetryScaleAndRender()
         {
-            // TBD: Hook browser screen refresh
-            var wait = Task.Delay(15);
             try
             {
                 ScaleAndRender();
@@ -35,7 +36,7 @@ public static class BrowserStart
             {
                 Console.WriteLine($"Error while rendering: {e.Message}");
             }
-            await wait;
+            BrowserWindow.RequestAnimationFrame(RetryScaleAndRender);
         }
 
 

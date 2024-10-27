@@ -8,6 +8,8 @@ namespace ZurfurGui.Render;
 
 public class Renderer
 {
+    readonly bool CLIP_CONTROLS = true;
+
     OsWindow _window;
     View _view;
 
@@ -18,30 +20,33 @@ public class Renderer
     long _totalMs;
     long _avgMs;
 
+    double _devicePixelRatio = double.NaN;
     Size _mainWindowSize = new(double.NaN, double.NaN);
 
 
-    public Renderer(OsWindow window, Controllable control)
+    public Renderer(OsWindow window, IEnumerable<Controllable> controls)
     {
+        var mainWindow = new Canvas()
+        {
+            AlignHorizontal = HorizontalAlignment.Stretch,
+            AlignVertical = VerticalAlignment.Stretch,
+            Controls = controls.ToList()
+        };
+
         _window = window;
-        _view = View.BuildViewTree(control);
-        //var windowPos = new Point(115, 175);
-        //var windowSize = new Size(400, 500);
-        var windowPos = new Point(0, 0);
-        var windowSize = new Size(10000,10000);
-        _view.Measure(windowSize, new MeasureContext(window.PrimaryCanvas.Context));
-        _view.Arrange(new Rect(windowPos, windowSize));
+        _view = View.BuildViewTree(mainWindow);
     }
 
     public void RenderFrame()
     {
         var timer = Stopwatch.StartNew();
 
-        if (_mainWindowSize != _window.PrimaryCanvas.DeviceSize)
+        if (_mainWindowSize != _window.PrimaryCanvas.DeviceSize || _devicePixelRatio != _window.DevicePixelRatio)
         {
-            _mainWindowSize = _window.PrimaryCanvas.DeviceSize;
-            //_view.Measure(_mainWindowSize, new MeasureContext(_window.PrimaryCanvas.Context));
-            //_view.Arrange(new Rect(new(0,0), _mainWindowSize));
+            _mainWindowSize = _window.PrimaryCanvas.DeviceSize / _window.DevicePixelRatio;
+            _devicePixelRatio = _window.DevicePixelRatio;
+            _view.Measure(_mainWindowSize, new MeasureContext(_window.PrimaryCanvas.Context));
+            _view.Arrange(new Rect(new(0,0), _mainWindowSize));
 
         }
 
@@ -72,8 +77,9 @@ public class Renderer
 
         var ms = timer.ElapsedMilliseconds;
         _totalMs += ms;
+        if (CLIP_CONTROLS)
+            renderContext.ClipRect(0, 0, 10000, 10000);
 
-        //renderContext.ClipRect(0, 0, 10000, 10000);
         renderContext.FontName = "sans-serif";
         renderContext.FontSize = 26;
         renderContext.FillColor = new Color(0xC0, 0xC0, 0xF0);
@@ -165,7 +171,8 @@ public class Renderer
 
         renderContext.PushOrigin(bounds.Position, 1);
 
-        //renderContext.ClipRect(clip.X, clip.Y, clip.Width, clip.Height);
+        if (CLIP_CONTROLS)
+            renderContext.ClipRect(clip.X, clip.Y, clip.Width, clip.Height);
 
 
         view.Control?.Render(renderContext);

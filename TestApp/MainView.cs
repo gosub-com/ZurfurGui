@@ -6,9 +6,75 @@ using ZurfurGui.Controls;
 
 public class MainView
 {
-    public static Controllable CreateView()
+    public static IEnumerable<Controllable> CreateView()
     {
-        var w1 = new Window {
+
+
+
+        var smallWin = MakeSmallWinTest();
+
+        var smallWinBR = MakeSmallWinTest();
+        smallWinBR.View.Margin = new Thickness(5);
+        smallWinBR.View.AlignHorizontal = HorizontalAlignment.Right;
+        smallWinBR.View.AlignVertical = VerticalAlignment.Bottom;
+
+
+
+        var canvas = new Canvas(){
+            Margin = new(10, 10, 10, 10),
+            AlignHorizontal = HorizontalAlignment.Stretch,
+            AlignVertical = VerticalAlignment.Stretch,
+        };
+
+
+
+
+        return [MakeQbfWin(), smallWin, canvas, smallWinBR];
+    }
+
+    static Window MakeSmallWinTest()
+    {
+        return new Window
+        {
+            Margin = new(600, 175, 0, 0),
+            Size = new(150, 150),
+            AlignHorizontal = HorizontalAlignment.Left,
+            AlignVertical = VerticalAlignment.Top,
+
+            Controls = [
+                new Button { Text = "This button is a test",
+                    AlignVertical = VerticalAlignment.Top,
+                    AlignHorizontal = HorizontalAlignment.Left,
+                    Size = new(100,100),
+                    Margin = new Thickness(100, 100, 0, 0),
+                },
+
+                new Window {
+                    AlignHorizontal = HorizontalAlignment.Left,
+                    AlignVertical = VerticalAlignment.Top,
+                    Margin = new Thickness(30, 30, 0, 0),
+                    Size = new(50,50),
+                },
+                new Label { Text = "TC", AlignHorizontal = HorizontalAlignment.Center, AlignVertical = VerticalAlignment.Top },
+                new Label { Text = "TS", AlignHorizontal = HorizontalAlignment.Stretch, AlignVertical = VerticalAlignment.Top },
+                new Label { Text = "TR", AlignHorizontal = HorizontalAlignment.Right, AlignVertical = VerticalAlignment.Top },
+                new Label { Text = "TL", AlignHorizontal = HorizontalAlignment.Left, AlignVertical = VerticalAlignment.Top },
+                new Label { Text = "Middle", AlignHorizontal = HorizontalAlignment.Center, AlignVertical = VerticalAlignment.Center },
+                new Label { Text = "CS", AlignHorizontal = HorizontalAlignment.Stretch, AlignVertical = VerticalAlignment.Center },
+                new Label { Text = "CR", AlignHorizontal = HorizontalAlignment.Right, AlignVertical = VerticalAlignment.Center },
+                new Label { Text = "CL", AlignHorizontal = HorizontalAlignment.Left, AlignVertical = VerticalAlignment.Center },
+                new Label { Text = "BC", AlignHorizontal = HorizontalAlignment.Center, AlignVertical = VerticalAlignment.Bottom },
+                new Label { Text = "BS", AlignHorizontal = HorizontalAlignment.Stretch, AlignVertical = VerticalAlignment.Bottom },
+                new Label { Text = "BR", AlignHorizontal = HorizontalAlignment.Right, AlignVertical = VerticalAlignment.Bottom },
+                new Label { Text = "BL", AlignHorizontal = HorizontalAlignment.Left, AlignVertical = VerticalAlignment.Bottom },
+            ]
+        };
+    }
+
+    static Window MakeQbfWin()
+    {
+        return new Window
+        {
             Name = "main",
             Text = "Test1",
             Margin = new(115, 175, 0, 0),
@@ -95,55 +161,6 @@ public class MainView
             ]
         };
 
-
-        var w2 = new Window
-        {
-            Margin = new(600, 175, 0, 0),
-            Size = new(300, 150),
-            AlignHorizontal = HorizontalAlignment.Left,
-            AlignVertical = VerticalAlignment.Top,
-
-            Controls = [
-                new Button { Text = "This Button Is a test", 
-                    AlignVertical = VerticalAlignment.Top,
-                    AlignHorizontal = HorizontalAlignment.Left,
-                    Size = new(100,100),
-                    Margin = new Thickness(250, 100, 0, 0),
-                },
-
-                new Window {
-                    AlignHorizontal = HorizontalAlignment.Left,
-                    AlignVertical = VerticalAlignment.Top,
-                    Margin = new Thickness(30, 30, 0, 0),
-                    Size = new(50,50),
-                },
-                new Label { Name="", Text = "TC", AlignHorizontal = HorizontalAlignment.Center, AlignVertical = VerticalAlignment.Top },
-                new Label { Name="", Text = "TS", AlignHorizontal = HorizontalAlignment.Stretch, AlignVertical = VerticalAlignment.Top },
-                new Label { Name="", Text = "TR", AlignHorizontal = HorizontalAlignment.Right, AlignVertical = VerticalAlignment.Top },
-                new Label { Name="", Text = "TL", AlignHorizontal = HorizontalAlignment.Left, AlignVertical = VerticalAlignment.Top },
-                new Label { Name="", Text = "Middle", AlignHorizontal = HorizontalAlignment.Center, AlignVertical = VerticalAlignment.Center },
-                new Label { Name="", Text = "CS", AlignHorizontal = HorizontalAlignment.Stretch, AlignVertical = VerticalAlignment.Center },
-                new Label { Name="", Text = "CR", AlignHorizontal = HorizontalAlignment.Right, AlignVertical = VerticalAlignment.Center },
-                new Label { Name="", Text = "CL", AlignHorizontal = HorizontalAlignment.Left, AlignVertical = VerticalAlignment.Center },
-                new Label { Name="", Text = "BC", AlignHorizontal = HorizontalAlignment.Center, AlignVertical = VerticalAlignment.Bottom },
-                new Label { Name="", Text = "BS", AlignHorizontal = HorizontalAlignment.Stretch, AlignVertical = VerticalAlignment.Bottom },
-                new Label { Name="", Text = "BR", AlignHorizontal = HorizontalAlignment.Right, AlignVertical = VerticalAlignment.Bottom },
-                new Label { Name="", Text = "BL", AlignHorizontal = HorizontalAlignment.Left, AlignVertical = VerticalAlignment.Bottom },
-            ]
-
-        };
-
-        var mainWindow = new Canvas(){
-            Margin = new(10, 10, 0, 0),
-            Size = new(1000, 700),
-            AlignHorizontal = HorizontalAlignment.Left,
-            AlignVertical = VerticalAlignment.Top,
-            Controls = [w1, w2]
-        };
-
-
-
-
-        return mainWindow;
     }
+
 }

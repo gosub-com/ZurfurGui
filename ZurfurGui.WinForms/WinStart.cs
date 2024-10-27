@@ -9,7 +9,7 @@ namespace ZurfurGui.WinForms;
 
 public static class WinStart
 {
-    public static void StartRendering(Controllable control)
+    public static void StartRendering(IEnumerable<Controllable> controls)
     {
         // To customize application configuration such as set high DPI settings or default font,
         // see https://aka.ms/applicationconfiguration.
@@ -19,6 +19,6 @@ public static class WinStart
         Application.SetCompatibleTextRenderingDefault(false);
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
 
-        Application.Run(new FormZurfurGui(control));
+        Application.Run(new FormZurfurGui(controls));
     }
 }

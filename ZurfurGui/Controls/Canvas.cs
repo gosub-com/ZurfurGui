@@ -68,7 +68,7 @@ public class Canvas : Controllable
 
     public void Render(RenderContext context)
     {
-        var BORDER_WIDTH = 4;
+        var BORDER_WIDTH = 2;
         var r = new Rect(new(), View.Bounds.Size);
         context.LineWidth = BORDER_WIDTH;
         context.StrokeColor = Colors.Yellow;
