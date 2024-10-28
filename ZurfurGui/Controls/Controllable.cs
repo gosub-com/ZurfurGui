@@ -19,6 +19,9 @@ public interface Controllable
     /// </summary>
     View View { get; }
 
+
+    Properties Properties { get; init; }
+
     /// <summary>
     /// Called only by View to setup the view tree.  This will often populate the main view with the 
     /// `View` in `Controls`, but may also add other views when the view tree is different from 
@@ -45,15 +48,5 @@ public interface Controllable
     /// Render the control
     /// </summary>
     void Render(RenderContext context) { }
-
-
-    // Remind everyone to delegate these properties to the View
-    public bool IsVisible { get; set; }
-    public Size Size { get; set; }
-    public Size SizeMax { get; set; }
-    public Size SizeMin { get; set; }
-    public HorizontalAlignment AlignHorizontal { get; set; }
-    public VerticalAlignment AlignVertical { get; set; }
-    public Thickness Margin { get; set; }
 }
 

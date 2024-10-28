@@ -6,12 +6,16 @@ namespace ZurfurGui.Controls;
 
 public class Row : Controllable
 {
+    public static readonly PropertyIndex<bool> WrapPi = new("Wrap");
+
+
     List<Controllable> _controls = new();
 
     public string Type => "Row";
     public string Name { get; init; } = "";
     public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
     public View View { get; private set; }
+    public Properties Properties { get; init; } = new();
 
     public IList<Controllable> Controls
     {
@@ -54,7 +58,8 @@ public class Row : Controllable
         var viewHeight = 0.0;
         foreach (var view in View.Views)
         {
-            if (!view.IsVisible)
+            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisiblePi) ?? true;
+            if (!viewIsVisible)
                 continue;
 
             view.Measure(available, measure);
@@ -92,13 +97,4 @@ public class Row : Controllable
         }
         return final;
     }
-
-    // Forward View properties
-    public bool IsVisible { get => View.IsVisible; set => View.IsVisible = value; }
-    public Size Size { get => View.Size; set => View.Size = value; }
-    public Size SizeMax { get => View.Size; set => View.Size = value; }
-    public Size SizeMin { get => View.Size; set => View.Size = value; }
-    public HorizontalAlignment AlignHorizontal { get => View.AlignHorizontal; set => View.AlignHorizontal = value; }
-    public VerticalAlignment AlignVertical { get => View.AlignVertical; set => View.AlignVertical = value; }
-    public Thickness Margin { get => View.Margin; set => View.Margin = value; }
 }

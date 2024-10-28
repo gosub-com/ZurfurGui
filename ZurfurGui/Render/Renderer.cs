@@ -28,8 +28,6 @@ public class Renderer
     {
         var mainWindow = new Canvas()
         {
-            AlignHorizontal = HorizontalAlignment.Stretch,
-            AlignVertical = VerticalAlignment.Stretch,
             Controls = controls.ToList()
         };
 

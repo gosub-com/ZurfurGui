@@ -11,6 +11,7 @@ public class Column : Controllable
     public string Name { get; init; } = "";
     public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
     public View View { get; private set; }
+    public Properties Properties { get; init; } = new();
 
     public IList<Controllable> Controls
     {
@@ -42,7 +43,8 @@ public class Column : Controllable
         var visibleCount = 0;
         foreach (var view in View.Views)
         {
-            if (!view.IsVisible)
+            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisiblePi) ?? true;
+            if (!viewIsVisible)
                 continue;
 
             visibleCount++;
@@ -68,15 +70,4 @@ public class Column : Controllable
         }
         return final;
     }
-
-    // Forward View properties
-    public bool IsVisible { get => View.IsVisible; set => View.IsVisible = value; }
-    public Size Size { get => View.Size; set => View.Size = value; }
-    public Size SizeMax { get => View.Size; set => View.Size = value; }
-    public Size SizeMin { get => View.Size; set => View.Size = value; }
-    public HorizontalAlignment AlignHorizontal { get => View.AlignHorizontal; set => View.AlignHorizontal = value; }
-    public VerticalAlignment AlignVertical { get => View.AlignVertical; set => View.AlignVertical = value; }
-    public Thickness Margin { get => View.Margin; set => View.Margin = value; }
-
-
 }

@@ -11,6 +11,7 @@ public class Window : Controllable
     public string Name { get; init; } = "";
     public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
     public View View { get; private set; }
+    public Properties Properties { get; init; } = new();
 
     public IList<Controllable> Controls
     {
@@ -29,34 +30,46 @@ public class Window : Controllable
     {
         var tileCanvas = new Canvas()
         {
-            Margin = new(0),
-            Size = new(double.NaN, 20),
-            AlignVertical = VerticalAlignment.Top,
+            Properties = new([
+                (View.AlignVerticalPi, VerticalAlignment.Top),
+                (View.SizePi, new Size(double.NaN, 20)),
+            ]),
+
             Controls = [
                 new Button() {
-                    Text = "Menu",
-                    AlignHorizontal = HorizontalAlignment.Left,
+                    Properties = new([
+                        (View.AlignHorizontalPi, HorizontalAlignment.Left),
+                        (View.Text, "Menu")
+                    ])
                 },
                 new Button() {
-                    Text = "X",
-                    AlignHorizontal = HorizontalAlignment.Right,
+                    Properties = new([
+                        (View.AlignHorizontalPi, HorizontalAlignment.Right), 
+                        (View.Text, "X")
+                    ])
                 },
                 new Label() {
-                    Text = "Title",
-                    AlignHorizontal = HorizontalAlignment.Center,
+                    Properties = new([
+                        (View.AlignHorizontalPi, HorizontalAlignment.Center),
+                        (View.Text, "Title")
+                    ])
                 },
             ]
         };
 
         var clientCanvas = new Canvas()
         {
-            Margin = new(0, 24, 0, 0),
             Controls = _controls,
+            Properties = new([
+                (View.MarginPi, new Thickness(0, 24, 0, 0)),
+            ]),
         };
 
         var borderCanvas = new Canvas() { 
-            Margin = new(5),
-            Controls = [tileCanvas,clientCanvas]
+            Controls = [tileCanvas,clientCanvas],
+            Properties = new([
+                (View.MarginPi, new Thickness(5)),
+            ]),
         };
 
         View.Views.Clear();
@@ -71,7 +84,8 @@ public class Window : Controllable
         var windowMeasured = new Size();
         foreach (var view in View.Views)
         {
-            if (!view.IsVisible)
+            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisiblePi) ?? true;
+            if (!viewIsVisible)
                 continue;
 
             view.Measure(available, measure);
@@ -100,14 +114,4 @@ public class Window : Controllable
         var r = new Rect(new(), View.Bounds.Size);
         context.FillRect(r);
     }
-
-    // Forward View properties
-    public bool IsVisible { get => View.IsVisible; set => View.IsVisible = value; }
-    public Size Size { get => View.Size; set => View.Size = value; }
-    public Size SizeMax { get => View.Size; set => View.Size = value; }
-    public Size SizeMin { get => View.Size; set => View.Size = value; }
-    public HorizontalAlignment AlignHorizontal { get => View.AlignHorizontal; set => View.AlignHorizontal = value; }
-    public VerticalAlignment AlignVertical { get => View.AlignVertical; set => View.AlignVertical = value; }
-    public Thickness Margin { get => View.Margin; set => View.Margin = value; }
-
 }

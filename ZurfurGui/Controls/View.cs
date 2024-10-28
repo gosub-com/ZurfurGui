@@ -21,6 +21,16 @@ public enum VerticalAlignment : byte
 
 public class View
 {
+    public static readonly PropertyIndex<string> NamePi = new("Name");
+    public static readonly PropertyIndex<bool> IsVisiblePi = new("IsVisible");
+    public static readonly PropertyIndex<HorizontalAlignment> AlignHorizontalPi = new("AlignHorizontal");
+    public static readonly PropertyIndex<VerticalAlignment> AlignVerticalPi = new("AlignVertical");
+    public static readonly PropertyIndex<string> Text = new("Text");
+    public static readonly PropertyIndex<Thickness> MarginPi = new("Margin");
+    public static readonly PropertyIndex<Size> SizePi = new("Size");
+    public static readonly PropertyIndex<Size> SizeMax = new("SizeMax");
+    public static readonly PropertyIndex<Size> SizeMin = new("SizeMin");
+
     /// <summary>
     /// Parent view
     /// </summary>
@@ -57,7 +67,6 @@ public class View
         Views = children.ToList();
     }
 
-    public string Name => Control?.Name ?? "";
     public string Type => Control?.Type ?? "";
 
     public override string ToString()
@@ -70,48 +79,6 @@ public class View
 
 
     /// <summary>
-    /// View is visible.
-    /// TBD: Make this into a stylable property.
-    /// </summary>
-    public bool IsVisible { get; set; } = true;
-
-    /// <summary>
-    /// Requested size of the view.  Nan means it will auto-size.
-    /// TBD: Make this into a stylable property.
-    /// </summary>
-    public Size Size { get; set; } = new(double.NaN, double.NaN);
-
-    /// <summary>
-    /// Requested maximum size of the view.
-    /// TBD: Make this into a stylable property.
-    /// </summary>
-    public Size SizeMax { get; set; } = new(double.PositiveInfinity, double.PositiveInfinity);
-
-    /// <summary>
-    /// Requested minimum size of the view
-    /// TBD: Make this into a stylable property.
-    /// </summary>
-    public Size SizeMin { get; set; } = new();
-
-    /// <summary>
-    /// Hoizontal alignment
-    /// TBD: Make this into a stylable property.
-    /// </summary>
-    public HorizontalAlignment AlignHorizontal { get; set; }
-
-    /// <summary>
-    /// Vertical alignment
-    /// TBD: Make this into a stylable property.
-    /// </summary>
-    public VerticalAlignment AlignVertical { get; set; }
-
-    /// <summary>
-    /// Margin
-    /// TBD: Make this into a stylable property.
-    /// </summary>
-    public Thickness Margin { get; set; }
-
-    /// <summary>
     /// Called to measure the view and set MeasuredSize.
     /// Invisible views and views not attached to a control always have a size 
     /// of (0,0) and do not measure children (i.e. a control that adds extra views to the
@@ -122,31 +89,33 @@ public class View
     /// </summary>
     public void Measure(Size available, MeasureContext measure)
     {
-        if (!IsVisible)
+        var isVisible = Control?.Properties?.Gets(IsVisiblePi) ?? true;
+        if (!isVisible)
         {
             DesiredSize = new();
             return;
         }
 
-        var constrained = ApplyLayoutConstraints(this, available.Deflate(Margin));
+        var margin = Control?.Properties.Gets(MarginPi) ?? new();
+        var constrained = ApplyLayoutConstraints(this, available.Deflate(margin));
         var measured = Control?.MeasureView(constrained, measure) ?? new();
 
         // Size override
-        var sizeOverride = Size;
+        var sizeOverride = Control?.Properties.Gets(SizePi)??new(double.NaN, double.NaN);
         if (!double.IsNaN(sizeOverride.Width))
             measured.Width = sizeOverride.Width;
         if (!double.IsNaN(sizeOverride.Height))
             measured.Height = sizeOverride.Height;
 
         // Max size override
-        var maxSize = SizeMax;
-        measured.Width = Math.Min(measured.Width, maxSize.Width);
-        measured.Height = Math.Min(measured.Height, maxSize.Height);
-        
+        var sizeMax = Control?.Properties.Gets(SizeMax) ?? new(double.PositiveInfinity, double.PositiveInfinity);
+        measured.Width = Math.Min(measured.Width, sizeMax.Width);
+        measured.Height = Math.Min(measured.Height, sizeMax.Height);
+
         // Min  size override
-        var minSize = SizeMin;
-        measured.Width = Math.Max(measured.Width, minSize.Width);
-        measured.Height = Math.Max(measured.Height, minSize.Height);
+        var sizeMin = Control?.Properties.Gets(SizeMax) ?? new(0, 0);
+        measured.Width = Math.Max(measured.Width, sizeMin.Width);
+        measured.Height = Math.Max(measured.Height, sizeMin.Height);
 
         // Min available
         measured.Width = Math.Min(measured.Width, available.Width);
@@ -155,7 +124,7 @@ public class View
         if (double.IsNaN(measured.Width) || double.IsNaN(measured.Height))
             throw new InvalidOperationException("Received NAN in Measure");
 
-        DesiredSize = measured.Inflate(Margin).MaxZero;
+        DesiredSize = measured.Inflate(margin).MaxZero;
     }
 
     /// <summary>
@@ -164,20 +133,21 @@ public class View
     /// </summary>
     public void Arrange(Rect finalRect)
     {
-        if (!IsVisible)
+        var isVisible = Control?.Properties?.Gets(IsVisiblePi) ?? true;
+        if (!isVisible)
             return;
 
-        var margin = Margin;
+        var margin = Control?.Properties.Gets(MarginPi) ?? new();
         var availableSize = finalRect.Size.Deflate(margin);
         var x = finalRect.X + margin.Left;
         var y = finalRect.Y + margin.Top;
         var size = availableSize;
 
-        var horizontalAlignment = AlignHorizontal;
+        var horizontalAlignment = Control?.Properties.Gets(AlignHorizontalPi) ?? new();
         if (horizontalAlignment != HorizontalAlignment.Stretch)
             size.Width = Math.Min(size.Width, DesiredSize.Width - margin.Left - margin.Right);
 
-        var verticalAlignment = AlignVertical;
+        var verticalAlignment = Control?.Properties.Gets(AlignVerticalPi) ?? new();
         if (verticalAlignment != VerticalAlignment.Stretch)
             size.Height = Math.Min(size.Height, DesiredSize.Height - margin.Top - margin.Bottom);
 
@@ -213,19 +183,23 @@ public class View
 
     public static Size ApplyLayoutConstraints(View v, Size constraints)
     {
-        var h = v.Size.Height;
+        var size = v.Control?.Properties.Gets(SizePi)??new(double.NaN, double.NaN);
+        var sizeMax = v.Control?.Properties.Gets(SizeMax) ?? new(double.PositiveInfinity, double.PositiveInfinity);
+        var sizeMin = v.Control?.Properties.Gets(SizeMin) ?? new(0,0);
+
+        var h = size.Height;
         var height = double.IsNaN(h) ? double.PositiveInfinity : h;
-        var maxHeight = Math.Max(Math.Min(height, v.SizeMax.Height), v.SizeMin.Height);
+        var maxHeight = Math.Max(Math.Min(height, sizeMax.Height), sizeMin.Height);
 
         height = double.IsNaN(h) ? 0 : h;
-        var minHeight = Math.Max(Math.Min(maxHeight, height), v.SizeMin.Height);
+        var minHeight = Math.Max(Math.Min(maxHeight, height), sizeMin.Height);
 
-        var w = v.Size.Width;
+        var w = size.Width;
         var width = double.IsNaN(w) ? double.PositiveInfinity : w;
-        var maxWidth = Math.Max(Math.Min(width, v.SizeMax.Width), v.SizeMin.Width);
+        var maxWidth = Math.Max(Math.Min(width, sizeMax.Width), sizeMin.Width);
 
         width = double.IsNaN(w) ? 0 : w;
-        var minWidth = Math.Max(Math.Min(maxWidth, width), v.SizeMin.Width);
+        var minWidth = Math.Max(Math.Min(maxWidth, width), sizeMin.Width);
 
         return new Size(
             Math.Clamp(constraints.Width, minWidth, maxWidth),
