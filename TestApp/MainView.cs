@@ -11,18 +11,16 @@ public class MainView
         var smallWin = MakeSmallWinTest();
 
         var smallWinBR = MakeSmallWinTest();
-        smallWinBR.View.Control?.Properties.Set(View.MarginPi, new(10));
-        smallWinBR.View.Control?.Properties.Set(View.AlignHorizontalPi, HorizontalAlignment.Right);
-        smallWinBR.View.Control?.Properties.Set(View.AlignVerticalPi, VerticalAlignment.Bottom);
+        smallWinBR.View.Control?.Properties.Set(View.Margin, new(10));
+        smallWinBR.View.Control?.Properties.Set(View.AlignHorizontal, HorizontalAlignment.Right);
+        smallWinBR.View.Control?.Properties.Set(View.AlignVertical, VerticalAlignment.Bottom);
 
         var canvas = new Canvas(){
-            Properties = new([
-                (View.MarginPi, new Thickness(10, 10, 10, 10)),
-                (View.AlignHorizontalPi, HorizontalAlignment.Stretch),
-                (View.AlignVerticalPi, VerticalAlignment.Stretch),
-            ]),
-
-
+            Properties = [
+                (View.Margin, new Thickness(10, 10, 10, 10)),
+                (View.AlignHorizontal, HorizontalAlignment.Stretch),
+                (View.AlignVertical, VerticalAlignment.Stretch),
+            ],
         };
 
         return [MakeQbfWin(), smallWin, canvas, smallWinBR];
@@ -32,115 +30,116 @@ public class MainView
     {
         return new Window
         {
-            Properties = new([
-                (View.MarginPi, new Thickness(600, 175, 0, 0)),
-                (View.SizePi, new Size(150, 150)),
-                (View.AlignHorizontalPi, HorizontalAlignment.Left),
-                (View.AlignVerticalPi, VerticalAlignment.Top),
-            ]),
+            Properties = [
+                (View.Margin, new Thickness(600, 175, 0, 0)),
+                (View.Size, new Size(150, 150)),
+                (View.AlignHorizontal, HorizontalAlignment.Left),
+                (View.AlignVertical, VerticalAlignment.Top),
+            ],
 
             Controls = [
-                new Button { Text = "This button is a test",
-                    Properties = new([
-                        (View.AlignVerticalPi, VerticalAlignment.Top),
-                        (View.AlignHorizontalPi,  HorizontalAlignment.Left),
-                        (View.SizePi, new Size(100, 100)),
-                        (View.MarginPi, new Thickness(100, 100, 0, 0)),
-                    ])
+                new Button {
+                    Properties = [
+                        (View.Text, "This button is a test"),
+                        (View.AlignVertical, VerticalAlignment.Top),
+                        (View.AlignHorizontal,  HorizontalAlignment.Left),
+                        (View.Size, new Size(100, 100)),
+                        (View.Margin, new Thickness(100, 100, 0, 0)),
+                    ],
                 },
 
                 new Window {
-                    Properties = new([
-                        (View.AlignVerticalPi, VerticalAlignment.Top),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Left),
-                        (View.SizePi, new Size(50, 50)),
-                        (View.MarginPi, new Thickness(30, 30, 0, 0)),
-                    ]),
+                    Properties = [
+                        (View.AlignVertical, VerticalAlignment.Top),
+                        (View.AlignHorizontal, HorizontalAlignment.Left),
+                        (View.Size, new Size(50, 50)),
+                        (View.Margin, new Thickness(30, 30, 0, 0)),
+                    ],
                     Controls = [new Canvas()]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "TC"),
-                        (View.AlignVerticalPi, VerticalAlignment.Top),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Center),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Top),
+                        (View.AlignHorizontal, HorizontalAlignment.Center),
+                    ]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "TS"),
-                        (View.AlignVerticalPi, VerticalAlignment.Top),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Stretch),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Top),
+                        (View.AlignHorizontal, HorizontalAlignment.Stretch),
+                    ]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "TR"),
-                        (View.AlignVerticalPi, VerticalAlignment.Top),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Right),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Top),
+                        (View.AlignHorizontal, HorizontalAlignment.Right),
+                    ]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "TL"),
-                        (View.AlignVerticalPi, VerticalAlignment.Top),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Left),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Top),
+                        (View.AlignHorizontal, HorizontalAlignment.Left),
+                    ]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "Middle"),
-                        (View.AlignVerticalPi, VerticalAlignment.Center),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Center),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Center),
+                        (View.AlignHorizontal, HorizontalAlignment.Center),
+                    ]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "CS"),
-                        (View.AlignVerticalPi, VerticalAlignment.Center),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Stretch),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Center),
+                        (View.AlignHorizontal, HorizontalAlignment.Stretch),
+                    ]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "CR"),
-                        (View.AlignVerticalPi, VerticalAlignment.Center),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Right),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Center),
+                        (View.AlignHorizontal, HorizontalAlignment.Right),
+                    ]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "CL"),
-                        (View.AlignVerticalPi, VerticalAlignment.Center),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Left),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Center),
+                        (View.AlignHorizontal, HorizontalAlignment.Left),
+                    ]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "BC"),
-                        (View.AlignVerticalPi, VerticalAlignment.Bottom),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Center),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Bottom),
+                        (View.AlignHorizontal, HorizontalAlignment.Center),
+                    ]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "BS"),
-                        (View.AlignVerticalPi, VerticalAlignment.Bottom),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Stretch),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Bottom),
+                        (View.AlignHorizontal, HorizontalAlignment.Stretch),
+                    ]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "BR"),
-                        (View.AlignVerticalPi, VerticalAlignment.Bottom),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Right),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Bottom),
+                        (View.AlignHorizontal, HorizontalAlignment.Right),
+                    ]
                 },
                 new Label {
-                    Properties = new([
+                    Properties = [
                         (View.Text, "BL"),
-                        (View.AlignVerticalPi, VerticalAlignment.Bottom),
-                        (View.AlignHorizontalPi, HorizontalAlignment.Left),
-                    ])
+                        (View.AlignVertical, VerticalAlignment.Bottom),
+                        (View.AlignHorizontal, HorizontalAlignment.Left),
+                    ]
                 },
             ]
         };
@@ -150,235 +149,232 @@ public class MainView
     {
         return new Window
         {
-            Properties = new([
-                (View.MarginPi, new Thickness(115, 175, 0, 0)),
-                (View.SizePi, new Size(400, 500)),
-                (View.AlignHorizontalPi, HorizontalAlignment.Left),
-                (View.AlignVerticalPi, VerticalAlignment.Top),
-            ]),
-
+            Properties = [
+                (View.Margin, new Thickness(115, 175, 0, 0)),
+                (View.Size, new Size(400, 500)),
+                (View.AlignHorizontal, HorizontalAlignment.Left),
+                (View.AlignVertical, VerticalAlignment.Top),
+            ],
 
             Controls = [
                 new Column {
                     Controls = [
                         new Button {
-                            Properties = new([
+                            Properties = [
                                 (View.Text, "Button"),
-                                (View.AlignHorizontalPi, HorizontalAlignment.Center),
-                            ]),
+                                (View.AlignHorizontal, HorizontalAlignment.Center),
+                            ],
                         },
                         new Button {
-                            Properties = new([
+                            Properties = [
                                 (View.Text, "Button"),
-                                (View.AlignHorizontalPi, HorizontalAlignment.Right),
-                            ]),
+                                (View.AlignHorizontal, HorizontalAlignment.Right),
+                            ],
                         },
                         new Button {
-                            Properties = new([
+                            Properties = [
                                 (View.Text, "Button"),
-                                (View.AlignHorizontalPi, HorizontalAlignment.Left),
-                            ]),
+                                (View.AlignHorizontal, HorizontalAlignment.Left),
+                            ],
                         },
                         new Row {
                             Controls = [
-                                new Button { Properties = new([(View.Text, "Button A")])},
-                                new Button { Properties = new([(View.Text, "Button B")])},
-                                new Button { Properties = new([(View.Text, "Button C")])},
+                                new Button { Properties = [(View.Text, "Button A")]},
+                                new Button { Properties = [(View.Text, "Button B")]},
+                                new Button { Properties = [(View.Text, "Button C")]},
                             ]
                         },
                         new Row {
                             Controls = [
-                                new Label { Properties = new([(View.Text, "The")])},
-                                new Label { Properties = new([(View.Text, "Quick Brown Fox Jumps Over")])},
-                                new Label { Properties = new([(View.Text, "The lazy dog")])},
+                                new Label { Properties = [(View.Text, "The")]},
+                                new Label { Properties = [(View.Text, "Quick Brown Fox Jumps Over")]},
+                                new Label { Properties = [(View.Text, "The lazy dog")]},
                             ]
                         },
                         new Row {
                             Controls = [
-                                new Label { Properties = new([(View.Text, "The"), (Label.FontSizePi, 16.0)])},
-                                new Label { Properties = new([(View.Text, "Quick"), (Label.FontSizePi, 32.0)])},
-                                new Label { Properties = new([(View.Text, "Brown"), (Label.FontSizePi, 26.0)])},
+                                new Label { Properties = [(View.Text, "The"), (Label.FontSize, 16.0)]},
+                                new Label { Properties = [(View.Text, "Quick"), (Label.FontSize, 32.0)]},
+                                new Label { Properties = [(View.Text, "Brown"), (Label.FontSize, 26.0)]},
                             ]
                         },
                         new Row {
                             Controls = [
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "The Quick Brown"),
-                                        (Label.FontSizePi, 26.0),
-                                        (View.MarginPi, new Thickness(-30, 0, 0, 0)),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                        (View.Margin, new Thickness(-30, 0, 0, 0)),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "Fox &Jumps"),
-                                        (Label.FontSizePi, 26.0),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "Over the lazy dog"),
-                                        (Label.FontSizePi, 26.0),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                    ],
                                 },
                             ]
                         },
                         new Row {
                             Controls = [
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "Sans j"),
-                                        (Label.FontSizePi, 26.0),
-                                        (Label.FontNamePi, "sans-serif"),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                        (Label.FontName, "sans-serif"),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "Arial j"),
-                                        (Label.FontSizePi, 26.0),
-                                        (Label.FontNamePi, "Arial"),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                        (Label.FontName, "Arial"),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "﴿█j A﴿│|"),
-                                        (Label.FontSizePi, 26.0),
-                                        (Label.FontNamePi, "Arial"),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                        (Label.FontName, "Arial"),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "Serif j"),
-                                        (Label.FontSizePi, 26.0),
-                                        (Label.FontNamePi, "Times New Roman"),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                        (Label.FontName, "Times New Roman"),
+                                    ],
                                 },
                             ]
                         },
                         new Row {
                             Controls = [
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "TheQuickBrown"),
-                                        (Label.FontSizePi, 26.0),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, " "),
-                                        (Label.FontSizePi, 26.0),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "    "),
-                                        (Label.FontSizePi, 26.0),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                    ],
                                 },
                             ]
                         },
                         new Row {
                             Controls = [
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "1 The Quick Brown"),
-                                        (Label.FontSizePi, 40.0),
-                                        (Label.FontNamePi, "Times New Roman"),
-                                    ]),
+                                        (Label.FontSize, 40.0),
+                                        (Label.FontName, "Times New Roman"),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "2 Fox Jumps Over"),
-                                        (Label.FontSizePi, 26.0),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "3 The Lazy Dog"),
-                                        (Label.FontSizePi, 26.0),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "4 And a Cow"),
-                                        (Label.FontSizePi, 26.0),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "5 And a Zebra"),
-                                        (Label.FontSizePi, 16.0),
-                                        (View.AlignVerticalPi, VerticalAlignment.Center),
-                                    ]),
+                                        (Label.FontSize, 16.0),
+                                        (View.AlignVertical, VerticalAlignment.Center),
+                                    ],
                                 },
                             ]
                         },
                         new Row {
-                            Wrap = true,
                             Controls = [
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "The Quick Brown"),
-                                        (Label.FontSizePi, 40.0),
-                                        (Label.FontNamePi, "Times New Roman"),
-                                    ]),
+                                        (Label.FontSize, 40.0),
+                                        (Label.FontName, "Times New Roman"),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "Fox Jumps Over"),
-                                        (Label.FontSizePi, 26.0),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                    ],
                                 },
-                                new Label { Text = "The Lazy Dog", FontSize = 26,
-                                    Properties = new([
+                                new Label {
+                                    Properties = [
                                         (View.Text, "The Lazy Dog"),
-                                        (Label.FontSizePi, 26.0),
-                                    ]),
+                                        (Label.FontSize, 26.0),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "And a Cow"),
-                                        (Label.FontSizePi, 32.0),
-                                    ]),
+                                        (Label.FontSize, 32.0),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "Center"),
-                                        (Label.FontSizePi, 16.0),
-                                        (View.AlignVerticalPi, VerticalAlignment.Center),
-                                    ]),
+                                        (Label.FontSize, 16.0),
+                                        (View.AlignVertical, VerticalAlignment.Center),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "Top"),
-                                        (Label.FontSizePi, 16.0),
-                                        (View.AlignVerticalPi, VerticalAlignment.Top),
-                                    ]),
+                                        (Label.FontSize, 16.0),
+                                        (View.AlignVertical, VerticalAlignment.Top),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "Bottom"),
-                                        (Label.FontSizePi, 16.0),
-                                        (View.AlignVerticalPi, VerticalAlignment.Bottom),
-                                    ]),
+                                        (Label.FontSize, 16.0),
+                                        (View.AlignVertical, VerticalAlignment.Bottom),
+                                    ],
                                 },
                                 new Label {
-                                    Properties = new([
+                                    Properties = [
                                         (View.Text, "Stretch"),
-                                        (Label.FontSizePi, 16.0),
-                                        (View.AlignVerticalPi, VerticalAlignment.Stretch),
-                                    ]),
+                                        (Label.FontSize, 16.0),
+                                        (View.AlignVertical, VerticalAlignment.Stretch),
+                                    ],
                                 },
                             ],
-                            Properties = new([(Row.WrapPi, true)]),
+                            Properties = [(Row.Wrap, true)],
                         },
                         new Row {
-                            Wrap = true,
                             Controls = [
-                                new Label { Properties = new([(View.Text, "Done")]), },
+                                new Label { Properties = [(View.Text, "Done"),(Row.Wrap, true)], },
                             ]
                         },
-                        new Label { Properties = new([(View.Text, "Done")]),}
+                        new Label { Properties = [(View.Text, "Done")],}
                     ]
                 },
             ]

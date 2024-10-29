@@ -6,7 +6,8 @@ namespace ZurfurGui.Controls;
 
 public class Row : Controllable
 {
-    public static readonly PropertyIndex<bool> WrapPi = new("Wrap");
+    public static readonly PropertyIndex<bool> Wrap = new("Wrap");
+    public static readonly PropertyIndex<Size> Spacing = new("Spacing");
 
 
     List<Controllable> _controls = new();
@@ -22,13 +23,6 @@ public class Row : Controllable
         get => _controls;
         init => _controls = value.ToList();
     }
-
-    /// <summary>
-    /// Space between elements (Height is only used when Wrap is true)
-    /// </summary>
-    public Size Spacing { get; set; } = new Size(5,5);
-
-    public bool Wrap { get; set; } = false;
 
 
     public Row()
@@ -50,36 +44,38 @@ public class Row : Controllable
         mArrange.Clear();
         int arrangeIndex = 0;
 
-        available.Width = Wrap ? available.Width : double.PositiveInfinity;
+        var wrap = Properties.Gets(Wrap) ?? false;
+        available.Width = wrap ? available.Width : double.PositiveInfinity;
         var rowPosX = 0.0;
         var rowPosY = 0.0;
         var rowHeight = 0.0;
         var viewWidth = 0.0;
         var viewHeight = 0.0;
+        var spacing = Properties.Gets(Spacing) ?? new Size(5,5);
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisiblePi) ?? true;
+            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisible) ?? true;
             if (!viewIsVisible)
                 continue;
 
             view.Measure(available, measure);
             var childSize = view.DesiredSize;
 
-            if (Wrap && rowPosX != 0 && rowPosX + childSize.Width > available.Width)
+            if (wrap && rowPosX != 0 && rowPosX + childSize.Width > available.Width)
             {
                 for (var i = arrangeIndex; i < mArrange.Count; i++)
                     mArrange[i] = mArrange[i] with { Height = rowHeight };
                 arrangeIndex = mArrange.Count;
 
                 rowPosX = 0.0;
-                rowPosY += rowHeight + Spacing.Height;
+                rowPosY += rowHeight + spacing.Height;
                 rowHeight = 0.0;
             }
             mArrange.Add(new(rowPosX, rowPosY, childSize.Width, 0));
             viewWidth = Math.Max(viewWidth, rowPosX + childSize.Width);
             viewHeight = Math.Max(viewHeight, rowPosY + childSize.Height);
 
-            rowPosX += childSize.Width + Spacing.Width;
+            rowPosX += childSize.Width + spacing.Width;
             rowHeight = Math.Max(rowHeight, childSize.Height);
         }
         for (var i = arrangeIndex; i < mArrange.Count; i++)

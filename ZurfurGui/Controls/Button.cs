@@ -24,10 +24,6 @@ public class Button : Controllable
         init => throw new NotImplementedException("Controls not allowed");
     }
 
-    public string Text { get; set; } = "";
-    public string FontName { get; set; } = "Arial";
-    public double FontSize { get; set; } = 16;
-
     public Button()
     {
         View = new(this);
@@ -39,22 +35,28 @@ public class Button : Controllable
 
     public Size MeasureView(Size available, MeasureContext measure)
     {
-        var text = Properties.Getc(View.Text) ?? Text;
+        var text = Properties.Getc(View.Text) ?? "";
+        var fontName = Properties.Getc(Label.FontName) ?? "Arial";
+        var fontSize = Properties.Gets(Label.FontSize) ?? 16;
+
         var lines = text.Split("\n");
-        var maxWidth = lines.Max(line => measure.MeasureTextWidth(FontName, FontSize, line));
-        return new Size(maxWidth, lines.Length * LINE_SPACING * FontSize);
+        var maxWidth = lines.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
+        return new Size(maxWidth, lines.Length * LINE_SPACING * fontSize);
     }
     public Size ArrangeViews(Size final) => final;
 
 
     public void Render(RenderContext context)
     {
-        var text = Properties.Getc(View.Text) ?? Text;
+        var text = Properties.Getc(View.Text) ?? "";
+        var fontName = Properties.Getc(Label.FontName) ?? "Arial";
+        var fontSize = Properties.Gets(Label.FontSize) ?? 16;
+
         context.FillColor = Colors.Gray;
         context.FillRect(0, 0, View.Bounds.Width, View.Bounds.Height);
-        context.FontName = FontName;
-        context.FontSize = FontSize;
+        context.FontName = fontName;
+        context.FontSize = fontSize;
         context.FillColor = Colors.White;
-        context.FillText(text, 0, FontSize);
+        context.FillText(text, 0, fontSize);
     }
 }

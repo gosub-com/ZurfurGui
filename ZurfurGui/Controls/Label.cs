@@ -7,8 +7,8 @@ namespace ZurfurGui.Controls;
 
 public class Label : Controllable
 {
-    public static readonly PropertyIndex<string> FontNamePi = new("FontName");
-    public static readonly PropertyIndex<double> FontSizePi = new("FontSize");
+    public static readonly PropertyIndex<string> FontName = new("FontName");
+    public static readonly PropertyIndex<double> FontSize = new("FontSize");
 
     // Expand lines over the size of the font itself
     const double LINE_SPACING = 1;
@@ -25,10 +25,6 @@ public class Label : Controllable
         init => throw new NotImplementedException("Controls not allowed");
     }
 
-    public string Text { get; set; } = "";
-    public string FontName { get; set; } = "Arial";
-    public double FontSize { get; set; } = 16;
-
     public Label()
     {
         View = new(this);
@@ -40,9 +36,9 @@ public class Label : Controllable
 
     public Size MeasureView(Size available, MeasureContext measure)
     {
-        var fontName = Properties.Getc(FontNamePi) ?? FontName;
-        var fontSize = Properties.Gets(FontSizePi) ?? FontSize;
-        var text = Properties.Getc(View.Text) ?? Text;
+        var fontName = Properties.Getc(FontName) ?? "Arial";
+        var fontSize = Properties.Gets(FontSize) ?? 16.0;
+        var text = Properties.Getc(View.Text) ?? "";
         var lines = text.Split("\n");
         var maxWidth = lines.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
         return new Size(maxWidth, lines.Length * LINE_SPACING * fontSize);
@@ -52,9 +48,9 @@ public class Label : Controllable
 
     public void Render(RenderContext context)
     {
-        var fontName = Properties.Getc(FontNamePi) ?? FontName;
-        var fontSize = Properties.Gets(FontSizePi) ?? FontSize;
-        var text = Properties.Getc(View.Text) ?? Text;
+        var fontName = Properties.Getc(FontName) ?? "Arial";
+        var fontSize = Properties.Gets(FontSize) ?? 16.0;
+        var text = Properties.Getc(View.Text) ?? "";
         context.FontName = fontName;
         context.FontSize = fontSize;
         context.FillColor = Colors.White;

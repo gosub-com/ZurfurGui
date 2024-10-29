@@ -30,29 +30,29 @@ public class Window : Controllable
     {
         var tileCanvas = new Canvas()
         {
-            Properties = new([
-                (View.AlignVerticalPi, VerticalAlignment.Top),
-                (View.SizePi, new Size(double.NaN, 20)),
-            ]),
+            Properties = [
+                (View.AlignVertical, VerticalAlignment.Top),
+                (View.Size, new Size(double.NaN, 20)),
+            ],
 
             Controls = [
                 new Button() {
-                    Properties = new([
-                        (View.AlignHorizontalPi, HorizontalAlignment.Left),
+                    Properties = [
+                        (View.AlignHorizontal, HorizontalAlignment.Left),
                         (View.Text, "Menu")
-                    ])
+                    ]
                 },
                 new Button() {
-                    Properties = new([
-                        (View.AlignHorizontalPi, HorizontalAlignment.Right), 
+                    Properties = [
+                        (View.AlignHorizontal, HorizontalAlignment.Right), 
                         (View.Text, "X")
-                    ])
+                    ]
                 },
                 new Label() {
-                    Properties = new([
-                        (View.AlignHorizontalPi, HorizontalAlignment.Center),
+                    Properties = [
+                        (View.AlignHorizontal, HorizontalAlignment.Center),
                         (View.Text, "Title")
-                    ])
+                    ]
                 },
             ]
         };
@@ -60,16 +60,16 @@ public class Window : Controllable
         var clientCanvas = new Canvas()
         {
             Controls = _controls,
-            Properties = new([
-                (View.MarginPi, new Thickness(0, 24, 0, 0)),
-            ]),
+            Properties = [
+                (View.Margin, new Thickness(0, 24, 0, 0)),
+            ]
         };
 
         var borderCanvas = new Canvas() { 
             Controls = [tileCanvas,clientCanvas],
-            Properties = new([
-                (View.MarginPi, new Thickness(5)),
-            ]),
+            Properties = [
+                (View.Margin, new Thickness(5)),
+            ]
         };
 
         View.Views.Clear();
@@ -84,7 +84,7 @@ public class Window : Controllable
         var windowMeasured = new Size();
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisiblePi) ?? true;
+            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisible) ?? true;
             if (!viewIsVisible)
                 continue;
 

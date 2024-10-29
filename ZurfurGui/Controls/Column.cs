@@ -43,7 +43,7 @@ public class Column : Controllable
         var visibleCount = 0;
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisiblePi) ?? true;
+            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisible) ?? true;
             if (!viewIsVisible)
                 continue;
 

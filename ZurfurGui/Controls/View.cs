@@ -21,13 +21,13 @@ public enum VerticalAlignment : byte
 
 public class View
 {
-    public static readonly PropertyIndex<string> NamePi = new("Name");
-    public static readonly PropertyIndex<bool> IsVisiblePi = new("IsVisible");
-    public static readonly PropertyIndex<HorizontalAlignment> AlignHorizontalPi = new("AlignHorizontal");
-    public static readonly PropertyIndex<VerticalAlignment> AlignVerticalPi = new("AlignVertical");
+    public static readonly PropertyIndex<string> Name = new("Name");
+    public static readonly PropertyIndex<bool> IsVisible = new("IsVisible");
+    public static readonly PropertyIndex<HorizontalAlignment> AlignHorizontal = new("AlignHorizontal");
+    public static readonly PropertyIndex<VerticalAlignment> AlignVertical = new("AlignVertical");
     public static readonly PropertyIndex<string> Text = new("Text");
-    public static readonly PropertyIndex<Thickness> MarginPi = new("Margin");
-    public static readonly PropertyIndex<Size> SizePi = new("Size");
+    public static readonly PropertyIndex<Thickness> Margin = new("Margin");
+    public static readonly PropertyIndex<Size> Size = new("Size");
     public static readonly PropertyIndex<Size> SizeMax = new("SizeMax");
     public static readonly PropertyIndex<Size> SizeMin = new("SizeMin");
 
@@ -89,19 +89,19 @@ public class View
     /// </summary>
     public void Measure(Size available, MeasureContext measure)
     {
-        var isVisible = Control?.Properties?.Gets(IsVisiblePi) ?? true;
+        var isVisible = Control?.Properties?.Gets(IsVisible) ?? true;
         if (!isVisible)
         {
             DesiredSize = new();
             return;
         }
 
-        var margin = Control?.Properties.Gets(MarginPi) ?? new();
+        var margin = Control?.Properties.Gets(Margin) ?? new();
         var constrained = ApplyLayoutConstraints(this, available.Deflate(margin));
         var measured = Control?.MeasureView(constrained, measure) ?? new();
 
         // Size override
-        var sizeOverride = Control?.Properties.Gets(SizePi)??new(double.NaN, double.NaN);
+        var sizeOverride = Control?.Properties.Gets(Size)??new(double.NaN, double.NaN);
         if (!double.IsNaN(sizeOverride.Width))
             measured.Width = sizeOverride.Width;
         if (!double.IsNaN(sizeOverride.Height))
@@ -133,21 +133,21 @@ public class View
     /// </summary>
     public void Arrange(Rect finalRect)
     {
-        var isVisible = Control?.Properties?.Gets(IsVisiblePi) ?? true;
+        var isVisible = Control?.Properties?.Gets(IsVisible) ?? true;
         if (!isVisible)
             return;
 
-        var margin = Control?.Properties.Gets(MarginPi) ?? new();
+        var margin = Control?.Properties.Gets(Margin) ?? new();
         var availableSize = finalRect.Size.Deflate(margin);
         var x = finalRect.X + margin.Left;
         var y = finalRect.Y + margin.Top;
         var size = availableSize;
 
-        var horizontalAlignment = Control?.Properties.Gets(AlignHorizontalPi) ?? new();
+        var horizontalAlignment = Control?.Properties.Gets(AlignHorizontal) ?? new();
         if (horizontalAlignment != HorizontalAlignment.Stretch)
             size.Width = Math.Min(size.Width, DesiredSize.Width - margin.Left - margin.Right);
 
-        var verticalAlignment = Control?.Properties.Gets(AlignVerticalPi) ?? new();
+        var verticalAlignment = Control?.Properties.Gets(AlignVertical) ?? new();
         if (verticalAlignment != VerticalAlignment.Stretch)
             size.Height = Math.Min(size.Height, DesiredSize.Height - margin.Top - margin.Bottom);
 
@@ -183,7 +183,7 @@ public class View
 
     public static Size ApplyLayoutConstraints(View v, Size constraints)
     {
-        var size = v.Control?.Properties.Gets(SizePi)??new(double.NaN, double.NaN);
+        var size = v.Control?.Properties.Gets(Size)??new(double.NaN, double.NaN);
         var sizeMax = v.Control?.Properties.Gets(SizeMax) ?? new(double.PositiveInfinity, double.PositiveInfinity);
         var sizeMin = v.Control?.Properties.Gets(SizeMin) ?? new(0,0);
 

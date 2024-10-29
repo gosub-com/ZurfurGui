@@ -44,7 +44,7 @@ public class Canvas : Controllable
         var windowMeasured = new Size();
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisiblePi) ?? true;
+            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisible) ?? true;
             if (!viewIsVisible)
                 continue;
 

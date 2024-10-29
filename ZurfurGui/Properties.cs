@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Controls;
 
 namespace ZurfurGui;
 
@@ -52,45 +54,55 @@ public class PropertyIndex<T>
 }
 
 
-public class Properties
+public class Properties : IEnumerable<(PropertyIndexId key, object value)>
 {
-    Dictionary<int, object?>? _properties;
+    Dictionary<int, object?> _properties = new();
 
     public Properties() 
-    { 
+    {
     }
 
-    public Properties(IEnumerable<(PropertyIndexId key, object value)> values)
+
+    public IEnumerator<(PropertyIndexId key, object value)> GetEnumerator()
     {
-        _properties = new Dictionary<int, object?>();
-        foreach (var (key, value) in values)
+        for (int i = 0; i <= 3; i += 2)
         {
-            if (key.Type != value.GetType())
-                throw new ArgumentException($"The property '{key.Name}' must have type '{key.Type}', but has '{value.GetType()}'");
-            _properties[key.Id] = value;
+            yield return (View.Text, "");
         }
     }
 
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+
+    public void Add((PropertyIndexId key, object value) kv)
+    {
+        if (_properties.ContainsKey(kv.key.Id))
+            throw new ArgumentException($"The property '{kv.key.Name}' already exists");
+        if (kv.key.Type != kv.value.GetType())
+            throw new ArgumentException($"The property '{kv.key.Name}' must have type '{kv.key.Type}', but has '{kv.value.GetType()}'");
+        _properties[kv.key.Id] = kv.value;
+    }
+
+
     public T? Gets<T>(PropertyIndex<T> property) where T : struct
     {
-        if (_properties != null && _properties.TryGetValue(property.Id.Id, out var value) && value is T v)
+        if (_properties.TryGetValue(property.Id.Id, out var value) && value is T v)
             return v;
         return null;
     }
 
     public T? Getc<T>(PropertyIndex<T> property) where T : class
     {
-        if (_properties != null && _properties.TryGetValue(property.Id.Id, out var value) && value is T v)
+        if (_properties.TryGetValue(property.Id.Id, out var value) && value is T v)
             return v;
         return null;
     }
 
     public void Set<T>(PropertyIndex<T> property, T value)
     {
-        if (_properties == null)
-            _properties = new();
         _properties[property.Id.Id] = value;
     }
-
 
 }
