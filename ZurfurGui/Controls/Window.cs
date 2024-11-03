@@ -5,76 +5,60 @@ namespace ZurfurGui.Controls;
 
 public class Window : Controllable
 {
-    List<Controllable> _controls = new();
-
     public string Type => "Window";
     public string Name { get; init; } = "";
     public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
     public View View { get; private set; }
-    public Properties Properties { get; init; } = new();
-
-    public IList<Controllable> Controls
-    {
-        get => _controls;
-        init => _controls = value.ToList();
-    }
+    public Properties Properties { get; set; } = new();
 
     public Window()
     {
         View = new(this);
     }
 
-    public string Text { get; set; } = "";
-
-    public void PopulateView()
+    public View BuildView(Properties properties)
     {
-        var tileCanvas = new Canvas()
-        {
-            Properties = [
-                (View.AlignVertical, VerticalAlignment.Top),
-                (View.Size, new Size(double.NaN, 20)),
-            ],
+        Properties tileCanvas = [
+            (ZGui.Controller, "ZGui.Canvas"),
+            (ZGui.AlignVertical, VerticalAlignment.Top),
+            (ZGui.Size, new Size(double.NaN, 20)),
+            (ZGui.Controls, (Properties[])[
+                [
+                    (ZGui.Controller, "ZGui.Button"),
+                    (ZGui.AlignHorizontal, HorizontalAlignment.Left),
+                    (ZGui.Text, "Menu"),
+                ],
+                [
+                    (ZGui.Controller, "ZGui.Button"),
+                    (ZGui.AlignHorizontal, HorizontalAlignment.Right),
+                    (ZGui.Text, "X")
+                ],
+                [
+                    (ZGui.Controller, "ZGui.Label"),
+                    (ZGui.AlignHorizontal, HorizontalAlignment.Center),
+                    (ZGui.Text, "Title")
+                ]
+            ])
+        ];
 
-            Controls = [
-                new Button() {
-                    Properties = [
-                        (View.AlignHorizontal, HorizontalAlignment.Left),
-                        (View.Text, "Menu")
-                    ]
-                },
-                new Button() {
-                    Properties = [
-                        (View.AlignHorizontal, HorizontalAlignment.Right), 
-                        (View.Text, "X")
-                    ]
-                },
-                new Label() {
-                    Properties = [
-                        (View.AlignHorizontal, HorizontalAlignment.Center),
-                        (View.Text, "Title")
-                    ]
-                },
-            ]
-        };
+        Properties clientCanvas = [
+            (ZGui.Controller, "ZGui.Canvas"),
+            (ZGui.Margin, new Thickness(0, 24, 0, 0)),
+            (ZGui.Controls, properties.Getc(ZGui.Controls) ?? [])
+        ];
 
-        var clientCanvas = new Canvas()
-        {
-            Controls = _controls,
-            Properties = [
-                (View.Margin, new Thickness(0, 24, 0, 0)),
-            ]
-        };
+        Properties borderCanvas = [
+            (ZGui.Controller, "ZGui.Canvas"),
+            (ZGui.Margin, new Thickness(5)),
+            (ZGui.Controls, (Properties[])[tileCanvas, clientCanvas])
+        ];
 
-        var borderCanvas = new Canvas() { 
-            Controls = [tileCanvas,clientCanvas],
-            Properties = [
-                (View.Margin, new Thickness(5)),
-            ]
-        };
 
         View.Views.Clear();
-        View.Views.Add(borderCanvas.View);
+        ViewHelper.AddControllers(View.Views, [borderCanvas]);
+        return View;
     }
+
 
     /// <summary>
     /// Same as canvas
@@ -84,7 +68,7 @@ public class Window : Controllable
         var windowMeasured = new Size();
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisible) ?? true;
+            var viewIsVisible = view.Control?.Properties.Gets(ZGui.IsVisible) ?? true;
             if (!viewIsVisible)
                 continue;
 

@@ -7,9 +7,6 @@ namespace ZurfurGui.Controls;
 
 public class Label : Controllable
 {
-    public static readonly PropertyIndex<string> FontName = new("FontName");
-    public static readonly PropertyIndex<double> FontSize = new("FontSize");
-
     // Expand lines over the size of the font itself
     const double LINE_SPACING = 1;
 
@@ -17,28 +14,23 @@ public class Label : Controllable
     public string Name { get; init; } = "";
     public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
     public View View { get; private set; }
-    public Properties Properties { get; init; } = new();
-
-    public IList<Controllable> Controls
-    {
-        get => Array.Empty<Controllable>();
-        init => throw new NotImplementedException("Controls not allowed");
-    }
+    public Properties Properties { get; set; } = new();
 
     public Label()
     {
         View = new(this);
     }
 
-    public void PopulateView()
+    public View BuildView(Properties properties)
     {
+        return View;
     }
 
     public Size MeasureView(Size available, MeasureContext measure)
     {
-        var fontName = Properties.Getc(FontName) ?? "Arial";
-        var fontSize = Properties.Gets(FontSize) ?? 16.0;
-        var text = Properties.Getc(View.Text) ?? "";
+        var fontName = Properties.Getc(ZGui.FontName) ?? "Arial";
+        var fontSize = Properties.Gets(ZGui.FontSize) ?? 16.0;
+        var text = Properties.Getc(ZGui.Text) ?? "";
         var lines = text.Split("\n");
         var maxWidth = lines.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
         return new Size(maxWidth, lines.Length * LINE_SPACING * fontSize);
@@ -48,9 +40,9 @@ public class Label : Controllable
 
     public void Render(RenderContext context)
     {
-        var fontName = Properties.Getc(FontName) ?? "Arial";
-        var fontSize = Properties.Gets(FontSize) ?? 16.0;
-        var text = Properties.Getc(View.Text) ?? "";
+        var fontName = Properties.Getc(ZGui.FontName) ?? "Arial";
+        var fontSize = Properties.Gets(ZGui.FontSize) ?? 16.0;
+        var text = Properties.Getc(ZGui.Text) ?? "";
         context.FontName = fontName;
         context.FontSize = fontSize;
         context.FillColor = Colors.White;

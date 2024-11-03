@@ -4,20 +4,11 @@ namespace ZurfurGui.Controls;
 
 public class Column : Controllable
 {
-
-    List<Controllable> _controls = new();
-
     public string Type => "Column";
     public string Name { get; init; } = "";
     public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
     public View View { get; private set; }
-    public Properties Properties { get; init; } = new();
-
-    public IList<Controllable> Controls
-    {
-        get => _controls;
-        init => _controls = value.ToList();
-    }
+    public Properties Properties { get; set; } = new();
 
     /// <summary>
     /// Space between elements
@@ -29,12 +20,12 @@ public class Column : Controllable
         View = new(this);
     }
 
-    public void PopulateView()
+    public View BuildView(Properties properties)
     {
         View.Views.Clear();
-        View.Views.AddRange(_controls.Select(c => c.View));
+        ViewHelper.AddControllers(View.Views, properties.Getc(ZGui.Controls));
+        return View;
     }
-
 
     public Size MeasureView(Size available, MeasureContext measure)
     {
@@ -43,7 +34,7 @@ public class Column : Controllable
         var visibleCount = 0;
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisible) ?? true;
+            var viewIsVisible = view.Control?.Properties.Gets(ZGui.IsVisible) ?? true;
             if (!viewIsVisible)
                 continue;
 

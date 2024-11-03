@@ -8,7 +8,7 @@ using ZurfurGui.Browser;
 namespace TestApp.Browser;
 
 
-public static class BrowserMain
+public static class Program
 {
     /// <summary>
     /// Called from Javascript with args[0] as the canvas to draw on
@@ -17,9 +17,9 @@ public static class BrowserMain
     {
         Console.WriteLine($"C# Main called args: '{string.Join(" ", args)}'");
 
-        var control = MainView.CreateView();
+        var control = MainView.CreateMainView();
         var canvasId = args[0];
-        BrowserStart.StartRendering(canvasId, control);
+        BrowserStart.Start(canvasId, control);
     }
 
 }

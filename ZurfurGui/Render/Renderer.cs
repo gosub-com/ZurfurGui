@@ -24,15 +24,10 @@ public class Renderer
     Size _mainWindowSize = new(double.NaN, double.NaN);
 
 
-    public Renderer(OsWindow window, IEnumerable<Controllable> controls)
+    public Renderer(OsWindow window, Properties controls)
     {
-        var mainWindow = new Canvas()
-        {
-            Controls = controls.ToList()
-        };
-
         _window = window;
-        _view = View.BuildViewTree(mainWindow);
+        _view = ViewHelper.GetViewFromProperties(controls);
     }
 
     public void RenderFrame()

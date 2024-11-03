@@ -12,9 +12,10 @@ You can see the result here: https://gosub.com/zurfurgui
 
 Zurfur Gui is an experiment to see what a minimal C# WebAssembly `Canvas` GUI might look like.
 
-* Runs in browsers and also natively on Windows for easy debugging
-* Small download - uses built-in platform drawing API (i.e. `Canvas`)
+* Runs in browsers and natively on Windows
 * Quick and easy to whip up small GUI applications (tools, etc.)
+* Uses JSON instead of XML
+* Small download - uses built-in platform drawing API (i.e. `Canvas`)
 
 
 

@@ -20,16 +20,10 @@ public interface Controllable
     View View { get; }
 
 
-    Properties Properties { get; init; }
+    Properties Properties { get; set; }
 
-    /// <summary>
-    /// Called only by View to setup the view tree.  This will often populate the main view with the 
-    /// `View` in `Controls`, but may also add other views when the view tree is different from 
-    /// the control tree. This does not recursively walk down the tree.
-    /// This should only be called from View.BuildViewTree (never call from any other code).
-    /// TBD: Move to private ControllableImpl so only View can call.
-    /// </summary>
-    void PopulateView();
+
+    View BuildView(Properties properties);
 
     /// <summary>
     /// Returns the desired size of the control given the available screen size.

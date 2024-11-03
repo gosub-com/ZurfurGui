@@ -16,28 +16,23 @@ public class Button : Controllable
     public string Name { get; init; } = "";
     public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
     public View View { get; private set; }
-    public Properties Properties { get; init; } = new();
-
-    public IList<Controllable> Controls
-    {
-        get => Array.Empty<Controllable>();
-        init => throw new NotImplementedException("Controls not allowed");
-    }
+    public Properties Properties { get; set; } = new();
 
     public Button()
     {
         View = new(this);
     }
 
-    public void PopulateView()
+    public View BuildView(Properties properties)
     {
+        return View;
     }
 
     public Size MeasureView(Size available, MeasureContext measure)
     {
-        var text = Properties.Getc(View.Text) ?? "";
-        var fontName = Properties.Getc(Label.FontName) ?? "Arial";
-        var fontSize = Properties.Gets(Label.FontSize) ?? 16;
+        var text = Properties.Getc(ZGui.Text) ?? "";
+        var fontName = Properties.Getc(ZGui.FontName) ?? "Arial";
+        var fontSize = Properties.Gets(ZGui.FontSize) ?? 16;
 
         var lines = text.Split("\n");
         var maxWidth = lines.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
@@ -48,9 +43,9 @@ public class Button : Controllable
 
     public void Render(RenderContext context)
     {
-        var text = Properties.Getc(View.Text) ?? "";
-        var fontName = Properties.Getc(Label.FontName) ?? "Arial";
-        var fontSize = Properties.Gets(Label.FontSize) ?? 16;
+        var text = Properties.Getc(ZGui.Text) ?? "";
+        var fontName = Properties.Getc(ZGui.FontName) ?? "Arial";
+        var fontSize = Properties.Gets(ZGui.FontSize) ?? 16;
 
         context.FillColor = Colors.Gray;
         context.FillRect(0, 0, View.Bounds.Width, View.Bounds.Height);

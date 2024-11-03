@@ -7,33 +7,30 @@ using System.Threading.Tasks;
 
 namespace ZurfurGui.Controls;
 
-internal static class ViewHelper
+public static class ViewHelper
 {
+
     /// <summary>
-    /// Call this function once on the highest level control.
+    /// Create controllers from properties, add to views
     /// </summary>
-    public static View BuildViewTree(Controllable control)
+    public static void AddControllers(IList<View> views, Properties[]? controllerProperties)
     {
-        BuildViewTree(control.View);
-        return control.View;
+        Debug.Assert(controllerProperties != null);
+        if (controllerProperties != null)
+            foreach (var control in controllerProperties)
+                views.Add(GetViewFromProperties(control));
     }
 
-
-    /// <summary>
-    /// Build the view tree
-    /// </summary>
-    static void BuildViewTree(View view)
+    public static View GetViewFromProperties(Properties controllerProperties)
     {
-        Debug.Assert(view.ParentView == null); // Shouldn't call on a view that is already in a tree
-        view.SetParentView(null);
-        if (view.Control != null)
-            view.Control.PopulateView();
+        var controllerName = controllerProperties.Getc(ZGui.Controller) ?? "";
+        if (controllerName == "")
+            throw new ArgumentException($"The control controller property is not specified.");
 
-        foreach (var child in view.Views)
-        {
-            BuildViewTree(child);
-            child.SetParentView(view);
-        }
+        var control = ControlRegistry.Create(controllerName)
+            ?? throw new ArgumentException($"Control '{controllerName}' not found in the control registry");
+        control.Properties = controllerProperties;
+        return control.BuildView(controllerProperties);
     }
 
 

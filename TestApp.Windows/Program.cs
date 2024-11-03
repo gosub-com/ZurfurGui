@@ -3,7 +3,7 @@ using ZurfurGui.WinForms;
 
 namespace TestApp.Windows;
 
-internal static class WinMain
+internal static class Program
 {
     /// <summary>
     ///  The main entry point for the application.
@@ -11,7 +11,7 @@ internal static class WinMain
     [STAThread]
     static void Main()
     {
-        var control = MainView.CreateView();
-        WinStart.StartRendering(control);
+        var control = MainView.CreateMainView();
+        WinStart.Start(control);
     }
 }

@@ -13,8 +13,10 @@ namespace ZurfurGui.Browser;
 public static class BrowserStart
 {
 
-    public static void StartRendering(string canvasId, IEnumerable<Controllable> controls)
+    public static void Start(string canvasId, Properties controls)
     {
+        Initialize.Init();
+
         var window = new BrowserWindow(canvasId);
         var renderer = new Renderer(window, controls);
         var canvas = window.PrimaryCanvas;

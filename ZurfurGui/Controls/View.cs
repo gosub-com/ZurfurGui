@@ -21,16 +21,6 @@ public enum VerticalAlignment : byte
 
 public class View
 {
-    public static readonly PropertyIndex<string> Name = new("Name");
-    public static readonly PropertyIndex<bool> IsVisible = new("IsVisible");
-    public static readonly PropertyIndex<HorizontalAlignment> AlignHorizontal = new("AlignHorizontal");
-    public static readonly PropertyIndex<VerticalAlignment> AlignVertical = new("AlignVertical");
-    public static readonly PropertyIndex<string> Text = new("Text");
-    public static readonly PropertyIndex<Thickness> Margin = new("Margin");
-    public static readonly PropertyIndex<Size> Size = new("Size");
-    public static readonly PropertyIndex<Size> SizeMax = new("SizeMax");
-    public static readonly PropertyIndex<Size> SizeMin = new("SizeMin");
-
     /// <summary>
     /// Parent view
     /// </summary>
@@ -61,11 +51,6 @@ public class View
     {
         Control = control;
     }
-    public View(Controllable control, IEnumerable<View> children)
-    {
-        Control = control;
-        Views = children.ToList();
-    }
 
     public string Type => Control?.Type ?? "";
 
@@ -73,10 +58,6 @@ public class View
     {
         return $"{(Control == null ? "View" : $"View:{Control}")}";
     }
-
-    public static View BuildViewTree(Controllable control)
-        => ViewHelper.BuildViewTree(control);
-
 
     /// <summary>
     /// Called to measure the view and set MeasuredSize.
@@ -89,31 +70,31 @@ public class View
     /// </summary>
     public void Measure(Size available, MeasureContext measure)
     {
-        var isVisible = Control?.Properties?.Gets(IsVisible) ?? true;
+        var isVisible = Control?.Properties?.Gets(ZGui.IsVisible) ?? true;
         if (!isVisible)
         {
             DesiredSize = new();
             return;
         }
 
-        var margin = Control?.Properties.Gets(Margin) ?? new();
+        var margin = Control?.Properties.Gets(ZGui.Margin) ?? new();
         var constrained = ApplyLayoutConstraints(this, available.Deflate(margin));
         var measured = Control?.MeasureView(constrained, measure) ?? new();
 
         // Size override
-        var sizeOverride = Control?.Properties.Gets(Size)??new(double.NaN, double.NaN);
+        var sizeOverride = Control?.Properties.Gets(ZGui.Size)??new(double.NaN, double.NaN);
         if (!double.IsNaN(sizeOverride.Width))
             measured.Width = sizeOverride.Width;
         if (!double.IsNaN(sizeOverride.Height))
             measured.Height = sizeOverride.Height;
 
         // Max size override
-        var sizeMax = Control?.Properties.Gets(SizeMax) ?? new(double.PositiveInfinity, double.PositiveInfinity);
+        var sizeMax = Control?.Properties.Gets(ZGui.SizeMax) ?? new(double.PositiveInfinity, double.PositiveInfinity);
         measured.Width = Math.Min(measured.Width, sizeMax.Width);
         measured.Height = Math.Min(measured.Height, sizeMax.Height);
 
         // Min  size override
-        var sizeMin = Control?.Properties.Gets(SizeMax) ?? new(0, 0);
+        var sizeMin = Control?.Properties.Gets(ZGui.SizeMax) ?? new(0, 0);
         measured.Width = Math.Max(measured.Width, sizeMin.Width);
         measured.Height = Math.Max(measured.Height, sizeMin.Height);
 
@@ -133,21 +114,21 @@ public class View
     /// </summary>
     public void Arrange(Rect finalRect)
     {
-        var isVisible = Control?.Properties?.Gets(IsVisible) ?? true;
+        var isVisible = Control?.Properties?.Gets(ZGui.IsVisible) ?? true;
         if (!isVisible)
             return;
 
-        var margin = Control?.Properties.Gets(Margin) ?? new();
+        var margin = Control?.Properties.Gets(ZGui.Margin) ?? new();
         var availableSize = finalRect.Size.Deflate(margin);
         var x = finalRect.X + margin.Left;
         var y = finalRect.Y + margin.Top;
         var size = availableSize;
 
-        var horizontalAlignment = Control?.Properties.Gets(AlignHorizontal) ?? new();
+        var horizontalAlignment = Control?.Properties.Gets(ZGui.AlignHorizontal) ?? new();
         if (horizontalAlignment != HorizontalAlignment.Stretch)
             size.Width = Math.Min(size.Width, DesiredSize.Width - margin.Left - margin.Right);
 
-        var verticalAlignment = Control?.Properties.Gets(AlignVertical) ?? new();
+        var verticalAlignment = Control?.Properties.Gets(ZGui.AlignVertical) ?? new();
         if (verticalAlignment != VerticalAlignment.Stretch)
             size.Height = Math.Min(size.Height, DesiredSize.Height - margin.Top - margin.Bottom);
 
@@ -183,9 +164,9 @@ public class View
 
     public static Size ApplyLayoutConstraints(View v, Size constraints)
     {
-        var size = v.Control?.Properties.Gets(Size)??new(double.NaN, double.NaN);
-        var sizeMax = v.Control?.Properties.Gets(SizeMax) ?? new(double.PositiveInfinity, double.PositiveInfinity);
-        var sizeMin = v.Control?.Properties.Gets(SizeMin) ?? new(0,0);
+        var size = v.Control?.Properties.Gets(ZGui.Size)??new(double.NaN, double.NaN);
+        var sizeMax = v.Control?.Properties.Gets(ZGui.SizeMax) ?? new(double.PositiveInfinity, double.PositiveInfinity);
+        var sizeMin = v.Control?.Properties.Gets(ZGui.SizeMin) ?? new(0,0);
 
         var h = size.Height;
         var height = double.IsNaN(h) ? double.PositiveInfinity : h;

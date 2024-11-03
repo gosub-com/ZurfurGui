@@ -9,31 +9,22 @@ namespace ZurfurGui.Controls;
 
 public class Canvas : Controllable
 {
-    List<Controllable> _controls = new();
-
     public string Type => "Canvas";
     public string Name { get; init; } = "";
     public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
     public View View { get; private set; }
-    public Properties Properties { get; init; } = new();
-
-    public IList<Controllable> Controls
-    {
-        get => _controls;
-        init => _controls = value.ToList();
-    }
+    public Properties Properties { get; set; } = new();
 
     public Canvas()
     {
         View = new(this);
     }
 
-    public string Text { get; set; } = "";
-
-    public void PopulateView()
+    public View BuildView(Properties properties)
     {
         View.Views.Clear();
-        View.Views.AddRange(_controls.Select(c => c.View));
+        ViewHelper.AddControllers(View.Views, properties.Getc(ZGui.Controls));
+        return View;
     }
 
     /// <summary>
@@ -44,7 +35,7 @@ public class Canvas : Controllable
         var windowMeasured = new Size();
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Control?.Properties.Gets(View.IsVisible) ?? true;
+            var viewIsVisible = view.Control?.Properties.Gets(ZGui.IsVisible) ?? true;
             if (!viewIsVisible)
                 continue;
 
