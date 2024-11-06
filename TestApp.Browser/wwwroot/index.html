@@ -25,7 +25,6 @@
 
     <!-- Preload stuff ASAP -->
     <link rel="prefetch" href="./_framework/dotnet.native.wasm" /> <!-- BIG -->
-    <link rel="modulepreload" href="./ZurfurGui.js" />
     <link rel="modulepreload" href="./_framework/dotnet.js" />
     <link rel="prefetch" href="./_framework/blazor.boot.json" />
 
@@ -63,14 +62,26 @@
     <!-- Run main app -->
     <script type="module">
         console.log("Loading ZurfurGui app...")
+        const CANVAS_ID = "canvasMain";
+        const SPLASH_ID = "splash";
+        const SPLASH_ERROR_ID = "splash-text";
+        const FRAMEWORK = "./_framework/dotnet.js";
+        const ASSEMBLY = "ZurfurGui.Browser";
         try {
-            var module = await import("./ZurfurGui.js");
-            globalThis.ZurfurGui = module;
-            await module.ZurfurGuiRun("canvasMain");
-            document.getElementById("splash").remove();
+            const framework = await import(FRAMEWORK);
+            const dotnetRuntime = await framework.dotnet
+                .withDiagnosticTracing(false)
+                .withApplicationArgumentsFromQuery()
+                .create();
+            const exports = await dotnetRuntime.getAssemblyExports(ASSEMBLY);
+            eval(exports.ZurfurGui.Browser.BrowserStart.GetStartupScript());
+            const config = dotnetRuntime.getConfig();
+            await dotnetRuntime.runMain(config.mainAssemblyName, [CANVAS_ID]);
+            document.getElementById(SPLASH_ID).remove();
+            console.log(`App is running the main assembly '${config.mainAssemblyName}'`);
         }
         catch (e) {
-            document.getElementById("splash-text").innerHTML = `ERROR: ${e.message}`;
+            document.getElementById(SPLASH_ERROR_ID).innerHTML = `ERROR: ${e.message}`;
         }
     </script>
 </body>

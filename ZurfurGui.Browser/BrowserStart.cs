@@ -1,6 +1,7 @@
 ﻿using Microsoft.JSInterop;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 
@@ -10,8 +11,30 @@ using ZurfurGui.Render;
 
 namespace ZurfurGui.Browser;
 
-public static class BrowserStart
+public static partial class BrowserStart
 {
+    const string STARTUP_CODE_NAME = "ZurfurGui.Browser.BrowserStart.js";
+
+    [JSExport]
+    public static string GetStartupScript()
+    {
+        return GetEmbeddedResourceString(STARTUP_CODE_NAME);
+    }
+
+    private static string GetEmbeddedResourceString(string name)
+    {
+        try
+        {
+            var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name);
+            ArgumentNullException.ThrowIfNull(stream, $"Can't find resource file");
+            using var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
+        }
+        catch
+        {
+            throw new ArgumentException($"Error loading embedded resource '{name}'");
+        }
+    }
 
     public static void Start(string canvasId, Properties controls)
     {
