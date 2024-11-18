@@ -44,7 +44,6 @@ internal partial class BrowserContext : OsContext
     public BrowserContext(JSObject context)
     {
         _context = context;
-        _context.SetProperty("textBaseline", "alphabetic");
     }
 
     public Color FillColor

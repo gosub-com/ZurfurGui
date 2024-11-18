@@ -14,11 +14,12 @@ public static class Initialize
     /// </summary>
     public static void Init()
     {
-        ControlRegistry.Add("ZGui.Button", () => new Button());
-        ControlRegistry.Add("ZGui.Canvas", () => new Canvas());
-        ControlRegistry.Add("ZGui.Column", () => new Column());
-        ControlRegistry.Add("ZGui.Label", () => new Label());
-        ControlRegistry.Add("ZGui.Row", () => new Row());
-        ControlRegistry.Add("ZGui.Window", () => new Window());
+        ControlRegistry.Add(() => new BackgroundTest());
+        ControlRegistry.Add(() => new Button());
+        ControlRegistry.Add(() => new Canvas());
+        ControlRegistry.Add(() => new Column());
+        ControlRegistry.Add(() => new Label());
+        ControlRegistry.Add(() => new Row());
+        ControlRegistry.Add(() => new Window());
     }
 }

@@ -4,11 +4,9 @@ namespace ZurfurGui.Controls;
 
 public class Column : Controllable
 {
-    public string Type => "Column";
-    public string Name { get; init; } = "";
-    public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
+    public string Type => "ZGui.Column";
+    public override string ToString() => $"{View.Properties.Get(ZGui.Id) ?? ""}:{Type}";
     public View View { get; private set; }
-    public Properties Properties { get; set; } = new();
 
     /// <summary>
     /// Space between elements
@@ -23,7 +21,7 @@ public class Column : Controllable
     public View BuildView(Properties properties)
     {
         View.Views.Clear();
-        ViewHelper.AddControllers(View.Views, properties.Getc(ZGui.Controls));
+        ViewHelper.BuildViewsFromProperties(View.Views, properties.Get(ZGui.Controls));
         return View;
     }
 
@@ -34,7 +32,7 @@ public class Column : Controllable
         var visibleCount = 0;
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Control?.Properties.Gets(ZGui.IsVisible) ?? true;
+            var viewIsVisible = view.Properties.Get(ZGui.IsVisible, true);
             if (!viewIsVisible)
                 continue;
 
@@ -48,7 +46,7 @@ public class Column : Controllable
         return columnMeasured;
     }
 
-    public Size ArrangeViews(Size final)
+    public Size ArrangeViews(Size final, MeasureContext measure)
     {
         var bounds = new Rect(0, 0, final.Width, final.Height);
         var spacing = Spacing;
@@ -56,7 +54,7 @@ public class Column : Controllable
         {
             bounds.Height = view.DesiredSize.Height;
             bounds.Width = Math.Max(final.Width, view.DesiredSize.Width);
-            view.Arrange(bounds);
+            view.Arrange(bounds, measure);
             bounds.Y += view.DesiredSize.Height + spacing;
         }
         return final;

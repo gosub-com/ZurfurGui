@@ -16,10 +16,7 @@ internal class WinWindow : OsWindow
     {
         _form = form;
         _picture = canvas;
-        PrimaryCanvas = new WinCanvas(canvas);
     }
-
-    public OsCanvas PrimaryCanvas { get; private set; }
 
     public double DevicePixelRatio { get; set; } = 1;
 

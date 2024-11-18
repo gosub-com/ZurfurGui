@@ -1,5 +1,4 @@
 using System.Text.Json;
-using ZurfurGui.Controls;
 using ZurfurGui.Render;
 using ZurfurGui.WinForms.Interop;
 
@@ -8,6 +7,7 @@ namespace ZurfurGui.WinForms;
 public partial class FormZurfurGui : Form
 {
     WinWindow _window;
+    WinCanvas _canvas;
     Renderer _render;
     DateTime _showMagnification;
 
@@ -18,7 +18,8 @@ public partial class FormZurfurGui : Form
     {
         InitializeComponent();
         _window = new WinWindow(this, pictureMain);
-        _render = new Renderer(_window, controls);
+        _canvas = new WinCanvas(pictureMain);
+        _render = new Renderer(_window, _canvas, controls);
         pictureMain.MouseWheel += PictureMain_MouseWheel;
     }
 
@@ -44,7 +45,7 @@ public partial class FormZurfurGui : Form
         _window.DevicePixelRatio = _mag[_magIndex];
 
         // Hack the graphics into the context since Winforms requires us to use the supplied version
-        ((WinContext)_window.PrimaryCanvas.Context)._graphics = e.Graphics;
+        ((WinContext)_canvas.Context)._graphics = e.Graphics;
 
         _render.RenderFrame();
     }

@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ZurfurGui.Controls;
+namespace ZurfurGui;
 
 
 /// <summary>
@@ -41,6 +41,10 @@ public readonly struct PropertyKeyId : IEquatable<PropertyKeyId>
     public static bool operator ==(PropertyKeyId a, PropertyKeyId b) => a.Equals(b);
     public static bool operator !=(PropertyKeyId a, PropertyKeyId b) => !a.Equals(b);
     public override int GetHashCode() => _id;
+    public override string ToString()
+    {
+        return $"{Name}:{_id}:{Type}";
+    }
 }
 
 
@@ -62,6 +66,7 @@ public struct PropertyKey<T> : IEquatable<PropertyKey<T>>
     }
 
     public string Name => _id.Name;
+    public Type Type => _id.Type;
     public PropertyKeyId Id => _id;
 
     public bool Equals(PropertyKey<T> id) => _id == id._id;
@@ -69,6 +74,10 @@ public struct PropertyKey<T> : IEquatable<PropertyKey<T>>
     public static bool operator ==(PropertyKey<T> a, PropertyKey<T> b) => a.Equals(b);
     public static bool operator !=(PropertyKey<T> a, PropertyKey<T> b) => !a.Equals(b);
     public override int GetHashCode() => _id.GetHashCode();
+    public override string ToString()
+    {
+        return _id.ToString();
+    }
 
 }
 
@@ -103,23 +112,16 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
         _properties[kv.key] = kv.value;
     }
 
-    public T? Gets<T>(PropertyKey<T> property) where T : struct
+    public T? Get<T>(PropertyKey<T> property, T? defaultProperty = default)
     {
         if (_properties.TryGetValue(property.Id, out var value) && value is T v)
             return v;
-        return null;
-    }
-
-    public T? Getc<T>(PropertyKey<T> property) where T : class
-    {
-        if (_properties.TryGetValue(property.Id, out var value) && value is T v)
-            return v;
-        return null;
+        return defaultProperty;
     }
 
     public void Set<T>(PropertyKey<T> property, T value)
     {
-        if (value is null) 
+        if (value is null)
             throw new ArgumentNullException(nameof(value));
         _properties[property.Id] = value;
     }

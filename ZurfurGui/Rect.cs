@@ -1,4 +1,5 @@
-﻿using static ZurfurGui.Helpers;
+﻿using System.Numerics;
+using static ZurfurGui.Helpers;
 
 namespace ZurfurGui;
 
@@ -32,6 +33,12 @@ public struct Rect : IEquatable<Rect>
     public double Right => X + Width;
     public double Bottom => Y + Height;
 
+    public bool Contains(Point p)
+    {
+        return p.X >= X && p.X <= X + Width && p.Y >= Y && p.Y <= Y + Height;
+    }
+
+
     public Rect Intersect(Rect r)
     {
         var newX = Math.Max(r.X, X);
@@ -44,7 +51,6 @@ public struct Rect : IEquatable<Rect>
             return new();
         return new Rect(newX, newY, width, height);
     }
-
 
     public Rect Inflate(double thickness)
     {
@@ -65,6 +71,12 @@ public struct Rect : IEquatable<Rect>
     {
         return new Rect(new Point(X + thickness.Left, Y + thickness.Top), Size.Deflate(thickness));
     }
+
+    public Rect Move(Point offset)
+    {
+        return new Rect(Position + offset, Size);
+    }
+
 
 
 }

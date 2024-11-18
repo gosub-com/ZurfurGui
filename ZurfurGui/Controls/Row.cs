@@ -8,11 +8,9 @@ public class Row : Controllable
 {
     List<Rect> _arrange = new List<Rect>();
 
-    public string Type => "Row";
-    public string Name { get; init; } = "";
-    public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
+    public string Type => "ZGui.Row";
+    public override string ToString() => $"{View.Properties.Get(ZGui.Id) ?? ""}:{Type}";
     public View View { get; private set; }
-    public Properties Properties { get; set; } = new();
 
 
     public Row()
@@ -23,7 +21,7 @@ public class Row : Controllable
     public View BuildView(Properties properties)
     {
         View.Views.Clear();
-        ViewHelper.AddControllers(View.Views, properties.Getc(ZGui.Controls));
+        ViewHelper.BuildViewsFromProperties(View.Views, properties.Get(ZGui.Controls));
         return View;
     }
 
@@ -33,17 +31,17 @@ public class Row : Controllable
         _arrange.Clear();
         int arrangeIndex = 0;
 
-        var wrap = Properties.Gets(ZGui.Wrap) ?? false;
+        var wrap = View.Properties.Get(ZGui.Wrap, false);
         available.Width = wrap ? available.Width : double.PositiveInfinity;
         var rowPosX = 0.0;
         var rowPosY = 0.0;
         var rowHeight = 0.0;
         var viewWidth = 0.0;
         var viewHeight = 0.0;
-        var spacing = Properties.Gets(ZGui.Spacing) ?? new Size(5,5);
+        var spacing = View.Properties.Get(ZGui.Spacing, new Size(5, 5));
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Control?.Properties.Gets(ZGui.IsVisible) ?? true;
+            var viewIsVisible = view.Properties.Get(ZGui.IsVisible, true);
             if (!viewIsVisible)
                 continue;
 
@@ -73,12 +71,12 @@ public class Row : Controllable
         return new Size(viewWidth, viewHeight);
     }
 
-    public Size ArrangeViews(Size final)
+    public Size ArrangeViews(Size final, MeasureContext measure)
     {
         Debug.Assert(_arrange.Count  == View.Views.Count);
         for (int i  = 0;  i < _arrange.Count; i++)
         {
-            View.Views[i].Arrange(_arrange[i]);
+            View.Views[i].Arrange(_arrange[i], measure);
         }
         return final;
     }

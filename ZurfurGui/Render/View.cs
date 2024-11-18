@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
-using ZurfurGui.Render;
+using ZurfurGui.Controls;
 
-namespace ZurfurGui.Controls;
+namespace ZurfurGui.Render;
 
 public enum HorizontalAlignment : byte
 {
@@ -28,35 +28,60 @@ public class View
     internal void SetParentView(View? parent) { ParentView = parent; }
 
     /// <summary>
-    /// All child views, including ones that don't have a control
+    /// All child views
     /// </summary>
     public readonly List<View> Views = new List<View>();
-    
+
+    /// <summary>
+    /// Control properties
+    /// </summary>
+    public Properties Properties { get; set; } = new();
+
     /// <summary>
     /// The control, if there is one
     /// </summary>
-    public Controllable? Control { get; private set; }
+    public Controllable Control { get; private set; }
 
     /// <summary>
-    /// Measured size of view (as calculated by the measure pass)
+    /// Measured size of view as calculated by the measure pass.
     /// </summary>
     public Size DesiredSize { get; private set; }
 
     /// <summary>
-    /// Bounds of view within parent (as caluclated by the arrange pass)
+    /// Bounds of view within parent as caluclated by the arrange pass.
     /// </summary>
     public Rect Bounds { get; private set; }
+
+    /// <summary>
+    /// Location of view in device pixels as calculated by the post arrange pass.
+    /// </summary>
+    public Point Origin { get; private set; }
+
+    /// <summary>
+    /// Scale of view, relative to device pixels as calculated by the post arrange pass.
+    /// </summary>
+    public double Scale { get; private set; } = 1;
+
+    /// <summary>
+    /// Visually clipped region of the view in device pixels.
+    /// </summary>
+    public Rect Clip {  get; private set; }
+
+    public Point toDevice(Point p) => Origin + p;
+    public Size toDevice(Size s) => Scale * s;
+    public Rect toDevice(Rect r) => new Rect(Origin + r.Position, Scale * r.Size);
+
 
     public View(Controllable control)
     {
         Control = control;
     }
 
-    public string Type => Control?.Type ?? "";
+    public string Type => Control.Type;
 
     public override string ToString()
     {
-        return $"{(Control == null ? "View" : $"View:{Control}")}";
+        return $"View:{Control}";
     }
 
     /// <summary>
@@ -70,31 +95,28 @@ public class View
     /// </summary>
     public void Measure(Size available, MeasureContext measure)
     {
-        var isVisible = Control?.Properties?.Gets(ZGui.IsVisible) ?? true;
+        var isVisible = Properties.Get(ZGui.IsVisible, true);
         if (!isVisible)
-        {
-            DesiredSize = new();
             return;
-        }
 
-        var margin = Control?.Properties.Gets(ZGui.Margin) ?? new();
+        var margin = Properties.Get(ZGui.Margin);
         var constrained = ApplyLayoutConstraints(this, available.Deflate(margin));
-        var measured = Control?.MeasureView(constrained, measure) ?? new();
+        var measured = Control.MeasureView(constrained, measure);
 
         // Size override
-        var sizeOverride = Control?.Properties.Gets(ZGui.Size)??new(double.NaN, double.NaN);
+        var sizeOverride = Properties.Get(ZGui.Size, new(double.NaN, double.NaN));
         if (!double.IsNaN(sizeOverride.Width))
             measured.Width = sizeOverride.Width;
         if (!double.IsNaN(sizeOverride.Height))
             measured.Height = sizeOverride.Height;
 
         // Max size override
-        var sizeMax = Control?.Properties.Gets(ZGui.SizeMax) ?? new(double.PositiveInfinity, double.PositiveInfinity);
+        var sizeMax = Properties.Get(ZGui.SizeMax, new(double.PositiveInfinity, double.PositiveInfinity));
         measured.Width = Math.Min(measured.Width, sizeMax.Width);
         measured.Height = Math.Min(measured.Height, sizeMax.Height);
 
         // Min  size override
-        var sizeMin = Control?.Properties.Gets(ZGui.SizeMax) ?? new(0, 0);
+        var sizeMin = Properties.Get(ZGui.SizeMax);
         measured.Width = Math.Max(measured.Width, sizeMin.Width);
         measured.Height = Math.Max(measured.Height, sizeMin.Height);
 
@@ -112,30 +134,29 @@ public class View
     /// Called to set the Bounds of the control within the parent.
     /// Similar to ArrangeCore in WPF
     /// </summary>
-    public void Arrange(Rect finalRect)
+    public void Arrange(Rect finalRect, MeasureContext measure)
     {
-        var isVisible = Control?.Properties?.Gets(ZGui.IsVisible) ?? true;
+        var isVisible = Properties.Get(ZGui.IsVisible, true);
         if (!isVisible)
             return;
 
-        var margin = Control?.Properties.Gets(ZGui.Margin) ?? new();
+        var margin = Properties.Get(ZGui.Margin);
         var availableSize = finalRect.Size.Deflate(margin);
         var x = finalRect.X + margin.Left;
         var y = finalRect.Y + margin.Top;
         var size = availableSize;
 
-        var horizontalAlignment = Control?.Properties.Gets(ZGui.AlignHorizontal) ?? new();
+        var horizontalAlignment = Properties.Get(ZGui.AlignHorizontal);
         if (horizontalAlignment != HorizontalAlignment.Stretch)
             size.Width = Math.Min(size.Width, DesiredSize.Width - margin.Left - margin.Right);
 
-        var verticalAlignment = Control?.Properties.Gets(ZGui.AlignVertical) ?? new();
+        var verticalAlignment = Properties.Get(ZGui.AlignVertical);
         if (verticalAlignment != VerticalAlignment.Stretch)
             size.Height = Math.Min(size.Height, DesiredSize.Height - margin.Top - margin.Bottom);
 
         size = ApplyLayoutConstraints(this, size);
 
-        if (Control != null)
-            size = Control.ArrangeViews(size).Constrain(size);
+        size = Control.ArrangeViews(size, measure).Constrain(size);
 
         switch (horizontalAlignment)
         {
@@ -162,11 +183,29 @@ public class View
         Bounds = new Rect(x, y, size.Width, size.Height);
     }
 
+    /// <summary>
+    /// Set view's origin and scale
+    /// </summary>
+    internal void PostArrange(Point origin, double scale, Rect clip)
+    {
+        var isVisible = Properties.Get(ZGui.IsVisible, true);
+        if (!isVisible)
+            return;
+
+        Scale = scale * Properties.Get(ZGui.Magnification, 1);
+        Origin = origin + scale * Bounds.Position;
+
+        clip = clip.Intersect(Bounds).Move(-Bounds.Position);
+        Clip = clip;
+        foreach (var view in Views)
+            view.PostArrange(Origin, Scale, clip);
+    }
+
     public static Size ApplyLayoutConstraints(View v, Size constraints)
     {
-        var size = v.Control?.Properties.Gets(ZGui.Size)??new(double.NaN, double.NaN);
-        var sizeMax = v.Control?.Properties.Gets(ZGui.SizeMax) ?? new(double.PositiveInfinity, double.PositiveInfinity);
-        var sizeMin = v.Control?.Properties.Gets(ZGui.SizeMin) ?? new(0,0);
+        var size = v.Properties.Get(ZGui.Size, new(double.NaN, double.NaN));
+        var sizeMax = v.Properties.Get(ZGui.SizeMax, new(double.PositiveInfinity, double.PositiveInfinity));
+        var sizeMin = v.Properties.Get(ZGui.SizeMin);
 
         var h = size.Height;
         var height = double.IsNaN(h) ? double.PositiveInfinity : h;
@@ -187,4 +226,23 @@ public class View
             Math.Clamp(constraints.Height, minHeight, maxHeight));
     }
 
+
+    /// <summary>
+    /// TBD: This needs to be a lot better, to support components, etc.
+    /// https://dev.to/marcel-goldammer/dynamic-ids-in-angular-components-1b6n
+    /// </summary>
+    public List<View> FindAllById(string id)
+    {
+        var views = new List<View>();
+        FindAllById(id, views);
+        return views;
+    }
+
+    void FindAllById(string id, List<View> views)
+    {
+        if (Properties.Get(ZGui.Id) == id)
+            views.Add(this);
+        foreach (var view in Views)
+            view.FindAllById(id, views);
+    }
 }

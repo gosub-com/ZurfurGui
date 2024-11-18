@@ -9,12 +9,11 @@ public class Label : Controllable
 {
     // Expand lines over the size of the font itself
     const double LINE_SPACING = 1;
+    const double TEXT_BASELINE = 0.8;
 
-    public string Type => "Label";
-    public string Name { get; init; } = "";
-    public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
+    public string Type => "ZGui.Label";
+    public override string ToString() => $"{View.Properties.Get(ZGui.Id) ?? ""}:{Type}";
     public View View { get; private set; }
-    public Properties Properties { get; set; } = new();
 
     public Label()
     {
@@ -28,25 +27,30 @@ public class Label : Controllable
 
     public Size MeasureView(Size available, MeasureContext measure)
     {
-        var fontName = Properties.Getc(ZGui.FontName) ?? "Arial";
-        var fontSize = Properties.Gets(ZGui.FontSize) ?? 16.0;
-        var text = Properties.Getc(ZGui.Text) ?? "";
+        var fontName = View.Properties.Get(ZGui.FontName) ?? "Arial";
+        var fontSize = View.Properties.Get(ZGui.FontSize, 16.0);
+        var text = View.Properties.Get(ZGui.Text) ?? "";
         var lines = text.Split("\n");
         var maxWidth = lines.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
         return new Size(maxWidth, lines.Length * LINE_SPACING * fontSize);
     }
-    public Size ArrangeViews(Size final) => final;
-
+    public Size ArrangeViews(Size final, MeasureContext measure) => final;
 
     public void Render(RenderContext context)
     {
-        var fontName = Properties.Getc(ZGui.FontName) ?? "Arial";
-        var fontSize = Properties.Gets(ZGui.FontSize) ?? 16.0;
-        var text = Properties.Getc(ZGui.Text) ?? "";
+        var fontName = View.Properties.Get(ZGui.FontName) ?? "Arial";
+        var fontSize = View.Properties.Get(ZGui.FontSize, 16.0);
+        var text = View.Properties.Get(ZGui.Text) ?? "";
         context.FontName = fontName;
         context.FontSize = fontSize;
         context.FillColor = Colors.White;
-        context.FillText(text, 0, fontSize);
+
+        // Mouse over color change
+        if (View.toDevice(View.Clip).Contains(context.PointerPosition))
+            context.FillColor = Colors.Red;
+
+
+        context.FillText(text, 0, fontSize*TEXT_BASELINE);
 
         context.LineWidth = 1;
         context.StrokeColor = Colors.Gray;

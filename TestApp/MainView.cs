@@ -3,7 +3,7 @@
 using System.ComponentModel.DataAnnotations;
 using ZurfurGui;
 using ZurfurGui.Controls;
-
+using ZurfurGui.Render;
 
 public class MainView
 {
@@ -241,7 +241,11 @@ public class MainView
                         ],
                         [
                             (ZGui.Controller, "ZGui.Label"),
-                            (ZGui.Text, "Done"),
+                            (ZGui.Text, "Done - Label"),
+                        ],
+                        [
+                            (ZGui.Controller, "ZGui.Button"),
+                            (ZGui.Text, "Done - Button"),
                         ],
                     ])
                 ]

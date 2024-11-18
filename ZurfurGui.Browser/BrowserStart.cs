@@ -4,21 +4,19 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
-
 using ZurfurGui.Browser.Interop;
-using ZurfurGui.Controls;
 using ZurfurGui.Render;
 
 namespace ZurfurGui.Browser;
 
 public static partial class BrowserStart
 {
-    const string STARTUP_CODE_NAME = "ZurfurGui.Browser.BrowserStart.js";
+    const string BROWSER_START_SCRIPT_NAME = "ZurfurGui.Browser.BrowserStart.js";
 
     [JSExport]
-    public static string GetStartupScript()
+    public static string GetBrowserStartScript()
     {
-        return GetEmbeddedResourceString(STARTUP_CODE_NAME);
+        return GetEmbeddedResourceString(BROWSER_START_SCRIPT_NAME);
     }
 
     private static string GetEmbeddedResourceString(string name)
@@ -40,9 +38,10 @@ public static partial class BrowserStart
     {
         Initialize.Init();
 
-        var window = new BrowserWindow(canvasId);
-        var renderer = new Renderer(window, controls);
-        var canvas = window.PrimaryCanvas;
+        var window = new BrowserWindow();
+        var canvas = new BrowserCanvas(canvasId, window);
+
+        var renderer = new Renderer(window, canvas, controls);
         var context = canvas.Context;
 
         // On first render, allow an exception to percolate up and show an error message

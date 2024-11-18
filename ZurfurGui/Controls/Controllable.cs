@@ -10,17 +10,9 @@ public interface Controllable
     string Type { get; }
 
     /// <summary>
-    /// Optional control name ("" if not supplied).  When supplied, must be unique within the controls collection.
-    /// </summary>
-    string Name { get; init; }
-
-    /// <summary>
     /// The main control view.  Each control must have a MainView, that is readonly (i.e. never changes)
     /// </summary>
     View View { get; }
-
-
-    Properties Properties { get; set; }
 
 
     View BuildView(Properties properties);
@@ -36,7 +28,7 @@ public interface Controllable
     /// Arrange the controls children.
     /// Similar to ArrangeOverride in WPF
     /// </summary>
-    Size ArrangeViews(Size final);
+    Size ArrangeViews(Size final, MeasureContext measure);
 
     /// <summary>
     /// Render the control

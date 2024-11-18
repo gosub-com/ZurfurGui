@@ -7,12 +7,10 @@ using System.Threading.Tasks;
 
 namespace ZurfurGui.Platform;
 
-
+public record class PointerEvent(string Type, Point Position);
 
 public interface OsWindow
 {
-    public OsCanvas PrimaryCanvas { get; }
-
     /// <summary>
     /// Best guess as to how big a pixel should be on our device
     /// </summary>
@@ -61,7 +59,18 @@ public interface OsCanvas
     /// </summary>
     public Size StyleSize { get; set; }
 
+    /// <summary>
+    /// True if the canvas has the focus
+    /// </summary>
+    public bool HasFocus { get; }
+
+
+    /// <summary>
+    /// Observe the pointer input
+    /// </summary>
+    public Action<PointerEvent>? PointerInput {  get; set; }
 }
+
 
 public interface OsContext
 {

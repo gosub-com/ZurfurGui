@@ -25,7 +25,6 @@
 
     <!-- Preload stuff ASAP -->
     <link rel="prefetch" href="./_framework/dotnet.native.wasm" /> <!-- BIG -->
-    <link rel="modulepreload" href="./_framework/dotnet.js" />
     <link rel="prefetch" href="./_framework/blazor.boot.json" />
 
     <!-- Splash screen css -->
@@ -57,7 +56,7 @@
     </div>
 
     <!-- Canvas to host main app -->
-    <canvas id="canvasMain" style="margin: 0; border: 0; overflow: hidden;" />
+    <canvas id="canvasMain" style="margin: 0; border: 0; overflow: hidden; touch-action: none;" tabindex="1" />
 
     <!-- Run main app -->
     <script type="module">
@@ -67,6 +66,7 @@
         const SPLASH_ERROR_ID = "splash-text";
         const FRAMEWORK = "./_framework/dotnet.js";
         const ASSEMBLY = "ZurfurGui.Browser";
+
         try {
             const framework = await import(FRAMEWORK);
             const dotnetRuntime = await framework.dotnet
@@ -74,7 +74,7 @@
                 .withApplicationArgumentsFromQuery()
                 .create();
             const exports = await dotnetRuntime.getAssemblyExports(ASSEMBLY);
-            eval(exports.ZurfurGui.Browser.BrowserStart.GetStartupScript());
+            eval(exports.ZurfurGui.Browser.BrowserStart.GetBrowserStartScript());
             const config = dotnetRuntime.getConfig();
             await dotnetRuntime.runMain(config.mainAssemblyName, [CANVAS_ID]);
             document.getElementById(SPLASH_ID).remove();

@@ -9,11 +9,9 @@ namespace ZurfurGui.Controls;
 
 public class Canvas : Controllable
 {
-    public string Type => "Canvas";
-    public string Name { get; init; } = "";
-    public override string ToString() => $"{Type}{(Name == "" ? "" : $":{Name}")}";
+    public string Type => "ZGui.Canvas";
+    public override string ToString() => $"{View.Properties.Get(ZGui.Id) ?? ""}:{Type}";
     public View View { get; private set; }
-    public Properties Properties { get; set; } = new();
 
     public Canvas()
     {
@@ -23,7 +21,7 @@ public class Canvas : Controllable
     public View BuildView(Properties properties)
     {
         View.Views.Clear();
-        ViewHelper.AddControllers(View.Views, properties.Getc(ZGui.Controls));
+        ViewHelper.BuildViewsFromProperties(View.Views, properties.Get(ZGui.Controls));
         return View;
     }
 
@@ -35,7 +33,7 @@ public class Canvas : Controllable
         var windowMeasured = new Size();
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Control?.Properties.Gets(ZGui.IsVisible) ?? true;
+            var viewIsVisible = view.Properties.Get(ZGui.IsVisible, true);
             if (!viewIsVisible)
                 continue;
 
@@ -50,11 +48,11 @@ public class Canvas : Controllable
     /// <summary>
     /// A canvas puts all controls at (0,0), like a window.  Position can be controlled using margin.
     /// </summary>
-    public Size ArrangeViews(Size final)
+    public Size ArrangeViews(Size final, MeasureContext measure)
     {
         var layoutRect = new Rect(0, 0, final.Width, final.Height);
         foreach (var view in View.Views)
-            view.Arrange(layoutRect);
+            view.Arrange(layoutRect, measure);
 
         return final;
     }

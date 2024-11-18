@@ -7,14 +7,15 @@ using ZurfurGui.Platform;
 
 namespace ZurfurGui.Render;
 
+
 public class RenderContext
 {
     OsContext _context;
+    public Point _origin;
+    public double _scale = 1.0;
 
-    Point _origin;
-    double _scale = 1.0;
-
-    List<(Point origin, double scale)> Origins = new();
+    // TBD: Turn into a class, PointerInfo
+    public Point PointerPosition { get; private set; }
 
     public RenderContext(OsContext context)
     {
@@ -28,21 +29,16 @@ public class RenderContext
         return _context.MeasureTextWidth(text) * 0.001 * fontSize;
     }
 
-    public void PushOrigin(Point origin, double scale)
+    internal void SetOrigin(Point origin, double scale)
     {
-        Origins.Add((_origin, _scale));
-        _scale *= scale;
-        _origin = _origin + _scale*origin;
+        _origin = origin;
+        _scale = scale;
     }
 
-    public void PopOrigin()
+    internal void SetPointerPosition(Point pos)
     {
-        if (Origins.Count == 0)
-            throw new Exception("Pop origin failed");
-        (_origin, _scale) = Origins[^1];
-        Origins.RemoveAt(Origins.Count - 1);
+        PointerPosition = pos;
     }
-
 
     public Color FillColor { set { _context.FillColor = value; } }
     public Color StrokeColor { set { _context.StrokeColor = value; } }
@@ -65,6 +61,5 @@ public class RenderContext
         => _context.ClipRect(_scale * x + _origin.X, _scale * y + _origin.Y, _scale * width, _scale * height);
     public void ClipRect(Rect r)
         => ClipRect(r.X, r.Y, r.Width, r.Height);
-
 
 }

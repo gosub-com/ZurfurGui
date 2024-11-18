@@ -22,16 +22,10 @@ internal partial class BrowserWindow : OsWindow
     public static partial void RequestAnimationFrame([JSMarshalAs<JSType.Function>] Action callback);
 
 
-    public BrowserWindow(string canvasId)
+    public BrowserWindow()
     {
         _js = GetBrowserWindow();
-        PrimaryCanvas = new BrowserCanvas(GetElementById(canvasId)
-            ?? throw new Exception($"Expecting canvas DOM element with ID '{canvasId}'"), canvasId);
     }
-
-
-    public OsCanvas PrimaryCanvas { get; private set; }
-
 
     public double DevicePixelRatio => _js.GetPropertyAsDouble("devicePixelRatio");
 

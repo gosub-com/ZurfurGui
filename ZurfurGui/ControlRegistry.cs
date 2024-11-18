@@ -4,8 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using ZurfurGui.Controls;
 
-namespace ZurfurGui.Controls;
+namespace ZurfurGui;
 
 public static class ControlRegistry
 {
@@ -13,30 +14,31 @@ public static class ControlRegistry
     static Dictionary<string, Func<Controllable>> s_controls = new();
 
     /// <summary>
-    /// Add a new control creator function
+    /// Add a new control creator function.  The type of control must be inique.
     /// </summary>
-    public static void Add(string name, Func<Controllable> createControl)
+    public static void Add(Func<Controllable> createControl)
     {
         lock (s_lock)
         {
-            if (s_controls.ContainsKey(name))
-                throw new ArgumentException($"Control registray already contains '{name}'");
-            s_controls[name] = createControl;
-        }   
+            var typeName = createControl().Type;
+            if (s_controls.ContainsKey(typeName))
+                throw new ArgumentException($"Control registray already contains '{typeName}'");
+            s_controls[typeName] = createControl;
+        }
     }
 
     /// <summary>
     /// Crete a new control, or return null if the control name doesn't exist
     /// </summary>
-    public static Controllable? Create(string name)
+    public static Controllable? Create(string typeName)
     {
         lock (s_lock)
         {
-            if (s_controls.TryGetValue(name, out var createFun))
+            if (s_controls.TryGetValue(typeName, out var createFun))
                 return createFun();
             return null;
         }
     }
 
-    
+
 }

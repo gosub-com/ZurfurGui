@@ -11,14 +11,23 @@ internal class WinCanvas : OsCanvas
 {
     PictureBox _pictureBox;
     WinContext _context;
+    Action<PointerEvent>? _pointerInput;
+    public OsContext Context => _context;
+
 
     public WinCanvas(PictureBox pictureBox)
     {
         _pictureBox = pictureBox;
         _context = new WinContext(pictureBox.CreateGraphics());
+
+        pictureBox.MouseMove += PictureBox_MouseMove;
     }
 
-    public OsContext Context => _context;
+    private void PictureBox_MouseMove(object? sender, MouseEventArgs e)
+    {
+        _pointerInput?.Invoke(new PointerEvent("pointermove", new(e.X, e.Y)));
+    }
+
 
     public Size DeviceSize 
     {
@@ -37,4 +46,11 @@ internal class WinCanvas : OsCanvas
         set => throw new NotImplementedException();
     }
 
+    public bool HasFocus => true;
+
+    public Action<PointerEvent>? PointerInput 
+    {
+        get => _pointerInput;
+        set { _pointerInput = value; }
+    }
 }
