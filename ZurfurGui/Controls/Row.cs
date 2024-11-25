@@ -9,7 +9,7 @@ public class Row : Controllable
     List<Rect> _arrange = new List<Rect>();
 
     public string Type => "ZGui.Row";
-    public override string ToString() => $"{View.Properties.Get(ZGui.Id) ?? ""}:{Type}";
+    public override string ToString() => View.ToString();
     public View View { get; private set; }
 
 
@@ -21,7 +21,7 @@ public class Row : Controllable
     public View BuildView(Properties properties)
     {
         View.Views.Clear();
-        ViewHelper.BuildViewsFromProperties(View.Views, properties.Get(ZGui.Controls));
+        Helper.BuildViewsFromProperties(View.Views, properties.Get(ZGui.Controls));
         return View;
     }
 

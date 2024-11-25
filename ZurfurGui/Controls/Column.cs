@@ -5,7 +5,7 @@ namespace ZurfurGui.Controls;
 public class Column : Controllable
 {
     public string Type => "ZGui.Column";
-    public override string ToString() => $"{View.Properties.Get(ZGui.Id) ?? ""}:{Type}";
+    public override string ToString() => View.ToString();
     public View View { get; private set; }
 
     /// <summary>
@@ -21,7 +21,7 @@ public class Column : Controllable
     public View BuildView(Properties properties)
     {
         View.Views.Clear();
-        ViewHelper.BuildViewsFromProperties(View.Views, properties.Get(ZGui.Controls));
+        Helper.BuildViewsFromProperties(View.Views, properties.Get(ZGui.Controls));
         return View;
     }
 

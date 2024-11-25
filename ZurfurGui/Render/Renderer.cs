@@ -14,6 +14,8 @@ public class Renderer
     BackgroundTest? _background;
     RenderContext _renderContext;
 
+    View? _hoverView;
+
     int _frameCount;
     int _frameLastCountSecond;
     int _fps;
@@ -29,7 +31,7 @@ public class Renderer
 
     public Renderer(OsWindow window, OsCanvas canvas, Properties controls)
     {
-        const string BACKGROUND_ID = "ZGui.BackgroundTest";
+        const string BACKGROUND_NAME = "ZGui.BackgroundTest";
 
         _window = window;
         _canvas = canvas;
@@ -37,18 +39,18 @@ public class Renderer
 
         Properties background = [
             (ZGui.Controller, "ZGui.BackgroundTest"),
-            (ZGui.Id, BACKGROUND_ID)
+            (ZGui.Name, BACKGROUND_NAME)
         ];
 
         // Add canvas to top level controls, so we can adjust device pixel resolution
         controls = [
-            (ZGui.Controller, "ZGui.Canvas"),
+            (ZGui.Controller, "ZGui.Panel"),
             (ZGui.Controls, (Properties[])[background, controls])
         ];
 
-        _view = ViewHelper.BuildViewFromProperties(controls);
+        _view = Helper.BuildViewFromProperties(controls);
 
-        var back = _view.FindAllById(BACKGROUND_ID);
+        var back = _view.FindAllByName(BACKGROUND_NAME);
         if (back.Count != 0)
             _background = back[0].Control as BackgroundTest;
         _background?.SetWindow(window, canvas);
@@ -60,9 +62,24 @@ public class Renderer
 
     void PointerInput(PointerEvent ev)
     {
-        Console.WriteLine($"Pointer input: type={ev.Type}, xy={ev.Position}");
         _pointerPosition = ev.Position;
+        
+        if (ev.Type == "pointermove")
+        {
+            var hit = View.FindHitTarget(_view, ev.Position);
+            if (hit != null)
+                Debug.WriteLine($"Hit: {hit}");
+            if (hit != _hoverView)
+            {
+                if (_hoverView != null)
+                    _hoverView.PointerHoverTarget = false;
+                _hoverView = hit;
+                if (_hoverView != null)
+                    _hoverView.PointerHoverTarget = true;
+            }
+        }
     }
+
 
     public void RenderFrame()
     {

@@ -13,7 +13,7 @@ namespace ZurfurGui;
 /// </summary>
 public static class ZGui
 {
-    public static readonly PropertyKey<string> Id = new("ZGui.Id");
+    public static readonly PropertyKey<string> Name = new("ZGui.Name");
     public static readonly PropertyKey<string> Controller = new("ZGui.Controller");
     public static readonly PropertyKey<Properties[]> Controls = new("ZGui.Controls");
     public static readonly PropertyKey<bool> IsVisible = new("ZGui.IsVisible");

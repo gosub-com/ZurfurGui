@@ -14,7 +14,7 @@ public class Button : Controllable
     const double TEXT_BASELINE = 0.8;
 
     public string Type => "ZGui.Button";
-    public override string ToString() => $"{View.Properties.Get(ZGui.Id) ?? ""}:{Type}";
+    public override string ToString() => View.ToString();
     public View View { get; private set; }
 
     public Button()
@@ -37,8 +37,8 @@ public class Button : Controllable
         var maxWidth = lines.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
         return new Size(maxWidth, lines.Length * LINE_SPACING * fontSize);
     }
-    public Size ArrangeViews(Size final, MeasureContext measure) => final;
 
+    public Size ArrangeViews(Size final, MeasureContext measure) => final;
 
     public void Render(RenderContext context)
     {
@@ -49,13 +49,20 @@ public class Button : Controllable
         context.FillColor = Colors.Gray;
 
         // Mouse over color change
-        if (new Rect(View.Origin + View.Clip.Position, View.Clip.Size * View.Scale).Contains(context.PointerPosition))
+        if (View.PointerHoverTarget)
             context.FillColor = Colors.Red;
 
-        context.FillRect(0, 0, View.Bounds.Width, View.Bounds.Height);
+        context.FillRect(0, 0, View.Size.Width, View.Size.Height);
         context.FontName = fontName;
         context.FontSize = fontSize;
         context.FillColor = Colors.White;
         context.FillText(text, 0, fontSize * TEXT_BASELINE);
+    }
+
+    public bool IsHit(Point point)
+    {
+        var p = View.toClient(point);
+        return new Rect(new(0,0), View.Size).Contains(p);
+        return true;
     }
 }

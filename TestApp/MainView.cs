@@ -18,7 +18,7 @@ public class MainView
         swtControl2.Set(ZGui.AlignVertical, VerticalAlignment.Bottom);
 
         Properties canvas2Controller = [
-            (ZGui.Controller, "ZGui.Canvas"),
+            (ZGui.Controller, "ZGui.Panel"),
             (ZGui.Margin, new Thickness(10, 10, 10, 10)),
             (ZGui.AlignHorizontal, HorizontalAlignment.Stretch),
             (ZGui.AlignVertical, VerticalAlignment.Stretch),

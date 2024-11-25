@@ -48,9 +48,14 @@ public class View
     public Size DesiredSize { get; private set; }
 
     /// <summary>
-    /// Bounds of view within parent as caluclated by the arrange pass.
+    /// Position of view within parent as caluclated by the arrange pass.
     /// </summary>
-    public Rect Bounds { get; private set; }
+    public Point Position { get; private set; }
+
+    /// <summary>
+    /// Size of view as caluclated by the arrange pass.
+    /// </summary>
+    public Size Size { get; private set; }
 
     /// <summary>
     /// Location of view in device pixels as calculated by the post arrange pass.
@@ -63,25 +68,25 @@ public class View
     public double Scale { get; private set; } = 1;
 
     /// <summary>
-    /// Visually clipped region of the view in device pixels.
+    /// Visually clipped region of the view in control coordinates
     /// </summary>
     public Rect Clip {  get; private set; }
 
-    public Point toDevice(Point p) => Origin + p;
+    public Point toDevice(Point p) => Origin + p*Scale;
     public Size toDevice(Size s) => Scale * s;
-    public Rect toDevice(Rect r) => new Rect(Origin + r.Position, Scale * r.Size);
+    public Rect toDevice(Rect r) => new Rect(Origin + r.Position*Scale, Scale * r.Size);
+    public Point toClient(Point p) => (p - Origin) / Scale;
 
+    public bool PointerHoverTarget {  get; internal set; }
 
     public View(Controllable control)
     {
         Control = control;
     }
 
-    public string Type => Control.Type;
-
     public override string ToString()
     {
-        return $"View:{Control}";
+        return $"{Control.Type}: {Properties.Get(ZGui.Name) ?? "(no name)"}";
     }
 
     /// <summary>
@@ -180,7 +185,8 @@ public class View
                 break;
         }
 
-        Bounds = new Rect(x, y, size.Width, size.Height);
+        Position = new(x, y);
+        Size = new(size.Width, size.Height);
     }
 
     /// <summary>
@@ -193,9 +199,9 @@ public class View
             return;
 
         Scale = scale * Properties.Get(ZGui.Magnification, 1);
-        Origin = origin + scale * Bounds.Position;
+        Origin = origin + scale * Position;
 
-        clip = clip.Intersect(Bounds).Move(-Bounds.Position);
+        clip = clip.Intersect(new(Position, Size)).Move(-Position);
         Clip = clip;
         foreach (var view in Views)
             view.PostArrange(Origin, Scale, clip);
@@ -231,18 +237,44 @@ public class View
     /// TBD: This needs to be a lot better, to support components, etc.
     /// https://dev.to/marcel-goldammer/dynamic-ids-in-angular-components-1b6n
     /// </summary>
-    public List<View> FindAllById(string id)
+    public List<View> FindAllByName(string name)
     {
         var views = new List<View>();
-        FindAllById(id, views);
+        FindAllByName(name, views);
         return views;
     }
 
-    void FindAllById(string id, List<View> views)
+    void FindAllByName(string name, List<View> views)
     {
-        if (Properties.Get(ZGui.Id) == id)
+        if (Properties.Get(ZGui.Name) == name)
             views.Add(this);
         foreach (var view in Views)
-            view.FindAllById(id, views);
+            view.FindAllByName(name, views);
     }
+
+    public static View? FindHitTarget(View view, Point target)
+    {
+        var clip = view.toDevice(view.Clip);
+        if (!clip.Contains(target))
+            return null;
+
+        Debug.WriteLine($"{view}, {clip}, text='{view.Properties.Get(ZGui.Text) ?? "(no)"}'");
+
+        if (view.Control.IsHit(target))
+            return view;
+
+
+
+        for (var i = view.Views.Count - 1; i >= 0; i--)
+        {
+            var hit = FindHitTarget(view.Views[i], target);
+            if (hit != null)
+                return hit;
+        }
+        return null;
+    }
+
+
+
+
 }

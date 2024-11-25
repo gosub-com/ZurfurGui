@@ -12,7 +12,7 @@ public class Label : Controllable
     const double TEXT_BASELINE = 0.8;
 
     public string Type => "ZGui.Label";
-    public override string ToString() => $"{View.Properties.Get(ZGui.Id) ?? ""}:{Type}";
+    public override string ToString() => View.ToString();
     public View View { get; private set; }
 
     public Label()
@@ -46,7 +46,7 @@ public class Label : Controllable
         context.FillColor = Colors.White;
 
         // Mouse over color change
-        if (View.toDevice(View.Clip).Contains(context.PointerPosition))
+        if (View.PointerHoverTarget)
             context.FillColor = Colors.Red;
 
 
@@ -54,6 +54,13 @@ public class Label : Controllable
 
         context.LineWidth = 1;
         context.StrokeColor = Colors.Gray;
-        context.StrokeRect(0, 0, View.Bounds.Width, View.Bounds.Height);
+        context.StrokeRect(0, 0, View.Size.Width, View.Size.Height);
     }
+
+    public bool IsHit(Point point)
+    {
+        var p = View.toClient(point);
+        return new Rect(new(0, 0), View.DesiredSize).Contains(p);
+    }
+
 }

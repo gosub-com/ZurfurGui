@@ -39,6 +39,7 @@ internal class WinContext : OsContext
     Pen? _pen;
     Font? _font;
     GraphicsPath _path = new();
+    Region _region = new();
 
     Color _fillColor = new Color(0, 0, 0);
     Color _strokeColor = new Color(0, 0, 0);
@@ -72,6 +73,7 @@ internal class WinContext : OsContext
             _pen = new Pen(WinColor(_strokeColor), (float)(_lineWidth));
         return _pen;
     }
+
     public Color FillColor 
     {
         get => _fillColor;
@@ -164,7 +166,8 @@ internal class WinContext : OsContext
 
     public void ClipRect(double x, double y, double width, double height)
     {
-        _graphics.Clip = new Region(new RectangleF(
-            (float)x, (float)y, (float)width, (float)height));
+        _region.MakeInfinite();
+        _region.Intersect(new RectangleF((float)x, (float)y, (float)width, (float)height));
+        _graphics.Clip = _region;
     }
 }

@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Render;
 
-namespace ZurfurGui.Render;
+namespace ZurfurGui.Controls;
 
-public static class ViewHelper
+
+public static class Helper
 {
 
     /// <summary>
@@ -35,5 +38,29 @@ public static class ViewHelper
         return control.BuildView(controllerProperties);
     }
 
+    public static Size MeasurePanel(IEnumerable<View> views, Size available, MeasureContext measure)
+    {
+        var windowMeasured = new Size();
+        foreach (var view in views)
+        {
+            var viewIsVisible = view.Properties.Get(ZGui.IsVisible, true);
+            if (!viewIsVisible)
+                continue;
+
+            view.Measure(available, measure);
+            var childMeasured = view.DesiredSize;
+            windowMeasured.Width = Math.Max(windowMeasured.Width, childMeasured.Width);
+            windowMeasured.Height = Math.Max(windowMeasured.Height, childMeasured.Height);
+        }
+        return windowMeasured;
+    }
+    public static Size ArrangePanel(IReadOnlyList<View> views, Size final, MeasureContext measure)
+    {
+        var layoutRect = new Rect(0, 0, final.Width, final.Height);
+        foreach (var view in views)
+            view.Arrange(layoutRect, measure);
+
+        return final;
+    }
 
 }

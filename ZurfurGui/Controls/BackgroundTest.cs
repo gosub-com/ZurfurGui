@@ -20,7 +20,7 @@ internal class BackgroundTest : Controllable
     long _avgMs;
 
     public string Type => "ZGui.BackgroundTest";
-    public override string ToString() => $"{View.Properties.Get(ZGui.Id)??""}:{Type}";
+    public override string ToString() => View.ToString();
     public View View { get; private set; }
 
     public BackgroundTest()
@@ -56,7 +56,7 @@ internal class BackgroundTest : Controllable
         var ls = 26;
 
         renderContext.FillColor = new Color(0x20, 0x20, 0x80);
-        renderContext.FillRect(0, 0, View.Bounds.Width, View.Bounds.Height);
+        renderContext.FillRect(0, 0, View.Size.Width, View.Size.Height);
 
         renderContext.FillColor = new Color(0x80, 0x80, 0xF0);
         renderContext.FontName = "sans-serif";

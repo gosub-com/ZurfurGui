@@ -16,7 +16,7 @@ public static class Initialize
     {
         ControlRegistry.Add(() => new BackgroundTest());
         ControlRegistry.Add(() => new Button());
-        ControlRegistry.Add(() => new Canvas());
+        ControlRegistry.Add(() => new Panel());
         ControlRegistry.Add(() => new Column());
         ControlRegistry.Add(() => new Label());
         ControlRegistry.Add(() => new Row());

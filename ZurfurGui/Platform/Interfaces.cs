@@ -64,7 +64,6 @@ public interface OsCanvas
     /// </summary>
     public bool HasFocus { get; }
 
-
     /// <summary>
     /// Observe the pointer input
     /// </summary>

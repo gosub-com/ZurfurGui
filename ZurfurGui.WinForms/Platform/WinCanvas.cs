@@ -20,14 +20,10 @@ internal class WinCanvas : OsCanvas
         _pictureBox = pictureBox;
         _context = new WinContext(pictureBox.CreateGraphics());
 
-        pictureBox.MouseMove += PictureBox_MouseMove;
+        pictureBox.MouseMove += (s, e) => _pointerInput?.Invoke(new PointerEvent("pointermove", new(e.X, e.Y))); ;
+        pictureBox.MouseDown += (s, e) => _pointerInput?.Invoke(new PointerEvent("pointerdown", new(e.X, e.Y)));
+        pictureBox.MouseUp += (s, e) => _pointerInput?.Invoke(new PointerEvent("pointerup", new(e.X, e.Y))); ;
     }
-
-    private void PictureBox_MouseMove(object? sender, MouseEventArgs e)
-    {
-        _pointerInput?.Invoke(new PointerEvent("pointermove", new(e.X, e.Y)));
-    }
-
 
     public Size DeviceSize 
     {

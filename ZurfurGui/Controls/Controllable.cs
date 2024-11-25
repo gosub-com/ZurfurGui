@@ -34,5 +34,10 @@ public interface Controllable
     /// Render the control
     /// </summary>
     void Render(RenderContext context) { }
+
+    /// <summary>
+    /// Returns TRUE if this control is opaque at the point
+    /// </summary>
+    bool IsHit(Point target) { return false; }
 }
 
