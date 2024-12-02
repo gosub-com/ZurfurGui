@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using ZurfurGui.Controls;
 
 namespace ZurfurGui.Render;
 
@@ -24,13 +23,13 @@ public class View
     /// <summary>
     /// Parent view
     /// </summary>
-    public View? ParentView { get; private set; }
-    internal void SetParentView(View? parent) { ParentView = parent; }
+    public View? Parent { get; private set; }
+    internal void SetParentView(View? parent) { Parent = parent; }
 
     /// <summary>
     /// All child views
     /// </summary>
-    public readonly List<View> Views = new List<View>();
+    public List<View> Views { get; set; } = new List<View>();
 
     /// <summary>
     /// Control properties
@@ -70,14 +69,14 @@ public class View
     /// <summary>
     /// Visually clipped region of the view in control coordinates
     /// </summary>
-    public Rect Clip {  get; private set; }
+    public Rect Clip { get; private set; }
 
-    public Point toDevice(Point p) => Origin + p*Scale;
+    public Point toDevice(Point p) => Origin + p * Scale;
     public Size toDevice(Size s) => Scale * s;
-    public Rect toDevice(Rect r) => new Rect(Origin + r.Position*Scale, Scale * r.Size);
+    public Rect toDevice(Rect r) => new Rect(Origin + r.Position * Scale, Scale * r.Size);
     public Point toClient(Point p) => (p - Origin) / Scale;
 
-    public bool PointerHoverTarget {  get; internal set; }
+    public bool PointerHoverTarget { get; internal set; }
 
     public View(Controllable control)
     {
@@ -232,6 +231,18 @@ public class View
             Math.Clamp(constraints.Height, minHeight, maxHeight));
     }
 
+    /// <summary>
+    /// Find exactly one view by name.  Throws an exception if none (or multiples) are found
+    /// </summary>
+    public View FindByName(string name)
+    {
+        var views = FindAllByName(name);
+        if (views.Count == 0)
+            throw new ArgumentException($"Can't find view named '{name}'");
+        if (views.Count > 1)
+            throw new ArgumentException($"Found multiple views names '{name}'");
+        return views[0];
+    }
 
     /// <summary>
     /// TBD: This needs to be a lot better, to support components, etc.
@@ -254,27 +265,38 @@ public class View
 
     public static View? FindHitTarget(View view, Point target)
     {
+        // Quick exit when not visible or not in clip region
         var clip = view.toDevice(view.Clip);
         if (!clip.Contains(target))
             return null;
+        if (!view.Properties.Get(ZGui.IsVisible, true))
+            return null;
 
-        Debug.WriteLine($"{view}, {clip}, text='{view.Properties.Get(ZGui.Text) ?? "(no)"}'");
-
-        if (view.Control.IsHit(target))
-            return view;
-
-
-
+        // Check children first
         for (var i = view.Views.Count - 1; i >= 0; i--)
         {
             var hit = FindHitTarget(view.Views[i], target);
             if (hit != null)
                 return hit;
         }
+
+        if (!view.Properties.Get(ZGui.DisableHitTest, false) && view.Control.IsHit(target))
+            return view;
+
         return null;
     }
 
-
+    public void BringToFront()
+    {
+        var parent = Parent;
+        if (parent == null)
+            throw new ArgumentException("BringToFront: Parent view cannot be null");
+        var i = parent.Views.FindIndex(v => v == this);
+        if (i < 0)
+            throw new ArgumentException("BringToFront: Parent does not contain this view");
+        parent.Views.RemoveAt(i);
+        parent.Views.Add(this);
+    }
 
 
 }

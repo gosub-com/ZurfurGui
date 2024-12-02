@@ -18,11 +18,9 @@ public class Row : Controllable
         View = new(this);
     }
 
-    public View BuildView(Properties properties)
+    public void Build()
     {
-        View.Views.Clear();
-        Helper.BuildViewsFromProperties(View.Views, properties.Get(ZGui.Controls));
-        return View;
+        View.Views = [.. Helper.BuildViews(View.Properties.Get(ZGui.Controls))];
     }
 
 

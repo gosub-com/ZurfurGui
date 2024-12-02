@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ZurfurGui.Controls;
+using ZurfurGui.Platform;
 using ZurfurGui.Render;
 
 namespace ZurfurGui;
@@ -29,4 +30,15 @@ public static class ZGui
     public static readonly PropertyKey<bool> Wrap = new("ZGui.Wrap");
     public static readonly PropertyKey<Size> Spacing = new("ZGui.Spacing");
     public static readonly PropertyKey<double> Magnification = new("ZGui.Magnification");
+    public static readonly PropertyKey<bool> DisableHitTest = new("ZGui.DisableHitTest");
+
+    public static readonly PropertyKey<Action<PointerEvent>> PointerDown = new("ZGui.PointerDown");
+    public static readonly PropertyKey<Action<PointerEvent>> PointerMove = new("ZGui.PointerMove");
+    public static readonly PropertyKey<Action<PointerEvent>> PointerUp = new("ZGui.PointerUp");
+
+    public static readonly PropertyKey<Action<PointerEvent>> PreviewPointerDown = new("ZGui.PreviewPointerDown");
+    public static readonly PropertyKey<Action<PointerEvent>> PreviewPointerMove = new("ZGui.PreviewPointerMove");
+    public static readonly PropertyKey<Action<PointerEvent>> PreviewPointerUp = new("ZGui.PreviewPointerUp");
+
+
 }

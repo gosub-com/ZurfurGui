@@ -28,9 +28,8 @@ internal class BackgroundTest : Controllable
         View = new(this);
     }
 
-    public View BuildView(Properties properties)
+    public void Build()
     {
-        return View;
     }
 
     public void SetStats(int count, int fps, int avgMs)

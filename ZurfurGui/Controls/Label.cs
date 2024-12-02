@@ -8,7 +8,6 @@ namespace ZurfurGui.Controls;
 public class Label : Controllable
 {
     // Expand lines over the size of the font itself
-    const double LINE_SPACING = 1;
     const double TEXT_BASELINE = 0.8;
 
     public string Type => "ZGui.Label";
@@ -20,41 +19,36 @@ public class Label : Controllable
         View = new(this);
     }
 
-    public View BuildView(Properties properties)
+    public void Build()
     {
-        return View;
     }
 
     public Size MeasureView(Size available, MeasureContext measure)
     {
-        var fontName = View.Properties.Get(ZGui.FontName) ?? "Arial";
-        var fontSize = View.Properties.Get(ZGui.FontSize, 16.0);
-        var text = View.Properties.Get(ZGui.Text) ?? "";
-        var lines = text.Split("\n");
-        var maxWidth = lines.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
-        return new Size(maxWidth, lines.Length * LINE_SPACING * fontSize);
+        return Helper.MeasureText(measure, View);
     }
+
     public Size ArrangeViews(Size final, MeasureContext measure) => final;
 
     public void Render(RenderContext context)
     {
+        // Draw background
+        context.FillColor = Colors.Purple;
+        context.FillRect(0,0, View.Size.Width, View.Size.Height);
+
+        var color = View.PointerHoverTarget ? Colors.Red : Colors.White;
+        var text = View.Properties.Get(ZGui.Text) ?? "";
         var fontName = View.Properties.Get(ZGui.FontName) ?? "Arial";
         var fontSize = View.Properties.Get(ZGui.FontSize, 16.0);
-        var text = View.Properties.Get(ZGui.Text) ?? "";
         context.FontName = fontName;
         context.FontSize = fontSize;
-        context.FillColor = Colors.White;
-
-        // Mouse over color change
-        if (View.PointerHoverTarget)
-            context.FillColor = Colors.Red;
-
-
+        context.FillColor = color;
         context.FillText(text, 0, fontSize*TEXT_BASELINE);
 
-        context.LineWidth = 1;
-        context.StrokeColor = Colors.Gray;
-        context.StrokeRect(0, 0, View.Size.Width, View.Size.Height);
+        // TBD: Single line border is partially hidden on Windows
+        // context.LineWidth = 1;
+        // context.StrokeColor = Colors.Gray;
+        // context.StrokeRect(0, 0, View.Size.Width, View.Size.Height);
     }
 
     public bool IsHit(Point point)

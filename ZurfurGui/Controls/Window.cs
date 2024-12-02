@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+
 using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
@@ -14,35 +15,39 @@ public class Window : Controllable
         View = new(this);
     }
 
-    public View BuildView(Properties properties)
+    public void Build()
     {
         Properties tilePanel = [
             (ZGui.Controller, "ZGui.Panel"),
             (ZGui.AlignVertical, VerticalAlignment.Top),
-            (ZGui.Size, new Size(double.NaN, 20)),
+            (ZGui.Size, new Size(double.NaN, 24)),
             (ZGui.Controls, (Properties[])[
                 [
                     (ZGui.Controller, "ZGui.Button"),
                     (ZGui.AlignHorizontal, HorizontalAlignment.Left),
-                    (ZGui.Text, "Menu"),
+                    (ZGui.Text, "≡"),
+                    (ZGui.FontSize, 24.0)
                 ],
                 [
                     (ZGui.Controller, "ZGui.Button"),
                     (ZGui.AlignHorizontal, HorizontalAlignment.Right),
-                    (ZGui.Text, "X")
+                    (ZGui.Text, "X"),
+                    (ZGui.FontSize, 24.0)
                 ],
                 [
                     (ZGui.Controller, "ZGui.Label"),
+                    (ZGui.DisableHitTest, true),
                     (ZGui.AlignHorizontal, HorizontalAlignment.Center),
-                    (ZGui.Text, "Title")
+                    (ZGui.Text, "Title"),
+                    (ZGui.FontSize, 24.0)
                 ]
             ])
         ];
 
         Properties clientPanel = [
             (ZGui.Controller, "ZGui.Panel"),
-            (ZGui.Margin, new Thickness(0, 24, 0, 0)),
-            (ZGui.Controls, properties.Get(ZGui.Controls) ?? [])
+            (ZGui.Margin, new Thickness(0, 28, 0, 0)),
+            (ZGui.Controls, View.Properties.Get(ZGui.Controls) ?? [])
         ];
 
         Properties borderPanel = [
@@ -51,25 +56,15 @@ public class Window : Controllable
             (ZGui.Controls, (Properties[])[tilePanel, clientPanel])
         ];
 
-        View.Views.Clear();
-        Helper.BuildViewsFromProperties(View.Views, [borderPanel]);
-        return View;
-    }
+        View.Views = [Helper.BuildView(borderPanel)];
 
-    /// <summary>
-    /// Same as panel
-    /// </summary>
-    public Size MeasureView(Size available, MeasureContext measure)
-    {
-        return Helper.MeasurePanel(View.Views, available, measure);
-    }
+        View.Properties.Set(ZGui.PreviewPointerDown, (e) => {
+            Debug.WriteLine("Window down");
 
-    /// <summary>
-    /// A window puts all controls at (0,0), like a panel.  Position can be controlled using margin.
-    /// </summary>
-    public Size ArrangeViews(Size final, MeasureContext measure)
-    {
-        return Helper.ArrangePanel(View.Views, final, measure);
+            // TBD: Remove this, enforce windows at top level
+            View.Parent?.BringToFront();
+        });
+
     }
 
     public void Render(RenderContext context)
@@ -78,4 +73,10 @@ public class Window : Controllable
         var r = new Rect(new(), View.Size);
         context.FillRect(r);
     }
+
+    public bool IsHit(Point point)
+    {
+        return true;
+    }
+
 }

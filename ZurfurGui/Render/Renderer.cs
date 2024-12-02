@@ -1,5 +1,6 @@
 ﻿
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 
@@ -48,11 +49,9 @@ public class Renderer
             (ZGui.Controls, (Properties[])[background, controls])
         ];
 
-        _view = Helper.BuildViewFromProperties(controls);
+        _view = Helper.BuildView(controls);
 
-        var back = _view.FindAllByName(BACKGROUND_NAME);
-        if (back.Count != 0)
-            _background = back[0].Control as BackgroundTest;
+        _background = _view.FindByName(BACKGROUND_NAME).Control as BackgroundTest;
         _background?.SetWindow(window, canvas);
 
         if (_canvas.PointerInput != null)
@@ -60,15 +59,15 @@ public class Renderer
         _canvas.PointerInput = PointerInput;
     }
 
+
     void PointerInput(PointerEvent ev)
     {
         _pointerPosition = ev.Position;
-        
+        var hit = View.FindHitTarget(_view, ev.Position);
+
+        // Update hover target        
         if (ev.Type == "pointermove")
         {
-            var hit = View.FindHitTarget(_view, ev.Position);
-            if (hit != null)
-                Debug.WriteLine($"Hit: {hit}");
             if (hit != _hoverView)
             {
                 if (_hoverView != null)
@@ -77,6 +76,55 @@ public class Renderer
                 if (_hoverView != null)
                     _hoverView.PointerHoverTarget = true;
             }
+        }
+
+        var chain = new List<View>();
+        GetViewChain(hit, chain);
+
+        PropertyKey<Action<PointerEvent>> property;
+        switch (ev.Type)
+        {
+            case "pointermove": property = ZGui.PreviewPointerMove; break;
+            case "pointerdown": property = ZGui.PreviewPointerDown; break;
+            case "pointerup": property = ZGui.PreviewPointerUp; break;
+            default: return;
+        }
+
+        // Preview
+        for (int i = chain.Count - 1; i >= 0; i--)
+        {
+            var view = chain[i];
+            var e = view.Properties.Get(property);
+            if (e != null)
+                e(ev);
+        }
+
+        switch (ev.Type)
+        {
+            case "pointermove": property = ZGui.PointerMove; break;
+            case "pointerdown": property = ZGui.PointerDown; break;
+            case "pointerup": property = ZGui.PointerUp; break;
+            default: return;
+        }
+
+        // Bubble
+        foreach (var view in chain)
+        {
+            var e = view.Properties.Get(property);
+            if (e != null)
+                e(ev);
+        }
+    }
+
+    /// <summary>
+    /// Retrieve views from the given child up to the root
+    /// </summary>
+    void GetViewChain(View? view, List<View> views)
+    {
+        while (view != null)
+        {
+            views.Add(view);
+            view = view.Parent;
         }
     }
 

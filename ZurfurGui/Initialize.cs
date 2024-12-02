@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Components;
 using ZurfurGui.Controls;
 
 namespace ZurfurGui;
@@ -21,5 +22,8 @@ public static class Initialize
         ControlRegistry.Add(() => new Label());
         ControlRegistry.Add(() => new Row());
         ControlRegistry.Add(() => new Window());
+
+        ControlRegistry.Add(() => new SmallWinTest());
+        ControlRegistry.Add(() => new QbfWinTest());
     }
 }

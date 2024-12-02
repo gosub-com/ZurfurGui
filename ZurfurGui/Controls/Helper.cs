@@ -12,18 +12,27 @@ namespace ZurfurGui.Controls;
 
 public static class Helper
 {
+    const double LINE_SPACING = 1;
+
 
     /// <summary>
-    /// Create controllers from properties, add to views
+    /// Create views from properties
     /// </summary>
-    public static void BuildViewsFromProperties(IList<View> views, Properties[]? controllerProperties)
+    public static View []BuildViews(Properties[]? controllerProperties)
     {
-        if (controllerProperties != null)
-            foreach (var control in controllerProperties)
-                views.Add(BuildViewFromProperties(control));
+        if (controllerProperties == null)
+            return Array.Empty<View>();
+
+        var views = new View[controllerProperties.Length];
+        for (int i = 0;  i < views.Length; i++)
+            views[i] = BuildView(controllerProperties[i]);
+        return views;
     }
 
-    public static View BuildViewFromProperties(Properties controllerProperties)
+    /// <summary>
+    /// Create a view from property
+    /// </summary>
+    public static View BuildView(Properties controllerProperties)
     {
         var controlName = controllerProperties.Get(ZGui.Controller) ?? "";
         if (controlName == "")
@@ -35,7 +44,12 @@ public static class Helper
 
 
         control.View.Properties = controllerProperties;
-        return control.BuildView(controllerProperties);
+        control.Build();
+
+        foreach (var v in control.View.Views)
+            v.SetParentView(control.View);
+
+        return control.View;
     }
 
     public static Size MeasurePanel(IEnumerable<View> views, Size available, MeasureContext measure)
@@ -54,6 +68,7 @@ public static class Helper
         }
         return windowMeasured;
     }
+
     public static Size ArrangePanel(IReadOnlyList<View> views, Size final, MeasureContext measure)
     {
         var layoutRect = new Rect(0, 0, final.Width, final.Height);
@@ -62,5 +77,16 @@ public static class Helper
 
         return final;
     }
+
+    public static Size MeasureText(MeasureContext measure, View view)
+    {
+        var fontName = view.Properties.Get(ZGui.FontName) ?? "Arial";
+        var fontSize = view.Properties.Get(ZGui.FontSize, 16.0);
+        var text = view.Properties.Get(ZGui.Text) ?? "";
+        var lines = text.Split("\n");
+        var maxWidth = lines.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
+        return new Size(maxWidth, lines.Length * LINE_SPACING * fontSize);
+    }
+
 
 }
