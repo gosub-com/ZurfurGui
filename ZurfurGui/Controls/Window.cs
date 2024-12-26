@@ -6,7 +6,7 @@ namespace ZurfurGui.Controls;
 
 public class Window : Controllable
 {
-    public string Type => "ZGui.Window";
+    public string Type => "Zui.Window";
     public override string ToString() => View.ToString();
     public View View { get; private set; }
 
@@ -18,47 +18,47 @@ public class Window : Controllable
     public void Build()
     {
         Properties tilePanel = [
-            (ZGui.Controller, "ZGui.Panel"),
-            (ZGui.AlignVertical, VerticalAlignment.Top),
-            (ZGui.Size, new Size(double.NaN, 24)),
-            (ZGui.Controls, (Properties[])[
+            (Zui.Controller, "Zui.Panel"),
+            (Zui.AlignVertical, AlignVertical.Top),
+            (Zui.Size, new Size(double.NaN, 24)),
+            (Zui.Content, (Properties[])[
                 [
-                    (ZGui.Controller, "ZGui.Button"),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Left),
-                    (ZGui.Text, "≡"),
-                    (ZGui.FontSize, 24.0)
+                    (Zui.Controller, "Zui.Button"),
+                    (Zui.AlignHorizontal, AlignHorizontal.Left),
+                    (Zui.Text, "≡"),
+                    (Zui.FontSize, 24.0)
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Button"),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Right),
-                    (ZGui.Text, "X"),
-                    (ZGui.FontSize, 24.0)
+                    (Zui.Controller, "Zui.Button"),
+                    (Zui.AlignHorizontal, AlignHorizontal.Right),
+                    (Zui.Text, "X"),
+                    (Zui.FontSize, 24.0)
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.DisableHitTest, true),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Center),
-                    (ZGui.Text, "Title"),
-                    (ZGui.FontSize, 24.0)
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.DisableHitTest, true),
+                    (Zui.AlignHorizontal, AlignHorizontal.Center),
+                    (Zui.Text, "Title"),
+                    (Zui.FontSize, 24.0)
                 ]
             ])
         ];
 
         Properties clientPanel = [
-            (ZGui.Controller, "ZGui.Panel"),
-            (ZGui.Margin, new Thickness(0, 28, 0, 0)),
-            (ZGui.Controls, View.Properties.Get(ZGui.Controls) ?? [])
+            (Zui.Controller, "Zui.Panel"),
+            (Zui.Margin, new Thickness(0, 28, 0, 0)),
+            (Zui.Content, View.Properties.Get(Zui.Content) ?? [])
         ];
 
         Properties borderPanel = [
-            (ZGui.Controller, "ZGui.Panel"),
-            (ZGui.Margin, new Thickness(5)),
-            (ZGui.Controls, (Properties[])[tilePanel, clientPanel])
+            (Zui.Controller, "Zui.Panel"),
+            (Zui.Margin, new Thickness(5)),
+            (Zui.Content, (Properties[])[tilePanel, clientPanel])
         ];
 
         View.Views = [Helper.BuildView(borderPanel)];
 
-        View.Properties.Set(ZGui.PreviewPointerDown, (e) => {
+        View.Properties.Set(Zui.PreviewPointerDown, (e) => {
             Debug.WriteLine("Window down");
 
             // TBD: Remove this, enforce windows at top level

@@ -13,7 +13,7 @@ namespace ZurfurGui.Components;
 /// </summary>
 internal class QbfWinTest : Controllable
 {
-    public string Type => "ZGui.QbfWinTest";
+    public string Type => "Zui.QbfWinTest";
 
     public View View { get; private set; }
 
@@ -30,114 +30,114 @@ internal class QbfWinTest : Controllable
     static Properties MakeQbfWinTest()
     {
         return [
-            (ZGui.Controller, "ZGui.Window"),
-            (ZGui.Controls, (Properties[])[
+            (Zui.Controller, "Zui.Window"),
+            (Zui.Content, (Properties[])[
                 [
-                    (ZGui.Controller, "ZGui.Column"),
-                    (ZGui.Controls, (Properties[])[
+                    (Zui.Controller, "Zui.Column"),
+                    (Zui.Content, (Properties[])[
                         [
-                            (ZGui.Controller, "ZGui.Button"),
-                            (ZGui.Text, "ButtonX"),
-                            (ZGui.AlignHorizontal, HorizontalAlignment.Center),
+                            (Zui.Controller, "Zui.Button"),
+                            (Zui.Text, "ButtonX"),
+                            (Zui.AlignHorizontal, AlignHorizontal.Center),
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Button"),
-                            (ZGui.Text, "Button"),
-                            (ZGui.AlignHorizontal, HorizontalAlignment.Right),
+                            (Zui.Controller, "Zui.Button"),
+                            (Zui.Text, "Button"),
+                            (Zui.AlignHorizontal, AlignHorizontal.Right),
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Button"),
-                            (ZGui.Text, "Button"),
-                            (ZGui.AlignHorizontal, HorizontalAlignment.Left),
+                            (Zui.Controller, "Zui.Button"),
+                            (Zui.Text, "Button"),
+                            (Zui.AlignHorizontal, AlignHorizontal.Left),
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Row"),
-                            (ZGui.Controls, (Properties[])[
-                                [(ZGui.Controller, "ZGui.Button"), (ZGui.Text, "Button A")],
-                                [(ZGui.Controller, "ZGui.Button"), (ZGui.Text, "Button B")],
-                                [(ZGui.Controller, "ZGui.Button"), (ZGui.Text, "Button C")],
+                            (Zui.Controller, "Zui.Row"),
+                            (Zui.Content, (Properties[])[
+                                [(Zui.Controller, "Zui.Button"), (Zui.Text, "Button A")],
+                                [(Zui.Controller, "Zui.Button"), (Zui.Text, "Button B")],
+                                [(Zui.Controller, "Zui.Button"), (Zui.Text, "Button C")],
                             ])
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Row"),
-                            (ZGui.Controls, (Properties[])[
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "The")],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Quick Brown Fox Jumps Over")],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "The lazy dog")],
+                            (Zui.Controller, "Zui.Row"),
+                            (Zui.Content, (Properties[])[
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "The")],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Quick Brown Fox Jumps Over")],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "The lazy dog")],
                             ])
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Row"),
-                            (ZGui.Controls, (Properties[])[
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "The"), (ZGui.FontSize, 16.0)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Quick"), (ZGui.FontSize, 32.0)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Brown"), (ZGui.FontSize, 26.0)],
+                            (Zui.Controller, "Zui.Row"),
+                            (Zui.Content, (Properties[])[
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "The"), (Zui.FontSize, 16.0)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Quick"), (Zui.FontSize, 32.0)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Brown"), (Zui.FontSize, 26.0)],
                             ])
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Row"),
-                            (ZGui.Controls, (Properties[])[
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "The Quick Brown"), (ZGui.FontSize, 26.0),(ZGui.Margin,new Thickness(-30,0,0,0))],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Fox &Jumps"), (ZGui.FontSize, 26.0)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Over the lazy dog"), (ZGui.FontSize, 26.0)],
+                            (Zui.Controller, "Zui.Row"),
+                            (Zui.Content, (Properties[])[
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "The Quick Brown"), (Zui.FontSize, 26.0),(Zui.Margin,new Thickness(-30,0,0,0))],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Fox &Jumps"), (Zui.FontSize, 26.0)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Over the lazy dog"), (Zui.FontSize, 26.0)],
                             ])
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Row"),
-                            (ZGui.Controls, (Properties[])[
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Sans j"), (ZGui.FontSize, 26.0),(ZGui.FontName, "sans-serif")],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Arial j"), (ZGui.FontSize, 26.0),(ZGui.FontName, "Arial")],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "﴿█j A﴿│|☰"), (ZGui.FontSize, 26.0),(ZGui.FontName, "Arial")],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Serif j"), (ZGui.FontSize, 26.0),(ZGui.FontName, "Times New Roman")],
+                            (Zui.Controller, "Zui.Row"),
+                            (Zui.Content, (Properties[])[
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Sans j"), (Zui.FontSize, 26.0),(Zui.FontName, "sans-serif")],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Arial j"), (Zui.FontSize, 26.0),(Zui.FontName, "Arial")],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "﴿█j A﴿│|☰"), (Zui.FontSize, 26.0),(Zui.FontName, "Arial")],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Serif j"), (Zui.FontSize, 26.0),(Zui.FontName, "Times New Roman")],
                             ])
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Row"),
-                            (ZGui.Controls, (Properties[])[
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "TheQuickBrown"), (ZGui.FontSize, 26.0)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, " "), (ZGui.FontSize, 26.0)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "    "), (ZGui.FontSize, 26.0)],
+                            (Zui.Controller, "Zui.Row"),
+                            (Zui.Content, (Properties[])[
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "TheQuickBrown"), (Zui.FontSize, 26.0)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, " "), (Zui.FontSize, 26.0)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "    "), (Zui.FontSize, 26.0)],
                             ])
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Row"),
-                            (ZGui.Controls, (Properties[])[
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "1 The Quick Brown"), (ZGui.FontSize, 40.0),(ZGui.FontName, "Times New ROman")],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "2 Fox Jumps Over"), (ZGui.FontSize, 26.0)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "3 The Lazy Dog"), (ZGui.FontSize, 26.0)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "4 And a Cow"), (ZGui.FontSize, 26.0)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "5 And a Zebra"), (ZGui.FontSize, 16.0),(ZGui.AlignVertical, VerticalAlignment.Center)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, ""), (ZGui.FontSize, 26.0)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, ""), (ZGui.FontSize, 26.0)],
+                            (Zui.Controller, "Zui.Row"),
+                            (Zui.Content, (Properties[])[
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "1 The Quick Brown"), (Zui.FontSize, 40.0),(Zui.FontName, "Times New ROman")],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "2 Fox Jumps Over"), (Zui.FontSize, 26.0)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "3 The Lazy Dog"), (Zui.FontSize, 26.0)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "4 And a Cow"), (Zui.FontSize, 26.0)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "5 And a Zebra"), (Zui.FontSize, 16.0),(Zui.AlignVertical, AlignVertical.Center)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, ""), (Zui.FontSize, 26.0)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, ""), (Zui.FontSize, 26.0)],
                             ])
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Row"),
-                            (ZGui.Wrap, true),
-                            (ZGui.Controls, (Properties[])[
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "The Quick Brown"), (ZGui.FontSize, 40.0),(ZGui.FontName, "Times New Roman")],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Fox Jumps Over"), (ZGui.FontSize, 26.0)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "The Lazy Dog"), (ZGui.FontSize, 26.0)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "And a Cow"), (ZGui.FontSize, 32.0),(ZGui.AlignVertical, VerticalAlignment.Center)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Center"), (ZGui.FontSize, 16.0),(ZGui.AlignVertical, VerticalAlignment.Center)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Top"), (ZGui.FontSize, 16.0),(ZGui.AlignVertical, VerticalAlignment.Top)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Bottom"), (ZGui.FontSize, 16.0),(ZGui.AlignVertical, VerticalAlignment.Bottom)],
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Stretch"), (ZGui.FontSize, 16.0),(ZGui.AlignVertical, VerticalAlignment.Stretch)],
+                            (Zui.Controller, "Zui.Row"),
+                            (Zui.Wrap, true),
+                            (Zui.Content, (Properties[])[
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "The Quick Brown"), (Zui.FontSize, 40.0),(Zui.FontName, "Times New Roman")],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Fox Jumps Over"), (Zui.FontSize, 26.0)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "The Lazy Dog"), (Zui.FontSize, 26.0)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "And a Cow"), (Zui.FontSize, 32.0),(Zui.AlignVertical, AlignVertical.Center)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Center"), (Zui.FontSize, 16.0),(Zui.AlignVertical, AlignVertical.Center)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Top"), (Zui.FontSize, 16.0),(Zui.AlignVertical, AlignVertical.Top)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Bottom"), (Zui.FontSize, 16.0),(Zui.AlignVertical, AlignVertical.Bottom)],
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Stretch"), (Zui.FontSize, 16.0),(Zui.AlignVertical, AlignVertical.Stretch)],
                             ])
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Row"),
-                            (ZGui.Controls, (Properties[])[
-                                [(ZGui.Controller, "ZGui.Label"), (ZGui.Text, "Done - row")],
+                            (Zui.Controller, "Zui.Row"),
+                            (Zui.Content, (Properties[])[
+                                [(Zui.Controller, "Zui.Label"), (Zui.Text, "Done - row")],
                             ])
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Label"),
-                            (ZGui.Text, "Done - Label"),
+                            (Zui.Controller, "Zui.Label"),
+                            (Zui.Text, "Done - Label"),
                         ],
                         [
-                            (ZGui.Controller, "ZGui.Button"),
-                            (ZGui.Text, "Done - Button"),
+                            (Zui.Controller, "Zui.Button"),
+                            (Zui.Text, "Done - Button"),
                         ],
                     ])
                 ]

@@ -32,21 +32,21 @@ public class Renderer
 
     public Renderer(OsWindow window, OsCanvas canvas, Properties controls)
     {
-        const string BACKGROUND_NAME = "ZGui.BackgroundTest";
+        const string BACKGROUND_NAME = "Zui.BackgroundTest";
 
         _window = window;
         _canvas = canvas;
         _renderContext = new RenderContext(_canvas.Context);
 
         Properties background = [
-            (ZGui.Controller, "ZGui.BackgroundTest"),
-            (ZGui.Name, BACKGROUND_NAME)
+            (Zui.Controller, BACKGROUND_NAME),
+            (Zui.Name, BACKGROUND_NAME)
         ];
 
         // Add canvas to top level controls, so we can adjust device pixel resolution
         controls = [
-            (ZGui.Controller, "ZGui.Panel"),
-            (ZGui.Controls, (Properties[])[background, controls])
+            (Zui.Controller, "Zui.Panel"),
+            (Zui.Content, (Properties[])[background, controls])
         ];
 
         _view = Helper.BuildView(controls);
@@ -84,9 +84,9 @@ public class Renderer
         PropertyKey<Action<PointerEvent>> property;
         switch (ev.Type)
         {
-            case "pointermove": property = ZGui.PreviewPointerMove; break;
-            case "pointerdown": property = ZGui.PreviewPointerDown; break;
-            case "pointerup": property = ZGui.PreviewPointerUp; break;
+            case "pointermove": property = Zui.PreviewPointerMove; break;
+            case "pointerdown": property = Zui.PreviewPointerDown; break;
+            case "pointerup": property = Zui.PreviewPointerUp; break;
             default: return;
         }
 
@@ -101,9 +101,9 @@ public class Renderer
 
         switch (ev.Type)
         {
-            case "pointermove": property = ZGui.PointerMove; break;
-            case "pointerdown": property = ZGui.PointerDown; break;
-            case "pointerup": property = ZGui.PointerUp; break;
+            case "pointermove": property = Zui.PointerMove; break;
+            case "pointerdown": property = Zui.PointerDown; break;
+            case "pointerup": property = Zui.PointerUp; break;
             default: return;
         }
 
@@ -135,7 +135,7 @@ public class Renderer
 
         if (_mainWindowSize != _canvas.DeviceSize || _devicePixelRatio != _window.DevicePixelRatio)
         {
-            _view.Properties.Set(ZGui.Magnification, _window.DevicePixelRatio);
+            _view.Properties.Set(Zui.Magnification, _window.DevicePixelRatio);
             _mainWindowSize = _canvas.DeviceSize / _window.DevicePixelRatio;
             _devicePixelRatio = _window.DevicePixelRatio;
             var measureConext = new MeasureContext(_canvas.Context);

@@ -19,17 +19,13 @@ internal class BackgroundTest : Controllable
     int _fps;
     long _avgMs;
 
-    public string Type => "ZGui.BackgroundTest";
+    public string Type => "Zui.BackgroundTest";
     public override string ToString() => View.ToString();
     public View View { get; private set; }
 
     public BackgroundTest()
     {
         View = new(this);
-    }
-
-    public void Build()
-    {
     }
 
     public void SetStats(int count, int fps, int avgMs)

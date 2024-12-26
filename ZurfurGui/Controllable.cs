@@ -15,7 +15,15 @@ public interface Controllable
     /// </summary>
     View View { get; }
 
-    void Build();
+    /// <summary>
+    /// The default build function adds all of the controls in the proerty Zui.Content, which is the correct thing to
+    /// do for most simple controls.  Panel, Border, Column, etc. all use this.  Complex controls that add more to the 
+    /// visual tree can do something different.  Window, Tab, and Tree controls use custom build functions.
+    /// </summary>
+    void Build()
+    {
+        View.Views = [.. Helper.BuildViews(View.Properties.Get(Zui.Content))];
+    }
 
     /// <summary>
     /// Returns the desired size of the control given the available screen size.
@@ -25,7 +33,7 @@ public interface Controllable
     /// </summary>
     Size MeasureView(Size available, MeasureContext measure)
     {
-        return Helper.MeasurePanel(View.Views, available, measure);
+        return Helper.MeasureView(View, available, measure);
     }
 
     /// <summary>
@@ -35,7 +43,7 @@ public interface Controllable
     /// </summary>
     Size ArrangeViews(Size final, MeasureContext measure)
     {
-        return Helper.ArrangePanel(View.Views, final, measure);
+        return Helper.ArrangeView(View, final, measure);
     }
 
     /// <summary>

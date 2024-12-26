@@ -2,7 +2,7 @@
 
 namespace ZurfurGui.Render;
 
-public enum HorizontalAlignment : byte
+public enum AlignHorizontal : byte
 {
     Stretch,
     Left,
@@ -10,7 +10,7 @@ public enum HorizontalAlignment : byte
     Right
 }
 
-public enum VerticalAlignment : byte
+public enum AlignVertical : byte
 {
     Stretch,
     Top,
@@ -85,7 +85,7 @@ public class View
 
     public override string ToString()
     {
-        return $"{Control.Type}: {Properties.Get(ZGui.Name) ?? "(no name)"}";
+        return $"{Control.Type}: {Properties.Get(Zui.Name) ?? "(no name)"}";
     }
 
     /// <summary>
@@ -99,28 +99,28 @@ public class View
     /// </summary>
     public void Measure(Size available, MeasureContext measure)
     {
-        var isVisible = Properties.Get(ZGui.IsVisible, true);
+        var isVisible = Properties.Get(Zui.IsVisible, true);
         if (!isVisible)
             return;
 
-        var margin = Properties.Get(ZGui.Margin);
+        var margin = Properties.Get(Zui.Margin);
         var constrained = ApplyLayoutConstraints(this, available.Deflate(margin));
         var measured = Control.MeasureView(constrained, measure);
 
         // Size override
-        var sizeOverride = Properties.Get(ZGui.Size, new(double.NaN, double.NaN));
+        var sizeOverride = Properties.Get(Zui.Size, new(double.NaN, double.NaN));
         if (!double.IsNaN(sizeOverride.Width))
             measured.Width = sizeOverride.Width;
         if (!double.IsNaN(sizeOverride.Height))
             measured.Height = sizeOverride.Height;
 
         // Max size override
-        var sizeMax = Properties.Get(ZGui.SizeMax, new(double.PositiveInfinity, double.PositiveInfinity));
+        var sizeMax = Properties.Get(Zui.SizeMax, new(double.PositiveInfinity, double.PositiveInfinity));
         measured.Width = Math.Min(measured.Width, sizeMax.Width);
         measured.Height = Math.Min(measured.Height, sizeMax.Height);
 
         // Min  size override
-        var sizeMin = Properties.Get(ZGui.SizeMax);
+        var sizeMin = Properties.Get(Zui.SizeMax);
         measured.Width = Math.Max(measured.Width, sizeMin.Width);
         measured.Height = Math.Max(measured.Height, sizeMin.Height);
 
@@ -140,46 +140,46 @@ public class View
     /// </summary>
     public void Arrange(Rect finalRect, MeasureContext measure)
     {
-        var isVisible = Properties.Get(ZGui.IsVisible, true);
+        var isVisible = Properties.Get(Zui.IsVisible, true);
         if (!isVisible)
             return;
 
-        var margin = Properties.Get(ZGui.Margin);
+        var margin = Properties.Get(Zui.Margin);
         var availableSize = finalRect.Size.Deflate(margin);
         var x = finalRect.X + margin.Left;
         var y = finalRect.Y + margin.Top;
         var size = availableSize;
 
-        var horizontalAlignment = Properties.Get(ZGui.AlignHorizontal);
-        if (horizontalAlignment != HorizontalAlignment.Stretch)
+        var horizontalAlignment = Properties.Get(Zui.AlignHorizontal);
+        if (horizontalAlignment != AlignHorizontal.Stretch)
             size.Width = Math.Min(size.Width, DesiredSize.Width - margin.Left - margin.Right);
 
-        var verticalAlignment = Properties.Get(ZGui.AlignVertical);
-        if (verticalAlignment != VerticalAlignment.Stretch)
+        var verticalAlignment = Properties.Get(Zui.AlignVertical);
+        if (verticalAlignment != AlignVertical.Stretch)
             size.Height = Math.Min(size.Height, DesiredSize.Height - margin.Top - margin.Bottom);
 
         size = ApplyLayoutConstraints(this, size);
 
-        size = Control.ArrangeViews(size, measure).Constrain(size);
+        size = Control.ArrangeViews(size, measure).Min(size);
 
         switch (horizontalAlignment)
         {
-            case HorizontalAlignment.Center:
-            case HorizontalAlignment.Stretch:
+            case AlignHorizontal.Center:
+            case AlignHorizontal.Stretch:
                 x += (availableSize.Width - size.Width) / 2;
                 break;
-            case HorizontalAlignment.Right:
+            case AlignHorizontal.Right:
                 x += availableSize.Width - size.Width;
                 break;
         }
 
         switch (verticalAlignment)
         {
-            case VerticalAlignment.Center:
-            case VerticalAlignment.Stretch:
+            case AlignVertical.Center:
+            case AlignVertical.Stretch:
                 y += (availableSize.Height - size.Height) / 2;
                 break;
-            case VerticalAlignment.Bottom:
+            case AlignVertical.Bottom:
                 y += availableSize.Height - size.Height;
                 break;
         }
@@ -193,11 +193,11 @@ public class View
     /// </summary>
     internal void PostArrange(Point origin, double scale, Rect clip)
     {
-        var isVisible = Properties.Get(ZGui.IsVisible, true);
+        var isVisible = Properties.Get(Zui.IsVisible, true);
         if (!isVisible)
             return;
 
-        Scale = scale * Properties.Get(ZGui.Magnification, 1);
+        Scale = scale * Properties.Get(Zui.Magnification, 1);
         Origin = origin + scale * Position;
 
         clip = clip.Intersect(new(Position, Size)).Move(-Position);
@@ -208,9 +208,9 @@ public class View
 
     public static Size ApplyLayoutConstraints(View v, Size constraints)
     {
-        var size = v.Properties.Get(ZGui.Size, new(double.NaN, double.NaN));
-        var sizeMax = v.Properties.Get(ZGui.SizeMax, new(double.PositiveInfinity, double.PositiveInfinity));
-        var sizeMin = v.Properties.Get(ZGui.SizeMin);
+        var size = v.Properties.Get(Zui.Size, new(double.NaN, double.NaN));
+        var sizeMax = v.Properties.Get(Zui.SizeMax, new(double.PositiveInfinity, double.PositiveInfinity));
+        var sizeMin = v.Properties.Get(Zui.SizeMin);
 
         var h = size.Height;
         var height = double.IsNaN(h) ? double.PositiveInfinity : h;
@@ -257,7 +257,7 @@ public class View
 
     void FindAllByName(string name, List<View> views)
     {
-        if (Properties.Get(ZGui.Name) == name)
+        if (Properties.Get(Zui.Name) == name)
             views.Add(this);
         foreach (var view in Views)
             view.FindAllByName(name, views);
@@ -269,7 +269,7 @@ public class View
         var clip = view.toDevice(view.Clip);
         if (!clip.Contains(target))
             return null;
-        if (!view.Properties.Get(ZGui.IsVisible, true))
+        if (!view.Properties.Get(Zui.IsVisible, true))
             return null;
 
         // Check children first
@@ -280,7 +280,7 @@ public class View
                 return hit;
         }
 
-        if (!view.Properties.Get(ZGui.DisableHitTest, false) && view.Control.IsHit(target))
+        if (!view.Properties.Get(Zui.DisableHitTest, false) && view.Control.IsHit(target))
             return view;
 
         return null;

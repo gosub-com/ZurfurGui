@@ -17,7 +17,7 @@ public static class Program
     {
         Console.WriteLine($"C# Main called args: '{string.Join(" ", args)}'");
 
-        var control = MainView.CreateMainView();
+        var control = TestApp.Main.Create(args);
         var canvasId = args[0];
         BrowserStart.Start(canvasId, control);
     }

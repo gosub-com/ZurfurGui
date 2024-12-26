@@ -9,20 +9,13 @@ namespace ZurfurGui.Controls;
 
 public class Button : Controllable
 {
-    // Expand lines over the size of the font itself
-    const double TEXT_BASELINE = 0.8;
-
-    public string Type => "ZGui.Button";
+    public string Type => "Zui.Button";
     public override string ToString() => View.ToString();
     public View View { get; private set; }
 
     public Button()
     {
         View = new(this);
-    }
-
-    public void Build()
-    {
     }
 
     public Size MeasureView(Size available, MeasureContext measure)
@@ -37,15 +30,9 @@ public class Button : Controllable
         // Draw background
         context.FillColor = View.PointerHoverTarget ? Colors.Red : Colors.Gray;
         context.FillRect(0, 0, View.Size.Width, View.Size.Height);
-
         var color = Colors.White;
-        var text = View.Properties.Get(ZGui.Text) ?? "";
-        var fontName = View.Properties.Get(ZGui.FontName) ?? "Arial";
-        var fontSize = View.Properties.Get(ZGui.FontSize, 16.0);
-        context.FontName = fontName;
-        context.FontSize = fontSize;
-        context.FillColor = color;
-        context.FillText(text, 0, fontSize * TEXT_BASELINE);
+
+        Helper.RenderText(View, context, color);
     }
 
     public bool IsHit(Point point)

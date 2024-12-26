@@ -9,9 +9,9 @@ internal static class Program
     ///  The main entry point for the application.
     /// </summary>
     [STAThread]
-    static void Main()
+    static void Main(string[] args)
     {
-        var control = MainView.CreateMainView();
+        var control = TestApp.Main.Create(args);
         WinStart.Start(control);
     }
 }

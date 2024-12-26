@@ -4,7 +4,7 @@ namespace ZurfurGui.Controls;
 
 public class Column : Controllable
 {
-    public string Type => "ZGui.Column";
+    public string Type => "Zui.Column";
     public override string ToString() => View.ToString();
     public View View { get; private set; }
 
@@ -18,11 +18,6 @@ public class Column : Controllable
         View = new(this);
     }
 
-    public void Build()
-    {
-        View.Views = [..Helper.BuildViews(View.Properties.Get(ZGui.Controls))];
-    }
-
     public Size MeasureView(Size available, MeasureContext measure)
     {
         available.Height = double.PositiveInfinity;
@@ -30,7 +25,7 @@ public class Column : Controllable
         var visibleCount = 0;
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Properties.Get(ZGui.IsVisible, true);
+            var viewIsVisible = view.Properties.Get(Zui.IsVisible, true);
             if (!viewIsVisible)
                 continue;
 

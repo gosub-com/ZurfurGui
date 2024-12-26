@@ -39,11 +39,13 @@ public struct Size : IEquatable<Size>
 
     public Size MaxZero => new Size(Math.Max(Width, 0), Math.Max(Height, 0));
 
-    public Size Constrain(Size constraint)
+    public Size Min(Size constraint)
     {
-        return new Size(
-            Math.Min(Width, constraint.Width),
-            Math.Min(Height, constraint.Height));
+        return new Size(Math.Min(Width, constraint.Width), Math.Min(Height, constraint.Height));
+    }
+    public Size Max(Size constraint)
+    {
+        return new Size(Math.Max(Width, constraint.Width), Math.Max(Height, constraint.Height));
     }
 
     public Size Inflate(Thickness thickness)

@@ -9,18 +9,13 @@ namespace ZurfurGui.Controls;
 
 public class Panel : Controllable
 {
-    public string Type => "ZGui.Panel";
+    public string Type => "Zui.Panel";
     public override string ToString() => View.ToString();
     public View View { get; private set; }
 
     public Panel()
     {
         View = new(this);
-    }
-
-    public void Build()
-    {
-        View.Views = [.. Helper.BuildViews(View.Properties.Get(ZGui.Controls))];
     }
 
     public void Render(RenderContext context)

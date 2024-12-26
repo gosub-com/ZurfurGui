@@ -8,7 +8,7 @@ public class Row : Controllable
 {
     List<Rect> _arrange = new List<Rect>();
 
-    public string Type => "ZGui.Row";
+    public string Type => "Zui.Row";
     public override string ToString() => View.ToString();
     public View View { get; private set; }
 
@@ -18,28 +18,23 @@ public class Row : Controllable
         View = new(this);
     }
 
-    public void Build()
-    {
-        View.Views = [.. Helper.BuildViews(View.Properties.Get(ZGui.Controls))];
-    }
-
-
     public Size MeasureView(Size available, MeasureContext measure)
     {
         _arrange.Clear();
-        int arrangeIndex = 0;
 
-        var wrap = View.Properties.Get(ZGui.Wrap, false);
+        var wrap = View.Properties.Get(Zui.Wrap, false);
         available.Width = wrap ? available.Width : double.PositiveInfinity;
         var rowPosX = 0.0;
         var rowPosY = 0.0;
         var rowHeight = 0.0;
         var viewWidth = 0.0;
         var viewHeight = 0.0;
-        var spacing = View.Properties.Get(ZGui.Spacing, new Size(5, 5));
+        var spacing = View.Properties.Get(Zui.Spacing, new Size(5, 5));
+        int arrangeIndex = 0;
         foreach (var view in View.Views)
         {
-            var viewIsVisible = view.Properties.Get(ZGui.IsVisible, true);
+            // Ignore invisible views
+            var viewIsVisible = view.Properties.Get(Zui.IsVisible, true);
             if (!viewIsVisible)
                 continue;
 
@@ -48,6 +43,7 @@ public class Row : Controllable
 
             if (wrap && rowPosX != 0 && rowPosX + childSize.Width > available.Width)
             {
+                // Equalize the height of the previously wrapped row
                 for (var i = arrangeIndex; i < _arrange.Count; i++)
                     _arrange[i] = _arrange[i] with { Height = rowHeight };
                 arrangeIndex = _arrange.Count;
@@ -63,6 +59,7 @@ public class Row : Controllable
             rowPosX += childSize.Width + spacing.Width;
             rowHeight = Math.Max(rowHeight, childSize.Height);
         }
+        // Equalize the height of the final row (or everything if not wrapped)
         for (var i = arrangeIndex; i < _arrange.Count; i++)
             _arrange[i] = _arrange[i] with { Height = rowHeight };
 
@@ -71,11 +68,16 @@ public class Row : Controllable
 
     public Size ArrangeViews(Size final, MeasureContext measure)
     {
-        Debug.Assert(_arrange.Count  == View.Views.Count);
-        for (int i  = 0;  i < _arrange.Count; i++)
+        var i = 0;
+        foreach (var view in View.Views)
         {
-            View.Views[i].Arrange(_arrange[i], measure);
+            if (view.Properties.Get(Zui.IsVisible, true))
+            {
+                view.Arrange(i < _arrange.Count ? _arrange[i] : new(), measure);
+                i++;
+            }
         }
+        Debug.Assert(i == _arrange.Count); // Visibility or child count changed between measure and arrange
         return final;
     }
 }

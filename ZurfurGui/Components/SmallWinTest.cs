@@ -11,7 +11,7 @@ namespace ZurfurGui.Components;
 
 internal class SmallWinTest : Controllable
 {
-    public string Type => "ZGui.SmallWinTest";
+    public string Type => "Zui.SmallWinTest";
 
     public View View { get; private set; }
 
@@ -25,10 +25,10 @@ internal class SmallWinTest : Controllable
         View.Views = [Helper.BuildView(MakeSmallWinTest())];
 
         var v = View.FindByName("button2");
-        v.Properties.Set(ZGui.PointerDown, (e) => {
+        v.Properties.Set(Zui.PointerDown, (e) => {
             Debug.WriteLine("Button2 mouse down");
         });
-        v.Properties.Set(ZGui.PointerUp, (e) => {
+        v.Properties.Set(Zui.PointerUp, (e) => {
             Debug.WriteLine("Button2 mouse up");
         });
 
@@ -37,106 +37,106 @@ internal class SmallWinTest : Controllable
     static Properties MakeSmallWinTest()
     {
         return [
-            (ZGui.Controller, "ZGui.Window"),
-            (ZGui.Controls, (Properties[])
+            (Zui.Controller, "Zui.Window"),
+            (Zui.Content, (Properties[])
             [
                 [
-                    (ZGui.Controller, "ZGui.Button"),
-                    (ZGui.Name, "button1"),
-                    (ZGui.Text, "Big Button Test"),
-                    (ZGui.AlignVertical, VerticalAlignment.Top),
-                    (ZGui.AlignHorizontal,  HorizontalAlignment.Left),
-                    (ZGui.Size, new Size(100, 100)),
-                    (ZGui.Margin, new Thickness(100, 100, 0, 0)),
+                    (Zui.Controller, "Zui.Button"),
+                    (Zui.Name, "button1"),
+                    (Zui.Text, "Big Button Test"),
+                    (Zui.AlignVertical, AlignVertical.Top),
+                    (Zui.AlignHorizontal,  AlignHorizontal.Left),
+                    (Zui.Size, new Size(100, 100)),
+                    (Zui.Margin, new Thickness(100, 100, 0, 0)),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Button"),
-                    (ZGui.Name, "button2"),
-                    (ZGui.Text, "Test 2"),
-                    (ZGui.AlignVertical, VerticalAlignment.Top),
-                    (ZGui.AlignHorizontal,  HorizontalAlignment.Left),
-                    (ZGui.Margin, new Thickness(10, 20, 0, 0)),
+                    (Zui.Controller, "Zui.Button"),
+                    (Zui.Name, "button2"),
+                    (Zui.Text, "Test 2"),
+                    (Zui.AlignVertical, AlignVertical.Top),
+                    (Zui.AlignHorizontal,  AlignHorizontal.Left),
+                    (Zui.Margin, new Thickness(10, 20, 0, 0)),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Button"),
-                    (ZGui.Name, "button3"),
-                    (ZGui.Text, "Test 3"),
-                    (ZGui.AlignVertical, VerticalAlignment.Top),
-                    (ZGui.AlignHorizontal,  HorizontalAlignment.Left),
-                    (ZGui.Margin, new Thickness(10, 50, 0, 0)),
+                    (Zui.Controller, "Zui.Button"),
+                    (Zui.Name, "button3"),
+                    (Zui.Text, "Test 3"),
+                    (Zui.AlignVertical, AlignVertical.Top),
+                    (Zui.AlignHorizontal,  AlignHorizontal.Left),
+                    (Zui.Margin, new Thickness(10, 50, 0, 0)),
 
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "TC"),
-                    (ZGui.AlignVertical, VerticalAlignment.Top),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Center),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "TC"),
+                    (Zui.AlignVertical, AlignVertical.Top),
+                    (Zui.AlignHorizontal, AlignHorizontal.Center),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "TS"),
-                    (ZGui.AlignVertical, VerticalAlignment.Top),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Stretch),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "TS"),
+                    (Zui.AlignVertical, AlignVertical.Top),
+                    (Zui.AlignHorizontal, AlignHorizontal.Stretch),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "TR"),
-                    (ZGui.AlignVertical, VerticalAlignment.Top),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Right),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "TR"),
+                    (Zui.AlignVertical, AlignVertical.Top),
+                    (Zui.AlignHorizontal, AlignHorizontal.Right),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "TL"),
-                    (ZGui.AlignVertical, VerticalAlignment.Top),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Left),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "TL"),
+                    (Zui.AlignVertical, AlignVertical.Top),
+                    (Zui.AlignHorizontal, AlignHorizontal.Left),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "Middle"),
-                    (ZGui.AlignVertical, VerticalAlignment.Center),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Center),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "Middle"),
+                    (Zui.AlignVertical, AlignVertical.Center),
+                    (Zui.AlignHorizontal, AlignHorizontal.Center),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "CS"),
-                    (ZGui.AlignVertical, VerticalAlignment.Center),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Stretch),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "CS"),
+                    (Zui.AlignVertical, AlignVertical.Center),
+                    (Zui.AlignHorizontal, AlignHorizontal.Stretch),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "CR"),
-                    (ZGui.AlignVertical, VerticalAlignment.Center),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Right),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "CR"),
+                    (Zui.AlignVertical, AlignVertical.Center),
+                    (Zui.AlignHorizontal, AlignHorizontal.Right),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "CL"),
-                    (ZGui.AlignVertical, VerticalAlignment.Center),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Left),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "CL"),
+                    (Zui.AlignVertical, AlignVertical.Center),
+                    (Zui.AlignHorizontal, AlignHorizontal.Left),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "BC"),
-                    (ZGui.AlignVertical, VerticalAlignment.Bottom),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Center),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "BC"),
+                    (Zui.AlignVertical, AlignVertical.Bottom),
+                    (Zui.AlignHorizontal, AlignHorizontal.Center),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "BS"),
-                    (ZGui.AlignVertical, VerticalAlignment.Bottom),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Stretch),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "BS"),
+                    (Zui.AlignVertical, AlignVertical.Bottom),
+                    (Zui.AlignHorizontal, AlignHorizontal.Stretch),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "BR"),
-                    (ZGui.AlignVertical, VerticalAlignment.Bottom),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Right),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "BR"),
+                    (Zui.AlignVertical, AlignVertical.Bottom),
+                    (Zui.AlignHorizontal, AlignHorizontal.Right),
                 ],
                 [
-                    (ZGui.Controller, "ZGui.Label"),
-                    (ZGui.Text, "BL"),
-                    (ZGui.AlignVertical, VerticalAlignment.Bottom),
-                    (ZGui.AlignHorizontal, HorizontalAlignment.Left),
+                    (Zui.Controller, "Zui.Label"),
+                    (Zui.Text, "BL"),
+                    (Zui.AlignVertical, AlignVertical.Bottom),
+                    (Zui.AlignHorizontal, AlignHorizontal.Left),
                 ]
             ])
         ];

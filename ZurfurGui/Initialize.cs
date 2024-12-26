@@ -22,6 +22,9 @@ public static class Initialize
         ControlRegistry.Add(() => new Label());
         ControlRegistry.Add(() => new Row());
         ControlRegistry.Add(() => new Window());
+        ControlRegistry.Add(() => new Border());
+        ControlRegistry.Add(() => new TextBox());
+        ControlRegistry.Add(() => new DockPanel());
 
         ControlRegistry.Add(() => new SmallWinTest());
         ControlRegistry.Add(() => new QbfWinTest());
