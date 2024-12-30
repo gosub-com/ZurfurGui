@@ -25,4 +25,7 @@ public struct Thickness : IEquatable<Thickness>
         h += HashMix(h) + Bottom.GetHashCode();
         return HashMix(h);
     }
+    public static Thickness operator +(Thickness a, Thickness b)
+        => new Thickness(a.Left + b.Left, a.Top + b.Top, a.Right + b.Right, a.Bottom + b.Bottom);
+
 }

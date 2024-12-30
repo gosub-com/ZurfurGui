@@ -58,8 +58,9 @@ public static class Helper
     /// <summary>
     /// Measure a view according to the rules of a panel
     /// </summary>
-    public static Size MeasureView(View view, Size available, MeasureContext measure, Thickness padding = default)
+    public static Size MeasureViewPanel(View view, Size available, MeasureContext measure, Thickness padding = default)
     {
+        available = available.Deflate(padding);
         var windowMeasured = new Size();
         foreach (var child in view.Views)
         {
@@ -78,7 +79,7 @@ public static class Helper
     /// <summary>
     /// Arrange a view according to the rules of a panel
     /// </summary>
-    public static Size ArrangeView(View view, Size final, MeasureContext measure, Thickness padding = default)
+    public static Size ArrangeViewPanel(View view, Size final, MeasureContext measure, Thickness padding = default)
     {
         var layoutRect = new Rect(0, 0, final.Width, final.Height).Deflate(padding);
         foreach (var child in view.Views)

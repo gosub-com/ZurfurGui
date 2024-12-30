@@ -18,9 +18,13 @@ public class Window : Controllable
     public void Build()
     {
         Properties tilePanel = [
-            (Zui.Controller, "Zui.Panel"),
+            (Zui.Controller, "Zui.Border"),
+            (Zui.Dock, Dock.Top),
             (Zui.AlignVertical, AlignVertical.Top),
-            (Zui.Size, new Size(double.NaN, 24)),
+            (Zui.Background, Colors.DarkSlateBlue),
+            (Zui.Padding, new Thickness(7)),
+            (Zui.Margin, new Thickness(2)),
+            (Zui.BorderRadius, 10.0),
             (Zui.Content, (Properties[])[
                 [
                     (Zui.Controller, "Zui.Button"),
@@ -46,13 +50,13 @@ public class Window : Controllable
 
         Properties clientPanel = [
             (Zui.Controller, "Zui.Panel"),
-            (Zui.Margin, new Thickness(0, 28, 0, 0)),
+            (Zui.Margin, new Thickness(10)),
             (Zui.Content, View.Properties.Get(Zui.Content) ?? [])
         ];
 
         Properties borderPanel = [
-            (Zui.Controller, "Zui.Panel"),
-            (Zui.Margin, new Thickness(5)),
+            (Zui.Controller, "Zui.DockPanel"),
+            //(Zui.Margin, new Thickness(5)),
             (Zui.Content, (Properties[])[tilePanel, clientPanel])
         ];
 
@@ -69,9 +73,13 @@ public class Window : Controllable
 
     public void Render(RenderContext context)
     {
-        context.FillColor = Colors.LightGray;
+        context.FillColor = Colors.LightSkyBlue;
         var r = new Rect(new(), View.Size);
-        context.FillRect(r);
+        context.FillRect(r, 10);
+        context.StrokeColor = Colors.AliceBlue;
+        r = r.Deflate(1);
+        context.LineWidth = 2;
+        context.StrokeRect(r, 10);
     }
 
     public bool IsHit(Point point)

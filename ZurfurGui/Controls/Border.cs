@@ -12,9 +12,6 @@ namespace ZurfurGui.Controls;
 /// </summary>
 public class Border : Controllable
 {
-    static readonly int BORDER_WIDTH = 2;
-    static readonly int PADDING = 5;
-
     public string Type => "Zui.Border";
     public override string ToString() => View.ToString();
     public View View { get; private set; }
@@ -28,26 +25,41 @@ public class Border : Controllable
 
     public Size MeasureView(Size available, MeasureContext measure)
     {
-        return Helper.MeasureView(View, available, measure, new(BORDER_WIDTH + PADDING));
+        var padding = View.Properties.Get(Zui.Padding);
+        var borderWidth = View.Properties.Get(Zui.BorderWidth);
+        return Helper.MeasureViewPanel(View, available, measure, padding + new Thickness(borderWidth));
     }
 
     public Size ArrangeViews(Size final, MeasureContext measure)
     {
-        return Helper.ArrangeView(View, final, measure, new(BORDER_WIDTH + PADDING));
+        var padding = View.Properties.Get(Zui.Padding);
+        var borderWidth = View.Properties.Get(Zui.BorderWidth);
+        return Helper.ArrangeViewPanel(View, final, measure, padding + new Thickness(borderWidth));
     }
 
     public void Render(RenderContext context)
     {
         var r = new Rect(new(), View.Size);
 
-        context.FillColor = Colors.Blue;
-        context.FillRect(r);
+        // Draw background
+        var borderRadius = View.Properties.Get(Zui.BorderRadius);
+        var background = View.Properties.Get(Zui.Background);
+        if (background.A != 0)
+        {
+            context.FillColor = background;
+            context.FillRect(r, borderRadius);
+        }
 
-
-        context.LineWidth = BORDER_WIDTH;
-        context.StrokeColor = Colors.Yellow;
-        r = r.Deflate(BORDER_WIDTH/2);
-        context.StrokeRect(r);
+        // Draw border
+        var borderColor = View.Properties.Get(Zui.BorderColor);
+        var borderWidth = View.Properties.Get(Zui.BorderWidth);
+        if (borderWidth > 0 && borderColor.A != 0)
+        {
+            context.LineWidth = borderWidth;
+            context.StrokeColor = borderColor;
+            r = r.Deflate(borderWidth / 2);
+            context.StrokeRect(r, borderRadius);
+        }
     }
 
 }

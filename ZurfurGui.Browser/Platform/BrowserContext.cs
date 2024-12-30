@@ -13,10 +13,10 @@ namespace ZurfurGui.Browser.Interop;
 internal partial class BrowserContext : OsContext
 {
     [JSImport("globalThis.ZurfurGui.fillRect")]
-    private static partial void FillRect(JSObject context, double x, double y, double width, double height);
+    private static partial void FillRect(JSObject context, double x, double y, double width, double height, double radius);
 
     [JSImport("globalThis.ZurfurGui.strokeRect")]
-    private static partial void StrokeRect(JSObject context, double x, double y, double width, double height);
+    private static partial void StrokeRect(JSObject context, double x, double y, double width, double height, double radius);
 
     [JSImport("globalThis.ZurfurGui.fillText")]
     private static partial void FillText(JSObject context, string text, double x, double y);
@@ -146,17 +146,17 @@ internal partial class BrowserContext : OsContext
         }
     }
 
-    public void FillRect(double x, double y, double width, double height)
+    public void FillRect(double x, double y, double width, double height, double radius)
     {
         ReconstructFillStyleString();
-        FillRect(_context, x, y, width, height);
+        FillRect(_context, x, y, width, height, radius);
     }
 
-    public void StrokeRect(double x, double y, double width, double height)
+    public void StrokeRect(double x, double y, double width, double height, double radius)
     { 
         ReconstructStrokeStyleString();
         ReconstructLineWidth();
-        StrokeRect(_context, x, y, width, height);
+        StrokeRect(_context, x, y, width, height, radius);
     }
 
     public void FillText(string text, double x, double y)

@@ -45,14 +45,14 @@ public class RenderContext
     public double LineWidth { set { _context.LineWidth = _scale * value; } }
     public string FontName { set { _context.FontName = value; } }
     public double FontSize { set { _context.FontSize = _scale * value; } }
-    public void FillRect(double x, double y, double width, double height)
-        => _context.FillRect(_scale * x + _origin.X, _scale * y + _origin.Y, _scale * width, _scale * height);
-    public void FillRect(Rect r)
-        => FillRect(r.X, r.Y, r.Width, r.Height);
-    public void StrokeRect(double x, double y, double width, double height)
-        => _context.StrokeRect(_scale * x + _origin.X, _scale * y + _origin.Y, _scale * width, _scale * height);
-    public void StrokeRect(Rect r)
-        => StrokeRect(r.X, r.Y, r.Width, r.Height);
+    public void FillRect(double x, double y, double width, double height, double radius = 0)
+        => _context.FillRect(_scale * x + _origin.X, _scale * y + _origin.Y, _scale * width, _scale * height, radius);
+    public void FillRect(Rect r, double radius = 0)
+        => FillRect(r.X, r.Y, r.Width, r.Height, radius);
+    public void StrokeRect(double x, double y, double width, double height, double radius = 0)
+        => _context.StrokeRect(_scale * x + _origin.X, _scale * y + _origin.Y, _scale * width, _scale * height, radius);
+    public void StrokeRect(Rect r, double radius = 0 )
+        => StrokeRect(r.X, r.Y, r.Width, r.Height, radius);
     public void FillText(string text, double x, double y)
         => _context.FillText(text, _scale * x + _origin.X, _scale * y + _origin.Y);
     public void FillText(string text, Point p)

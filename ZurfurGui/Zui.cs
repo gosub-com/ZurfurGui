@@ -41,6 +41,13 @@ public static class Zui
     public static readonly PropertyKey<string> FontName = new("Zui.FontName");
     public static readonly PropertyKey<double> FontSize = new("Zui.FontSize");
 
+    // Borders, text, misc
+    public static readonly PropertyKey<Color> Background = new("Zui.Background");
+    public static readonly PropertyKey<Thickness> Padding = new("Zui.Padding");
+    public static readonly PropertyKey<Color> BorderColor = new("Zui.BorderColor");
+    public static readonly PropertyKey<double> BorderWidth = new("Zui.BorderWidth");
+    public static readonly PropertyKey<double> BorderRadius = new("Zui.BorderRadius");
+
     // Row, Column, DockPanel, etc.
     public static readonly PropertyKey<bool> Wrap = new("Zui.Wrap");
     public static readonly PropertyKey<Size> Spacing = new("Zui.Spacing");

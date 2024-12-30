@@ -58,9 +58,27 @@ globalThis.ZurfurGui.observeCanvasDevicePixelSize = function (canvas) {
 }
 
 globalThis.ZurfurGui.fillText = function(context, text, x, y) { context.fillText(text, x, y); }
-globalThis.ZurfurGui.fillRect = function(context, x, y, width, height) { context.fillRect(x, y, width, height); }
-globalThis.ZurfurGui.strokeRect = function(context, x, y, width, height) { context.strokeRect(x, y, width, height); }
+globalThis.ZurfurGui.fillRect = function (context, x, y, width, height, radius) {
+    if (radius > 0) {
+        context.beginPath();
+        context.roundRect(x, y, width, height, radius);
+        context.fill();
+    } else {
+        context.fillRect(x, y, width, height);
+    }
+}
+globalThis.ZurfurGui.strokeRect = function (context, x, y, width, height, radius) {
+    if (radius > 0) {
+        context.beginPath();
+        context.roundRect(x, y, width, height, radius);
+        context.stroke();
+    } else {
+        context.strokeRect(x, y, width, height);
+    }
+}
+
 globalThis.ZurfurGui.measureText = function (context, text) { return context.measureText(text); }
+
 globalThis.ZurfurGui.clipRect = function (context, x, y, width, height) {
     context.restore();
     context.save();
@@ -68,7 +86,6 @@ globalThis.ZurfurGui.clipRect = function (context, x, y, width, height) {
     context.rect(x, y, width, height);
     context.clip();
 }
-
 
 
 

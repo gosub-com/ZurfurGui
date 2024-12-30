@@ -80,9 +80,9 @@ public interface OsContext
     public double FontSize { set; get; }
 
 
-    public void FillRect(double x, double y, double width, double height);
+    public void FillRect(double x, double y, double width, double height, double radius);
 
-    public void StrokeRect(double x, double y, double width, double height);
+    public void StrokeRect(double x, double y, double width, double height, double radius);
 
     /// <summary>
     /// Draw at the alphabetic base line

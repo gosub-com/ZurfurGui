@@ -138,16 +138,46 @@ internal class WinContext : OsContext
         }
     }
 
-    public void FillRect(double x, double y, double width, double height)
+    static GraphicsPath GetRoundedRect(double x, double y, double width, double height, double radius)
     {
-        _graphics.FillRectangle(GetBrush(), 
-            (float)x, (float)y, (float)width, (float)height);
+        var path = new GraphicsPath();
+        var diameter = Math.Min(radius * 2, Math.Min(height, width));
+        var arc = new RectangleF((float)x, (float)y, (float)diameter, (float)diameter);
+        path.AddArc(arc, 180, 90); // top left
+        arc.X = (float)(x + width - diameter);
+        path.AddArc(arc, 270, 90); // top right
+        arc.Y = (float)(y + height - diameter);
+        path.AddArc(arc, 0, 90); // bottom right
+        arc.X = (float)x;
+        path.AddArc(arc, 90, 90); // bottom left
+        path.CloseFigure();
+        return path;
     }
 
-    public void StrokeRect(double x, double y,double width,double height)
+    public void FillRect(double x, double y, double width, double height, double radius)
     {
-        _graphics.DrawRectangle(GetPen(),
-            (float)x, (float)y, (float)width, (float)height);
+        if (radius > 0)
+        {
+            using var path = GetRoundedRect(x, y, width, height, radius);
+            _graphics.FillPath(GetBrush(), path);
+        }
+        else
+        {
+            _graphics.FillRectangle(GetBrush(), (float)x, (float)y, (float)width, (float)height);
+        }
+    }
+
+    public void StrokeRect(double x, double y, double width, double height, double radius)
+    {
+        if (radius > 0)
+        {
+            using var path = GetRoundedRect(x, y, width, height, radius);
+            _graphics.DrawPath(GetPen(), path);
+        }
+        else
+        {
+            _graphics.DrawRectangle(GetPen(), (float)x, (float)y, (float)width, (float)height);
+        }
     }
 
     public void FillText(string text, double x, double y)

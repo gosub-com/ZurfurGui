@@ -10,7 +10,6 @@ public class Main
     public static Properties Create(string[] args)
     {
         ControlRegistry.Add(() => { return new FormSearch(); });
-        ControlRegistry.Add(() => { return new FormSearch2(); });
 
         Properties canvas2Controller = [
             (Zui.Controller, "Zui.Panel"),
@@ -42,10 +41,10 @@ public class Main
                 [
                     (Zui.Controller, "TestApp.FormSearch"),
                     (Zui.AlignHorizontal, AlignHorizontal.Left),
-                    (Zui.AlignVertical, AlignVertical.Top),
+                    (Zui.AlignVertical, AlignVertical.Bottom),
                 ],
                 [
-                    (Zui.Controller, "TestApp.FormSearch2"),
+                    (Zui.Controller, "TestApp.FormSearch"),
                     (Zui.AlignHorizontal, AlignHorizontal.Right),
                     (Zui.AlignVertical, AlignVertical.Top),
                     //(Zui.AlignHorizontal, AlignHorizontal.Stretch),

@@ -33,7 +33,7 @@ public interface Controllable
     /// </summary>
     Size MeasureView(Size available, MeasureContext measure)
     {
-        return Helper.MeasureView(View, available, measure);
+        return Helper.MeasureViewPanel(View, available, measure);
     }
 
     /// <summary>
@@ -43,7 +43,7 @@ public interface Controllable
     /// </summary>
     Size ArrangeViews(Size final, MeasureContext measure)
     {
-        return Helper.ArrangeView(View, final, measure);
+        return Helper.ArrangeViewPanel(View, final, measure);
     }
 
     /// <summary>
