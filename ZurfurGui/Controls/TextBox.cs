@@ -11,27 +11,27 @@ public class TextBox : Controllable
     public override string ToString() => View.ToString();
     public View View { get; private set; }
 
-    View? _content;
+    View _content;
 
     public TextBox()
     {
         View = new(this);
-    }
 
-    public void Build()
-    {
         // Place all content inside a panel, using margin
         // TBD: Can we do this without adding an additonal label?
         Properties label = [
             (Zui.Controller, "Zui.Label"),
             (Zui.Text, "Test TextBox"),
-            (Zui.Content, View.Properties.Get(Zui.Content) ?? [])
         ];
         _content = Helper.BuildView(label);
-        View.Views = [_content];
+        View.AddView(_content);
 
         // TBD: This should be set via event when border thickness or padding changes
-        _content?.Properties.Set(Zui.Margin, new(BORDER_WIDTH + PADDING));
+        _content.Properties.Set(Zui.Margin, new(BORDER_WIDTH + PADDING));
+    }
+
+    public void Build()
+    {
     }
 
 

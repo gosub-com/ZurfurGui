@@ -1,85 +1,155 @@
 ﻿using System.Diagnostics;
-
 using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
+/// <summary>
+/// A window is a wrapper to hold a component intended to be shown over the main app window.
+/// It could be modal or modeless, and could cover the app completely when modal or can
+/// be moved by the user when modeless.  The content is displayed inside a client area.
+/// </summary>
 public class Window : Controllable
 {
     public string Type => "Zui.Window";
     public override string ToString() => View.ToString();
     public View View { get; private set; }
 
+    View _contentView;
+    View _titleView;
+
+    bool _mouseDown;
+    Point _mouseDownOffset;
+
     public Window()
     {
         View = new(this);
+
+        const string WINDOW_TITLE_NAME = "$windowTitle";
+        const string WINDOW_CONTENT_NAME = "$windowContent";
+
+        Properties windowProps = [
+            (Zui.Controller, "Zui.DockPanel"),
+            (Zui.Content, (Properties[])[
+                [
+                    (Zui.Controller, "Zui.Border"),
+                    (Zui.Name, WINDOW_TITLE_NAME),
+                    (Zui.Dock, Dock.Top),
+                    (Zui.AlignVertical, AlignVertical.Top),
+                    (Zui.Background, Colors.DarkSlateBlue),
+                    (Zui.Padding, new Thickness(10,4,10,0)),
+                    (Zui.Margin, new Thickness(2)),
+                    (Zui.BorderRadius, 10.0),
+                    (Zui.Content, (Properties[])[
+                        [
+                            (Zui.Controller, "Zui.Label"),
+                            (Zui.AlignHorizontal, AlignHorizontal.Left),
+                            (Zui.Text, "≡"),
+                            (Zui.FontSize, 24.0),
+                        ],
+                        [
+                            (Zui.Controller, "Zui.Label"),
+                            (Zui.AlignHorizontal, AlignHorizontal.Right),
+                            (Zui.Text, "X"),
+                            (Zui.FontSize, 24.0)
+                        ],
+                        [
+                            (Zui.Controller, "Zui.Label"),
+                            (Zui.DisableHitTest, true),
+                            (Zui.AlignHorizontal, AlignHorizontal.Center),
+                            (Zui.Text, "Title"),
+                            (Zui.FontSize, 24.0)
+                        ]
+                    ])
+                ],
+                [
+                    (Zui.Controller, "Zui.Panel"),
+                    (Zui.Name, WINDOW_CONTENT_NAME),
+                    (Zui.Margin, new Thickness(10)),
+                ],
+            ])
+        ];
+
+        var windowView = Helper.BuildView(windowProps);
+        View.AddView(windowView);
+        _titleView = View.FindByName(WINDOW_TITLE_NAME);
+        _contentView = View.FindByName(WINDOW_CONTENT_NAME);
+
+
+        // Click on any control brings window to foreground
+        View.Properties.Set(Zui.PreviewPointerDown, (e) =>
+        {
+            View.BringToFront();
+        });
+
+
+        // TBD: Replace with grabber control, and fix pointer up messages
+        _titleView.Properties.Set(Zui.PreviewPointerDown, (e) =>
+        {
+            _mouseDown = true;
+            var margin = View.Properties.Get(Zui.Margin);
+            _mouseDownOffset = (View.Parent?.toClient(e.Position) ?? new()) - margin.TopLeft;
+        });
+        // TBD: Up message is lost if mouse moves too fast
+        _titleView.Properties.Set(Zui.PreviewPointerMove, (e) =>
+        {
+            if (!_mouseDown)
+                return;
+
+            var position = (View.Parent?.toClient(e.Position) ?? new()) - _mouseDownOffset;
+            var margin = View.Properties.Get(Zui.Margin);
+            margin.Left = position.X;
+            margin.Top = position.Y;
+            View.Properties.Set(Zui.Margin, margin);
+            View.InvalidateMeasure(); // TBD: Should be automatic
+        });
+        // TBD: Up message is lost if mouse moves too fast
+        _titleView.Properties.Set(Zui.PreviewPointerUp, (e) =>
+        {
+            _mouseDown = false;
+        });
     }
 
     public void Build()
     {
-        Properties tilePanel = [
-            (Zui.Controller, "Zui.Border"),
-            (Zui.Dock, Dock.Top),
-            (Zui.AlignVertical, AlignVertical.Top),
-            (Zui.Background, Colors.DarkSlateBlue),
-            (Zui.Padding, new Thickness(7)),
-            (Zui.Margin, new Thickness(2)),
-            (Zui.BorderRadius, 10.0),
-            (Zui.Content, (Properties[])[
-                [
-                    (Zui.Controller, "Zui.Button"),
-                    (Zui.AlignHorizontal, AlignHorizontal.Left),
-                    (Zui.Text, "≡"),
-                    (Zui.FontSize, 24.0)
-                ],
-                [
-                    (Zui.Controller, "Zui.Button"),
-                    (Zui.AlignHorizontal, AlignHorizontal.Right),
-                    (Zui.Text, "X"),
-                    (Zui.FontSize, 24.0)
-                ],
-                [
-                    (Zui.Controller, "Zui.Label"),
-                    (Zui.DisableHitTest, true),
-                    (Zui.AlignHorizontal, AlignHorizontal.Center),
-                    (Zui.Text, "Title"),
-                    (Zui.FontSize, 24.0)
-                ]
-            ])
-        ];
+        var contentProperties = View.Properties.Get(Zui.Content);
+        if (contentProperties != null)
+            foreach (var property in contentProperties)
+                _contentView.AddView(Helper.BuildView(property));
+    }
 
-        Properties clientPanel = [
-            (Zui.Controller, "Zui.Panel"),
-            (Zui.Margin, new Thickness(10)),
-            (Zui.Content, View.Properties.Get(Zui.Content) ?? [])
-        ];
+    /// <summary>
+    /// TBD: Needs to be an actual property
+    /// </summary>
+    public bool IsWindowWrappingVisible
+    {
+        get => _titleView.Properties.Get(Zui.IsVisible, true);
+        set => _titleView.Properties?.Set(Zui.IsVisible, value);
+    }
 
-        Properties borderPanel = [
-            (Zui.Controller, "Zui.DockPanel"),
-            //(Zui.Margin, new Thickness(5)),
-            (Zui.Content, (Properties[])[tilePanel, clientPanel])
-        ];
-
-        View.Views = [Helper.BuildView(borderPanel)];
-
-        View.Properties.Set(Zui.PreviewPointerDown, (e) => {
-            Debug.WriteLine("Window down");
-
-            // TBD: Remove this, enforce windows at top level
-            View.Parent?.BringToFront();
-        });
-
+    /// <summary>
+    /// Set the window content
+    /// </summary>
+    public void SetContent(View content)
+    {
+        _contentView.ClearViews();
+        _contentView.AddView(content);
     }
 
     public void Render(RenderContext context)
     {
-        context.FillColor = Colors.LightSkyBlue;
+        var background = View.Properties.Get(Zui.Background, Colors.LightSkyBlue);
+        var borderColor = View.Properties.Get(Zui.BorderColor, Colors.AliceBlue);
+        var borderRadius = View.Properties.Get(Zui.BorderRadius, 10);
+        var borderWidth = View.Properties.Get(Zui.BorderWidth, 2);
+
+        context.FillColor = background;
         var r = new Rect(new(), View.Size);
-        context.FillRect(r, 10);
-        context.StrokeColor = Colors.AliceBlue;
-        r = r.Deflate(1);
-        context.LineWidth = 2;
-        context.StrokeRect(r, 10);
+        context.FillRect(r, borderRadius);
+        context.StrokeColor = borderColor;
+
+        r = r.Deflate(borderWidth/2);
+        context.LineWidth = borderWidth;
+        context.StrokeRect(r, borderRadius);
     }
 
     public bool IsHit(Point point)

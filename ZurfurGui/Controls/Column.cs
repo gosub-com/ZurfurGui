@@ -17,6 +17,10 @@ public class Column : Controllable
     {
         View = new(this);
     }
+    public void Build()
+    {
+        Helper.BuildViews(View, View.Properties.Get(Zui.Content));
+    }
 
     public Size MeasureView(Size available, MeasureContext measure)
     {

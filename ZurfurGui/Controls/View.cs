@@ -1,6 +1,8 @@
-﻿using System.Diagnostics;
+﻿using System.Collections;
+using System.Diagnostics;
+using ZurfurGui.Render;
 
-namespace ZurfurGui.Render;
+namespace ZurfurGui.Controls;
 
 public enum AlignHorizontal : byte
 {
@@ -21,20 +23,24 @@ public enum AlignVertical : byte
 public class View
 {
     /// <summary>
+    /// All child views. 
+    /// </summary>
+    readonly List<View> _views = new List<View>();
+
+    /// <summary>
+    /// Iterate and find child views.  Use AddView (and friends) to modify the view list
+    /// </summary>
+    public RoList<View> Views => new RoList<View>(_views);
+
+    /// <summary>
     /// Parent view
     /// </summary>
     public View? Parent { get; private set; }
-    internal void SetParentView(View? parent) { Parent = parent; }
-
-    /// <summary>
-    /// All child views
-    /// </summary>
-    public List<View> Views { get; set; } = new List<View>();
 
     /// <summary>
     /// Control properties
     /// </summary>
-    public Properties Properties { get; set; } = new();
+    public readonly Properties Properties = new();
 
     /// <summary>
     /// The control, if there is one
@@ -71,6 +77,10 @@ public class View
     /// </summary>
     public Rect Clip { get; private set; }
 
+
+    public bool IsMeasureInvalid { get; private set; }
+    public bool IsVisualInvalid { get; private set; }
+
     public Point toDevice(Point p) => Origin + p * Scale;
     public Size toDevice(Size s) => Scale * s;
     public Rect toDevice(Rect r) => new Rect(Origin + r.Position * Scale, Scale * r.Size);
@@ -88,6 +98,34 @@ public class View
         return $"{Control.Type}: {Properties.Get(Zui.Name) ?? "(no name)"}";
     }
 
+    public void InvalidateMeasure()
+    {
+        if (IsMeasureInvalid)
+            return;
+
+        IsMeasureInvalid = true;
+        var parent = Parent;
+        while (parent != null && !parent.IsMeasureInvalid && parent.Properties.Get(Zui.IsVisible, true))
+        {
+            parent.InvalidateMeasure();
+            parent = parent.Parent;
+        }
+    }
+
+    public void InvalidateVisual()
+    {
+        if (IsVisualInvalid)
+            return;
+
+        IsVisualInvalid = true;
+        var parent = Parent;
+        while (parent != null && !parent.IsVisualInvalid && parent.Properties.Get(Zui.IsVisible, true))
+        {
+            parent.InvalidateVisual();
+            parent = parent.Parent;
+        }
+    }
+
     /// <summary>
     /// Called to measure the view and set MeasuredSize.
     /// Invisible views and views not attached to a control always have a size 
@@ -102,6 +140,8 @@ public class View
         var isVisible = Properties.Get(Zui.IsVisible, true);
         if (!isVisible)
             return;
+
+        IsMeasureInvalid = false;
 
         var margin = Properties.Get(Zui.Margin);
         var constrained = ApplyLayoutConstraints(this, available.Deflate(margin));
@@ -273,9 +313,10 @@ public class View
             return null;
 
         // Check children first
-        for (var i = view.Views.Count - 1; i >= 0; i--)
+        var views = view.Views;
+        for (var i = views.Count - 1; i >= 0; i--)
         {
-            var hit = FindHitTarget(view.Views[i], target);
+            var hit = FindHitTarget(views[i], target);
             if (hit != null)
                 return hit;
         }
@@ -286,6 +327,32 @@ public class View
         return null;
     }
 
+    public void AddView(View view)
+    {
+        if (view.Parent != null)
+            throw new ArgumentException("AddView: Parent must be null");
+        view.Parent = this;
+        _views.Add(view);
+    }
+    public void AddViews(IEnumerable<View> views)
+    {
+        foreach (var view in views)
+            AddView(view);
+    }
+
+    public void RemoveView(int index)
+    {
+        var view = _views[index];
+        _views.RemoveAt(index);
+        view.Parent = null;
+    }
+
+    public void ClearViews()
+    {
+        while (_views.Count > 0)
+            RemoveView(_views.Count - 1);
+    }
+
     public void BringToFront()
     {
         var parent = Parent;
@@ -294,8 +361,8 @@ public class View
         var i = parent.Views.FindIndex(v => v == this);
         if (i < 0)
             throw new ArgumentException("BringToFront: Parent does not contain this view");
-        parent.Views.RemoveAt(i);
-        parent.Views.Add(this);
+        parent._views.RemoveAt(i);
+        parent._views.Add(this);
     }
 
 

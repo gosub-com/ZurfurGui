@@ -1,4 +1,5 @@
 using System.Text.Json;
+using ZurfurGui.Controls;
 using ZurfurGui.Render;
 using ZurfurGui.WinForms.Interop;
 
@@ -14,12 +15,13 @@ public partial class FormZurfurGui : Form
     double[] _mag = [0.25, 0.33, 0.5, 0.66, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
     int _magIndex = 7;
 
-    public FormZurfurGui(Properties controls)
+    public FormZurfurGui(Action<AppWindow> mainAppEntry)
     {
         InitializeComponent();
+        var appWindow = ZuiInit.Init(mainAppEntry);
         _window = new WinWindow(this, pictureMain);
         _canvas = new WinCanvas(pictureMain);
-        _render = new Renderer(_window, _canvas, controls);
+        _render = new Renderer(_window, _canvas, appWindow);
         pictureMain.MouseWheel += PictureMain_MouseWheel;
     }
 

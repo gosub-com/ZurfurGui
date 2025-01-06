@@ -11,8 +11,7 @@ public class Renderer
 {
     OsWindow _window;
     OsCanvas _canvas;
-    View _view;
-    BackgroundTest? _background;
+    AppWindow _appWindow;
     RenderContext _renderContext;
 
     View? _hoverView;
@@ -30,29 +29,14 @@ public class Renderer
     Point _pointerPosition;
 
 
-    public Renderer(OsWindow window, OsCanvas canvas, Properties controls)
+    public Renderer(OsWindow window, OsCanvas canvas, AppWindow appWindow)
     {
-        const string BACKGROUND_NAME = "Zui.BackgroundTest";
-
         _window = window;
         _canvas = canvas;
         _renderContext = new RenderContext(_canvas.Context);
 
-        Properties background = [
-            (Zui.Controller, BACKGROUND_NAME),
-            (Zui.Name, BACKGROUND_NAME)
-        ];
-
-        // Add canvas to top level controls, so we can adjust device pixel resolution
-        controls = [
-            (Zui.Controller, "Zui.Panel"),
-            (Zui.Content, (Properties[])[background, controls])
-        ];
-
-        _view = Helper.BuildView(controls);
-
-        _background = _view.FindByName(BACKGROUND_NAME).Control as BackgroundTest;
-        _background?.SetWindow(window, canvas);
+        _appWindow = appWindow;
+        _appWindow.SetRenderWindow(window, canvas);
 
         if (_canvas.PointerInput != null)
             throw new ArgumentException("Pointer input already taken", nameof(_canvas));
@@ -63,7 +47,7 @@ public class Renderer
     void PointerInput(PointerEvent ev)
     {
         _pointerPosition = ev.Position;
-        var hit = View.FindHitTarget(_view, ev.Position);
+        var hit = View.FindHitTarget(_appWindow.View, ev.Position);
 
         // Update hover target        
         if (ev.Type == "pointermove")
@@ -133,15 +117,17 @@ public class Renderer
     {
         var timer = Stopwatch.StartNew();
 
-        if (_mainWindowSize != _canvas.DeviceSize || _devicePixelRatio != _window.DevicePixelRatio)
+        var view = _appWindow.View;
+        if (_mainWindowSize != _canvas.DeviceSize || _devicePixelRatio != _window.DevicePixelRatio
+            || _appWindow.View.IsMeasureInvalid)
         {
-            _view.Properties.Set(Zui.Magnification, _window.DevicePixelRatio);
+            view.Properties.Set(Zui.Magnification, _window.DevicePixelRatio);
             _mainWindowSize = _canvas.DeviceSize / _window.DevicePixelRatio;
             _devicePixelRatio = _window.DevicePixelRatio;
             var measureConext = new MeasureContext(_canvas.Context);
-            _view.Measure(_mainWindowSize, measureConext);
-            _view.Arrange(new Rect(new(0,0), _mainWindowSize), measureConext);
-            _view.PostArrange(new(), 1, new Rect(0, 0, 1000000, 1000000));
+            view.Measure(_mainWindowSize, measureConext);
+            view.Arrange(new Rect(new(0,0), _mainWindowSize), measureConext);
+            view.PostArrange(new(), 1, new Rect(0, 0, 1000000, 1000000));
         }
 
         _frameCount++;
@@ -157,9 +143,9 @@ public class Renderer
         }
 
         _renderContext.SetPointerPosition(_pointerPosition);
-        _background?.SetStats(_frameCount, _fps, (int)_avgMs);
+        _appWindow.SetRenderStats(_frameCount, _fps, (int)_avgMs);
 
-        RenderView(_view);
+        RenderView(view);
 
         _totalMs += timer.ElapsedMilliseconds;
     }

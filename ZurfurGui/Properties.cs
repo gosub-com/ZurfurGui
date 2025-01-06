@@ -126,4 +126,20 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
         _properties[property.Id] = value;
     }
 
+    public void SetUnion(Properties p)
+    {
+        foreach (var property in p)
+            _properties[property.key] = property.value; 
+    }
+    
+    public void Remove<T>(PropertyKey<T> property)
+    {
+        _properties.Remove(property.Id);
+    }
+
+    public bool Has<T>(PropertyKey<T> property)
+    {
+        return _properties.ContainsKey(property.Id);
+    }
+
 }

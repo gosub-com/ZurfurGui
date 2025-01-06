@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using ZurfurGui.Controls;
 using ZurfurGui.Platform;
-using ZurfurGui.Render;
 
 namespace ZurfurGui;
 

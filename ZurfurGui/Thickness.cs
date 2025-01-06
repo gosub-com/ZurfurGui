@@ -8,6 +8,11 @@ public struct Thickness : IEquatable<Thickness>
     public double Top { get; set; }
     public double Right { get; set; }
     public double Bottom { get; set; }
+    public Point TopLeft
+    {
+        get => new Point(Left, Top);
+        set { Left = value.X; Top = value.Y; }
+    }
 
     public Thickness() { }
     public Thickness(double size) { Left = size;  Top = size;  Right = size;  Bottom = size; }

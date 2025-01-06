@@ -21,7 +21,7 @@ public static class ControlRegistry
         {
             var typeName = createControl().Type;
             if (s_controls.ContainsKey(typeName))
-                throw new ArgumentException($"Control registray already contains '{typeName}'");
+                throw new ArgumentException($"Control registry already contains '{typeName}'");
             s_controls[typeName] = createControl;
         }
     }

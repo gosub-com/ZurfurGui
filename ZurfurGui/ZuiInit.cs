@@ -8,25 +8,29 @@ using ZurfurGui.Controls;
 
 namespace ZurfurGui;
 
-public static class Initialize
+public static class ZuiInit
 {
     /// <summary>
     /// Initialize the library with the built in controls, etc.
     /// </summary>
-    public static void Init()
+    public static AppWindow Init(Action<AppWindow> mainAppEntry)
     {
-        ControlRegistry.Add(() => new BackgroundTest());
-        ControlRegistry.Add(() => new Button());
         ControlRegistry.Add(() => new Panel());
+        ControlRegistry.Add(() => new Button());
         ControlRegistry.Add(() => new Column());
         ControlRegistry.Add(() => new Label());
         ControlRegistry.Add(() => new Row());
-        ControlRegistry.Add(() => new Window());
         ControlRegistry.Add(() => new Border());
         ControlRegistry.Add(() => new TextBox());
         ControlRegistry.Add(() => new DockPanel());
+        ControlRegistry.Add(() => new Window());
+        ControlRegistry.Add(() => new AppWindow());
 
         ControlRegistry.Add(() => new SmallWinTest());
         ControlRegistry.Add(() => new QbfWinTest());
+
+        var appWindow = new AppWindow();
+        mainAppEntry(appWindow);
+        return appWindow;
     }
 }

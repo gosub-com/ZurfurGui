@@ -29,6 +29,11 @@ public class DockPanel : Controllable
         View = new(this);
     }
 
+    public void Build()
+    {
+        Helper.BuildViews(View, View.Properties.Get(Zui.Content));
+    }
+
     public Size MeasureView(Size available, MeasureContext measure)
     {
         available = available.Min(new(1000000, 1000000));  // Rule out infinities
@@ -36,10 +41,11 @@ public class DockPanel : Controllable
         var constraint = available;
         _lastVisibleIndex = -1;
         var minSize = new Size();
-        for (var i = 0;  i < View.Views.Count;  i++)
+        var views = View.Views;
+        for (var i = 0;  i < views.Count;  i++)
         {
             // Ignore invisible views
-            var view = View.Views[i];
+            var view = views[i];
             var viewIsVisible = view.Properties.Get(Zui.IsVisible, true);
             if (!viewIsVisible)
                 continue;
@@ -72,10 +78,11 @@ public class DockPanel : Controllable
         var right = final.Width;
         var top = 0.0;
         var bottom = final.Height;
-        for (var i = 0;  i < View.Views.Count;  i++)
+        var views = View.Views;
+        for (var i = 0;  i < views.Count;  i++)
         {
             // Ignore invisible views
-            var view = View.Views[i];
+            var view = views[i];
             var viewIsVisible = view.Properties.Get(Zui.IsVisible, true);
             if (!viewIsVisible)
                 continue;

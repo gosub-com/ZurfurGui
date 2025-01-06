@@ -8,7 +8,11 @@ using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
-internal class BackgroundTest : Controllable
+/// <summary>
+/// The AppWindow is either the main browser window, or a canvas inside a web page, or the computer desktop when running
+/// as a native applications.  It holds all the other windows - main app window, modless and modal dialogs, etc.
+/// </summary>
+public class AppWindow : Controllable
 {
     readonly bool DRAW_NUMBERS = false;
 
@@ -19,30 +23,57 @@ internal class BackgroundTest : Controllable
     int _fps;
     long _avgMs;
 
-    public string Type => "Zui.BackgroundTest";
+    public string Type => "Zui.AppWindow";
     public override string ToString() => View.ToString();
     public View View { get; private set; }
 
-    public BackgroundTest()
+    View _mainAppView;
+    View _floatingWindows;
+    View _dialogWindows;
+
+    public AppWindow()
     {
         View = new(this);
+
+        _mainAppView = new Panel().View;
+        _mainAppView.Properties.Set(Zui.Name, "$_mainAppView");
+        _floatingWindows = new Panel().View;
+        _floatingWindows.Properties.Set(Zui.Name, "$_floatingWindows");
+        _dialogWindows = new Panel().View;
+        _dialogWindows.Properties.Set(Zui.Name, "$_dialogWindows");
+
+        View.AddViews([_mainAppView, _floatingWindows, _dialogWindows]);
     }
 
-    public void SetStats(int count, int fps, int avgMs)
+    public void Build() { }
+
+    /// <summary>
+    /// Add a new modeless dialog window over the main app window
+    /// </summary>
+    public void AddWindow(Window window)
+    {
+        View.InvalidateMeasure(); // TBD: Move to AddView
+        _dialogWindows.AddView(window.View);
+    }
+
+    /// <summary>
+    /// Called by renderer so we can display some stats
+    /// </summary>
+    internal void SetRenderStats(int count, int fps, int avgMs)
     {
         _fps = fps;
         _avgMs = avgMs;
         _frameCount = count;
     }
 
-    public void SetWindow(OsWindow window, OsCanvas canvas)
+    /// <summary>
+    /// Called by renderer so we can display some stats
+    /// </summary>
+    internal void SetRenderWindow(OsWindow window, OsCanvas canvas)
     {
         _window = window;
         _canvas = canvas;
     }
-
-    public Size MeasureView(Size available, MeasureContext measure) => available;
-    public Size ArrangeViews(Size final, MeasureContext measure) => final;
 
     public void Render(RenderContext renderContext) 
     {

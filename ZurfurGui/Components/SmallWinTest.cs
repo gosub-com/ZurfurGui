@@ -5,11 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using ZurfurGui.Controls;
-using ZurfurGui.Render;
 
 namespace ZurfurGui.Components;
 
-internal class SmallWinTest : Controllable
+public class SmallWinTest : Controllable
 {
     public string Type => "Zui.SmallWinTest";
 
@@ -18,11 +17,7 @@ internal class SmallWinTest : Controllable
     public SmallWinTest()
     {
         View = new(this);
-    }
-
-    public void Build()
-    {
-        View.Views = [Helper.BuildView(MakeSmallWinTest())];
+        View.AddView(Helper.BuildView(MakeSmallWinTest()));
 
         var v = View.FindByName("button2");
         v.Properties.Set(Zui.PointerDown, (e) => {
@@ -34,12 +29,15 @@ internal class SmallWinTest : Controllable
 
     }
 
+    public void Build()
+    {
+    }
+
     static Properties MakeSmallWinTest()
     {
         return [
-            (Zui.Controller, "Zui.Window"),
-            (Zui.Content, (Properties[])
-            [
+            (Zui.Controller, "Zui.Panel"),
+            (Zui.Content, (Properties[]) [
                 [
                     (Zui.Controller, "Zui.Button"),
                     (Zui.Name, "button1"),

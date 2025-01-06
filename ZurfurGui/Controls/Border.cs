@@ -23,6 +23,13 @@ public class Border : Controllable
         View = new(this);
     }
 
+    public void Build()
+    {
+        Helper.BuildViews(View, View.Properties.Get(Zui.Content));
+    }
+
+
+
     public Size MeasureView(Size available, MeasureContext measure)
     {
         var padding = View.Properties.Get(Zui.Padding);
@@ -61,5 +68,12 @@ public class Border : Controllable
             context.StrokeRect(r, borderRadius);
         }
     }
+
+    public bool IsHit(Point point)
+    {
+        var p = View.toClient(point);
+        return new Rect(new(0, 0), View.Size).Contains(p);
+    }
+
 
 }

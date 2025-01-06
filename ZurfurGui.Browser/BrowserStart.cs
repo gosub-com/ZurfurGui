@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 using ZurfurGui.Browser.Interop;
+using ZurfurGui.Controls;
 using ZurfurGui.Render;
 
 namespace ZurfurGui.Browser;
@@ -34,15 +35,12 @@ public static partial class BrowserStart
         }
     }
 
-    public static void Start(string canvasId, Properties controls)
+    public static void Start(string canvasId, Action<AppWindow> mainAppEntry)
     {
-        Initialize.Init();
-
+        var appWindow = ZuiInit.Init(mainAppEntry);
         var window = new BrowserWindow();
         var canvas = new BrowserCanvas(canvasId, window);
-
-        var renderer = new Renderer(window, canvas, controls);
-        var context = canvas.Context;
+        var renderer = new Renderer(window, canvas, appWindow);
 
         // On first render, allow an exception to percolate up and show an error message
         ScaleAndRender();

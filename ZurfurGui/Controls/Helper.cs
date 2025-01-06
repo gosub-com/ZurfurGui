@@ -19,17 +19,15 @@ public static class Helper
     const double TEXT_BASELINE = 0.8;
 
     /// <summary>
-    /// Create views from properties
+    /// Build views from properties and add them to the view.Views collection
     /// </summary>
-    public static View []BuildViews(Properties[]? controllerProperties)
+    public static void BuildViews(View view, Properties[]? controllerProperties)
     {
         if (controllerProperties == null)
-            return Array.Empty<View>();
+            return;
 
-        var views = new View[controllerProperties.Length];
-        for (int i = 0;  i < views.Length; i++)
-            views[i] = BuildView(controllerProperties[i]);
-        return views;
+        foreach (var property in controllerProperties)
+            view.AddView(BuildView(property));
     }
 
     /// <summary>
@@ -44,13 +42,10 @@ public static class Helper
         var control = ControlRegistry.Create(controlName);
         if (control == null)
             throw new ArgumentException($"'{controlName}' is not a registered control");
-
-
-        control.View.Properties = controllerProperties;
+     
+        control.View.Properties.SetUnion(controllerProperties);
+        
         control.Build();
-
-        foreach (var v in control.View.Views)
-            v.SetParentView(control.View);
 
         return control.View;
     }

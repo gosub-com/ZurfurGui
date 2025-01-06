@@ -57,9 +57,7 @@ public class RenderContext
         => _context.FillText(text, _scale * x + _origin.X, _scale * y + _origin.Y);
     public void FillText(string text, Point p)
         => _context.FillText(text, p.X, p.Y);
-    public void ClipRect(double x, double y, double width, double height)
+    internal void ClipRect(double x, double y, double width, double height)
         => _context.ClipRect(_scale * x + _origin.X, _scale * y + _origin.Y, _scale * width, _scale * height);
-    public void ClipRect(Rect r)
-        => ClipRect(r.X, r.Y, r.Width, r.Height);
 
 }

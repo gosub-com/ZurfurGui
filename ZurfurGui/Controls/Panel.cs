@@ -18,6 +18,12 @@ public class Panel : Controllable
         View = new(this);
     }
 
+    public void Build()
+    {
+        Helper.BuildViews(View, View.Properties.Get(Zui.Content));
+    }
+
+
     public void Render(RenderContext context)
     {
         // TBD: Clear for now

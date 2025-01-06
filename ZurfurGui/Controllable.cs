@@ -16,14 +16,9 @@ public interface Controllable
     View View { get; }
 
     /// <summary>
-    /// The default build function adds all of the controls in the proerty Zui.Content, which is the correct thing to
-    /// do for most simple controls.  Panel, Border, Column, etc. all use this.  Complex controls that add more to the 
-    /// visual tree can do something different.  Window, Tab, and Tree controls use custom build functions.
+    /// Controls that have content override this to add content to the view tree
     /// </summary>
-    void Build()
-    {
-        View.Views = [.. Helper.BuildViews(View.Properties.Get(Zui.Content))];
-    }
+    void Build();
 
     /// <summary>
     /// Returns the desired size of the control given the available screen size.

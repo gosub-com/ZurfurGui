@@ -23,7 +23,8 @@ public class Button : Controllable
         return Helper.MeasureText(measure, View);
     }
 
-    public Size ArrangeViews(Size final, MeasureContext measure) => final;
+    public void Build() { }
+
 
     public void Render(RenderContext context)
     {

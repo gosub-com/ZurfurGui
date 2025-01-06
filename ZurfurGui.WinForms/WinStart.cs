@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Controls;
 
 namespace ZurfurGui.WinForms;
 
 public static class WinStart
 {
-    public static void Start(Properties controls)
+    public static void Start(Action<AppWindow> mainAppEntry)
     {
         // To customize application configuration such as set high DPI settings or default font,
         // see https://aka.ms/applicationconfiguration.
@@ -18,7 +19,6 @@ public static class WinStart
         Application.SetCompatibleTextRenderingDefault(false);
         Application.SetHighDpiMode(HighDpiMode.SystemAware);
 
-        Initialize.Init();
-        Application.Run(new FormZurfurGui(controls));
+        Application.Run(new FormZurfurGui(mainAppEntry));
     }
 }
