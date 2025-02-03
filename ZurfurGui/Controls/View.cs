@@ -366,4 +366,38 @@ public class View
     }
 
 
+    /// <summary>
+    /// Walks up the tree to find the main AppWindow.  Returns null if this view is not attached to the tree.
+    /// </summary>
+    public AppWindow? AppWindow
+    {
+        get
+        {
+            var view = this;
+            while (view != null)
+            {
+                if (view.Control is AppWindow appWindow)
+                    return appWindow;
+                view = view.Parent;
+            }
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// True when the pointer is captured.  Automatically reset (and PointerCaptureLost event sent) when the pointer
+    /// is released. There isn't a need to use the PointerUp event if you capture the pointer and use the CaptureLost event.
+    /// Can only be set inside of PointerDown event (can be reset any time)
+    /// </summary>
+    public bool CapturePointer
+    {
+        get { return AppWindow?.GetIsPointerCaptured(this) ?? false; }
+        set
+        {
+            if (AppWindow is not AppWindow appWindow)
+                throw new InvalidOperationException("View is not attached to main tree");
+            appWindow.SetIsPointerCapture(this, value);
+        }
+    }
+
 }

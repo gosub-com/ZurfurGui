@@ -47,9 +47,24 @@ public class Renderer
     void PointerInput(PointerEvent ev)
     {
         _pointerPosition = ev.Position;
-        var hit = View.FindHitTarget(_appWindow.View, ev.Position);
+
+        // Perform capture
+        if (_appWindow._pointerCaptureList.Count != 0)
+        {
+            // End hover target
+            if (_hoverView != null)
+                _hoverView.PointerHoverTarget = false;
+            _hoverView = null;
+
+            // Send events to captured views
+            if (ev.Type == "pointerup" || ev.Type == "pointerleave")
+                _appWindow.ClearPointerCaptureList();
+            else
+                SendPointerEvent(ev, _appWindow._pointerCaptureList);
+        }
 
         // Update hover target        
+        var hit = View.FindHitTarget(_appWindow.View, ev.Position);
         if (ev.Type == "pointermove")
         {
             if (hit != _hoverView)
@@ -65,7 +80,14 @@ public class Renderer
         var chain = new List<View>();
         GetViewChain(hit, chain);
 
-        PropertyKey<Action<PointerEvent>> property;
+        SendPointerEvent(ev, chain);
+
+    }
+
+
+    private static void SendPointerEvent(PointerEvent ev, List<View> views)
+    {
+        PropertyKey<EventHandler<PointerEvent>> property;
         switch (ev.Type)
         {
             case "pointermove": property = Zui.PreviewPointerMove; break;
@@ -75,12 +97,12 @@ public class Renderer
         }
 
         // Preview
-        for (int i = chain.Count - 1; i >= 0; i--)
+        for (int i = views.Count - 1; i >= 0; i--)
         {
-            var view = chain[i];
+            var view = views[i];
             var e = view.Properties.Get(property);
             if (e != null)
-                e(ev);
+                e(null, ev);
         }
 
         switch (ev.Type)
@@ -92,11 +114,11 @@ public class Renderer
         }
 
         // Bubble
-        foreach (var view in chain)
+        foreach (var view in views)
         {
             var e = view.Properties.Get(property);
             if (e != null)
-                e(ev);
+                e(null, ev);
         }
     }
 

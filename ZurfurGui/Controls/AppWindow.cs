@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using ZurfurGui.Platform;
@@ -30,6 +32,8 @@ public class AppWindow : Controllable
     View _mainAppView;
     View _floatingWindows;
     View _dialogWindows;
+    internal List<View> _pointerCaptureList = new();
+
 
     public AppWindow()
     {
@@ -147,6 +151,39 @@ public class AppWindow : Controllable
         renderContext.FontSize = 26;
         renderContext.FillColor = new Color(0xC0, 0xC0, 0xF0);
         renderContext.FillText($"|fps={_fps}, ms={_avgMs}, count={_frameCount}", left, top + 0 * ls);
+    }
+
+    internal bool GetIsPointerCaptured(View view)
+    {
+        return _pointerCaptureList.Contains(view);
+    }
+    internal void SetIsPointerCapture(View view, bool capture)
+    {
+        Debug.WriteLine($"Capture {capture}");
+        var i = _pointerCaptureList.IndexOf(view);
+        if (capture)
+        {
+            // TBD: Throw if not in pointer down
+            if (i < 0)
+                _pointerCaptureList.Add(view);
+        }
+        if (!capture)
+        {
+            if (i >= 0)
+            {
+                _pointerCaptureList.RemoveAt(i);
+                view.Properties.Get(Zui.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
+            }
+        }
+    }
+
+    internal void ClearPointerCaptureList()
+    {
+        Debug.WriteLine("CaptureLost");
+        var c = _pointerCaptureList;
+        _pointerCaptureList = new();
+        foreach (var view in c)
+            view.Properties.Get(Zui.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
     }
 
 }

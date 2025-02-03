@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using ZurfurGui.Platform;
 using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
@@ -74,39 +75,37 @@ public class Window : Controllable
         _titleView = View.FindByName(WINDOW_TITLE_NAME);
         _contentView = View.FindByName(WINDOW_CONTENT_NAME);
 
-
         // Click on any control brings window to foreground
-        View.Properties.Set(Zui.PreviewPointerDown, (e) =>
+        View.Properties.AddEvent(Zui.PreviewPointerDown, (s, e) =>
         {
             View.BringToFront();
         });
 
+        // Title events
+        _titleView.Properties.AddEvent(Zui.PreviewPointerDown, _titleView_PreviewPointerDown);
+        _titleView.Properties.AddEvent(Zui.PreviewPointerMove, _titleView_PreviewPointerMove);
+        _titleView.Properties.AddEvent(Zui.PointerCaptureLost, (s, e) =>_mouseDown = false);
+    }
 
-        // TBD: Replace with grabber control, and fix pointer up messages
-        _titleView.Properties.Set(Zui.PreviewPointerDown, (e) =>
-        {
-            _mouseDown = true;
-            var margin = View.Properties.Get(Zui.Margin);
-            _mouseDownOffset = (View.Parent?.toClient(e.Position) ?? new()) - margin.TopLeft;
-        });
-        // TBD: Up message is lost if mouse moves too fast
-        _titleView.Properties.Set(Zui.PreviewPointerMove, (e) =>
-        {
-            if (!_mouseDown)
-                return;
+    void _titleView_PreviewPointerDown(object? s, PointerEvent e)
+    {
+        _mouseDown = true;
+        var margin = View.Properties.Get(Zui.Margin);
+        _mouseDownOffset = (View.Parent?.toClient(e.Position) ?? new()) - margin.TopLeft;
+        _titleView.CapturePointer = true;
+    }
 
-            var position = (View.Parent?.toClient(e.Position) ?? new()) - _mouseDownOffset;
-            var margin = View.Properties.Get(Zui.Margin);
-            margin.Left = position.X;
-            margin.Top = position.Y;
-            View.Properties.Set(Zui.Margin, margin);
-            View.InvalidateMeasure(); // TBD: Should be automatic
-        });
-        // TBD: Up message is lost if mouse moves too fast
-        _titleView.Properties.Set(Zui.PreviewPointerUp, (e) =>
-        {
-            _mouseDown = false;
-        });
+    void _titleView_PreviewPointerMove(object? s, PointerEvent e)
+    {
+        if (!_mouseDown)
+            return;
+
+        var position = (View.Parent?.toClient(e.Position) ?? new()) - _mouseDownOffset;
+        var margin = View.Properties.Get(Zui.Margin);
+        margin.Left = position.X;
+        margin.Top = position.Y;
+        View.Properties.Set(Zui.Margin, margin);
+        View.InvalidateMeasure(); // TBD: Should be automatic
     }
 
     public void Build()
@@ -123,7 +122,7 @@ public class Window : Controllable
     public bool IsWindowWrappingVisible
     {
         get => _titleView.Properties.Get(Zui.IsVisible, true);
-        set => _titleView.Properties?.Set(Zui.IsVisible, value);
+        set => _titleView.Properties.Set(Zui.IsVisible, value);
     }
 
     /// <summary>

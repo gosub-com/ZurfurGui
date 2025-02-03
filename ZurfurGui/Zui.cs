@@ -28,12 +28,13 @@ public static class Zui
 
     // Common UI interaction
     public static readonly PropertyKey<bool> DisableHitTest = new("Zui.DisableHitTest");
-    public static readonly PropertyKey<Action<PointerEvent>> PointerDown = new("Zui.PointerDown");
-    public static readonly PropertyKey<Action<PointerEvent>> PointerMove = new("Zui.PointerMove");
-    public static readonly PropertyKey<Action<PointerEvent>> PointerUp = new("Zui.PointerUp");
-    public static readonly PropertyKey<Action<PointerEvent>> PreviewPointerDown = new("Zui.PreviewPointerDown");
-    public static readonly PropertyKey<Action<PointerEvent>> PreviewPointerMove = new("Zui.PreviewPointerMove");
-    public static readonly PropertyKey<Action<PointerEvent>> PreviewPointerUp = new("Zui.PreviewPointerUp");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerDown = new("Zui.PointerDown");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerMove = new("Zui.PointerMove");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerUp = new("Zui.PointerUp");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerDown = new("Zui.PreviewPointerDown");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerMove = new("Zui.PreviewPointerMove");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerUp = new("Zui.PreviewPointerUp");
+    public static readonly PropertyKey<EventHandler> PointerCaptureLost = new("Zui.PointerCaptureLost");
 
     // Label, Window, Button, Checkbox, etc.
     public static readonly PropertyKey<string> Text = new("Zui.Text");

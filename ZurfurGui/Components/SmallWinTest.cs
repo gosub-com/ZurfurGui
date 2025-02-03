@@ -20,10 +20,10 @@ public class SmallWinTest : Controllable
         View.AddView(Helper.BuildView(MakeSmallWinTest()));
 
         var v = View.FindByName("button2");
-        v.Properties.Set(Zui.PointerDown, (e) => {
+        v.Properties.AddEvent(Zui.PointerDown, (s, e) => {
             Debug.WriteLine("Button2 mouse down");
         });
-        v.Properties.Set(Zui.PointerUp, (e) => {
+        v.Properties.AddEvent(Zui.PointerUp, (s, e) => {
             Debug.WriteLine("Button2 mouse up");
         });
 

@@ -2,10 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace ZurfurGui;
 
@@ -103,6 +105,11 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
         return GetEnumerator();
     }
 
+    /// <summary>
+    /// Add a property, throw an exception if it already exists in the collection.
+    /// This allows using collection expressions
+    /// TBD: Use dictionary collection, when they are added to C#.
+    /// </summary>
     public void Add((PropertyKeyId key, object value) kv)
     {
         if (_properties.ContainsKey(kv.key))
@@ -112,6 +119,9 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
         _properties[kv.key] = kv.value;
     }
 
+    /// <summary>
+    /// Get a property, or return the default when not present.
+    /// </summary>
     public T? Get<T>(PropertyKey<T> property, T? defaultProperty = default)
     {
         if (_properties.TryGetValue(property.Id, out var value) && value is T v)
@@ -119,11 +129,68 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
         return defaultProperty;
     }
 
+    /// <summary>
+    /// Set a property.  Cannot be null, use Remove instead.  Cannot be an event, use AddEvent instead.
+    /// </summary>
     public void Set<T>(PropertyKey<T> property, T value)
     {
         if (value is null)
-            throw new ArgumentNullException(nameof(value));
+            throw new ArgumentNullException(nameof(value), "Use Remove instead of assigning null");
+        if (typeof(T).IsAssignableTo(typeof(Delegate)))
+            throw new ArgumentException($"Use AddEvent for delegate types", nameof(T));
+
         _properties[property.Id] = value;
+    }
+
+    /// <summary>
+    /// Remove a property.  Cannot be an event, use RemoveEvent instead.
+    /// </summary>
+    public void Remove<T>(PropertyKey<T> property)
+    {
+        if (typeof(T).IsAssignableTo(typeof(Delegate)))
+            throw new ArgumentException($"Use RemoveEvent for delegate types", nameof(T));
+        _properties.Remove(property.Id);
+    }
+
+    /// <summary>
+    /// Add an event
+    /// </summary>
+    public void AddEvent<T>(PropertyKey<T> property, T ev) where T : Delegate
+    {
+        if (ev is null)
+            return;
+
+        if (!_properties.TryGetValue(property.Id, out var delegateObject))
+        {
+            _properties[property.Id] = ev;
+            return;
+        }
+        if (delegateObject is not Delegate del)
+            throw new InvalidOperationException($"The property '{property.Name}' must be a delegate type, "
+                +$"but it contains a property of type '{delegateObject.GetType()}'");
+        _properties[property.Id] = Delegate.Combine(del, ev);
+    }
+
+    /// <summary>
+    /// Add an event
+    /// </summary>
+    public void RemoveEvent<T>(PropertyKey<T> property, T ev) where T : Delegate
+    {
+        if (ev is null)
+            return;
+
+        if (!_properties.TryGetValue(property.Id, out var delegateObject))
+            return;
+
+        if (delegateObject is not Delegate del)
+            throw new InvalidOperationException($"The property '{property.Name}' must be a delegate type, "
+                + $"but it contains a property of type '{delegateObject.GetType()}'");
+
+        var removedEvent = Delegate.RemoveAll(del, ev);
+        if (removedEvent is null)
+            _properties.Remove(property.Id);
+        else
+            _properties[property.Id] = removedEvent;
     }
 
     public void SetUnion(Properties p)
@@ -132,10 +199,6 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
             _properties[property.key] = property.value; 
     }
     
-    public void Remove<T>(PropertyKey<T> property)
-    {
-        _properties.Remove(property.Id);
-    }
 
     public bool Has<T>(PropertyKey<T> property)
     {
