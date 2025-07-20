@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.Windows", "TestApp.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.Browser", "TestApp.Browser\TestApp.Browser.csproj", "{DDAFF2A4-6107-42BE-9F5A-A422B84B6855}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZurfurGuiGen", "ZurfurGuiGen\ZurfurGuiGen.csproj", "{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{DDAFF2A4-6107-42BE-9F5A-A422B84B6855}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDAFF2A4-6107-42BE-9F5A-A422B84B6855}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDAFF2A4-6107-42BE-9F5A-A422B84B6855}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
