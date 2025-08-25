@@ -5,35 +5,30 @@ using System.Runtime.Serialization;
 using ZurfurGui;
 using ZurfurGui.Components;
 using ZurfurGui.Controls;
-
-public class Main
+using System.Text.Json;
+using System.Text.Json.Serialization;
+public class ZurfurMain
 {
     public static void MainApp(AppWindow app)
     {
-        ControlRegistry.Add(() => { return new FormSearch(); });
+        ControlRegistry.Add(() => new FormSearch());
+        ControlRegistry.Add(() => new FormSmallWinTest());
+        ControlRegistry.Add(() => new FormQbfWinTest());
 
-        
-        // An alternate way of creating the window below
-        var win1v = new Window();
-        win1v.SetContent(new QbfWinTest().View);
-        var p1 = win1v.View.Properties;
-        p1.Set(Zui.Size, new Size(400, 500));
-        p1.Set(Zui.Margin, new Thickness(95, 175, 0, 0));
-        p1.Set(Zui.AlignHorizontal, AlignHorizontal.Left);
-        p1.Set(Zui.AlignVertical, AlignVertical.Top);
-        app.AddWindow(win1v);
-        
-        /*
+        app.SetMainappWindow(new FormQbfWinTest());
+
         Properties win1 = [
             (Zui.Controller, "Zui.Window"),
             (Zui.Size, new Size(400, 500)),
             (Zui.Margin, new Thickness(95, 175, 0, 0)),
             (Zui.AlignHorizontal, AlignHorizontal.Left),
             (Zui.AlignVertical, AlignVertical.Top),
-            (Zui.Content, (Properties[])[[(Zui.Controller, "Zui.QbfWinTest")]])
+            (Zui.Content, (Properties[])[[(Zui.Controller, "TestApp.FormQbfWinTest")]])
         ];
-        app.AddWindow((Window)Helper.BuildView(win1).Control);
-        */
+        app.ShowWindow((Window)Helper.BuildView(win1).Control);
+
+
+
 
         Properties win2 = [
             (Zui.Controller, "Zui.Window"),
@@ -41,9 +36,9 @@ public class Main
             (Zui.Size, new Size(200, 200)),
             (Zui.AlignHorizontal, AlignHorizontal.Left),
             (Zui.AlignVertical, AlignVertical.Top),
-            (Zui.Content, (Properties[])[[(Zui.Controller, "Zui.SmallWinTest")]])
+            (Zui.Content, (Properties[])[[(Zui.Controller, "TestApp.FormSmallWinTest")]])
         ];
-        app.AddWindow((Window)Helper.BuildView(win2).Control);
+        app.ShowWindow((Window)Helper.BuildView(win2).Control);
 
         Properties win3 = [
             (Zui.Controller, "Zui.Window"),
@@ -51,9 +46,9 @@ public class Main
             (Zui.AlignHorizontal, AlignHorizontal.Right),
             (Zui.AlignVertical, AlignVertical.Bottom),
             (Zui.Margin, new Thickness(10)),
-            (Zui.Content, (Properties[])[[(Zui.Controller, "Zui.SmallWinTest")]])
+            (Zui.Content, (Properties[])[[(Zui.Controller, "TestApp.FormSmallWinTest")]])
         ];
-        app.AddWindow((Window)Helper.BuildView(win3).Control);
+        app.ShowWindow((Window)Helper.BuildView(win3).Control);
 
         Properties win4Props = [
             (Zui.Controller, "Zui.Window"),
@@ -63,7 +58,7 @@ public class Main
             (Zui.Content, (Properties[])[[(Zui.Controller, "TestApp.FormSearch")]])
         ];
         var win4 = (Window)Helper.BuildView(win4Props).Control;
-        app.AddWindow(win4);
+        app.ShowWindow(win4);
         win4.IsWindowWrappingVisible = false;
 
         Properties win5Props = [
@@ -79,9 +74,11 @@ public class Main
             (Zui.Content, (Properties[])[[(Zui.Controller, "TestApp.FormSearch")]])
         ];
         var win5 = (Window)Helper.BuildView(win5Props).Control;
-        app.AddWindow(win5);
+        app.ShowWindow(win5);
         win5.IsWindowWrappingVisible = false;
 
     }
+
+
 
 }

@@ -23,9 +23,6 @@ public class Button : Controllable
         return Helper.MeasureText(measure, View);
     }
 
-    public void Build() { }
-
-
     public void Render(RenderContext context)
     {
         // Draw background

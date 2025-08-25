@@ -18,7 +18,7 @@ public static class Program
         Console.WriteLine($"C# Main called args: '{string.Join(" ", args)}'");
 
         var canvasId = args[0];
-        BrowserStart.Start(canvasId, TestApp.Main.MainApp);
+        BrowserStart.Start(canvasId, ZurfurMain.MainApp);
     }
 
 }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ZurfurGui.Components;
 using ZurfurGui.Controls;
 
 namespace ZurfurGui;
@@ -25,9 +24,6 @@ public static class ZuiInit
         ControlRegistry.Add(() => new DockPanel());
         ControlRegistry.Add(() => new Window());
         ControlRegistry.Add(() => new AppWindow());
-
-        ControlRegistry.Add(() => new SmallWinTest());
-        ControlRegistry.Add(() => new QbfWinTest());
 
         var appWindow = new AppWindow();
         mainAppEntry(appWindow);

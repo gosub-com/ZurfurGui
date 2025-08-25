@@ -28,8 +28,6 @@ public class Border : Controllable
         Helper.BuildViews(View, View.Properties.Get(Zui.Content));
     }
 
-
-
     public Size MeasureView(Size available, MeasureContext measure)
     {
         var padding = View.Properties.Get(Zui.Padding);

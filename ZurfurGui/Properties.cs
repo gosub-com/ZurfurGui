@@ -5,38 +5,72 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace ZurfurGui;
 
+/// <summary>
+/// Property key info
+/// </summary>
+public record class PropertyKeyInfo(PropertyKeyId Id, string Name, Type Type)
+{
+    public override string ToString() => Id.ToString();
+};
 
 /// <summary>
-/// Light weight dynamically typed property key, used to lookup property name and type.
+/// Global cache of property keys
 /// </summary>
-public readonly struct PropertyKeyId : IEquatable<PropertyKeyId>
+public static class PropertyKeys
 {
     static object _lock = new();
-    static List<(string name, Type type)> s_properties = new() { ("(unknown)", typeof(void)) };
+    static List<PropertyKeyInfo> s_propertiesById = [];
+    static Dictionary<string, PropertyKeyInfo> s_propertiesByName = new() ;
 
-    readonly int _id;
-
-    public PropertyKeyId(string name, Type type)
+    internal static PropertyKeyId Create(string name, Type type)
     {
         lock (_lock)
         {
-            var index = s_properties.FindIndex(n => n.name == name);
-            if (index >= 0)
+            if (s_propertiesByName.ContainsKey(name))
                 throw new ArgumentException($"The property '{name}' is already used");
-            s_properties.Add((name, type));
-            _id = s_properties.Count - 1;
+            var id = new PropertyKeyId(s_propertiesById.Count);
+            var info = new PropertyKeyInfo(id, name, type);
+            s_propertiesByName[name] = info;
+            s_propertiesById.Add(info);
+            return id;
         }
     }
 
-    public string Name => s_properties[_id].name;
-    public Type Type => s_properties[_id].type;
+    internal static PropertyKeyInfo GetInfo(int id)
+    {
+        return s_propertiesById[id];
+    }
 
+    public static PropertyKeyInfo? GetInfo(string name)
+    {
+        if (s_propertiesByName.TryGetValue(name, out var info))
+            return info;
+        return null;
+    }
+
+}
+
+/// <summary>
+/// Dynamically typed property key, used to lookup property name and type.
+/// </summary>
+public readonly struct PropertyKeyId : IEquatable<PropertyKeyId>
+{
+    readonly int _id;
+
+    internal PropertyKeyId(int id)
+    {
+        _id = id;
+    }
+
+    public string Name => PropertyKeys.GetInfo(_id).Name;
+    public Type Type => PropertyKeys.GetInfo(_id).Type;
 
     public bool Equals(PropertyKeyId id) => _id == id._id;
     public override bool Equals(object? obj) => obj is PropertyKeyId id && Equals(id);
@@ -45,13 +79,13 @@ public readonly struct PropertyKeyId : IEquatable<PropertyKeyId>
     public override int GetHashCode() => _id;
     public override string ToString()
     {
-        return $"{Name}:{_id}:{Type}";
+        return $"{_id}: '{Name}' is {Type.Name}";
     }
 }
 
 
 /// <summary>
-/// Light weight statically typed property key, used to lookup property name
+/// Statically typed property key, used to lookup property name.
 /// </summary>
 public struct PropertyKey<T> : IEquatable<PropertyKey<T>>
 {
@@ -59,7 +93,7 @@ public struct PropertyKey<T> : IEquatable<PropertyKey<T>>
 
     public PropertyKey(string name)
     {
-        _id = new PropertyKeyId(name, typeof(T));
+        _id = PropertyKeys.Create(name, typeof(T));
     }
 
     public static implicit operator PropertyKeyId(PropertyKey<T> propertyIndex)
@@ -140,6 +174,17 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
             throw new ArgumentException($"Use AddEvent for delegate types", nameof(T));
 
         _properties[property.Id] = value;
+    }
+
+    public void SetById(PropertyKeyId property, object value)
+    {
+        if (value is null)
+            throw new ArgumentNullException(nameof(value), "Use Remove instead of assigning null");
+        if (property.Type.IsAssignableTo(typeof(Delegate)))
+            throw new ArgumentException($"Use AddEvent for delegate types", nameof(property));
+        if (property.Type != value.GetType())
+            throw new ArgumentException($"The property '{property.Name}' must have type '{property.Type}', but has '{value.GetType()}'");
+        _properties[property] = value;
     }
 
     /// <summary>

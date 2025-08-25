@@ -11,8 +11,12 @@ using ZurfurGui.Render;
 namespace ZurfurGui.Controls;
 
 /// <summary>
-/// The AppWindow is either the main browser window, or a canvas inside a web page, or the computer desktop when running
-/// as a native applications.  It holds all the other windows - main app window, modless and modal dialogs, etc.
+/// The AppWindow is either the main browser window, or a canvas inside a web page,
+/// or the computer desktop when running as a native applications.  It holds all the 
+/// other windows:
+///     MainAppView: The background app contained in the browser, canvas, or desktop application.
+///     FloatingWindows: Modeless windows that can be moved around by the user.
+///     DialogWindows: Modal windows that can be shown over the main app view.
 /// </summary>
 public class AppWindow : Controllable
 {
@@ -29,9 +33,10 @@ public class AppWindow : Controllable
     public override string ToString() => View.ToString();
     public View View { get; private set; }
 
-    View _mainAppView;
-    View _floatingWindows;
-    View _dialogWindows;
+    readonly View _mainAppView;
+    readonly View _floatingWindows;
+    readonly View _dialogWindows;
+
     internal List<View> _pointerCaptureList = new();
 
 
@@ -40,24 +45,29 @@ public class AppWindow : Controllable
         View = new(this);
 
         _mainAppView = new Panel().View;
-        _mainAppView.Properties.Set(Zui.Name, "$_mainAppView");
+        _mainAppView.Properties.Set(Zui.Name, "_mainAppView");
         _floatingWindows = new Panel().View;
-        _floatingWindows.Properties.Set(Zui.Name, "$_floatingWindows");
+        _floatingWindows.Properties.Set(Zui.Name, "_floatingWindows");
         _dialogWindows = new Panel().View;
-        _dialogWindows.Properties.Set(Zui.Name, "$_dialogWindows");
+        _dialogWindows.Properties.Set(Zui.Name, "_dialogWindows");
 
         View.AddViews([_mainAppView, _floatingWindows, _dialogWindows]);
     }
 
-    public void Build() { }
-
-    /// <summary>
-    /// Add a new modeless dialog window over the main app window
-    /// </summary>
-    public void AddWindow(Window window)
+    public void SetMainappWindow(Controllable control)
     {
         View.InvalidateMeasure(); // TBD: Move to AddView
-        _dialogWindows.AddView(window.View);
+        _mainAppView.ClearViews();
+        _mainAppView.AddView(control.View);
+    }
+
+    /// <summary>
+    /// Show a new modeless dialog window over the main app window
+    /// </summary>
+    public void ShowWindow(Window window)
+    {
+        View.InvalidateMeasure(); // TBD: Move to AddView
+        _floatingWindows.AddView(window.View);
     }
 
     /// <summary>
@@ -81,6 +91,7 @@ public class AppWindow : Controllable
 
     public void Render(RenderContext renderContext) 
     {
+        //return;
         var left = 15;
         var top = 50;
         var ls = 26;

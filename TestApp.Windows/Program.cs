@@ -11,6 +11,6 @@ internal static class Program
     [STAThread]
     static void Main()
     {
-        WinStart.Start(TestApp.Main.MainApp);
+        WinStart.Start(ZurfurMain.MainApp);
     }
 }

@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Controls;
 
 namespace ZurfurGui.Components;
 
-public partial class SmallWinTest2
+public partial class FormSmallWinTest : Controllable
 {
-    public SmallWinTest2()
+    public FormSmallWinTest()
     {
         InitializeComponent();
     }

@@ -1,4 +1,5 @@
 {
+    "Type": "TestApp.FormSearch",
     "Zui.Controller": "Zui.Column",
     "Zui.Content": [
         {
@@ -7,7 +8,7 @@
                 {
                     "Zui.Controller": "Zui.Button",
                     "Zui.Text": "[X]",
-                    "Zui.Dock": "Dock.Right"
+                    "Zui.Dock": "Right"
                 },
                 {
                     "Zui.Controller": "Zui.Label",
@@ -18,12 +19,12 @@
                         "Bottom": 0
                     },
                     "Zui.Text": "[X] Replace",
-                    "Zui.Dock": "Dock.Right"
+                    "Zui.Dock": "Right"
                 },
                 {
                     "Zui.Controller": "Zui.Label",
                     "Zui.Text": "Search Form:",
-                    "Zui.Dock": "Dock.Left"
+                    "Zui.Dock": "Left"
                 }
             ]
         },
@@ -35,9 +36,9 @@
                     "Zui.Text": "Find (F3)",
                     "Zui.Size": {
                         "Width": 120,
-                        "Height": "nan"
+                        "Height": "NaN"
                     },
-                    "Zui.Dock": "Dock.Right",
+                    "Zui.Dock": "Right",
                     "Zui.Margin": {
                         "Left": 10,
                         "Top": 0,
@@ -48,7 +49,7 @@
                 {
                     "Zui.Controller": "Zui.TextBox",
                     "Zui.Text": "Search Text",
-                    "Zui.Dock": "Dock.Left"
+                    "Zui.Dock": "Left"
                 }
             ]
         },
@@ -60,9 +61,9 @@
                     "Zui.Text": "Matches (#)",
                     "Zui.Size": {
                         "Width": 120,
-                        "Height": "nan"
+                        "Height": "NaN"
                     },
-                    "Zui.Dock": "Dock.Right"
+                    "Zui.Dock": "Right"
                 },
                 {
                     "Zui.Controller": "Zui.Label",
@@ -78,7 +79,7 @@
                     "Zui.Text": "Replace",
                     "Zui.Size": {
                         "Width": 120,
-                        "Height": "nan"
+                        "Height": "NaN"
                     },
                     "Zui.Margin": {
                         "Left": 10,
@@ -86,7 +87,7 @@
                         "Right": 0,
                         "Bottom": 0
                     },
-                    "Zui.Dock": "Dock.Right"
+                    "Zui.Dock": "Right"
                 },
                 {
                     "Zui.Controller": "Zui.TextBox",
@@ -102,7 +103,7 @@
                     "Zui.Text": "Replace All",
                     "Zui.Size": {
                         "Width": 120,
-                        "Height": "nan"
+                        "Height": "NaN"
                     },
                     "Zui.Margin": {
                         "Left": 10,
@@ -110,7 +111,7 @@
                         "Right": 0,
                         "Bottom": 0
                     },
-                    "Zui.Dock": "Dock.Right"
+                    "Zui.Dock": "Right"
                 },
                 {
                     "Zui.Controller": "Zui.Label",

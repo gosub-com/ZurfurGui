@@ -30,11 +30,6 @@ public class TextBox : Controllable
         _content.Properties.Set(Zui.Margin, new(BORDER_WIDTH + PADDING));
     }
 
-    public void Build()
-    {
-    }
-
-
     public void Render(RenderContext context)
     {
         var r = new Rect(new(), View.Size);

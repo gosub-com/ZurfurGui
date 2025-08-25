@@ -16,8 +16,6 @@ public class Label : Controllable
         View = new(this);
     }
 
-    public void Build() { }
-
     public Size MeasureView(Size available, MeasureContext measure)
     {
         return Helper.MeasureText(measure, View);

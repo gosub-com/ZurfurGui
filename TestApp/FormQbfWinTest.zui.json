@@ -1,20 +1,21 @@
 {
+    "Type": "TestApp.FormQbfWinTest",
     "Zui.Controller": "Zui.Column",
     "Zui.Content": [
         {
             "Zui.Controller": "Zui.Button",
             "Zui.Text": "ButtonX",
-            "Zui.AlignHorizontal": "AlignHorizontal.Center"
+            "Zui.AlignHorizontal": "Center"
         },
         {
             "Zui.Controller": "Zui.Button",
             "Zui.Text": "Button",
-            "Zui.AlignHorizontal": "AlignHorizontal.Right"
+            "Zui.AlignHorizontal": "Right"
         },
         {
             "Zui.Controller": "Zui.Button",
             "Zui.Text": "Button",
-            "Zui.AlignHorizontal": "AlignHorizontal.Left"
+            "Zui.AlignHorizontal": "Left"
         },
         {
             "Zui.Controller": "Zui.Row",
@@ -173,7 +174,7 @@
                     "Zui.Controller": "Zui.Label",
                     "Zui.Text": "5 And a Zebra",
                     "Zui.FontSize": 16.0,
-                    "Zui.AlignVertical": "AlignVertical.Center"
+                    "Zui.AlignVertical": "Center"
                 },
                 {
                     "Zui.Controller": "Zui.Label",
@@ -211,31 +212,31 @@
                     "Zui.Controller": "Zui.Label",
                     "Zui.Text": "And a Cow",
                     "Zui.FontSize": 32.0,
-                    "Zui.AlignVertical": "AlignVertical.Center"
+                    "Zui.AlignVertical": "Center"
                 },
                 {
                     "Zui.Controller": "Zui.Label",
                     "Zui.Text": "Center",
                     "Zui.FontSize": 16.0,
-                    "Zui.AlignVertical": "AlignVertical.Center"
+                    "Zui.AlignVertical": "Center"
                 },
                 {
                     "Zui.Controller": "Zui.Label",
                     "Zui.Text": "Top",
                     "Zui.FontSize": 16.0,
-                    "Zui.AlignVertical": "AlignVertical.Top"
+                    "Zui.AlignVertical": "Top"
                 },
                 {
                     "Zui.Controller": "Zui.Label",
                     "Zui.Text": "Bottom",
                     "Zui.FontSize": 16.0,
-                    "Zui.AlignVertical": "AlignVertical.Bottom"
+                    "Zui.AlignVertical": "Bottom"
                 },
                 {
                     "Zui.Controller": "Zui.Label",
                     "Zui.Text": "Stretch",
                     "Zui.FontSize": 16.0,
-                    "Zui.AlignVertical": "AlignVertical.Stretch"
+                    "Zui.AlignVertical": "Stretch"
                 }
             ]
         },

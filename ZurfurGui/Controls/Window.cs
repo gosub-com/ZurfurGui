@@ -25,8 +25,8 @@ public class Window : Controllable
     {
         View = new(this);
 
-        const string WINDOW_TITLE_NAME = "$windowTitle";
-        const string WINDOW_CONTENT_NAME = "$windowContent";
+        const string WINDOW_TITLE_NAME = "_windowTitle";
+        const string WINDOW_CONTENT_NAME = "_windowContent";
 
         Properties windowProps = [
             (Zui.Controller, "Zui.DockPanel"),

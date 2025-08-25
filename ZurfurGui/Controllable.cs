@@ -16,9 +16,9 @@ public interface Controllable
     View View { get; }
 
     /// <summary>
-    /// Controls that have content override this to add content to the view tree
+    /// Controls that have non-json content override this to add content to the view tree
     /// </summary>
-    void Build();
+    void Build() { }
 
     /// <summary>
     /// Returns the desired size of the control given the available screen size.
