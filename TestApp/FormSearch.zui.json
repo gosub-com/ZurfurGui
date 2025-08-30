@@ -1,45 +1,45 @@
 {
-    "Type": "TestApp.FormSearch",
-    "Zui.Controller": "Zui.Column",
-    "Zui.Content": [
+    "Component": "TestApp.FormSearch",
+    "Controller": "Column",
+    "Content": [
         {
-            "Zui.Controller": "Zui.DockPanel",
-            "Zui.Content": [
+            "Controller": "DockPanel",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Button",
-                    "Zui.Text": "[X]",
-                    "Zui.Dock": "Right"
+                    "Controller": "Button",
+                    "Text": "[X]",
+                    "Dock": "Right"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Margin": {
+                    "Controller": "Label",
+                    "Margin": {
                         "Left": 0,
                         "Top": 0,
                         "Right": 10,
                         "Bottom": 0
                     },
-                    "Zui.Text": "[X] Replace",
-                    "Zui.Dock": "Right"
+                    "Text": "[X] Replace",
+                    "Dock": "Right"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Search Form:",
-                    "Zui.Dock": "Left"
+                    "Controller": "Label",
+                    "Text": "Search Form:",
+                    "Dock": "Left"
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.DockPanel",
-            "Zui.Content": [
+            "Controller": "DockPanel",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Button",
-                    "Zui.Text": "Find (F3)",
-                    "Zui.Size": {
+                    "Controller": "Button",
+                    "Text": "Find (F3)",
+                    "Size": {
                         "Width": 120,
                         "Height": "NaN"
                     },
-                    "Zui.Dock": "Right",
-                    "Zui.Margin": {
+                    "Dock": "Right",
+                    "Margin": {
                         "Left": 10,
                         "Top": 0,
                         "Right": 10,
@@ -47,80 +47,80 @@
                     }
                 },
                 {
-                    "Zui.Controller": "Zui.TextBox",
-                    "Zui.Text": "Search Text",
-                    "Zui.Dock": "Left"
+                    "Controller": "TextBox",
+                    "Text": "Search Text",
+                    "Dock": "Left"
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.DockPanel",
-            "Zui.Content": [
+            "Controller": "DockPanel",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Matches (#)",
-                    "Zui.Size": {
+                    "Controller": "Label",
+                    "Text": "Matches (#)",
+                    "Size": {
                         "Width": 120,
                         "Height": "NaN"
                     },
-                    "Zui.Dock": "Right"
+                    "Dock": "Right"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Replace with:"
+                    "Controller": "Label",
+                    "Text": "Replace with:"
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.DockPanel",
-            "Zui.Content": [
+            "Controller": "DockPanel",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Button",
-                    "Zui.Text": "Replace",
-                    "Zui.Size": {
+                    "Controller": "Button",
+                    "Text": "Replace",
+                    "Size": {
                         "Width": 120,
                         "Height": "NaN"
                     },
-                    "Zui.Margin": {
+                    "Margin": {
                         "Left": 10,
                         "Top": 0,
                         "Right": 0,
                         "Bottom": 0
                     },
-                    "Zui.Dock": "Right"
+                    "Dock": "Right"
                 },
                 {
-                    "Zui.Controller": "Zui.TextBox",
-                    "Zui.Text": "Replace Text"
+                    "Controller": "TextBox",
+                    "Text": "Replace Text"
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.DockPanel",
-            "Zui.Content": [
+            "Controller": "DockPanel",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Button",
-                    "Zui.Text": "Replace All",
-                    "Zui.Size": {
+                    "Controller": "Button",
+                    "Text": "Replace All",
+                    "Size": {
                         "Width": 120,
                         "Height": "NaN"
                     },
-                    "Zui.Margin": {
+                    "Margin": {
                         "Left": 10,
                         "Top": 0,
                         "Right": 0,
                         "Bottom": 0
                     },
-                    "Zui.Dock": "Right"
+                    "Dock": "Right"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "[X] Match Case"
+                    "Controller": "Label",
+                    "Text": "[X] Match Case"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "[X] Match Whole Word",
-                    "Zui.Margin": {
+                    "Controller": "Label",
+                    "Text": "[X] Match Whole Word",
+                    "Margin": {
                         "Left": 10,
                         "Top": 0,
                         "Right": 0,

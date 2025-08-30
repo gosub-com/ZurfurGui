@@ -5,15 +5,12 @@ using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
-public class Label : Controllable
+public partial class Label : Controllable
 {
-    public string Type => "Zui.Label";
-    public override string ToString() => View.ToString();
-    public View View { get; private set; }
 
     public Label()
     {
-        View = new(this);
+        InitializeComponent();
     }
 
     public Size MeasureView(Size available, MeasureContext measure)

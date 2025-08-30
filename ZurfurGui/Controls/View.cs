@@ -95,7 +95,7 @@ public class View
 
     public override string ToString()
     {
-        return $"{Control.Type}: {Properties.Get(Zui.Name) ?? "(no name)"}";
+        return $"{Control.Component}: {Properties.Get(Zui.Name) ?? "(no name)"}";
     }
 
     public void InvalidateMeasure()

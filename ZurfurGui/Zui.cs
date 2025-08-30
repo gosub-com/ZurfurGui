@@ -13,44 +13,70 @@ namespace ZurfurGui;
 /// </summary>
 public static class Zui
 {
+    /// <summary>
+    /// Initialize the library with the built in controls, etc.
+    /// </summary>
+    public static AppWindow Init(Action<AppWindow> mainAppEntry)
+    {
+        // Force initialization of static properties
+        _ = Zui.Name;
+
+        ControlRegistry.Add(() => new Panel());
+        ControlRegistry.Add(() => new Button());
+        ControlRegistry.Add(() => new Column());
+        ControlRegistry.Add(() => new Label());
+        ControlRegistry.Add(() => new Row());
+        ControlRegistry.Add(() => new Border());
+        ControlRegistry.Add(() => new TextBox());
+        ControlRegistry.Add(() => new DockPanel());
+        ControlRegistry.Add(() => new Window());
+        ControlRegistry.Add(() => new AppWindow());
+
+        var appWindow = new AppWindow();
+        mainAppEntry(appWindow);
+        return appWindow;
+    }
+
+
     // Basic View functionality
-    public static readonly PropertyKey<string> Name = new("Zui.Name");
-    public static readonly PropertyKey<string> Controller = new("Zui.Controller");
-    public static readonly PropertyKey<Properties[]> Content = new("Zui.Content");
-    public static readonly PropertyKey<bool> IsVisible = new("Zui.IsVisible");
-    public static readonly PropertyKey<AlignHorizontal> AlignHorizontal = new("Zui.AlignHorizontal");
-    public static readonly PropertyKey<AlignVertical> AlignVertical = new("Zui.AlignVertical");
-    public static readonly PropertyKey<Thickness> Margin = new("Zui.Margin");
-    public static readonly PropertyKey<Size> Size = new("Zui.Size");
-    public static readonly PropertyKey<Size> SizeMax = new("Zui.SizeMax");
-    public static readonly PropertyKey<Size> SizeMin = new("Zui.SizeMin");
-    public static readonly PropertyKey<double> Magnification = new("Zui.Magnification");
+    public static readonly PropertyKey<string> Name = new("Name");
+    public static readonly PropertyKey<string> Controller = new("Controller");
+    public static readonly PropertyKey<string> Component = new("Component");
+    public static readonly PropertyKey<Properties[]> Content = new("Content");
+    public static readonly PropertyKey<bool> IsVisible = new("IsVisible");
+    public static readonly PropertyKey<AlignHorizontal> AlignHorizontal = new("AlignHorizontal");
+    public static readonly PropertyKey<AlignVertical> AlignVertical = new("AlignVertical");
+    public static readonly PropertyKey<Thickness> Margin = new("Margin");
+    public static readonly PropertyKey<Size> Size = new("Size");
+    public static readonly PropertyKey<Size> SizeMax = new("SizeMax");
+    public static readonly PropertyKey<Size> SizeMin = new("SizeMin");
+    public static readonly PropertyKey<double> Magnification = new("Magnification");
 
     // Common UI interaction
-    public static readonly PropertyKey<bool> DisableHitTest = new("Zui.DisableHitTest");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerDown = new("Zui.PointerDown");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerMove = new("Zui.PointerMove");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerUp = new("Zui.PointerUp");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerDown = new("Zui.PreviewPointerDown");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerMove = new("Zui.PreviewPointerMove");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerUp = new("Zui.PreviewPointerUp");
-    public static readonly PropertyKey<EventHandler> PointerCaptureLost = new("Zui.PointerCaptureLost");
+    public static readonly PropertyKey<bool> DisableHitTest = new("DisableHitTest");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerDown = new("PointerDown");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerMove = new("PointerMove");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerUp = new("PointerUp");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerDown = new("PreviewPointerDown");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerMove = new("PreviewPointerMove");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerUp = new("PreviewPointerUp");
+    public static readonly PropertyKey<EventHandler> PointerCaptureLost = new("PointerCaptureLost");
 
     // Label, Window, Button, Checkbox, etc.
-    public static readonly PropertyKey<string> Text = new("Zui.Text");
-    public static readonly PropertyKey<string> FontName = new("Zui.FontName");
-    public static readonly PropertyKey<double> FontSize = new("Zui.FontSize");
+    public static readonly PropertyKey<string> Text = new("Text");
+    public static readonly PropertyKey<string> FontName = new("FontName");
+    public static readonly PropertyKey<double> FontSize = new("FontSize");
 
     // Borders, text, misc
-    public static readonly PropertyKey<Color> Background = new("Zui.Background");
-    public static readonly PropertyKey<Thickness> Padding = new("Zui.Padding");
-    public static readonly PropertyKey<Color> BorderColor = new("Zui.BorderColor");
-    public static readonly PropertyKey<double> BorderWidth = new("Zui.BorderWidth");
-    public static readonly PropertyKey<double> BorderRadius = new("Zui.BorderRadius");
+    public static readonly PropertyKey<Color> Background = new("Background");
+    public static readonly PropertyKey<Thickness> Padding = new("Padding");
+    public static readonly PropertyKey<Color> BorderColor = new("BorderColor");
+    public static readonly PropertyKey<double> BorderWidth = new("BorderWidth");
+    public static readonly PropertyKey<double> BorderRadius = new("BorderRadius");
 
     // Row, Column, DockPanel, etc.
-    public static readonly PropertyKey<bool> Wrap = new("Zui.Wrap");
-    public static readonly PropertyKey<Size> Spacing = new("Zui.Spacing");
-    public static readonly PropertyKey<Dock> Dock = new("Zui.Dock");
+    public static readonly PropertyKey<bool> Wrap = new("Wrap");
+    public static readonly PropertyKey<Size> Spacing = new("Spacing");
+    public static readonly PropertyKey<Dock> Dock = new("Dock");
 
 }

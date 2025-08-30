@@ -18,7 +18,7 @@ public partial class FormZurfurGui : Form
     public FormZurfurGui(Action<AppWindow> mainAppEntry)
     {
         InitializeComponent();
-        var appWindow = ZuiInit.Init(mainAppEntry);
+        var appWindow = Zui.Init(mainAppEntry);
         _window = new WinWindow(this, pictureMain);
         _canvas = new WinCanvas(pictureMain);
         _render = new Renderer(_window, _canvas, appWindow);

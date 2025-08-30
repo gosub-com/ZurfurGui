@@ -4,23 +4,18 @@ using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
-public class Row : Controllable
+public partial class Row : Controllable
 {
     List<Rect> _arrange = new List<Rect>();
 
-    public string Type => "Zui.Row";
-    public override string ToString() => View.ToString();
-    public View View { get; private set; }
-
-
     public Row()
     {
-        View = new(this);
+        InitializeComponent();
     }
 
-    public void Build()
+    public void LoadContent()
     {
-        Helper.BuildViews(View, View.Properties.Get(Zui.Content));
+        Loader.BuildViews(View, View.Properties.Get(Zui.Content));
     }
 
 

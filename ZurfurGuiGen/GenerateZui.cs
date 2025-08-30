@@ -159,16 +159,16 @@ public class GenerateZui : IIncrementalGenerator
         // TBD: Remove insignificant whitespace from zuiJsonContent
         zuiJsonContent = zuiJsonContent.Replace("\"", "\"\"").Replace("\r", "").Replace("\n", "");
 
-        if (!jsonDocument.TryGetValue("Type", out var typeObject))
-            throw new Exception("Top level JSON must contain a 'Type' key");
-        if (typeObject is not string typeName || typeName == "")
-            throw new Exception("The JSON 'Type' key must be a non-empty string");
-        if (!typeName.Contains('.'))
-            throw new Exception("The JSON 'Type' key must contain a dot, e.g. 'MyLibrary.MyControl'");
-        var typeNameEnd = typeName.Split('.').Last();
+        if (!jsonDocument.TryGetValue("Component", out var componentObject))
+            throw new Exception("Top level JSON must contain a 'Component' key");
+        if (componentObject is not string componentName || componentName == "")
+            throw new Exception("The JSON 'Component' key must be a non-empty string");
+        if (!componentName.Contains('.') && !nameSpace.StartsWith("ZurfurGui."))
+            throw new Exception($"The JSON 'Component' key must contain a dot, e.g. 'MyLibrary.MyControl'");
+        var componentNameEnd = componentName.Split('.').Last();
         var classNameEnd = className.Split('.').Last();
-        if (typeNameEnd != classNameEnd)
-            throw new Exception($"The JSON 'Type' key '{typeNameEnd}' must match the class name '{classNameEnd}'");
+        if (componentNameEnd != classNameEnd)
+            throw new Exception($"The JSON 'Component' key '{componentNameEnd}' must match the class name '{classNameEnd}'");
 
         var source = $@"
             // This file is generated from '{Path.GetFileName(zuiPath)}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}
@@ -179,14 +179,14 @@ public class GenerateZui : IIncrementalGenerator
                 void InitializeComponent() 
                 {{
                     View = new(this);
-                    _zuiProperties = global::ZurfurGui.ZurfurJsonLoader.Load(this, _zuiJsonContent);
+                    global::ZurfurGui.Loader.Load(this, _zuiJsonContent);
                 }}
                 public global::ZurfurGui.Properties _zuiProperties;
                 public global::ZurfurGui.Controls.View View {{ get; private set; }}
-                public string Type => ""{typeName}""; 
+                public string Component => ""{componentName}""; 
                 public override string ToString() => View.ToString();
 
-                public string _zuiJsonContent => @""{zuiJsonContent}"";
+                static string _zuiJsonContent => @""{zuiJsonContent}"";
             }}";
         return source;
     }

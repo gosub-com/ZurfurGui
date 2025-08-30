@@ -1,0 +1,57 @@
+{
+    "Component": "Window",
+    "Controller": "DockPanel",
+    "Content": [
+        {
+            "Controller": "Border",
+            "Name": "_windowTitle",
+            "Dock": "Top",
+            "AlignVertical": "Top",
+            "Background": "DarkSlateBlue",
+            "Padding": {
+                "Left": 10,
+                "Top": 4,
+                "Right": 10,
+                "Bottom": 0
+            },
+            "Margin": {
+                "Left": 2,
+                "Top": 2,
+                "Right": 2,
+                "Bottom": 2
+            },
+            "BorderRadius": 10.0,
+            "Content": [
+                {
+                    "Controller": "Label",
+                    "AlignHorizontal": "Left",
+                    "Text": "≡",
+                    "FontSize": 24.0
+                },
+                {
+                    "Controller": "Label",
+                    "AlignHorizontal": "Right",
+                    "Text": "X",
+                    "FontSize": 24.0
+                },
+                {
+                    "Controller": "Label",
+                    "DisableHitTest": true,
+                    "AlignHorizontal": "Center",
+                    "Text": "Title",
+                    "FontSize": 24.0
+                }
+            ]
+        },
+        {
+            "Controller": "Panel",
+            "Name": "_windowContent",
+            "Margin": {
+                "Left": 10,
+                "Top": 10,
+                "Right": 10,
+                "Bottom": 10
+            }
+        }
+    ]
+}

@@ -17,21 +17,18 @@ public enum Dock
     Top
 }
 
-public class DockPanel : Controllable
+public partial class DockPanel : Controllable
 {
     int _lastVisibleIndex;
 
-    public string Type => "Zui.DockPanel";
-    public override string ToString() => View.ToString();
-    public View View { get; private set; }
     public DockPanel()
     {
-        View = new(this);
+        InitializeComponent();
     }
 
-    public void Build()
+    public void LoadContent()
     {
-        Helper.BuildViews(View, View.Properties.Get(Zui.Content));
+        Loader.BuildViews(View, View.Properties.Get(Zui.Content));
     }
 
     public Size MeasureView(Size available, MeasureContext measure)

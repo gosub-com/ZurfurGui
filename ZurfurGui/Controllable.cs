@@ -6,9 +6,9 @@ namespace ZurfurGui;
 public interface Controllable
 {
     /// <summary>
-    /// Unique type name of control
+    /// Unique component name of control
     /// </summary>
-    string Type { get; }
+    string Component { get; }
 
     /// <summary>
     /// The main control view.  Each control must have a MainView, that is readonly (i.e. never changes)
@@ -18,7 +18,7 @@ public interface Controllable
     /// <summary>
     /// Controls that have non-json content override this to add content to the view tree
     /// </summary>
-    void Build() { }
+    void LoadContent() { }
 
     /// <summary>
     /// Returns the desired size of the control given the available screen size.

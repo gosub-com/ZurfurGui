@@ -15,70 +15,137 @@ public class ZurfurMain
         ControlRegistry.Add(() => new FormSmallWinTest());
         ControlRegistry.Add(() => new FormQbfWinTest());
 
+
+
         app.SetMainappWindow(new FormQbfWinTest());
 
-        Properties win1 = [
-            (Zui.Controller, "Zui.Window"),
-            (Zui.Size, new Size(400, 500)),
-            (Zui.Margin, new Thickness(95, 175, 0, 0)),
-            (Zui.AlignHorizontal, AlignHorizontal.Left),
-            (Zui.AlignVertical, AlignVertical.Top),
-            (Zui.Content, (Properties[])[[(Zui.Controller, "TestApp.FormQbfWinTest")]])
-        ];
-        app.ShowWindow((Window)Helper.BuildView(win1).Control);
+        var win1 = Loader.LoadJson("""
+        {
+          "Controller": "Window",
+          "Size": { "Width": 400, "Height": 500 },
+          "Margin": { "Left": 95, "Top": 175, "Right": 0, "Bottom": 0 },
+          "AlignHorizontal": "Left",
+          "AlignVertical": "Top",
+          "Content": [
+            {
+              "Controller": "TestApp.FormQbfWinTest"
+            }
+          ]
+        }
+        """);
+        app.ShowWindow((Window)win1);
 
 
+        var win2 = Loader.LoadJson("""
+        {
+          "Controller": "Window",
+          "Margin": { "Left": 600, "Top": 175, "Right": 0, "Bottom": 0 },
+          "Size": { "Width": 200, "Height": 200 },
+          "AlignHorizontal": "Left",
+          "AlignVertical": "Top",
+          "Content": [
+            {
+              "Controller": "TestApp.FormSmallWinTest",
+              "Name": "smallWinTest"
+            }
+          ]
+        }
+        """);
+        app.ShowWindow((Window)win2);
+        var smallWinTest = (FormSmallWinTest)win2.View.FindByName("smallWinTest").Control;
+        smallWinTest.button1.View.Properties.Set(Zui.Text, "*BUTTON*");
 
+        var win3 = Loader.LoadJson("""
+        {
+          "Controller": "Window",
+          "Size": { "Width": 200, "Height": 200 },
+          "AlignHorizontal": "Right",
+          "AlignVertical": "Bottom",
+          "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
+          "Content": [
+            {
+              "Controller": "TestApp.FormSmallWinTest"
+            }
+          ]
+        }
+        """);
+        app.ShowWindow((Window)win3);
 
-        Properties win2 = [
-            (Zui.Controller, "Zui.Window"),
-            (Zui.Margin, new Thickness(600, 175, 0, 0)),
-            (Zui.Size, new Size(200, 200)),
-            (Zui.AlignHorizontal, AlignHorizontal.Left),
-            (Zui.AlignVertical, AlignVertical.Top),
-            (Zui.Content, (Properties[])[[(Zui.Controller, "TestApp.FormSmallWinTest")]])
-        ];
-        app.ShowWindow((Window)Helper.BuildView(win2).Control);
+        var win4 = Loader.LoadJson("""
+        {
+          "Controller": "Window",
+          "AlignHorizontal": "Left",
+          "AlignVertical": "Bottom",
+          "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
+          "Content": [
+            {
+              "Controller": "TestApp.FormSearch"
+            }
+          ]
+        }
+        """);
+        app.ShowWindow((Window)win4);
+        ((Window)win4).IsWindowWrappingVisible = false;
 
-        Properties win3 = [
-            (Zui.Controller, "Zui.Window"),
-            (Zui.Size, new Size(200, 200)),
-            (Zui.AlignHorizontal, AlignHorizontal.Right),
-            (Zui.AlignVertical, AlignVertical.Bottom),
-            (Zui.Margin, new Thickness(10)),
-            (Zui.Content, (Properties[])[[(Zui.Controller, "TestApp.FormSmallWinTest")]])
-        ];
-        app.ShowWindow((Window)Helper.BuildView(win3).Control);
-
-        Properties win4Props = [
-            (Zui.Controller, "Zui.Window"),
-            (Zui.AlignHorizontal, AlignHorizontal.Left),
-            (Zui.AlignVertical, AlignVertical.Bottom),
-            (Zui.Margin, new Thickness(10)),
-            (Zui.Content, (Properties[])[[(Zui.Controller, "TestApp.FormSearch")]])
-        ];
-        var win4 = (Window)Helper.BuildView(win4Props).Control;
-        app.ShowWindow(win4);
-        win4.IsWindowWrappingVisible = false;
-
-        Properties win5Props = [
-            (Zui.Controller, "Zui.Window"),
-            (Zui.AlignHorizontal, AlignHorizontal.Right),
-            (Zui.AlignVertical, AlignVertical.Top),
-            (Zui.Margin, new Thickness(10)),
-            (Zui.Background, Colors.Red),
-            (Zui.BorderColor, Colors.Yellow),
-            (Zui.BorderWidth, 2.0),
-            (Zui.Padding, new Thickness(50)),
-            (Zui.BorderRadius, 10.0),
-            (Zui.Content, (Properties[])[[(Zui.Controller, "TestApp.FormSearch")]])
-        ];
-        var win5 = (Window)Helper.BuildView(win5Props).Control;
-        app.ShowWindow(win5);
-        win5.IsWindowWrappingVisible = false;
+        var win5Unused = Loader.LoadJson("""
+        {
+          "Controller": "Window",
+          "AlignHorizontal": "Right",
+          "AlignVertical": "Top",
+          "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
+          "Background": "Red",
+          "BorderColor": "Yellow",
+          "BorderWidth": 2.0,
+          "Padding": { "Left": 50, "Top": 50, "Right": 50, "Bottom": 50 },
+          "BorderRadius": 10.0,
+          "Content": [
+            {
+              "Controller": "TestApp.FormSearch"
+            }
+          ]
+        }
+        """);
+        var win5 = Loader.LoadJson("""
+        {
+          "Controller": "Window",
+          "AlignHorizontal": "Right",
+          "AlignVertical": "Top",
+          "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
+          "Background": "Red",
+          "BorderColor": "Yellow",
+          "BorderWidth": 2.0,
+          "Padding": { "Left": 50, "Top": 50, "Right": 50, "Bottom": 50 },
+          "BorderRadius": 10.0,
+          "Content": [
+            {
+              "Controller": "Column",
+              "Content": [
+                {
+                  "Controller": "Border",
+                  "Background": "Blue",
+                  "Content": [
+                    {
+                      "Controller": "TestApp.FormSmallWinTest"
+                    }
+                  ]
+                },
+                {
+                  "Controller": "Border",
+                  "Background": "Purple",
+                  "Content": [
+                    {
+                      "Controller": "TestApp.FormSearch"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+        """);
+        app.ShowWindow((Window)win5);
+        ((Window)win5).IsWindowWrappingVisible = false;
 
     }
-
-
 
 }

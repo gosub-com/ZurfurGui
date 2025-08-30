@@ -2,11 +2,8 @@
 
 namespace ZurfurGui.Controls;
 
-public class Column : Controllable
+public partial class Column : Controllable
 {
-    public string Type => "Zui.Column";
-    public override string ToString() => View.ToString();
-    public View View { get; private set; }
 
     /// <summary>
     /// Space between elements
@@ -15,11 +12,11 @@ public class Column : Controllable
 
     public Column()
     {
-        View = new(this);
+        InitializeComponent();
     }
-    public void Build()
+    public void LoadContent()
     {
-        Helper.BuildViews(View, View.Properties.Get(Zui.Content));
+        Loader.BuildViews(View, View.Properties.Get(Zui.Content));
     }
 
     public Size MeasureView(Size available, MeasureContext measure)

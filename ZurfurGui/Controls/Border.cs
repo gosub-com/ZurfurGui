@@ -10,22 +10,19 @@ namespace ZurfurGui.Controls;
 /// <summary>
 ///  
 /// </summary>
-public class Border : Controllable
+public partial class Border : Controllable
 {
-    public string Type => "Zui.Border";
-    public override string ToString() => View.ToString();
-    public View View { get; private set; }
 
     View? _content;
 
     public Border()
     {
-        View = new(this);
+        InitializeComponent();
     }
 
-    public void Build()
+    public void LoadContent()
     {
-        Helper.BuildViews(View, View.Properties.Get(Zui.Content));
+        Loader.BuildViews(View, View.Properties.Get(Zui.Content));
     }
 
     public Size MeasureView(Size available, MeasureContext measure)

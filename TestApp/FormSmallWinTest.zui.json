@@ -1,18 +1,18 @@
 {
-    "Type":  "TestApp.FormSmallWinTest",
-    "Zui.Controller": "Zui.Panel",
-    "Zui.Content": [
+    "Component": "TestApp.FormSmallWinTest",
+    "Controller": "Panel",
+    "Content": [
         {
-            "Zui.Controller": "Zui.Button",
-            "Zui.Name": "button1",
-            "Zui.Text": "Big Button Test",
-            "Zui.AlignVertical": "Top",
-            "Zui.AlignHorizontal": "Left",
-            "Zui.Size": {
+            "Controller": "Button",
+            "Name": "button1",
+            "Text": "Big Button Test",
+            "AlignVertical": "Top",
+            "AlignHorizontal": "Left",
+            "Size": {
                 "Width": 100,
                 "Height": 100
             },
-            "Zui.Margin": {
+            "Margin": {
                 "Left": 100,
                 "Top": 100,
                 "Right": 0,
@@ -20,12 +20,12 @@
             }
         },
         {
-            "Zui.Controller": "Zui.Button",
-            "Zui.Name": "button2",
-            "Zui.Text": "Test 2",
-            "Zui.AlignVertical": "Top",
-            "Zui.AlignHorizontal": "Left",
-            "Zui.Margin": {
+            "Controller": "Button",
+            "Name": "button2",
+            "Text": "Test 2",
+            "AlignVertical": "Top",
+            "AlignHorizontal": "Left",
+            "Margin": {
                 "Left": 10,
                 "Top": 20,
                 "Right": 0,
@@ -33,12 +33,12 @@
             }
         },
         {
-            "Zui.Controller": "Zui.Button",
-            "Zui.Name": "button3",
-            "Zui.Text": "Test 3",
-            "Zui.AlignVertical": "Top",
-            "Zui.AlignHorizontal": "Left",
-            "Zui.Margin": {
+            "Controller": "Button",
+            "Name": "button3",
+            "Text": "Test 3",
+            "AlignVertical": "Top",
+            "AlignHorizontal": "Left",
+            "Margin": {
                 "Left": 10,
                 "Top": 50,
                 "Right": 0,
@@ -46,76 +46,76 @@
             }
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "TC",
-            "Zui.AlignVertical": "Top",
-            "Zui.AlignHorizontal": "Center"
+            "Controller": "Label",
+            "Text": "TC",
+            "AlignVertical": "Top",
+            "AlignHorizontal": "Center"
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "TS",
-            "Zui.AlignVertical": "Top",
-            "Zui.AlignHorizontal": "Stretch"
+            "Controller": "Label",
+            "Text": "TS",
+            "AlignVertical": "Top",
+            "AlignHorizontal": "Stretch"
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "TR",
-            "Zui.AlignVertical": "Top",
-            "Zui.AlignHorizontal": "Right"
+            "Controller": "Label",
+            "Text": "TR",
+            "AlignVertical": "Top",
+            "AlignHorizontal": "Right"
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "TL",
-            "Zui.AlignVertical": "Top",
-            "Zui.AlignHorizontal": "Left"
+            "Controller": "Label",
+            "Text": "TL",
+            "AlignVertical": "Top",
+            "AlignHorizontal": "Left"
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "Middle",
-            "Zui.AlignVertical": "Center",
-            "Zui.AlignHorizontal": "Center"
+            "Controller": "Label",
+            "Text": "Middle",
+            "AlignVertical": "Center",
+            "AlignHorizontal": "Center"
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "CS",
-            "Zui.AlignVertical": "Center",
-            "Zui.AlignHorizontal": "Stretch"
+            "Controller": "Label",
+            "Text": "CS",
+            "AlignVertical": "Center",
+            "AlignHorizontal": "Stretch"
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "CR",
-            "Zui.AlignVertical": "Center",
-            "Zui.AlignHorizontal": "Right"
+            "Controller": "Label",
+            "Text": "CR",
+            "AlignVertical": "Center",
+            "AlignHorizontal": "Right"
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "CL",
-            "Zui.AlignVertical": "Center",
-            "Zui.AlignHorizontal": "Left"
+            "Controller": "Label",
+            "Text": "CL",
+            "AlignVertical": "Center",
+            "AlignHorizontal": "Left"
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "BC",
-            "Zui.AlignVertical": "Bottom",
-            "Zui.AlignHorizontal": "Center"
+            "Controller": "Label",
+            "Text": "BC",
+            "AlignVertical": "Bottom",
+            "AlignHorizontal": "Center"
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "BS",
-            "Zui.AlignVertical": "Bottom",
-            "Zui.AlignHorizontal": "Stretch"
+            "Controller": "Label",
+            "Text": "BS",
+            "AlignVertical": "Bottom",
+            "AlignHorizontal": "Stretch"
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "BR",
-            "Zui.AlignVertical": "Bottom",
-            "Zui.AlignHorizontal": "Right"
+            "Controller": "Label",
+            "Text": "BR",
+            "AlignVertical": "Bottom",
+            "AlignHorizontal": "Right"
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "BL",
-            "Zui.AlignVertical": "Bottom",
-            "Zui.AlignHorizontal": "Left"
+            "Controller": "Label",
+            "Text": "BL",
+            "AlignVertical": "Bottom",
+            "AlignHorizontal": "Left"
         }
     ]
 }

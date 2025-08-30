@@ -128,6 +128,8 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
     {
     }
 
+    public int Count => _properties.Count;
+
     public IEnumerator<(PropertyKeyId key, object value)> GetEnumerator()
     {
         foreach (var propertyIndex in _properties)

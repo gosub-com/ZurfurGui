@@ -9,11 +9,10 @@ namespace ZurfurGui.Controls;
 /// It could be modal or modeless, and could cover the app completely when modal or can
 /// be moved by the user when modeless.  The content is displayed inside a client area.
 /// </summary>
-public class Window : Controllable
+public partial class Window : Controllable
 {
-    public string Type => "Zui.Window";
-    public override string ToString() => View.ToString();
-    public View View { get; private set; }
+    const string WINDOW_TITLE_NAME = "_windowTitle";
+    const string WINDOW_CONTENT_NAME = "_windowContent";
 
     View _contentView;
     View _titleView;
@@ -23,55 +22,8 @@ public class Window : Controllable
 
     public Window()
     {
-        View = new(this);
+        InitializeComponent();
 
-        const string WINDOW_TITLE_NAME = "_windowTitle";
-        const string WINDOW_CONTENT_NAME = "_windowContent";
-
-        Properties windowProps = [
-            (Zui.Controller, "Zui.DockPanel"),
-            (Zui.Content, (Properties[])[
-                [
-                    (Zui.Controller, "Zui.Border"),
-                    (Zui.Name, WINDOW_TITLE_NAME),
-                    (Zui.Dock, Dock.Top),
-                    (Zui.AlignVertical, AlignVertical.Top),
-                    (Zui.Background, Colors.DarkSlateBlue),
-                    (Zui.Padding, new Thickness(10,4,10,0)),
-                    (Zui.Margin, new Thickness(2)),
-                    (Zui.BorderRadius, 10.0),
-                    (Zui.Content, (Properties[])[
-                        [
-                            (Zui.Controller, "Zui.Label"),
-                            (Zui.AlignHorizontal, AlignHorizontal.Left),
-                            (Zui.Text, "≡"),
-                            (Zui.FontSize, 24.0),
-                        ],
-                        [
-                            (Zui.Controller, "Zui.Label"),
-                            (Zui.AlignHorizontal, AlignHorizontal.Right),
-                            (Zui.Text, "X"),
-                            (Zui.FontSize, 24.0)
-                        ],
-                        [
-                            (Zui.Controller, "Zui.Label"),
-                            (Zui.DisableHitTest, true),
-                            (Zui.AlignHorizontal, AlignHorizontal.Center),
-                            (Zui.Text, "Title"),
-                            (Zui.FontSize, 24.0)
-                        ]
-                    ])
-                ],
-                [
-                    (Zui.Controller, "Zui.Panel"),
-                    (Zui.Name, WINDOW_CONTENT_NAME),
-                    (Zui.Margin, new Thickness(10)),
-                ],
-            ])
-        ];
-
-        var windowView = Helper.BuildView(windowProps);
-        View.AddView(windowView);
         _titleView = View.FindByName(WINDOW_TITLE_NAME);
         _contentView = View.FindByName(WINDOW_CONTENT_NAME);
 
@@ -86,6 +38,27 @@ public class Window : Controllable
         _titleView.Properties.AddEvent(Zui.PreviewPointerMove, _titleView_PreviewPointerMove);
         _titleView.Properties.AddEvent(Zui.PointerCaptureLost, (s, e) =>_mouseDown = false);
     }
+
+    public void LoadContent()
+    {
+        var contentProperties = View.Properties.Get(Zui.Content);
+        if (contentProperties != null)
+            foreach (var property in contentProperties)
+                _contentView.AddView(Loader.BuildView(property));
+
+        if (Debugger.IsAttached)
+            WalkView(View);
+    }
+
+    void WalkView(View view, int level = 0)
+    {
+        Debug.WriteLine($"{new string(' ', level)}{view.Control.GetType()}: {view.Control.Component}");
+        foreach (var child in view.Views)
+        {
+            WalkView(child, level + 1);
+        }
+    }
+
 
     void _titleView_PreviewPointerDown(object? s, PointerEvent e)
     {
@@ -106,14 +79,6 @@ public class Window : Controllable
         margin.Top = position.Y;
         View.Properties.Set(Zui.Margin, margin);
         View.InvalidateMeasure(); // TBD: Should be automatic
-    }
-
-    public void Build()
-    {
-        var contentProperties = View.Properties.Get(Zui.Content);
-        if (contentProperties != null)
-            foreach (var property in contentProperties)
-                _contentView.AddView(Helper.BuildView(property));
     }
 
     /// <summary>

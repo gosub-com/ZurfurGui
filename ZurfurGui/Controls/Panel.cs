@@ -7,20 +7,17 @@ using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
-public class Panel : Controllable
+public partial class Panel : Controllable
 {
-    public string Type => "Zui.Panel";
-    public override string ToString() => View.ToString();
-    public View View { get; private set; }
 
     public Panel()
     {
-        View = new(this);
+        InitializeComponent();
     }
 
-    public void Build()
+    public void LoadContent()
     {
-        Helper.BuildViews(View, View.Properties.Get(Zui.Content));
+        Loader.BuildViews(View, View.Properties.Get(Zui.Content));
     }
 
 

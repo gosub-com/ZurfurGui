@@ -29,7 +29,7 @@ public class AppWindow : Controllable
     int _fps;
     long _avgMs;
 
-    public string Type => "Zui.AppWindow";
+    public string Component => "Zui.AppWindow";
     public override string ToString() => View.ToString();
     public View View { get; private set; }
 

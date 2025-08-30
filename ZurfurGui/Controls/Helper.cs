@@ -19,38 +19,6 @@ public static class Helper
     const double TEXT_BASELINE = 0.8;
 
     /// <summary>
-    /// Build views from properties and add them to the view.Views collection
-    /// </summary>
-    public static void BuildViews(View view, Properties[]? controllerProperties)
-    {
-        if (controllerProperties == null)
-            return;
-
-        foreach (var property in controllerProperties)
-            view.AddView(BuildView(property));
-    }
-
-    /// <summary>
-    /// Create a view from property
-    /// </summary>
-    public static View BuildView(Properties controllerProperties)
-    {
-        var controlName = controllerProperties.Get(Zui.Controller) ?? "";
-        if (controlName == "")
-            throw new ArgumentException($"The control's controller property is not specified.");
-
-        var control = ControlRegistry.Create(controlName);
-        if (control == null)
-            throw new ArgumentException($"'{controlName}' is not a registered control");
-     
-        control.View.Properties.SetUnion(controllerProperties);
-        
-        control.Build();
-
-        return control.View;
-    }
-
-    /// <summary>
     /// Measure a view according to the rules of a panel
     /// </summary>
     public static Size MeasureViewPanel(View view, Size available, MeasureContext measure, Thickness padding = default)

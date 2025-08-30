@@ -1,84 +1,84 @@
 {
-    "Type": "TestApp.FormQbfWinTest",
-    "Zui.Controller": "Zui.Column",
-    "Zui.Content": [
+    "Component": "TestApp.FormQbfWinTest",
+    "Controller": "Column",
+    "Content": [
         {
-            "Zui.Controller": "Zui.Button",
-            "Zui.Text": "ButtonX",
-            "Zui.AlignHorizontal": "Center"
+            "Controller": "Button",
+            "Text": "ButtonX",
+            "AlignHorizontal": "Center"
         },
         {
-            "Zui.Controller": "Zui.Button",
-            "Zui.Text": "Button",
-            "Zui.AlignHorizontal": "Right"
+            "Controller": "Button",
+            "Text": "Button",
+            "AlignHorizontal": "Right"
         },
         {
-            "Zui.Controller": "Zui.Button",
-            "Zui.Text": "Button",
-            "Zui.AlignHorizontal": "Left"
+            "Controller": "Button",
+            "Text": "Button",
+            "AlignHorizontal": "Left"
         },
         {
-            "Zui.Controller": "Zui.Row",
-            "Zui.Content": [
+            "Controller": "Row",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Button",
-                    "Zui.Text": "Button A"
+                    "Controller": "Button",
+                    "Text": "Button A"
                 },
                 {
-                    "Zui.Controller": "Zui.Button",
-                    "Zui.Text": "Button B"
+                    "Controller": "Button",
+                    "Text": "Button B"
                 },
                 {
-                    "Zui.Controller": "Zui.Button",
-                    "Zui.Text": "Button C"
+                    "Controller": "Button",
+                    "Text": "Button C"
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.Row",
-            "Zui.Content": [
+            "Controller": "Row",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "The"
+                    "Controller": "Label",
+                    "Text": "The"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Quick Brown Fox Jumps Over"
+                    "Controller": "Label",
+                    "Text": "Quick Brown Fox Jumps Over"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "The lazy dog"
+                    "Controller": "Label",
+                    "Text": "The lazy dog"
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.Row",
-            "Zui.Content": [
+            "Controller": "Row",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "The",
-                    "Zui.FontSize": 16.0
+                    "Controller": "Label",
+                    "Text": "The",
+                    "FontSize": 16.0
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Quick",
-                    "Zui.FontSize": 32.0
+                    "Controller": "Label",
+                    "Text": "Quick",
+                    "FontSize": 32.0
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Brown",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "Brown",
+                    "FontSize": 26.0
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.Row",
-            "Zui.Content": [
+            "Controller": "Row",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "The Quick Brown",
-                    "Zui.FontSize": 26.0,
-                    "Zui.Margin": {
+                    "Controller": "Label",
+                    "Text": "The Quick Brown",
+                    "FontSize": 26.0,
+                    "Margin": {
                         "Left": -30,
                         "Top": 0,
                         "Right": 0,
@@ -86,176 +86,176 @@
                     }
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Fox &Jumps",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "Fox &Jumps",
+                    "FontSize": 26.0
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Over the lazy dog",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "Over the lazy dog",
+                    "FontSize": 26.0
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.Row",
-            "Zui.Content": [
+            "Controller": "Row",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Sans j",
-                    "Zui.FontSize": 26.0,
-                    "Zui.FontName": "sans-serif"
+                    "Controller": "Label",
+                    "Text": "Sans j",
+                    "FontSize": 26.0,
+                    "FontName": "sans-serif"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Arial j",
-                    "Zui.FontSize": 26.0,
-                    "Zui.FontName": "Arial"
+                    "Controller": "Label",
+                    "Text": "Arial j",
+                    "FontSize": 26.0,
+                    "FontName": "Arial"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "﴿█j A﴿│|☰",
-                    "Zui.FontSize": 26.0,
-                    "Zui.FontName": "Arial"
+                    "Controller": "Label",
+                    "Text": "﴿█j A﴿│|☰",
+                    "FontSize": 26.0,
+                    "FontName": "Arial"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Serif j",
-                    "Zui.FontSize": 26.0,
-                    "Zui.FontName": "Times New Roman"
+                    "Controller": "Label",
+                    "Text": "Serif j",
+                    "FontSize": 26.0,
+                    "FontName": "Times New Roman"
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.Row",
-            "Zui.Content": [
+            "Controller": "Row",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "TheQuickBrown",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "TheQuickBrown",
+                    "FontSize": 26.0
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": " ",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": " ",
+                    "FontSize": 26.0
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "   ",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "   ",
+                    "FontSize": 26.0
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.Row",
-            "Zui.Content": [
+            "Controller": "Row",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "1 The Quick Brown",
-                    "Zui.FontSize": 40.0,
-                    "Zui.FontName": "Times New ROman"
+                    "Controller": "Label",
+                    "Text": "1 The Quick Brown",
+                    "FontSize": 40.0,
+                    "FontName": "Times New ROman"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "2 Fox Jumps Over",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "2 Fox Jumps Over",
+                    "FontSize": 26.0
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "3 The Lazy Dog",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "3 The Lazy Dog",
+                    "FontSize": 26.0
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "4 And a Cow",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "4 And a Cow",
+                    "FontSize": 26.0
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "5 And a Zebra",
-                    "Zui.FontSize": 16.0,
-                    "Zui.AlignVertical": "Center"
+                    "Controller": "Label",
+                    "Text": "5 And a Zebra",
+                    "FontSize": 16.0,
+                    "AlignVertical": "Center"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "",
+                    "FontSize": 26.0
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "",
+                    "FontSize": 26.0
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.Row",
-            "Zui.Wrap": true,
-            "Zui.Content": [
+            "Controller": "Row",
+            "Wrap": true,
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "The Quick Brown",
-                    "Zui.FontSize": 40.0,
-                    "Zui.FontName": "Times New Roman"
+                    "Controller": "Label",
+                    "Text": "The Quick Brown",
+                    "FontSize": 40.0,
+                    "FontName": "Times New Roman"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Fox Jumps Over",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "Fox Jumps Over",
+                    "FontSize": 26.0
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "The Lazy Dog",
-                    "Zui.FontSize": 26.0
+                    "Controller": "Label",
+                    "Text": "The Lazy Dog",
+                    "FontSize": 26.0
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "And a Cow",
-                    "Zui.FontSize": 32.0,
-                    "Zui.AlignVertical": "Center"
+                    "Controller": "Label",
+                    "Text": "And a Cow",
+                    "FontSize": 32.0,
+                    "AlignVertical": "Center"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Center",
-                    "Zui.FontSize": 16.0,
-                    "Zui.AlignVertical": "Center"
+                    "Controller": "Label",
+                    "Text": "Center",
+                    "FontSize": 16.0,
+                    "AlignVertical": "Center"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Top",
-                    "Zui.FontSize": 16.0,
-                    "Zui.AlignVertical": "Top"
+                    "Controller": "Label",
+                    "Text": "Top",
+                    "FontSize": 16.0,
+                    "AlignVertical": "Top"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Bottom",
-                    "Zui.FontSize": 16.0,
-                    "Zui.AlignVertical": "Bottom"
+                    "Controller": "Label",
+                    "Text": "Bottom",
+                    "FontSize": 16.0,
+                    "AlignVertical": "Bottom"
                 },
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Stretch",
-                    "Zui.FontSize": 16.0,
-                    "Zui.AlignVertical": "Stretch"
+                    "Controller": "Label",
+                    "Text": "Stretch",
+                    "FontSize": 16.0,
+                    "AlignVertical": "Stretch"
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.Row",
-            "Zui.Content": [
+            "Controller": "Row",
+            "Content": [
                 {
-                    "Zui.Controller": "Zui.Label",
-                    "Zui.Text": "Done - row"
+                    "Controller": "Label",
+                    "Text": "Done - row"
                 }
             ]
         },
         {
-            "Zui.Controller": "Zui.Label",
-            "Zui.Text": "Done - Label"
+            "Controller": "Label",
+            "Text": "Done - Label"
         },
         {
-            "Zui.Controller": "Zui.Button",
-            "Zui.Text": "Done - Button"
+            "Controller": "Button",
+            "Text": "Done - Button"
         }
     ]
 }
