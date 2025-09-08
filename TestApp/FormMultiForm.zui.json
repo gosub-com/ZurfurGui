@@ -1,0 +1,36 @@
+{
+    "Component": "TestApp.FormMultiForm",
+    "Layout": "Column",
+    "AlignHorizontal": "Right",
+    "AlignVertical": "Top",
+    "Content": [
+        {
+            "Controller": "Panel",
+            "Background": "Blue",
+            "BorderRadius": 10.0,
+            "BorderWidth": 2.0,
+            "BorderColor": "Black",
+            "Padding": {
+                "Left": 15,
+                "Top": 15,
+                "Right": 15,
+                "Bottom": 15
+            },
+            "Content": [
+                {
+                    "Controller": "TestApp.FormSmallWinTest"
+                }
+            ]
+        },
+        {
+            "Controller": "Panel",
+            "Background": "Purple",
+            "Content": [
+                {
+                    "Controller": "TestApp.FormSearch"
+                }
+            ]
+        }
+    ]
+}
+

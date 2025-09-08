@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ZurfurGui.Controls;
+using ZurfurGui.Draw;
+using ZurfurGui.Layout;
 using ZurfurGui.Platform;
 
 namespace ZurfurGui;
@@ -21,16 +23,12 @@ public static class Zui
         // Force initialization of static properties
         _ = Zui.Name;
 
-        ControlRegistry.Add(() => new Panel());
-        ControlRegistry.Add(() => new Button());
-        ControlRegistry.Add(() => new Column());
-        ControlRegistry.Add(() => new Label());
-        ControlRegistry.Add(() => new Row());
-        ControlRegistry.Add(() => new Border());
-        ControlRegistry.Add(() => new TextBox());
-        ControlRegistry.Add(() => new DockPanel());
-        ControlRegistry.Add(() => new Window());
-        ControlRegistry.Add(() => new AppWindow());
+        ControlManager.Add(() => new Panel());
+        ControlManager.Add(() => new Button());
+        ControlManager.Add(() => new Label());
+        ControlManager.Add(() => new TextBox());
+        ControlManager.Add(() => new Window());
+        ControlManager.Add(() => new AppWindow());
 
         var appWindow = new AppWindow();
         mainAppEntry(appWindow);
@@ -42,6 +40,9 @@ public static class Zui
     public static readonly PropertyKey<string> Name = new("Name");
     public static readonly PropertyKey<string> Controller = new("Controller");
     public static readonly PropertyKey<string> Component = new("Component");
+    public static readonly PropertyKey<string> Layout = new("Layout");
+    public static readonly PropertyKey<string> Draw = new("Draw");
+
     public static readonly PropertyKey<Properties[]> Content = new("Content");
     public static readonly PropertyKey<bool> IsVisible = new("IsVisible");
     public static readonly PropertyKey<AlignHorizontal> AlignHorizontal = new("AlignHorizontal");
@@ -51,6 +52,25 @@ public static class Zui
     public static readonly PropertyKey<Size> SizeMax = new("SizeMax");
     public static readonly PropertyKey<Size> SizeMin = new("SizeMin");
     public static readonly PropertyKey<double> Magnification = new("Magnification");
+    public static readonly PropertyKey<bool> Clip = new("Clip");
+    public static readonly PropertyKey<Point> Offset = new("Offset");
+    public static readonly PropertyKey<Thickness> Padding = new("Padding");
+
+    // Label, Window, Button, Checkbox, etc.
+    public static readonly PropertyKey<string> Text = new("Text");
+    public static readonly PropertyKey<string> FontName = new("FontName");
+    public static readonly PropertyKey<double> FontSize = new("FontSize");
+
+    // Borders, text, misc
+    public static readonly PropertyKey<Color> Background = new("Background");
+    public static readonly PropertyKey<Color> BorderColor = new("BorderColor");
+    public static readonly PropertyKey<double> BorderWidth = new("BorderWidth");
+    public static readonly PropertyKey<double> BorderRadius = new("BorderRadius");
+
+    // Row, Column, DockPanel, etc.
+    public static readonly PropertyKey<bool> Wrap = new("Wrap");
+    public static readonly PropertyKey<Size> Spacing = new("Spacing");
+    public static readonly PropertyKey<Dock> Dock = new("Dock");
 
     // Common UI interaction
     public static readonly PropertyKey<bool> DisableHitTest = new("DisableHitTest");
@@ -61,22 +81,5 @@ public static class Zui
     public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerMove = new("PreviewPointerMove");
     public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerUp = new("PreviewPointerUp");
     public static readonly PropertyKey<EventHandler> PointerCaptureLost = new("PointerCaptureLost");
-
-    // Label, Window, Button, Checkbox, etc.
-    public static readonly PropertyKey<string> Text = new("Text");
-    public static readonly PropertyKey<string> FontName = new("FontName");
-    public static readonly PropertyKey<double> FontSize = new("FontSize");
-
-    // Borders, text, misc
-    public static readonly PropertyKey<Color> Background = new("Background");
-    public static readonly PropertyKey<Thickness> Padding = new("Padding");
-    public static readonly PropertyKey<Color> BorderColor = new("BorderColor");
-    public static readonly PropertyKey<double> BorderWidth = new("BorderWidth");
-    public static readonly PropertyKey<double> BorderRadius = new("BorderRadius");
-
-    // Row, Column, DockPanel, etc.
-    public static readonly PropertyKey<bool> Wrap = new("Wrap");
-    public static readonly PropertyKey<Size> Spacing = new("Spacing");
-    public static readonly PropertyKey<Dock> Dock = new("Dock");
 
 }

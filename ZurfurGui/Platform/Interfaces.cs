@@ -90,5 +90,8 @@ public interface OsContext
     public void FillText(string text, double x, double y);
 
     public double MeasureTextWidth(string text);
-    public void ClipRect(double x, double y, double width, double height);
+
+    public void Clip(double x, double y, double width, double height);
+
+    public void UnClip();
 }

@@ -1,41 +1,157 @@
 {
     "Component": "TestApp.FormQbfWinTest",
-    "Controller": "Column",
+    "Layout": "Column",
     "Content": [
         {
-            "Controller": "Button",
-            "Text": "ButtonX",
-            "AlignHorizontal": "Center"
-        },
-        {
-            "Controller": "Button",
-            "Text": "Button",
-            "AlignHorizontal": "Right"
-        },
-        {
-            "Controller": "Button",
-            "Text": "Button",
-            "AlignHorizontal": "Left"
-        },
-        {
-            "Controller": "Row",
+            "Layout": "Row",
             "Content": [
                 {
-                    "Controller": "Button",
-                    "Text": "Button A"
+                    "Controller": "Label",
+                    "Text": "T"
                 },
                 {
-                    "Controller": "Button",
-                    "Text": "Button B"
+                    "Controller": "Label",
+                    "Text": "T B",
+                    "BorderColor": "Green",
+                    "BorderWidth": 2
                 },
                 {
-                    "Controller": "Button",
-                    "Text": "Button C"
+                    "Controller": "Label",
+                    "Text": "T P",
+                    "Padding": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    }
+                },
+                {
+                    "Controller": "Label",
+                    "Text": "T M",
+                    "Margin": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    }
+                },
+                {
+                    "Controller": "Label",
+                    "Text": "T PMB",
+                    "BorderColor": "Red",
+                    "BorderWidth": 2,
+                    "Padding": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    },
+                    "Margin": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    }
                 }
             ]
         },
         {
-            "Controller": "Row",
+            "Layout": "Row",
+            "Content": [
+                {
+                    "Controller": "Button",
+                    "Text": "B"
+                },
+                {
+                    "Controller": "Button",
+                    "Text": "B P",
+                    "Padding": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    }
+                },
+                {
+                    "Controller": "Button",
+                    "Text": "B M",
+                    "Margin": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    }
+                },
+                {
+                    "Controller": "Button",
+                    "Text": "B PM",
+                    "Padding": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    },
+                    "Margin": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    }
+                }
+            ]
+        },
+        {
+            "Layout": "Row",
+            "Content": [
+                {
+                    "Controller": "TextBox",
+                    "Text": "TB"
+                },
+                {
+                    "Controller": "TextBox",
+                    "Text": ""
+                },
+                {
+                    "Controller": "TextBox",
+                    "Text": "TB P",
+                    "Padding": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    }
+                },
+                {
+                    "Controller": "TextBox",
+                    "Text": "TB M",
+                    "Margin": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    }
+                },
+                {
+                    "Controller": "TextBox",
+                    "Text": "TB PMB",
+                    "BorderColor": "Red",
+                    "Padding": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    },
+                    "Margin": {
+                        "Left": 20,
+                        "Top": 10,
+                        "Right": 20,
+                        "Bottom": 10
+                    }
+                }
+            ]
+        },
+        {
+            "Layout": "Row",
             "Content": [
                 {
                     "Controller": "Label",
@@ -52,7 +168,7 @@
             ]
         },
         {
-            "Controller": "Row",
+            "Layout": "Row",
             "Content": [
                 {
                     "Controller": "Label",
@@ -72,7 +188,7 @@
             ]
         },
         {
-            "Controller": "Row",
+            "Layout": "Row",
             "Content": [
                 {
                     "Controller": "Label",
@@ -98,7 +214,7 @@
             ]
         },
         {
-            "Controller": "Row",
+            "Layout": "Row",
             "Content": [
                 {
                     "Controller": "Label",
@@ -127,7 +243,7 @@
             ]
         },
         {
-            "Controller": "Row",
+            "Layout": "Row",
             "Content": [
                 {
                     "Controller": "Label",
@@ -147,7 +263,7 @@
             ]
         },
         {
-            "Controller": "Row",
+            "Layout": "Row",
             "Content": [
                 {
                     "Controller": "Label",
@@ -189,7 +305,7 @@
             ]
         },
         {
-            "Controller": "Row",
+            "Layout": "Row",
             "Wrap": true,
             "Content": [
                 {
@@ -241,7 +357,7 @@
             ]
         },
         {
-            "Controller": "Row",
+            "Layout": "Row",
             "Content": [
                 {
                     "Controller": "Label",

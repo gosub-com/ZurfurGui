@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Platform;
-using ZurfurGui.Render;
+using ZurfurGui.Draw;
 
 namespace ZurfurGui.Controls;
 
@@ -13,12 +13,13 @@ public partial class Window : Controllable
 {
     const string WINDOW_TITLE_NAME = "_windowTitle";
     const string WINDOW_CONTENT_NAME = "_windowContent";
+    const string WINDOW_CLOSE_BUTTON_NAME = "_closeButton";
 
     View _contentView;
     View _titleView;
 
     bool _mouseDown;
-    Point _mouseDownOffset;
+    Point _mousePosition;
 
     public Window()
     {
@@ -37,18 +38,21 @@ public partial class Window : Controllable
         _titleView.Properties.AddEvent(Zui.PreviewPointerDown, _titleView_PreviewPointerDown);
         _titleView.Properties.AddEvent(Zui.PreviewPointerMove, _titleView_PreviewPointerMove);
         _titleView.Properties.AddEvent(Zui.PointerCaptureLost, (s, e) =>_mouseDown = false);
+
+        var closeButton = _titleView.FindByName(WINDOW_CLOSE_BUTTON_NAME);
+        closeButton.Properties.AddEvent(Zui.PointerUp, (s, e) => View.Parent?.RemoveView(View));
     }
 
-    public void LoadContent()
+    public void LoadContent(Properties[]? contents)
     {
-        var contentProperties = View.Properties.Get(Zui.Content);
-        if (contentProperties != null)
-            foreach (var property in contentProperties)
-                _contentView.AddView(Loader.BuildView(property));
+        if (contents != null)
+            foreach (var property in contents)
+                _contentView.AddView(Loader.CreateControl(property).View);
 
         if (Debugger.IsAttached)
             WalkView(View);
     }
+
 
     void WalkView(View view, int level = 0)
     {
@@ -64,7 +68,7 @@ public partial class Window : Controllable
     {
         _mouseDown = true;
         var margin = View.Properties.Get(Zui.Margin);
-        _mouseDownOffset = (View.Parent?.toClient(e.Position) ?? new()) - margin.TopLeft;
+        _mousePosition = View.Parent?.toClient(e.Position) ?? new();
         _titleView.CapturePointer = true;
     }
 
@@ -73,11 +77,14 @@ public partial class Window : Controllable
         if (!_mouseDown)
             return;
 
-        var position = (View.Parent?.toClient(e.Position) ?? new()) - _mouseDownOffset;
-        var margin = View.Properties.Get(Zui.Margin);
-        margin.Left = position.X;
-        margin.Top = position.Y;
-        View.Properties.Set(Zui.Margin, margin);
+        var position = View.Parent?.toClient(e.Position) ?? new();
+        var diff = position - _mousePosition;
+        _mousePosition = position;
+
+        // Update window offset
+        View.Properties.Set(Zui.Offset, View.Properties.Get(Zui.Offset) + diff);
+
+
         View.InvalidateMeasure(); // TBD: Should be automatic
     }
 
@@ -99,26 +106,5 @@ public partial class Window : Controllable
         _contentView.AddView(content);
     }
 
-    public void Render(RenderContext context)
-    {
-        var background = View.Properties.Get(Zui.Background, Colors.LightSkyBlue);
-        var borderColor = View.Properties.Get(Zui.BorderColor, Colors.AliceBlue);
-        var borderRadius = View.Properties.Get(Zui.BorderRadius, 10);
-        var borderWidth = View.Properties.Get(Zui.BorderWidth, 2);
-
-        context.FillColor = background;
-        var r = new Rect(new(), View.Size);
-        context.FillRect(r, borderRadius);
-        context.StrokeColor = borderColor;
-
-        r = r.Deflate(borderWidth/2);
-        context.LineWidth = borderWidth;
-        context.StrokeRect(r, borderRadius);
-    }
-
-    public bool IsHit(Point point)
-    {
-        return true;
-    }
 
 }

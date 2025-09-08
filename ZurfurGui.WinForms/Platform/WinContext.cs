@@ -46,6 +46,8 @@ internal class WinContext : OsContext
     double _lineWidth = 1;
     string _fontName = "Arial";
     double _fontSize = 16;
+    RectangleF _currentClip = new RectangleF(-1000000, -1000000, 2000000, 2000000);
+    List<RectangleF> _clipStack = new();
 
 
     public WinContext(Graphics graphics)
@@ -194,10 +196,31 @@ internal class WinContext : OsContext
             TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
     }
 
-    public void ClipRect(double x, double y, double width, double height)
+    /// <summary>
+    /// Clip to the specified rectangle in device pixels
+    /// </summary>
+    public void Clip(double x, double y, double width, double height)
     {
+        _clipStack.Add(_currentClip);
+        _currentClip = new RectangleF((float)x, (float)y, (float)width, (float)height);
+
         _region.MakeInfinite();
-        _region.Intersect(new RectangleF((float)x, (float)y, (float)width, (float)height));
+        _region.Intersect(_currentClip);
         _graphics.Clip = _region;
+    }
+
+    public void UnClip()
+    {
+        _currentClip = new RectangleF(-1000000, -1000000, 2000000, 2000000);
+        if (_clipStack.Count > 0)
+        {
+            _currentClip = _clipStack[^1];
+            _clipStack.RemoveAt(_clipStack.Count - 1);
+        }
+
+        _region.MakeInfinite();
+        _region.Intersect(_currentClip);
+        _graphics.Clip = _region;
+
     }
 }

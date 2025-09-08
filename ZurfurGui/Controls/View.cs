@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Diagnostics;
-using ZurfurGui.Render;
+using ZurfurGui.Layout;
+using ZurfurGui.Layout;
+using ZurfurGui.Draw;
 
 namespace ZurfurGui.Controls;
 
@@ -20,7 +22,7 @@ public enum AlignVertical : byte
     Bottom
 }
 
-public class View
+public sealed class View
 {
     /// <summary>
     /// All child views. 
@@ -43,9 +45,19 @@ public class View
     public readonly Properties Properties = new();
 
     /// <summary>
-    /// The control, if there is one
+    /// The control
     /// </summary>
     public Controllable Control { get; private set; }
+
+    /// <summary>
+    /// When null, the control is treated as a panel.
+    /// </summary>
+    public Layoutable? Layout { get; set; }
+
+    /// <summary>
+    /// When null, the control is treated as a panel (i.e. draw backgrond & border, performs hit testing, etc.)
+    /// </summary>
+    public Drawable? Draw { get; set; }
 
     /// <summary>
     /// Measured size of view as calculated by the measure pass.
@@ -71,12 +83,6 @@ public class View
     /// Scale of view, relative to device pixels as calculated by the post arrange pass.
     /// </summary>
     public double Scale { get; private set; } = 1;
-
-    /// <summary>
-    /// Visually clipped region of the view in control coordinates
-    /// </summary>
-    public Rect Clip { get; private set; }
-
 
     public bool IsMeasureInvalid { get; private set; }
     public bool IsVisualInvalid { get; private set; }
@@ -143,9 +149,20 @@ public class View
 
         IsMeasureInvalid = false;
 
+        // Include padding and border in the measurement
         var margin = Properties.Get(Zui.Margin);
-        var constrained = ApplyLayoutConstraints(this, available.Deflate(margin));
-        var measured = Control.MeasureView(constrained, measure);
+        var padding = Properties.Get(Zui.Padding) + new Thickness(Properties.Get(Zui.BorderWidth));
+        var constrained = ApplyLayoutConstraints(this, available.Deflate(margin + padding));
+
+        // Measure control content (default is a panel)
+        Size measured;
+        if (Layout is Layoutable layout)
+            measured = layout.MeasureView(Control.View, measure, constrained);
+        else
+            measured = LayoutManager.MeasurePanel(Control.View, measure, constrained);
+
+        // Desired view size includes padding and border
+        measured = measured.Inflate(padding);
 
         // Size override
         var sizeOverride = Properties.Get(Zui.Size, new(double.NaN, double.NaN));
@@ -160,7 +177,7 @@ public class View
         measured.Height = Math.Min(measured.Height, sizeMax.Height);
 
         // Min  size override
-        var sizeMin = Properties.Get(Zui.SizeMax);
+        var sizeMin = Properties.Get(Zui.SizeMin);
         measured.Width = Math.Max(measured.Width, sizeMin.Width);
         measured.Height = Math.Max(measured.Height, sizeMin.Height);
 
@@ -184,8 +201,11 @@ public class View
         if (!isVisible)
             return;
 
+
         var margin = Properties.Get(Zui.Margin);
+
         var availableSize = finalRect.Size.Deflate(margin);
+
         var x = finalRect.X + margin.Left;
         var y = finalRect.Y + margin.Top;
         var size = availableSize;
@@ -200,7 +220,16 @@ public class View
 
         size = ApplyLayoutConstraints(this, size);
 
-        size = Control.ArrangeViews(size, measure).Min(size);
+        var padding = Properties.Get(Zui.Padding) + new Thickness(Properties.Get(Zui.BorderWidth));
+
+        var contentRect = new Rect(new Point(0, 0), size).Deflate(padding);
+
+        // Arrange views
+        if (Layout is Layoutable layout)
+            size = layout.ArrangeViews(Control.View, measure, size, contentRect).Min(size);
+        else
+            size = LayoutManager.ArrangePanel(Control.View, measure, size, contentRect).Min(size);
+
 
         switch (horizontalAlignment)
         {
@@ -224,14 +253,14 @@ public class View
                 break;
         }
 
-        Position = new(x, y);
+        Position = new Point(x, y) + Properties.Get(Zui.Offset);
         Size = new(size.Width, size.Height);
     }
 
     /// <summary>
     /// Set view's origin and scale
     /// </summary>
-    internal void PostArrange(Point origin, double scale, Rect clip)
+    internal void PostArrange(Point origin, double scale)
     {
         var isVisible = Properties.Get(Zui.IsVisible, true);
         if (!isVisible)
@@ -240,10 +269,8 @@ public class View
         Scale = scale * Properties.Get(Zui.Magnification, 1);
         Origin = origin + scale * Position;
 
-        clip = clip.Intersect(new(Position, Size)).Move(-Position);
-        Clip = clip;
         foreach (var view in Views)
-            view.PostArrange(Origin, Scale, clip);
+            view.PostArrange(Origin, Scale);
     }
 
     public static Size ApplyLayoutConstraints(View v, Size constraints)
@@ -303,30 +330,6 @@ public class View
             view.FindAllByName(name, views);
     }
 
-    public static View? FindHitTarget(View view, Point target)
-    {
-        // Quick exit when not visible or not in clip region
-        var clip = view.toDevice(view.Clip);
-        if (!clip.Contains(target))
-            return null;
-        if (!view.Properties.Get(Zui.IsVisible, true))
-            return null;
-
-        // Check children first
-        var views = view.Views;
-        for (var i = views.Count - 1; i >= 0; i--)
-        {
-            var hit = FindHitTarget(views[i], target);
-            if (hit != null)
-                return hit;
-        }
-
-        if (!view.Properties.Get(Zui.DisableHitTest, false) && view.Control.IsHit(target))
-            return view;
-
-        return null;
-    }
-
     public void AddView(View view)
     {
         if (view.Parent != null)
@@ -344,6 +347,12 @@ public class View
     {
         var view = _views[index];
         _views.RemoveAt(index);
+        view.Parent = null;
+    }
+
+    public void RemoveView(View view)
+    {
+        _views.Remove(view);
         view.Parent = null;
     }
 

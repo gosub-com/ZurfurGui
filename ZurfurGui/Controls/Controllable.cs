@@ -1,0 +1,49 @@
+﻿using ZurfurGui.Layout;
+using ZurfurGui.Draw;
+
+namespace ZurfurGui.Controls;
+
+public interface Controllable
+{
+    /// <summary>
+    /// Unique component name of control
+    /// </summary>
+    string Component { get; }
+
+    /// <summary>
+    /// The main control view.  Each control must have a MainView, that is readonly (i.e. never changes)
+    /// </summary>
+    View View { get; }
+
+    /// <summary>
+    /// The component may supply a default layout, which can be overridden by setting the Layout 
+    /// property in the zui.json.  If no layout is specified (default to null), a Panel layout is used.  
+    /// </summary>
+    Layoutable? DefaultLayout { get { return null; } }
+
+
+    /// <summary>
+    /// The component may supply a default drawable.  
+    /// If no drawble is specified (default to null), only a panel is drawn (all components draw a panel).  
+    /// </summary>
+    Drawable? DefaultDraw { get { return null; } }
+
+    /// <summary>
+    /// Load content.  By default, it's a Panel and content gets loaded accordingly.
+    /// Windows, Tabs, and other complex controls may need to override this function.
+    /// The contents parameter contains the contents from the components parent.
+    /// The View.Properties[Zui.Content] still contains the original content properties
+    /// from this component's zui.json.
+    /// TBD: From a user perspective we should probably copy the parent content to this 
+    ///      component.  This components content is part of the visual tree, while the
+    ///      parent content is part of the logical tree.  We will get that sorted out later.
+    /// </summary>
+    void LoadContent(Properties[]? contents) 
+    { 
+        if (contents != null)
+            foreach (var property in contents)
+                View.AddView(Loader.CreateControl(property).View);
+    }
+
+}
+

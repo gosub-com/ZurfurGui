@@ -13,7 +13,7 @@ namespace ZurfurGui;
 public struct RoList<T> : IReadOnlyList<T>
 {
     List<T> _list;
-
+    public RoList() => _list = new List<T>();
     public RoList(List<T> list) => _list = list;
     public int Count => _list.Count;
     public T this[int index] => _list[index];

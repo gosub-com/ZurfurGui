@@ -1,6 +1,7 @@
+using System.Diagnostics;
 using System.Text.Json;
 using ZurfurGui.Controls;
-using ZurfurGui.Render;
+using ZurfurGui.Draw;
 using ZurfurGui.WinForms.Interop;
 
 namespace ZurfurGui.WinForms;
@@ -44,11 +45,20 @@ public partial class FormZurfurGui : Form
 
     private void pictureMain_Paint(object sender, PaintEventArgs e)
     {
-        _window.DevicePixelRatio = _mag[_magIndex];
+        try
+        {
+            _window.DevicePixelRatio = _mag[_magIndex];
 
-        // Hack the graphics into the context since Winforms requires us to use the supplied version
-        ((WinContext)_canvas.Context)._graphics = e.Graphics;
+            // Hack the graphics into the context since Winforms requires us to use the supplied version
+            ((WinContext)_canvas.Context)._graphics = e.Graphics;
 
-        _render.RenderFrame();
+            _render.RenderFrame();
+        }
+        catch (Exception ex)
+        {            
+            Console.WriteLine($"Error during rendering: {ex.Message}");
+            Debug.Assert(false);
+            throw;
+        }
     }
 }

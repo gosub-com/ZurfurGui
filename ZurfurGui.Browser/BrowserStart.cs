@@ -6,7 +6,7 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Runtime.Versioning;
 using ZurfurGui.Browser.Interop;
 using ZurfurGui.Controls;
-using ZurfurGui.Render;
+using ZurfurGui.Draw;
 
 namespace ZurfurGui.Browser;
 

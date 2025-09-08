@@ -11,11 +11,10 @@ public class ZurfurMain
 {
     public static void MainApp(AppWindow app)
     {
-        ControlRegistry.Add(() => new FormSearch());
-        ControlRegistry.Add(() => new FormSmallWinTest());
-        ControlRegistry.Add(() => new FormQbfWinTest());
-
-
+        ControlManager.Add(() => new FormSearch());
+        ControlManager.Add(() => new FormSmallWinTest());
+        ControlManager.Add(() => new FormQbfWinTest());
+        ControlManager.Add(() => new FormMultiForm());
 
         app.SetMainappWindow(new FormQbfWinTest());
 
@@ -87,65 +86,40 @@ public class ZurfurMain
         app.ShowWindow((Window)win4);
         ((Window)win4).IsWindowWrappingVisible = false;
 
-        var win5Unused = Loader.LoadJson("""
-        {
-          "Controller": "Window",
-          "AlignHorizontal": "Right",
-          "AlignVertical": "Top",
-          "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
-          "Background": "Red",
-          "BorderColor": "Yellow",
-          "BorderWidth": 2.0,
-          "Padding": { "Left": 50, "Top": 50, "Right": 50, "Bottom": 50 },
-          "BorderRadius": 10.0,
-          "Content": [
-            {
-              "Controller": "TestApp.FormSearch"
-            }
-          ]
-        }
-        """);
+
         var win5 = Loader.LoadJson("""
         {
           "Controller": "Window",
           "AlignHorizontal": "Right",
           "AlignVertical": "Top",
           "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
-          "Background": "Red",
-          "BorderColor": "Yellow",
-          "BorderWidth": 2.0,
-          "Padding": { "Left": 50, "Top": 50, "Right": 50, "Bottom": 50 },
-          "BorderRadius": 10.0,
+          "Background": "Green",
           "Content": [
             {
-              "Controller": "Column",
-              "Content": [
-                {
-                  "Controller": "Border",
-                  "Background": "Blue",
-                  "Content": [
-                    {
-                      "Controller": "TestApp.FormSmallWinTest"
-                    }
-                  ]
-                },
-                {
-                  "Controller": "Border",
-                  "Background": "Purple",
-                  "Content": [
-                    {
-                      "Controller": "TestApp.FormSearch"
-                    }
-                  ]
-                }
-              ]
+              "Controller": "TestApp.FormMultiForm"
             }
           ]
         }
         """);
         app.ShowWindow((Window)win5);
-        ((Window)win5).IsWindowWrappingVisible = false;
 
+
+        // Create FormMultiForm window in code
+        var fmf = new FormMultiForm();
+        var fmfWin = new Window();
+        fmfWin.SetContent(fmf.View);
+        fmfWin.View.Properties.Set(Zui.AlignHorizontal, AlignHorizontal.Right);
+        fmfWin.View.Properties.Set(Zui.Margin, new(10));
+        fmfWin.View.Properties.Set(Zui.Background, Colors.Red);
+        app.ShowWindow(fmfWin);
+
+        // Create FormSmallWinTest window in code
+        var fswt = new FormSmallWinTest();
+        var fswtWin = new Window();
+        fswtWin.SetContent(fswt.View);
+        fswtWin.View.Properties.Set(Zui.AlignHorizontal, AlignHorizontal.Right);
+        fswtWin.View.Properties.Set(Zui.AlignVertical, AlignVertical.Bottom);
+        app.ShowWindow(fswtWin);
     }
 
 }

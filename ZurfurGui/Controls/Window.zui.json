@@ -1,13 +1,26 @@
 {
     "Component": "Window",
-    "Controller": "DockPanel",
+    "AlignHorizontal": "Left",
+    "AlignVertical": "Top",
+    "Layout": "DockPanel",
+    "Background": "LightSkyBlue",
+    "BorderRadius": 10.0,
+    "BorderWidth": 2,
+    "BorderColor": "AliceBlue",
+    "Padding": {
+        "Left": 0,
+        "Top": 0,
+        "Right": 0,
+        "Bottom": 0
+    },
     "Content": [
         {
-            "Controller": "Border",
+            "Controller": "Panel",
             "Name": "_windowTitle",
             "Dock": "Top",
             "AlignVertical": "Top",
             "Background": "DarkSlateBlue",
+            "BorderRadius": 10.0,
             "Padding": {
                 "Left": 10,
                 "Top": 4,
@@ -15,12 +28,11 @@
                 "Bottom": 0
             },
             "Margin": {
-                "Left": 2,
-                "Top": 2,
-                "Right": 2,
-                "Bottom": 2
+                "Left": 0,
+                "Top": 0,
+                "Right": 0,
+                "Bottom": 0
             },
-            "BorderRadius": 10.0,
             "Content": [
                 {
                     "Controller": "Label",
@@ -30,6 +42,7 @@
                 },
                 {
                     "Controller": "Label",
+                    "Name": "_closeButton",
                     "AlignHorizontal": "Right",
                     "Text": "X",
                     "FontSize": 24.0
@@ -44,8 +57,8 @@
             ]
         },
         {
-            "Controller": "Panel",
             "Name": "_windowContent",
+            "Clip": true,
             "Margin": {
                 "Left": 10,
                 "Top": 10,

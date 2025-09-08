@@ -5,15 +5,14 @@ console.log("Running startup...");
 
 globalThis.ZurfurGui = {};
 
-
 globalThis.ZurfurGui.getBrowserWindow = function () { return globalThis.window; }
 
 globalThis.ZurfurGui.getBoundingClientRect = function (canvas) { return canvas.getBoundingClientRect(); }
+
 globalThis.ZurfurGui.getContext = function (canvas, contextId) {
-    var c = canvas.getContext(contextId);
-    c.save();
-    return c;
+    return canvas.getContext(contextId);
 }
+
 globalThis.ZurfurGui.canvasHasFocus = function (canvas) {
     return globalThis.document.hasFocus() && globalThis.document.activeElement == canvas;
 }
@@ -80,13 +79,15 @@ globalThis.ZurfurGui.strokeRect = function (context, x, y, width, height, radius
 globalThis.ZurfurGui.measureText = function (context, text) { return context.measureText(text); }
 
 globalThis.ZurfurGui.clipRect = function (context, x, y, width, height) {
-    context.restore();
     context.save();
     context.beginPath();
     context.rect(x, y, width, height);
     context.clip();
 }
 
+globalThis.ZurfurGui.unClip = function (context) {
+    context.restore();
+}
 
 
 

@@ -1,9 +1,9 @@
 {
     "Component": "TestApp.FormSearch",
-    "Controller": "Column",
+    "Layout": "Column",
     "Content": [
         {
-            "Controller": "DockPanel",
+            "Layout":  "DockPanel",
             "Content": [
                 {
                     "Controller": "Button",
@@ -29,7 +29,7 @@
             ]
         },
         {
-            "Controller": "DockPanel",
+            "Layout": "DockPanel",
             "Content": [
                 {
                     "Controller": "Button",
@@ -54,7 +54,7 @@
             ]
         },
         {
-            "Controller": "DockPanel",
+            "Layout": "DockPanel",
             "Content": [
                 {
                     "Controller": "Label",
@@ -72,7 +72,7 @@
             ]
         },
         {
-            "Controller": "DockPanel",
+            "Layout": "DockPanel",
             "Content": [
                 {
                     "Controller": "Button",
@@ -96,7 +96,7 @@
             ]
         },
         {
-            "Controller": "DockPanel",
+            "Layout": "DockPanel",
             "Content": [
                 {
                     "Controller": "Button",

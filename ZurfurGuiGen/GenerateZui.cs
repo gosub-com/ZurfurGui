@@ -41,18 +41,17 @@ public class GenerateZui : IIncrementalGenerator
             var csTree = syntaxTreesArray.FirstOrDefault(tree =>
             {
                 var csFileName = Path.GetFileNameWithoutExtension(tree.FilePath);
-                return string.Equals(csFileName, className, StringComparison.OrdinalIgnoreCase);
+                return string.Equals(csFileName, fileName, StringComparison.OrdinalIgnoreCase);
             });
 
             // Location of error when the line number isn't known 
-
             if (csTree == null)
             {
                 // Report a diagnostic error if no corresponding .cs file
                 var descriptor = new DiagnosticDescriptor(
                     id: "ZUI001",
                     title: "Missing corresponding .cs file",
-                    messageFormat: $"No corresponding .cs file found for '{Path.GetFileName(zuiPath)}'. Expected a file named '{className}.cs' in the project.",
+                    messageFormat: $"No corresponding .cs file found for '{Path.GetFileName(zuiPath)}'. Expected a file named '{fileName}.cs' in the project.",
                     category: "ZurfurGuiGen",
                     DiagnosticSeverity.Error,
                     isEnabledByDefault: true
@@ -174,7 +173,7 @@ public class GenerateZui : IIncrementalGenerator
             // This file is generated from '{Path.GetFileName(zuiPath)}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}
             namespace {nameSpace};
 
-            public partial class {className}
+            public sealed partial class {className}
             {{
                 void InitializeComponent() 
                 {{

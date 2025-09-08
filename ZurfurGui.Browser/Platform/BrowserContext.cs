@@ -23,8 +23,12 @@ internal partial class BrowserContext : OsContext
 
     [JSImport("globalThis.ZurfurGui.measureText")]
     private static partial JSObject MeasureText(JSObject context, string text);
+
     [JSImport("globalThis.ZurfurGui.clipRect")]
-    private static partial void ClipRect(JSObject context, double x, double y, double width, double height);
+    private static partial void Clip(JSObject context, double x, double y, double width, double height);
+
+    [JSImport("globalThis.ZurfurGui.unClip")]
+    private static partial void UnClip(JSObject context);
 
     JSObject _context;
 
@@ -172,14 +176,19 @@ internal partial class BrowserContext : OsContext
         return MeasureText(_context, text).GetPropertyAsDouble("width");
     }
 
-    public void ClipRect(double x, double y, double width, double height)
+    public void Clip(double x, double y, double width, double height)
     {
-        ClipRect(_context, x, y, width, height);
+        Clip(_context, x, y, width, height);
+    }
 
+    public void UnClip()
+    {
+        UnClip(_context);
         _fontString = null;
         _fillStyleString = null;
         _strokeStyleString = null;
         _lineWidthInvalid = true;
+
     }
 
 }

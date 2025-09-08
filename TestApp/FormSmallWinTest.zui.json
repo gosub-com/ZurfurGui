@@ -1,6 +1,5 @@
 {
     "Component": "TestApp.FormSmallWinTest",
-    "Controller": "Panel",
     "Content": [
         {
             "Controller": "Button",

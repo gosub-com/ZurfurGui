@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
-namespace ZurfurGui;
+namespace ZurfurGui.Controls;
 
-public static class ControlRegistry
+public static class ControlManager
 {
     static object s_lock = new();
     static Dictionary<string, Func<Controllable>> s_controls = new();

@@ -5,9 +5,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ZurfurGui.Render;
+using ZurfurGui.Controls;
 
-namespace ZurfurGui.Controls;
+namespace ZurfurGui.Layout;
 
 public enum Dock
 {
@@ -17,40 +17,33 @@ public enum Dock
     Top
 }
 
-public partial class DockPanel : Controllable
+public class LayoutDockPanel : Layoutable
 {
     int _lastVisibleIndex;
 
-    public DockPanel()
-    {
-        InitializeComponent();
-    }
+    public string LayoutType => "DockPanel";
 
-    public void LoadContent()
-    {
-        Loader.BuildViews(View, View.Properties.Get(Zui.Content));
-    }
 
-    public Size MeasureView(Size available, MeasureContext measure)
+    public Size MeasureView(View view, MeasureContext measure, Size available)
     {
         available = available.Min(new(1000000, 1000000));  // Rule out infinities
 
         var constraint = available;
         _lastVisibleIndex = -1;
         var minSize = new Size();
-        var views = View.Views;
-        for (var i = 0;  i < views.Count;  i++)
+        var childViews = view.Views;
+        for (var i = 0;  i < childViews.Count;  i++)
         {
             // Ignore invisible views
-            var view = views[i];
-            var viewIsVisible = view.Properties.Get(Zui.IsVisible, true);
+            var childView = childViews[i];
+            var viewIsVisible = childView.Properties.Get(Zui.IsVisible, true);
             if (!viewIsVisible)
                 continue;
 
             _lastVisibleIndex = i;
-            view.Measure(constraint, measure);
-            var childSize = view.DesiredSize;
-            var dock = view.Properties.Get(Zui.Dock);
+            childView.Measure(constraint, measure);
+            var childSize = childView.DesiredSize;
+            var dock = childView.Properties.Get(Zui.Dock);
             switch (dock)
             {
                 case Dock.Left:
@@ -69,18 +62,18 @@ public partial class DockPanel : Controllable
         return (available - constraint).Max(minSize).Min(available);
     }
 
-    public Size ArrangeViews(Size final, MeasureContext measure)
+    public Size ArrangeViews(View view, MeasureContext measure, Size final, Rect contentRect)
     {
-        var left = 0.0;
-        var right = final.Width;
-        var top = 0.0;
-        var bottom = final.Height;
-        var views = View.Views;
-        for (var i = 0;  i < views.Count;  i++)
+        var left = contentRect.X;
+        var right = contentRect.Right;
+        var top = contentRect.Y;
+        var bottom = contentRect.Bottom;
+        var childViews = view.Views;
+        for (var i = 0;  i < childViews.Count;  i++)
         {
             // Ignore invisible views
-            var view = views[i];
-            var viewIsVisible = view.Properties.Get(Zui.IsVisible, true);
+            var childView = childViews[i];
+            var viewIsVisible = childView.Properties.Get(Zui.IsVisible, true);
             if (!viewIsVisible)
                 continue;
             
@@ -88,8 +81,8 @@ public partial class DockPanel : Controllable
             var childLocation = new Rect(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top));
 
             // Update based on dock (last visible index always takes remaining space)
-            var childSize = view.DesiredSize;
-            var dock = view.Properties.Get(Zui.Dock);
+            var childSize = childView.DesiredSize;
+            var dock = childView.Properties.Get(Zui.Dock);
             if (i < _lastVisibleIndex)
             {
                 switch (dock)
@@ -117,7 +110,7 @@ public partial class DockPanel : Controllable
                         break;
                 }
             }
-            view.Arrange(childLocation, measure);
+            childView.Arrange(childLocation, measure);
         }
 
         return final;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 
-namespace ZurfurGui.Render;
+namespace ZurfurGui.Layout;
 
 public class MeasureContext
 {

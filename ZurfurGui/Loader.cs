@@ -6,91 +6,114 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ZurfurGui.Controls;
+using ZurfurGui.Layout;
 
 namespace ZurfurGui;
 
 /// <summary>
 /// Load and build controls and components from JSON
-/// 
-/// TBD: Split out the layout from the controller
 /// </summary>
 public static class Loader
 {
     /// <summary>
-    /// Load a JSON file into the target object, adding the views and returning the properties.
+    /// Load a JSON file into the target object.  This is the function that gets
+    /// called from the InitializeComponent function in the generated code.
     /// </summary>
     public static void Load(Controllable target, string json)
     {
+        var properties = LoadJsonProperties(json);
         if (target.View.Views.Count != 0)
             throw new ArgumentException("The target control already has views");
         if (target.View.Properties.Count != 0)
             throw new ArgumentException("The target control already has properties");
-
-        var properties = LoadJsonProperties(json);
         if ((properties.Get(Zui.Name) ?? "") != "")
             throw new ArgumentException("Top level component properties may not be named");
+        var component = properties.Get(Zui.Component) ?? "";
+        if (component != target.Component)
+            throw new ArgumentException($"Top level component property '{component}' must match target '{target.Component}");
+        var controller = properties.Get(Zui.Controller) ?? "";
+        if (controller != "")
+            throw new ArgumentException($"Top level controller property '{controller}' must be empty or 'Empty'");
 
         target.View.Properties.SetUnion(properties);
-        if ((properties.Get(Zui.Controller) ?? "") != "Empty")
-            target.View.AddView(BuildView(properties));
+        SetLayout(properties, target.View);
+        SetDraw(properties, target.View);
+        foreach (var child in properties.Get(Zui.Content) ?? Array.Empty<Properties>())
+        {
+            target.View.AddView(CreateControl(child).View);
+        }
     }
-
-
-    /// <summary>
-    /// Create a view from property
-    /// </summary>
-    public static View BuildView(Properties properties)
-    {
-        var controlName = properties.Get(Zui.Controller) ?? "";
-        if (controlName == "")
-            throw new ArgumentException($"The control's controller property is not specified.");
-
-        var control = ControlRegistry.Create(controlName);
-        if (control == null)
-            throw new ArgumentException($"'{controlName}' is not a registered control");
-
-        // TBD: don't allow changing component or controller names here.
-        //      Need to split out the layout from the Controller
-
-        //var oldComponentName = control.View.Properties.Get(Zui.Component) ?? "";
-        //var oldControllerName = control.View.Properties.Get(Zui.Controller) ?? "";
-
-        control.View.Properties.SetUnion(properties);
-        
-        //var newComponentName = control.View.Properties.Get(Zui.Component) ?? "";
-        //var newControllerName = control.View.Properties.Get(Zui.Controller) ?? "";
-        //if (oldComponentName != newComponentName)
-        //    throw new ArgumentException($"Component name changed from '{oldComponentName}' to '{newComponentName}'");
-        //if (oldControllerName != newControllerName)
-        //    throw new ArgumentException($"Component name changed from '{oldControllerName}' to '{newControllerName}'");
-
-        control.LoadContent();
-
-        return control.View;
-    }
-
 
     public static Controllable LoadJson(string json)
     {
-        var properties = LoadJsonProperties(json);
-        return BuildView(properties).Control;
+        return CreateControl(LoadJsonProperties(json));
     }
 
-    /// <summary>
-    /// Build views from properties and add them to the view.Views collection
-    /// </summary>
-    public static void BuildViews(View view, Properties[]? controllerProperties)
+    public static Controllable CreateControl(Properties properties)
     {
-        if (controllerProperties == null)
-            return;
+        // Create the control
+        var controller = properties.Get(Zui.Controller) ?? "";
+        Controllable control;
+        if (controller == "")
+            control = new Panel();
+        else
+            control = ControlManager.Create(controller)
+                ?? throw new ArgumentException($"'{controller}' is not a registered control");
 
-        foreach (var property in controllerProperties)
-            view.AddView(BuildView(property));
+        // The properties become overrides, but the content becomes a parameter to LoadContent
+        var contents = properties.Get(Zui.Content);
+        properties.Remove(Zui.Content);
+        control.View.Properties.SetUnion(properties);
+        SetLayout(properties, control.View);
+        SetDraw(properties, control.View);
+        control.LoadContent(contents);
+
+        return control;
+
     }
 
 
+    private static void SetLayout(Properties properties, View view)
+    {
+        var layout = properties.Get(Zui.Layout) ?? "";
+        if (layout != "")
+        {
+            switch (layout)
+            {
+                case "Panel": view.Layout = null; break;
+                case "DockPanel": view.Layout = new LayoutDockPanel(); break;
+                case "Row": view.Layout = new LayoutRow(); break;
+                case "Column": view.Layout = new LayoutColumn(); break;
+                default:
+                    throw new ArgumentException($"The layout '{layout}' is not supported");
+            }
+        }
+        else
+        {
+            if (view.Layout == null)
+                view.Layout = view.Control.DefaultLayout;
+        }
+    }
 
-    public static Properties LoadJsonProperties(string json)
+    private static void SetDraw(Properties properties, View view)
+    {
+        var draw = properties.Get(Zui.Draw) ?? "";
+        if (draw != "")
+        {
+            switch (draw)
+            {
+                default:
+                    throw new ArgumentException($"The draw '{draw}' is not supported");
+            }
+        }
+        else
+        {
+            if (view.Draw == null)
+                view.Draw = view.Control.DefaultDraw;
+        }
+    }
+
+    static Properties LoadJsonProperties(string json)
     {
         return LoadJsonProperties(JsonDocument.Parse(json).RootElement);
     }
@@ -106,6 +129,11 @@ public static class Loader
             if (name == "Type")
             {
                 properties.Set(Zui.Component, e.Value.GetString() ?? "");
+                continue;
+            }
+            if (name == "//")
+            {
+                // Ignore comments
                 continue;
             }
 
