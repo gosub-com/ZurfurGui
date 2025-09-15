@@ -1,14 +1,15 @@
 ﻿using ZurfurGui.Layout;
 using ZurfurGui.Draw;
+using ZurfurGui.Base;
 
 namespace ZurfurGui.Controls;
 
 public interface Controllable
 {
     /// <summary>
-    /// Unique component name of control
+    /// Unique type name of control, which should be set by generated code
     /// </summary>
-    string Component { get; }
+    string TypeName { get; }
 
     /// <summary>
     /// The main control view.  Each control must have a MainView, that is readonly (i.e. never changes)
@@ -42,7 +43,7 @@ public interface Controllable
     { 
         if (contents != null)
             foreach (var property in contents)
-                View.AddView(Loader.CreateControl(property).View);
+                View.AddChild(Loader.CreateControl(property).View);
     }
 
 }

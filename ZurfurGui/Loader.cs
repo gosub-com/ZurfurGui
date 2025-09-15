@@ -5,16 +5,36 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using ZurfurGui.Base;
+using ZurfurGui.Base.Serializers;
 using ZurfurGui.Controls;
 using ZurfurGui.Layout;
+using ZurfurGui.Styles.Serializers;
 
 namespace ZurfurGui;
 
 /// <summary>
-/// Load and build controls and components from JSON
+/// Load and build controls from JSON
 /// </summary>
 public static class Loader
 {
+    public static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
+    {
+        Converters = {
+                new DoublePropJsonConverter(),
+                new PointPropJsonConverter(),
+                new SizePropJsonConverter(),
+                new ThicknessPropJsonConverter(),
+                new PropertiesJsonConverter(),
+                new TextLinesJsonConverter(),
+                new ColorPropJsonConverter(),
+                new StyleSheetJsonConverter(),
+                new StylePropertyJsonConverter(),
+            },
+        NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
+    };
+
+
     /// <summary>
     /// Load a JSON file into the target object.  This is the function that gets
     /// called from the InitializeComponent function in the generated code.
@@ -22,25 +42,22 @@ public static class Loader
     public static void Load(Controllable target, string json)
     {
         var properties = LoadJsonProperties(json);
-        if (target.View.Views.Count != 0)
+        if (target.View.Children.Count != 0)
             throw new ArgumentException("The target control already has views");
-        if (target.View.Properties.Count != 0)
+        if (target.View.PropertiesCount != 0)
             throw new ArgumentException("The target control already has properties");
         if ((properties.Get(Zui.Name) ?? "") != "")
             throw new ArgumentException("Top level component properties may not be named");
-        var component = properties.Get(Zui.Component) ?? "";
-        if (component != target.Component)
-            throw new ArgumentException($"Top level component property '{component}' must match target '{target.Component}");
         var controller = properties.Get(Zui.Controller) ?? "";
-        if (controller != "")
-            throw new ArgumentException($"Top level controller property '{controller}' must be empty or 'Empty'");
+        if (controller != target.TypeName)
+            throw new ArgumentException($"Top level controller property '{controller}' must match target '{target.TypeName}");
 
-        target.View.Properties.SetUnion(properties);
+        target.View.PropertiesSetUnionInternal(properties);
         SetLayout(properties, target.View);
         SetDraw(properties, target.View);
         foreach (var child in properties.Get(Zui.Content) ?? Array.Empty<Properties>())
         {
-            target.View.AddView(CreateControl(child).View);
+            target.View.AddChild(CreateControl(child).View);
         }
     }
 
@@ -63,7 +80,7 @@ public static class Loader
         // The properties become overrides, but the content becomes a parameter to LoadContent
         var contents = properties.Get(Zui.Content);
         properties.Remove(Zui.Content);
-        control.View.Properties.SetUnion(properties);
+        control.View.PropertiesSetUnionInternal(properties);
         SetLayout(properties, control.View);
         SetDraw(properties, control.View);
         control.LoadContent(contents);
@@ -91,7 +108,7 @@ public static class Loader
         else
         {
             if (view.Layout == null)
-                view.Layout = view.Control.DefaultLayout;
+                view.Layout = view.Controller.DefaultLayout;
         }
     }
 
@@ -109,7 +126,7 @@ public static class Loader
         else
         {
             if (view.Draw == null)
-                view.Draw = view.Control.DefaultDraw;
+                view.Draw = view.Controller.DefaultDraw;
         }
     }
 
@@ -118,20 +135,22 @@ public static class Loader
         return LoadJsonProperties(JsonDocument.Parse(json).RootElement);
     }
 
+    class TextTest
+    {
+        public string Text { get; set; } = "";
+        public TextLines TestText { get; set; } = ["1", "2"];
+    }
+
     static Properties LoadJsonProperties(JsonElement element)
     {
         if (element.ValueKind != JsonValueKind.Object)
             throw new ArgumentException("Expected a JSON object", nameof(element));
         var properties = new Properties();
+
         foreach (var e in element.EnumerateObject())
         {
             var name = e.Name;
-            if (name == "Type")
-            {
-                properties.Set(Zui.Component, e.Value.GetString() ?? "");
-                continue;
-            }
-            if (name == "//")
+            if (name.StartsWith("#"))
             {
                 // Ignore comments
                 continue;
@@ -141,11 +160,7 @@ public static class Loader
             if (info == null)
                 throw new Exception($"Unknown property name: '{name}'");
 
-            if (info.Type == typeof(string))
-            {
-                properties.SetById(info.Id, e.Value.GetString() ?? "");
-            }
-            else if (info.Type == typeof(Properties[]))
+            if (info.Type == typeof(Properties[]))
             {
                 properties.SetById(info.Id, GetPropertiesArray(e.Value));
             }
@@ -156,37 +171,20 @@ public static class Loader
                 if (!Enum.TryParse(enumType, enumName, true, out var enumValue))
                     throw new Exception($"The property '{info.Name}' with type '{enumType}' has an unknown enum value '{enumName}'");
                 properties.SetById(info.Id, enumValue);
-
             }
-            else if (info.Type == typeof(Color))
+            else
             {
-                // Parse a css color string
-                if (e.Value.ValueKind != JsonValueKind.String)
-                    throw new Exception($"The property '{info.Name}' must be a string containing a CSS color");
-                var colorString = e.Value.ToString();
-                if (Color.ParseCss(colorString) is not Color color)
-                    throw new Exception($"The property '{info.Name}' with value '{colorString}' is not a valid CSS color");
-                properties.SetById(info.Id, color);
-            }
-            else if (info.Type.IsValueType)
-            {
+                // Deserialize the property value
                 try
                 {
-                    var options = new JsonSerializerOptions
-                    {
-                        NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
-                    };
-                    var infoObject = e.Value.Deserialize(info.Type, options) ?? throw new Exception("Null not allowed");
+                    var infoObject = e.Value.Deserialize(info.Type, JsonSerializerOptions)
+                        ?? throw new Exception("Null not allowed");
                     properties.SetById(info.Id, infoObject);
                 }
                 catch (Exception ex)
                 {
                     throw new Exception($"The property '{info.Name}' with type '{info.Type}' is not a valid JSON object: {ex.Message}");
                 }
-            }
-            else
-            {
-                throw new Exception($"The property '{info.Name}' has an unsupported type '{info.Type}'");
             }
         }
 

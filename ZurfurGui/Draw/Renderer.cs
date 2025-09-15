@@ -1,6 +1,7 @@
 ﻿
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 
@@ -91,11 +92,11 @@ public class Renderer
         if (!clip.Contains(target))
             return null;
 
-        if (!view.Properties.Get(Zui.IsVisible, true))
+        if (!view.GetStyle(Zui.IsVisible, true))
             return null;
 
         // Check children first
-        var views = view.Views;
+        var views = view.Children;
         for (var i = views.Count - 1; i >= 0; i--)
         {
             var hit = FindHitTarget(views[i], target);
@@ -103,7 +104,7 @@ public class Renderer
                 return hit;
         }
 
-        if (!view.Properties.Get(Zui.DisableHitTest, false))
+        if (!view.GetProperty(Zui.DisableHitTest, false))
         {
             // User content hit test
             if (view.Draw is Drawable renderable)
@@ -135,7 +136,7 @@ public class Renderer
         for (int i = views.Count - 1; i >= 0; i--)
         {
             var view = views[i];
-            var e = view.Properties.Get(property);
+            var e = view.GetProperty(property);
             if (e != null)
                 e(null, ev);
         }
@@ -151,7 +152,7 @@ public class Renderer
         // Bubble
         foreach (var view in views)
         {
-            var e = view.Properties.Get(property);
+            var e = view.GetProperty(property);
             if (e != null)
                 e(null, ev);
         }
@@ -178,7 +179,7 @@ public class Renderer
         if (_mainWindowSize != _canvas.DeviceSize || _devicePixelRatio != _window.DevicePixelRatio
             || _appWindow.View.IsMeasureInvalid)
         {
-            view.Properties.Set(Zui.Magnification, _window.DevicePixelRatio);
+            view.SetProperty(Zui.Magnification, _window.DevicePixelRatio);
             _mainWindowSize = _canvas.DeviceSize / _window.DevicePixelRatio;
             _devicePixelRatio = _window.DevicePixelRatio;
             var measureConext = new Layout.MeasureContext(_canvas.Context);
@@ -212,10 +213,10 @@ public class Renderer
     void RenderView(View view, Rect clip)
     {
         // Quick exit for invisible
-        if (!view.Properties.Get(Zui.IsVisible, true))
+        if (!view.GetStyle(Zui.IsVisible, true))
             return;
 
-        var doClip = view.Properties.Get(Zui.Clip, false);
+        var doClip = view.GetProperty(Zui.Clip, false);
         if (doClip)
         {
             // Skip drawing when fully clipped
@@ -233,14 +234,15 @@ public class Renderer
             // Render panel background & border
             DrawManager.Draw(view, _renderContext);
 
-            var padding = view.Properties.Get(Zui.Padding) + new Thickness(view.Properties.Get(Zui.BorderWidth));
+            var padding = view.GetStyle(Zui.Padding, null).Or(0) 
+                + new Thickness(view.GetStyle(Zui.BorderWidth, null).Or(0));
             var contentRect = new Rect(new(), view.Size).Deflate(padding);
 
             var draw = view.Draw;
             if (draw is not null)
                 draw.Draw(view, _renderContext, contentRect);
             
-            foreach (var child in view.Views)
+            foreach (var child in view.Children)
                 RenderView(child, clip);
 
             if (draw is not null)

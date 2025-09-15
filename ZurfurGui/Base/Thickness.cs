@@ -1,6 +1,6 @@
-﻿using static ZurfurGui.Helpers;
+﻿using static ZurfurGui.Base.Helpers;
 
-namespace ZurfurGui;
+namespace ZurfurGui.Base;
 
 public struct Thickness : IEquatable<Thickness>
 {

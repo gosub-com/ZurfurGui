@@ -12,7 +12,7 @@ public partial class Panel : Controllable
 {
     public Panel()
     {
-        InitializeComponent();
+        InitializeControl();
     }
 
 }

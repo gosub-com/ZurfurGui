@@ -1,5 +1,5 @@
 {
-    "Component": "TestApp.FormSmallWinTest",
+    "Controller": "TestApp.FormSmallWinTest",
     "Content": [
         {
             "Controller": "Button",
@@ -7,7 +7,7 @@
             "Text": "Big Button Test",
             "AlignVertical": "Top",
             "AlignHorizontal": "Left",
-            "Size": {
+            "SizeRequest": {
                 "Width": 100,
                 "Height": 100
             },
@@ -45,73 +45,73 @@
             }
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "TC",
             "AlignVertical": "Top",
             "AlignHorizontal": "Center"
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "TS",
             "AlignVertical": "Top",
             "AlignHorizontal": "Stretch"
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "TR",
             "AlignVertical": "Top",
             "AlignHorizontal": "Right"
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "TL",
             "AlignVertical": "Top",
             "AlignHorizontal": "Left"
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "Middle",
             "AlignVertical": "Center",
             "AlignHorizontal": "Center"
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "CS",
             "AlignVertical": "Center",
             "AlignHorizontal": "Stretch"
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "CR",
             "AlignVertical": "Center",
             "AlignHorizontal": "Right"
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "CL",
             "AlignVertical": "Center",
             "AlignHorizontal": "Left"
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "BC",
             "AlignVertical": "Bottom",
             "AlignHorizontal": "Center"
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "BS",
             "AlignVertical": "Bottom",
             "AlignHorizontal": "Stretch"
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "BR",
             "AlignVertical": "Bottom",
             "AlignHorizontal": "Right"
         },
         {
-            "Controller": "Label",
+            "Controller": "Text",
             "Text": "BL",
             "AlignVertical": "Bottom",
             "AlignHorizontal": "Left"

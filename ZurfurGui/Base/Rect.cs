@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
-using static ZurfurGui.Helpers;
+using static ZurfurGui.Base.Helpers;
 
-namespace ZurfurGui;
+namespace ZurfurGui.Base;
 
 public struct Rect : IEquatable<Rect>
 {
@@ -72,7 +72,7 @@ public struct Rect : IEquatable<Rect>
         return new Rect(new Point(X + thickness.Left, Y + thickness.Top), Size.Deflate(thickness));
     }
 
-    public Rect Move(Point offset)
+    public Rect Move(Vector offset)
     {
         return new Rect(Position + offset, Size);
     }

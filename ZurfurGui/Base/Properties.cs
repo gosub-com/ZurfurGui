@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -10,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
-namespace ZurfurGui;
+namespace ZurfurGui.Base;
 
 /// <summary>
 /// Property key info
@@ -165,6 +166,17 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
         return defaultProperty;
     }
 
+    public bool TryGet<T>(PropertyKey<T> property, [MaybeNullWhen(false)]  out T? value)
+    {
+        if (_properties.TryGetValue(property.Id, out var obj) && obj is T v)
+        {
+            value = v;
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
     /// <summary>
     /// Set a property.  Cannot be null, use Remove instead.  Cannot be an event, use AddEvent instead.
     /// </summary>
@@ -219,7 +231,7 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
     }
 
     /// <summary>
-    /// Add an event
+    /// Remove an event
     /// </summary>
     public void RemoveEvent<T>(PropertyKey<T> property, T ev) where T : Delegate
     {

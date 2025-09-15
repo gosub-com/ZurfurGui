@@ -1,4 +1,4 @@
-﻿namespace ZurfurGui;
+﻿namespace ZurfurGui.Base;
 
 public static class Helpers
 {
@@ -10,5 +10,5 @@ public static class Helpers
         => (int)((Rol((uint)i, 26) ^ i ^ Rol((uint)i, 9)) * 0x9E3779BB);
 
     static uint Rol(uint i, int shift)
-        => (i << shift) | (i >> (32 - shift));
+        => i << shift | i >> 32 - shift;
 }

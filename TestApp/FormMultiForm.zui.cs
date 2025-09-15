@@ -11,6 +11,6 @@ public partial class FormMultiForm : Controllable
 {
     public FormMultiForm()
     {
-        InitializeComponent();
+        InitializeControl();
     }
 }

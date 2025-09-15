@@ -14,16 +14,16 @@ public static class Json
 {
     /// <summary>
     /// Parse a JSON object from a string.  Objects are any of the following:
-    ///     Dictionary<string, object>
-    ///     List<object>
+    ///     Dictionary<string, object?>
+    ///     List<object?>
     ///     String
     ///     Double
     ///     Long
     ///     true
     ///     false
-    ///     NEVER NULL - Throws an exception if 'null' is encountered.
+    ///     null
     /// </summary>
-    public static Dictionary<string, object> ParseJson(string json)
+    public static Dictionary<string, object?> ParseJson(string json)
     {
         int index = 0;
         SkipWhitespace(json, ref index);
@@ -33,9 +33,9 @@ public static class Json
         return ParseObject(json, ref index);
     }
 
-    private static Dictionary<string, object> ParseObject(string json, ref int index)
+    private static Dictionary<string, object?> ParseObject(string json, ref int index)
     {
-        var dict = new Dictionary<string, object>();
+        var dict = new Dictionary<string, object?>();
         index++; // skip '{'
         SkipWhitespace(json, ref index);
 
@@ -70,9 +70,9 @@ public static class Json
         return dict;
     }
 
-    private static List<object> ParseArray(string json, ref int index)
+    private static List<object?> ParseArray(string json, ref int index)
     {
-        var list = new List<object>();
+        var list = new List<object?>();
         index++; // skip '['
         SkipWhitespace(json, ref index);
 
@@ -97,7 +97,7 @@ public static class Json
         return list;
     }
 
-    private static object ParseValue(string json, ref int index)
+    private static object? ParseValue(string json, ref int index)
     {
         SkipWhitespace(json, ref index);
         if (index >= json.Length)
@@ -125,7 +125,7 @@ public static class Json
         if (json.Substring(index).StartsWith("null"))
         {
             index += 4;
-            throw GetLocationException("Null is not valid in zui.json", json, index);
+            return null;
         }
         throw GetLocationException($"Unexpected character '{c}' at position {index}", json, index);
     }

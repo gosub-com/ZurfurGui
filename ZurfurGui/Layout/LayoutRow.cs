@@ -1,5 +1,6 @@
 ﻿
 using System.Diagnostics;
+using ZurfurGui.Base;
 using ZurfurGui.Controls;
 
 namespace ZurfurGui.Layout;
@@ -9,26 +10,25 @@ public class LayoutRow : Layoutable
     List<Rect> _measuredRects = new List<Rect>();
 
 
-    public string LayoutType => "Row";
+    public string TypeName => "Row";
 
 
     public Size MeasureView(View view, MeasureContext measure, Size available)
     {
         _measuredRects.Clear();
 
-        var wrap = view.Properties.Get(Zui.Wrap, false);
-        available.Width = wrap ? available.Width : double.PositiveInfinity;
+        var wrap = view.GetStyle(Zui.Wrap, true);
         var rowPosX = 0.0;
         var rowPosY = 0.0;
         var rowHeight = 0.0;
         var viewWidth = 0.0;
         var viewHeight = 0.0;
-        var spacing = view.Properties.Get(Zui.Spacing, new Size(5, 5));
+        var spacing = view.GetStyle(Zui.Spacing, new Size(5, 5));
         int arrangeIndex = 0;
-        foreach (var childView in view.Views)
+        foreach (var childView in view.Children)
         {
             // Ignore invisible views
-            var viewIsVisible = childView.Properties.Get(Zui.IsVisible, true);
+            var viewIsVisible = childView.GetStyle(Zui.IsVisible, true);
             if (!viewIsVisible)
                 continue;
 
@@ -43,14 +43,14 @@ public class LayoutRow : Layoutable
                 arrangeIndex = _measuredRects.Count;
 
                 rowPosX = 0.0;
-                rowPosY += rowHeight + spacing.Height;
+                rowPosY += rowHeight + spacing.Height.Or(0);
                 rowHeight = 0.0;
             }
             _measuredRects.Add(new(rowPosX, rowPosY, childSize.Width, 0));
             viewWidth = Math.Max(viewWidth, rowPosX + childSize.Width);
             viewHeight = Math.Max(viewHeight, rowPosY + childSize.Height);
 
-            rowPosX += childSize.Width + spacing.Width;
+            rowPosX += childSize.Width + spacing.Width.Or(0);
             rowHeight = Math.Max(rowHeight, childSize.Height);
         }
         // Equalize the height of the final row (or everything if not wrapped)
@@ -63,13 +63,13 @@ public class LayoutRow : Layoutable
     public Size ArrangeViews(View view, MeasureContext measure, Size final, Rect contentRect)
     {
         var i = 0;
-        foreach (var childView in view.Views)
+        foreach (var childView in view.Children)
         {
-            if (childView.Properties.Get(Zui.IsVisible, true))
+            if (childView.GetStyle(Zui.IsVisible, true))
             {
                
                 var measuredRect = i < _measuredRects.Count ? _measuredRects[i] : new();
-                childView.Arrange(measuredRect.Move(contentRect.Position), measure);
+                childView.Arrange(measuredRect.Move(contentRect.Position.ToVector), measure);
                 i++;
             }
         }

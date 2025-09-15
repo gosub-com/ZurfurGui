@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Base;
 using ZurfurGui.Controls;
 
 namespace ZurfurGui.Layout;
@@ -21,29 +22,29 @@ public class LayoutDockPanel : Layoutable
 {
     int _lastVisibleIndex;
 
-    public string LayoutType => "DockPanel";
+    public string TypeName => "DockPanel";
 
 
     public Size MeasureView(View view, MeasureContext measure, Size available)
     {
-        available = available.Min(new(1000000, 1000000));  // Rule out infinities
+        if (available.Width >= double.MaxValue || available.Height >= double.MaxValue)
+            throw new InvalidOperationException("DockPanel requires finite available size");
 
         var constraint = available;
         _lastVisibleIndex = -1;
         var minSize = new Size();
-        var childViews = view.Views;
+        var childViews = view.Children;
         for (var i = 0;  i < childViews.Count;  i++)
         {
             // Ignore invisible views
             var childView = childViews[i];
-            var viewIsVisible = childView.Properties.Get(Zui.IsVisible, true);
-            if (!viewIsVisible)
+            if (!childView.GetStyle(Zui.IsVisible, true))
                 continue;
 
             _lastVisibleIndex = i;
             childView.Measure(constraint, measure);
             var childSize = childView.DesiredSize;
-            var dock = childView.Properties.Get(Zui.Dock);
+            var dock = childView.GetStyle(Zui.Dock, Dock.Left);
             switch (dock)
             {
                 case Dock.Left:
@@ -59,7 +60,7 @@ public class LayoutDockPanel : Layoutable
             }
         }
 
-        return (available - constraint).Max(minSize).Min(available);
+        return (available - constraint).ToSize.Max(minSize).Min(available);
     }
 
     public Size ArrangeViews(View view, MeasureContext measure, Size final, Rect contentRect)
@@ -68,12 +69,12 @@ public class LayoutDockPanel : Layoutable
         var right = contentRect.Right;
         var top = contentRect.Y;
         var bottom = contentRect.Bottom;
-        var childViews = view.Views;
+        var childViews = view.Children;
         for (var i = 0;  i < childViews.Count;  i++)
         {
             // Ignore invisible views
             var childView = childViews[i];
-            var viewIsVisible = childView.Properties.Get(Zui.IsVisible, true);
+            var viewIsVisible = childView.GetStyle(Zui.IsVisible, true);
             if (!viewIsVisible)
                 continue;
             
@@ -82,7 +83,7 @@ public class LayoutDockPanel : Layoutable
 
             // Update based on dock (last visible index always takes remaining space)
             var childSize = childView.DesiredSize;
-            var dock = childView.Properties.Get(Zui.Dock);
+            var dock = childView.GetStyle(Zui.Dock, Dock.Left);
             if (i < _lastVisibleIndex)
             {
                 switch (dock)

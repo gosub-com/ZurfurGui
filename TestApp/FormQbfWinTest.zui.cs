@@ -11,7 +11,7 @@ public partial class FormQbfWinTest : Controllable
 {
     public FormQbfWinTest()
     {
-        InitializeComponent();
+        InitializeControl();
     }
 
 }

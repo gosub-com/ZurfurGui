@@ -14,10 +14,10 @@ public partial class Button : Controllable
 
     public Button()
     {
-        InitializeComponent();
+        InitializeControl();
     }
 
-    public Layoutable DefaultLayout => LayoutLabel.Instance;
+    public Layoutable DefaultLayout => LayoutText.Instance;
     public Drawable? DefaultDraw => DrawButton.Instance;
 
 }

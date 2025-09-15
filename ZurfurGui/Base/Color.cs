@@ -1,6 +1,6 @@
-﻿using static ZurfurGui.Helpers;
+﻿using static ZurfurGui.Base.Helpers;
 
-namespace ZurfurGui;
+namespace ZurfurGui.Base;
 
 
 /// <summary>
@@ -14,7 +14,7 @@ public readonly struct Color : IEquatable<Color>
 
     public Color(int r, int g, int b, int a = 255) 
     {
-        _rgba = ((uint)r&255) | ((uint)(g&255) << 8) | ((uint)(b&255) << 16) | (uint)((a&255) << 24);
+        _rgba = (uint)r&255 | (uint)(g&255) << 8 | (uint)(b&255) << 16 | (uint)((a&255) << 24);
     }
 
     // Create color from hex ABGR, a=0xFF000000, b=0x00FF0000, g=0x0000FF00, r=0x000000FF
@@ -27,25 +27,25 @@ public readonly struct Color : IEquatable<Color>
     /// Create an opaque color from web hexadecimal value, eg. r=0xFF0000, g=0x00FF00, b=0x0000FF
     /// </summary>
     public static Color FromWebHexRgb(uint webHexColor)
-        => new Color((webHexColor >> 16) & 0xFF // Red
-            | (webHexColor & 0xFF00) // Green
-            | ((webHexColor & 0xFF) << 16) // Blue
+        => new Color(webHexColor >> 16 & 0xFF // Red
+            | webHexColor & 0xFF00 // Green
+            | (webHexColor & 0xFF) << 16 // Blue
             | 0xFF000000);
 
     /// <summary>
     /// Create an alpha color from web hexadecimal value, eg. r=0xFF000000, g=0x00FF0000, b=0x0000FF00, a=0x000000FF
     /// </summary>
     public static Color FromWebHexArgb(uint webHexColor)
-        => new Color((webHexColor >> 24) & 0xFF // Red
-            | ((webHexColor >> 8) & 0xFF00) // Green
-            | ((webHexColor & 0xFF00) << 8) // Blue
-            | (webHexColor << 24)); // Alpha
+        => new Color(webHexColor >> 24 & 0xFF // Red
+            | webHexColor >> 8 & 0xFF00 // Green
+            | (webHexColor & 0xFF00) << 8 // Blue
+            | webHexColor << 24); // Alpha
 
 
-    public int A => (int)((_rgba >> 24) & 0xff);
-    public int B => (int)((_rgba >> 16) & 0xff);
-    public int G => (int)((_rgba >> 8) & 0xff);
-    public int R => (int)((_rgba) & 0xff);
+    public int A => (int)(_rgba >> 24 & 0xff);
+    public int B => (int)(_rgba >> 16 & 0xff);
+    public int G => (int)(_rgba >> 8 & 0xff);
+    public int R => (int)(_rgba & 0xff);
 
     public bool Equals(Color v) => _rgba == v._rgba;
     public override bool Equals(object? obj) => obj is Color v && Equals(v);

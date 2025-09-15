@@ -19,7 +19,7 @@ public static class ControlManager
     {
         lock (s_lock)
         {
-            var typeName = createControl().Component;
+            var typeName = createControl().TypeName;
             if (s_controls.ContainsKey(typeName))
                 throw new ArgumentException($"Control registry already contains '{typeName}'");
             s_controls[typeName] = createControl;

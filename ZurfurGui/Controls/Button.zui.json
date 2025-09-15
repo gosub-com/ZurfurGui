@@ -1,5 +1,5 @@
 {
-    "Component": "Button",
+    "Controller": "Button",
     "Clip": true,
     "Padding": {
         "Left": 2,

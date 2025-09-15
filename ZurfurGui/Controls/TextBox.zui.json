@@ -1,8 +1,11 @@
 {
-    "Component": "TextBox",
+    "Controller": "TextBox",
     "Background": "LightBlue",
     "BorderWidth": 2,
     "BorderColor": "Navy",
+    "SizeMin": {
+        "Width": 100
+    },
     "Padding": {
         "Left": 2,
         "Top": 2,

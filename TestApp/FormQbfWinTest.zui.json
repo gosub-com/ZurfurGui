@@ -1,56 +1,76 @@
 {
-    "Component": "TestApp.FormQbfWinTest",
+    "Controller": "TestApp.FormQbfWinTest",
     "Layout": "Column",
     "Content": [
         {
             "Layout": "Row",
             "Content": [
                 {
-                    "Controller": "Label",
-                    "Text": "T"
+                    "Controller": "Text",
+                    "Text": "T",
+                    "BorderColor": "Green",
+                    "BorderWidth": 2,
+                    "AlignVertical": "Top"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "T B",
                     "BorderColor": "Green",
-                    "BorderWidth": 2
+                    "BorderWidth": 2,
+                    "AlignVertical": "Bottom"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "T P",
                     "Padding": {
                         "Left": 20,
                         "Top": 10,
                         "Right": 20,
                         "Bottom": 10
-                    }
+                    },
+                    "BorderColor": "Green",
+                    "BorderWidth": 2
                 },
                 {
-                    "Controller": "Label",
-                    "Text": "T M",
+                    "Controller": "Text",
+                    "Text": "T M1",
                     "Margin": {
-                        "Left": 20,
-                        "Top": 10,
-                        "Right": 20,
-                        "Bottom": 10
-                    }
-                },
-                {
-                    "Controller": "Label",
-                    "Text": "T PMB",
-                    "BorderColor": "Red",
-                    "BorderWidth": 2,
-                    "Padding": {
                         "Left": 20,
                         "Top": 10,
                         "Right": 20,
                         "Bottom": 10
                     },
+                    "BorderColor": "Green",
+                    "BorderWidth": 2
+                },
+                {
+                    "Controller": "Text",
+                    "Text": "T M2",
                     "Margin": {
                         "Left": 20,
-                        "Top": 10,
+                        "Top": 0,
                         "Right": 20,
-                        "Bottom": 10
+                        "Bottom": 0
+                    },
+                    "BorderColor": "Green",
+                    "BorderWidth": 2
+                },
+                {
+                    "Controller": "Text",
+                    "Text": "T PMB",
+                    "BorderColor": "Red",
+                    "BorderWidth": 2,
+                    "Padding": {
+                        "Left": 20,
+                        "Top": 50,
+                        "Right": 20,
+                        "Bottom": 50
+                    },
+                    "Margin": {
+                        "Left": 20,
+                        "Top": 0,
+                        "Right": 20,
+                        "Bottom": 0
                     }
                 }
             ]
@@ -123,7 +143,7 @@
                 },
                 {
                     "Controller": "TextBox",
-                    "Text": "TB M",
+                    "Text": "TB M - This is a longer text box",
                     "Margin": {
                         "Left": 20,
                         "Top": 10,
@@ -154,15 +174,15 @@
             "Layout": "Row",
             "Content": [
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "The"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Quick Brown Fox Jumps Over"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "The lazy dog"
                 }
             ]
@@ -171,17 +191,17 @@
             "Layout": "Row",
             "Content": [
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "The",
                     "FontSize": 16.0
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Quick",
                     "FontSize": 32.0
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Brown",
                     "FontSize": 26.0
                 }
@@ -191,7 +211,7 @@
             "Layout": "Row",
             "Content": [
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "The Quick Brown",
                     "FontSize": 26.0,
                     "Margin": {
@@ -202,12 +222,12 @@
                     }
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Fox &Jumps",
                     "FontSize": 26.0
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Over the lazy dog",
                     "FontSize": 26.0
                 }
@@ -217,25 +237,25 @@
             "Layout": "Row",
             "Content": [
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Sans j",
                     "FontSize": 26.0,
                     "FontName": "sans-serif"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Arial j",
                     "FontSize": 26.0,
                     "FontName": "Arial"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "﴿█j A﴿│|☰",
                     "FontSize": 26.0,
                     "FontName": "Arial"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Serif j",
                     "FontSize": 26.0,
                     "FontName": "Times New Roman"
@@ -246,17 +266,17 @@
             "Layout": "Row",
             "Content": [
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "TheQuickBrown",
                     "FontSize": 26.0
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": " ",
                     "FontSize": 26.0
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "   ",
                     "FontSize": 26.0
                 }
@@ -266,39 +286,39 @@
             "Layout": "Row",
             "Content": [
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "1 The Quick Brown",
                     "FontSize": 40.0,
                     "FontName": "Times New ROman"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "2 Fox Jumps Over",
                     "FontSize": 26.0
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "3 The Lazy Dog",
                     "FontSize": 26.0
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "4 And a Cow",
                     "FontSize": 26.0
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "5 And a Zebra",
                     "FontSize": 16.0,
                     "AlignVertical": "Center"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "",
                     "FontSize": 26.0
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "",
                     "FontSize": 26.0
                 }
@@ -309,47 +329,47 @@
             "Wrap": true,
             "Content": [
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "The Quick Brown",
                     "FontSize": 40.0,
                     "FontName": "Times New Roman"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Fox Jumps Over",
                     "FontSize": 26.0
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "The Lazy Dog",
                     "FontSize": 26.0
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "And a Cow",
                     "FontSize": 32.0,
                     "AlignVertical": "Center"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Center",
                     "FontSize": 16.0,
                     "AlignVertical": "Center"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Top",
                     "FontSize": 16.0,
                     "AlignVertical": "Top"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Bottom",
                     "FontSize": 16.0,
                     "AlignVertical": "Bottom"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Stretch",
                     "FontSize": 16.0,
                     "AlignVertical": "Stretch"
@@ -360,14 +380,14 @@
             "Layout": "Row",
             "Content": [
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Done - row"
                 }
             ]
         },
         {
-            "Controller": "Label",
-            "Text": "Done - Label"
+            "Controller": "Text",
+            "Text": "Done - Text"
         },
         {
             "Controller": "Button",

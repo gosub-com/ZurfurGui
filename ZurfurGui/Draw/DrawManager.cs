@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Base;
 using ZurfurGui.Controls;
 
 namespace ZurfurGui.Draw;
@@ -18,8 +19,8 @@ public static class DrawManager
         var backgroundRect = new Rect(new(), view.Size);
 
         // Draw background
-        var borderRadius = view.Properties.Get(Zui.BorderRadius);
-        var background = view.Properties.Get(Zui.Background);
+        var borderRadius = view.GetStyle(Zui.BorderRadius, null).Or(0);
+        var background = view.GetStyle(Zui.Background, null).Or(Colors.TransParent);
         if (background.A != 0)
         {
             context.FillColor = background;
@@ -27,8 +28,8 @@ public static class DrawManager
         }
 
         // Draw border
-        var borderColor = view.Properties.Get(Zui.BorderColor);
-        var borderWidth = view.Properties.Get(Zui.BorderWidth);
+        var borderColor = view.GetStyle(Zui.BorderColor, null).Or(Colors.TransParent);
+        var borderWidth = view.GetStyle(Zui.BorderWidth, null).Or(0);
         if (borderWidth > 0 && borderColor.A != 0)
         {
             context.LineWidth = borderWidth;
@@ -49,7 +50,7 @@ public static class DrawManager
             return false;
 
         // Check if the background is visible (TBD: on the border and border radius)
-        return view.Properties.Get(Zui.Background).A > ALPHA_HIT_THRESHOLD;
+        return view.GetProperty(Zui.Background, null).Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
     }
 
 }

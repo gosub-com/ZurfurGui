@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Base;
 using ZurfurGui.Platform;
 
 namespace ZurfurGui.Browser.Interop;
@@ -78,7 +78,7 @@ internal partial class BrowserCanvas : OsCanvas
                 var canvasRect = GetBoundingClientRect(_canvas);
                 var canvasPoint = new Point(canvasRect.GetPropertyAsDouble("x"), canvasRect.GetPropertyAsDouble("y"));
                 var position = new Point(e.GetPropertyAsDouble("clientX"), e.GetPropertyAsDouble("clientY")) - canvasPoint;
-                _pointerInput?.Invoke(new PointerEvent(etype, position * _window.DevicePixelRatio));
+                _pointerInput?.Invoke(new PointerEvent(etype, position.ToPoint * _window.DevicePixelRatio));
                 break;
             default: 
                 Console.WriteLine($"Un-processed event: {etype}");

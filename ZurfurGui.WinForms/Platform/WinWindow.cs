@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Base;
 using ZurfurGui.Platform;
+
+using Size = ZurfurGui.Base.Size;
 
 namespace ZurfurGui.WinForms.Interop;
 

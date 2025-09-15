@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Base;
 using ZurfurGui.Controls;
 
 namespace ZurfurGui.Draw;
@@ -22,7 +23,7 @@ public class DrawButton : Drawable
         // Draw background
         //context.FillColor = View.PointerHoverTarget ? Colors.Red : Colors.Gray;
         //context.FillRect(0, 0, View.Size.Width, View.Size.Height);
-        view.Properties.Set(Zui.Background, view.PointerHoverTarget ? Colors.Red : Colors.Gray);
+        view.SetProperty(Zui.Background, view.PointerHoverTarget ? Colors.Red : Colors.Gray);
         var color = Colors.White;
         DrawLabel.Draw(view, context, contentRect, color);
     }

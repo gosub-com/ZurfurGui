@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Platform;
 using ZurfurGui.Draw;
+using ZurfurGui.Base;
+using ZurfurGui.Layout;
 
 namespace ZurfurGui.Controls;
 
@@ -17,37 +19,43 @@ public partial class Window : Controllable
 
     View _contentView;
     View _titleView;
+    View _resizeHandle;
 
     bool _mouseDown;
     Point _mousePosition;
 
     public Window()
     {
-        InitializeComponent();
+        InitializeControl();
 
         _titleView = View.FindByName(WINDOW_TITLE_NAME);
         _contentView = View.FindByName(WINDOW_CONTENT_NAME);
+        _resizeHandle = View.FindByName("_resizeHandle");
 
         // Click on any control brings window to foreground
-        View.Properties.AddEvent(Zui.PreviewPointerDown, (s, e) =>
+        View.AddEvent(Zui.PreviewPointerDown, (s, e) =>
         {
             View.BringToFront();
         });
 
         // Title events
-        _titleView.Properties.AddEvent(Zui.PreviewPointerDown, _titleView_PreviewPointerDown);
-        _titleView.Properties.AddEvent(Zui.PreviewPointerMove, _titleView_PreviewPointerMove);
-        _titleView.Properties.AddEvent(Zui.PointerCaptureLost, (s, e) =>_mouseDown = false);
+        _titleView.AddEvent(Zui.PreviewPointerDown, _titleView_PreviewPointerDown);
+        _titleView.AddEvent(Zui.PreviewPointerMove, _titleView_PreviewPointerMove);
+        _titleView.AddEvent(Zui.PointerCaptureLost, (s, e) =>_mouseDown = false);
+
+        _resizeHandle.AddEvent(Zui.PreviewPointerDown, _resizeHandle_PreviewPointerDown);
+        _resizeHandle.AddEvent(Zui.PreviewPointerMove, _resizeHandle_PreviewPointerMove);
+        _resizeHandle.AddEvent(Zui.PointerCaptureLost, (s, e) => _mouseDown = false);
 
         var closeButton = _titleView.FindByName(WINDOW_CLOSE_BUTTON_NAME);
-        closeButton.Properties.AddEvent(Zui.PointerUp, (s, e) => View.Parent?.RemoveView(View));
+        closeButton.AddEvent(Zui.PointerUp, (s, e) => View.Parent?.RemoveChild(View));
     }
 
     public void LoadContent(Properties[]? contents)
     {
         if (contents != null)
             foreach (var property in contents)
-                _contentView.AddView(Loader.CreateControl(property).View);
+                _contentView.AddChild(Loader.CreateControl(property).View);
 
         if (Debugger.IsAttached)
             WalkView(View);
@@ -56,8 +64,8 @@ public partial class Window : Controllable
 
     void WalkView(View view, int level = 0)
     {
-        Debug.WriteLine($"{new string(' ', level)}{view.Control.GetType()}: {view.Control.Component}");
-        foreach (var child in view.Views)
+        Debug.WriteLine($"{new string(' ', level)}{view.Controller.GetType()}: {view.Controller.TypeName}");
+        foreach (var child in view.Children)
         {
             WalkView(child, level + 1);
         }
@@ -67,7 +75,6 @@ public partial class Window : Controllable
     void _titleView_PreviewPointerDown(object? s, PointerEvent e)
     {
         _mouseDown = true;
-        var margin = View.Properties.Get(Zui.Margin);
         _mousePosition = View.Parent?.toClient(e.Position) ?? new();
         _titleView.CapturePointer = true;
     }
@@ -82,19 +89,44 @@ public partial class Window : Controllable
         _mousePosition = position;
 
         // Update window offset
-        View.Properties.Set(Zui.Offset, View.Properties.Get(Zui.Offset) + diff);
-
-
+        View.SetProperty(Zui.Offset, View.GetStyle(Zui.Offset, null).Or(0) + diff);
         View.InvalidateMeasure(); // TBD: Should be automatic
     }
+
+    void _resizeHandle_PreviewPointerDown(object? s, PointerEvent e)
+    {
+        _mouseDown = true;
+        _mousePosition = View.Parent?.toClient(e.Position) ?? new();
+        _resizeHandle.CapturePointer = true;
+    }
+
+    void _resizeHandle_PreviewPointerMove(object? s, PointerEvent e)
+    {
+        if (!_mouseDown)
+            return;
+
+        var position = View.Parent?.toClient(e.Position) ?? new();
+        var diff = position - _mousePosition;
+        _mousePosition = position;
+
+        // Update window offset
+        var size = View.GetStyle(Zui.SizeRequest, null).Or(View.Size);
+        View.SetProperty(Zui.SizeRequest, LayoutManager.ClampViewSize(View, size + diff, true));
+        View.InvalidateMeasure(); // TBD: Should be automatic
+    }
+
 
     /// <summary>
     /// TBD: Needs to be an actual property
     /// </summary>
     public bool IsWindowWrappingVisible
     {
-        get => _titleView.Properties.Get(Zui.IsVisible, true);
-        set => _titleView.Properties.Set(Zui.IsVisible, value);
+        get => _titleView.GetProperty(Zui.IsVisible, true);
+        set
+        {
+            _titleView.SetProperty(Zui.IsVisible, value);
+            _resizeHandle.SetProperty(Zui.IsVisible, value);
+        }
     }
 
     /// <summary>
@@ -102,8 +134,8 @@ public partial class Window : Controllable
     /// </summary>
     public void SetContent(View content)
     {
-        _contentView.ClearViews();
-        _contentView.AddView(content);
+        _contentView.ClearChildren();
+        _contentView.AddChild(content);
     }
 
 

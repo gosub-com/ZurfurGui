@@ -7,6 +7,7 @@ using System.Drawing.Drawing2D;
 
 using ZurfurGui.Platform;
 
+using Color = ZurfurGui.Base.Color;
 
 namespace ZurfurGui.WinForms.Interop;
 

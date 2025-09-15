@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using ZurfurGui.Platform;
 using ZurfurGui.Draw;
+using ZurfurGui.Base;
 
 namespace ZurfurGui.Controls;
 
@@ -15,10 +16,9 @@ namespace ZurfurGui.Controls;
 /// or the computer desktop when running as a native applications.  It holds all the 
 /// other windows:
 ///     MainAppView: The background app contained in the browser, canvas, or desktop application.
-///     FloatingWindows: Modeless windows that can be moved around by the user.
-///     DialogWindows: Modal windows that can be shown over the main app view.
+///     FloatingWindows: Modal and modeless windows that can be moved around by the user.
 /// </summary>
-public class AppWindow : Controllable, Drawable
+public partial class AppWindow : Controllable, Drawable
 {
     readonly bool DRAW_NUMBERS = false;
 
@@ -29,13 +29,8 @@ public class AppWindow : Controllable, Drawable
     int _fps;
     long _avgMs;
 
-    public string Component => "Zui.AppWindow";
-    public override string ToString() => View.ToString();
-    public View View { get; private set; }
-
     readonly View _mainAppView;
     readonly View _floatingWindows;
-    readonly View _dialogWindows;
 
     internal List<View> _pointerCaptureList = new();
 
@@ -46,27 +41,19 @@ public class AppWindow : Controllable, Drawable
 
     public AppWindow()
     {
-        View = new(this);
+        InitializeControl();
 
-        // TBD: Use the loader to create the main app window, then we shouldn't need this:
-        View.Draw = this;
-
-        _mainAppView = new Panel().View;
-        _mainAppView.Properties.Set(Zui.Name, "_mainAppView");
-        _floatingWindows = new Panel().View;
-        _floatingWindows.Properties.Set(Zui.Name, "_floatingWindows");
-        _dialogWindows = new Panel().View;
-        _dialogWindows.Properties.Set(Zui.Name, "_dialogWindows");
-
-        View.AddViews([_mainAppView, _floatingWindows, _dialogWindows]);
+        // TBD: Should be code generated
+        _mainAppView = View.FindByName("_mainAppView") ?? throw new Exception("Missing _mainAppView");
+        _floatingWindows = View.FindByName("_floatingWindows") ?? throw new Exception("Missing _floatingWindows");
     }
 
 
     public void SetMainappWindow(Controllable control)
     {
         View.InvalidateMeasure(); // TBD: Move to AddView
-        _mainAppView.ClearViews();
-        _mainAppView.AddView(control.View);
+        _mainAppView.ClearChildren();
+        _mainAppView.AddChild(control.View);
     }
 
     /// <summary>
@@ -75,7 +62,7 @@ public class AppWindow : Controllable, Drawable
     public void ShowWindow(Window window)
     {
         View.InvalidateMeasure(); // TBD: Move to AddView
-        _floatingWindows.AddView(window.View);
+        _floatingWindows.AddChild(window.View);
     }
 
     /// <summary>
@@ -197,7 +184,7 @@ public class AppWindow : Controllable, Drawable
             if (i >= 0)
             {
                 _pointerCaptureList.RemoveAt(i);
-                view.Properties.Get(Zui.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
+                view.GetProperty(Zui.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
             }
         }
     }
@@ -208,7 +195,7 @@ public class AppWindow : Controllable, Drawable
         var c = _pointerCaptureList;
         _pointerCaptureList = new();
         foreach (var view in c)
-            view.Properties.Get(Zui.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
+            view.GetProperty(Zui.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
     }
 
 }

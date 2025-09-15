@@ -9,11 +9,6 @@
     <None Remove="BrowserStart.js" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="wwwroot\readme.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="BrowserStart.js" />
   </ItemGroup>
 

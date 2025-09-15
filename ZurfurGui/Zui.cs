@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Draw;
 using ZurfurGui.Layout;
 using ZurfurGui.Platform;
+using ZurfurGui.Styles;
 
 namespace ZurfurGui;
 
@@ -25,7 +27,7 @@ public static class Zui
 
         ControlManager.Add(() => new Panel());
         ControlManager.Add(() => new Button());
-        ControlManager.Add(() => new Label());
+        ControlManager.Add(() => new Text());
         ControlManager.Add(() => new TextBox());
         ControlManager.Add(() => new Window());
         ControlManager.Add(() => new AppWindow());
@@ -35,41 +37,43 @@ public static class Zui
         return appWindow;
     }
 
-
     // Basic View functionality
     public static readonly PropertyKey<string> Name = new("Name");
     public static readonly PropertyKey<string> Controller = new("Controller");
-    public static readonly PropertyKey<string> Component = new("Component");
     public static readonly PropertyKey<string> Layout = new("Layout");
     public static readonly PropertyKey<string> Draw = new("Draw");
-
     public static readonly PropertyKey<Properties[]> Content = new("Content");
+
+    // Basic View Style
     public static readonly PropertyKey<bool> IsVisible = new("IsVisible");
     public static readonly PropertyKey<AlignHorizontal> AlignHorizontal = new("AlignHorizontal");
     public static readonly PropertyKey<AlignVertical> AlignVertical = new("AlignVertical");
-    public static readonly PropertyKey<Thickness> Margin = new("Margin");
-    public static readonly PropertyKey<Size> Size = new("Size");
-    public static readonly PropertyKey<Size> SizeMax = new("SizeMax");
-    public static readonly PropertyKey<Size> SizeMin = new("SizeMin");
-    public static readonly PropertyKey<double> Magnification = new("Magnification");
+    public static readonly PropertyKey<ThicknessProp> Margin = new("Margin");
+    public static readonly PropertyKey<SizeProp> SizeRequest = new("SizeRequest");
+    public static readonly PropertyKey<SizeProp> SizeMax = new("SizeMax");
+    public static readonly PropertyKey<SizeProp> SizeMin = new("SizeMin");
+    public static readonly PropertyKey<DoubleProp> Magnification = new("Magnification");
     public static readonly PropertyKey<bool> Clip = new("Clip");
-    public static readonly PropertyKey<Point> Offset = new("Offset");
-    public static readonly PropertyKey<Thickness> Padding = new("Padding");
+    public static readonly PropertyKey<PointProp> Offset = new("Offset");
+    public static readonly PropertyKey<ThicknessProp> Padding = new("Padding");
+    public static readonly PropertyKey<ColorProp> Background = new("Background");
+    public static readonly PropertyKey<ColorProp> BorderColor = new("BorderColor");
+    public static readonly PropertyKey<DoubleProp> BorderWidth = new("BorderWidth");
+    public static readonly PropertyKey<DoubleProp> BorderRadius = new("BorderRadius");
+
+    // Style
+    public static readonly PropertyKey<TextLines> Classes = new("Classes");
+    public static readonly PropertyKey<StyleSheet> DefaultStyle = new("DefaultStyle");
+    public static readonly PropertyKey<TextLines> UseStyle = new("UseStyle");
 
     // Label, Window, Button, Checkbox, etc.
-    public static readonly PropertyKey<string> Text = new("Text");
+    public static readonly PropertyKey<TextLines> Text = new("Text");
     public static readonly PropertyKey<string> FontName = new("FontName");
-    public static readonly PropertyKey<double> FontSize = new("FontSize");
-
-    // Borders, text, misc
-    public static readonly PropertyKey<Color> Background = new("Background");
-    public static readonly PropertyKey<Color> BorderColor = new("BorderColor");
-    public static readonly PropertyKey<double> BorderWidth = new("BorderWidth");
-    public static readonly PropertyKey<double> BorderRadius = new("BorderRadius");
+    public static readonly PropertyKey<DoubleProp> FontSize = new("FontSize");
 
     // Row, Column, DockPanel, etc.
     public static readonly PropertyKey<bool> Wrap = new("Wrap");
-    public static readonly PropertyKey<Size> Spacing = new("Spacing");
+    public static readonly PropertyKey<SizeProp> Spacing = new("Spacing");
     public static readonly PropertyKey<Dock> Dock = new("Dock");
 
     // Common UI interaction

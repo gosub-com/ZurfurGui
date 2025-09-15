@@ -3,18 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Base;
 using ZurfurGui.Controls;
 
 namespace ZurfurGui.Layout;
 
-public class LayoutLabel : Layoutable
+public class LayoutText : Layoutable
 {
     /// <summary>
     /// Since there is no state, we can use a single instance for all text
     /// </summary>
-    public static readonly LayoutLabel Instance = new();
+    public static readonly LayoutText Instance = new();
 
-    public string LayoutType => "Text";
+    public string TypeName => "Text";
 
     public Size MeasureView(View view, MeasureContext measure, Size available)
     {
@@ -24,12 +25,11 @@ public class LayoutLabel : Layoutable
 
     static Size MeasureLabel(MeasureContext measure, View view)
     {
-        var fontName = view.Properties.Get(Zui.FontName) ?? "Arial";
-        var fontSize = view.Properties.Get(Zui.FontSize, 16.0);
-        var text = view.Properties.Get(Zui.Text) ?? "";
-        var lines = text.Split("\n");
-        var maxWidth = lines.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
-        return new Size(maxWidth, lines.Length * Label.LINE_SPACING * fontSize);
+        var fontName = view.GetStyle(Zui.FontName, "Arial");
+        var fontSize = view.GetStyle(Zui.FontSize, null).Or(16.0);
+        var text = view.GetStyle(Zui.Text, "�");
+        var maxWidth = text.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
+        return new Size(maxWidth, text.Count * Text.LINE_SPACING * fontSize);
     }
 
     public Size ArrangeViews(View view, MeasureContext measure, Size final, Rect contentRect)

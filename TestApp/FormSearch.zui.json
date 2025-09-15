@@ -1,9 +1,9 @@
 {
-    "Component": "TestApp.FormSearch",
+    "Controller": "TestApp.FormSearch",
     "Layout": "Column",
     "Content": [
         {
-            "Layout":  "DockPanel",
+            "Layout": "DockPanel",
             "Content": [
                 {
                     "Controller": "Button",
@@ -11,7 +11,7 @@
                     "Dock": "Right"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Margin": {
                         "Left": 0,
                         "Top": 0,
@@ -22,7 +22,7 @@
                     "Dock": "Right"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Search Form:",
                     "Dock": "Left"
                 }
@@ -34,9 +34,8 @@
                 {
                     "Controller": "Button",
                     "Text": "Find (F3)",
-                    "Size": {
-                        "Width": 120,
-                        "Height": "NaN"
+                    "SizeRequest": {
+                        "Width": 120
                     },
                     "Dock": "Right",
                     "Margin": {
@@ -57,16 +56,15 @@
             "Layout": "DockPanel",
             "Content": [
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Matches (#)",
-                    "Size": {
-                        "Width": 120,
-                        "Height": "NaN"
+                    "SizeRequest": {
+                        "Width": 120
                     },
                     "Dock": "Right"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "Replace with:"
                 }
             ]
@@ -77,9 +75,8 @@
                 {
                     "Controller": "Button",
                     "Text": "Replace",
-                    "Size": {
-                        "Width": 120,
-                        "Height": "NaN"
+                    "SizeRequest": {
+                        "Width": 120
                     },
                     "Margin": {
                         "Left": 10,
@@ -101,9 +98,8 @@
                 {
                     "Controller": "Button",
                     "Text": "Replace All",
-                    "Size": {
-                        "Width": 120,
-                        "Height": "NaN"
+                    "SizeRequest": {
+                        "Width": 120
                     },
                     "Margin": {
                         "Left": 10,
@@ -114,11 +110,11 @@
                     "Dock": "Right"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "[X] Match Case"
                 },
                 {
-                    "Controller": "Label",
+                    "Controller": "Text",
                     "Text": "[X] Match Whole Word",
                     "Margin": {
                         "Left": 10,

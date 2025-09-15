@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Base;
 using ZurfurGui.Controls;
 
 namespace ZurfurGui.Layout;
@@ -10,9 +11,9 @@ namespace ZurfurGui.Layout;
 public interface Layoutable
 {
     /// <summary>
-    /// Name of the layout type, which must be the same for all instances of this type.
+    /// Layout type, e.g. "Row", "Column", "Text", etc.
     /// </summary>
-    string LayoutType { get; }
+    string TypeName { get; }
 
     /// <summary>
     /// Returns the desired size of the control given the available screen size.

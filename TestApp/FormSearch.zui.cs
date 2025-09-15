@@ -11,7 +11,7 @@ public partial class FormSearch : Controllable
 {
     public FormSearch()
     {
-        InitializeComponent();
+        InitializeControl();
     }
 
 }

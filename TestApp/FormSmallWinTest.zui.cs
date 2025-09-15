@@ -15,10 +15,10 @@ public partial class FormSmallWinTest : Controllable
 
     public FormSmallWinTest()
     {
-        InitializeComponent();
+        InitializeControl();
 
         // TBD: Code generated
-        button1 = (Button)View.FindByName("button1").Control;
-        button2 = (Button)View.FindByName("button2").Control;
+        button1 = (Button)View.FindByName("button1").Controller;
+        button2 = (Button)View.FindByName("button2").Controller;
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Layout;
 
@@ -34,16 +35,15 @@ public class DrawLabel : Drawable
 
     public static void Draw(View view, DrawContext context, Rect contentRect, Color color)
     {
-        var text = view.Properties.Get(Zui.Text) ?? "";
-        var fontName = view.Properties.Get(Zui.FontName) ?? "Arial";
-        var fontSize = view.Properties.Get(Zui.FontSize, 16.0);
+        var text = view.GetStyle(Zui.Text, "�");
+        var fontName = view.GetStyle(Zui.FontName, "Arial");
+        var fontSize = view.GetStyle(Zui.FontSize, 16.0).Or(16.0);
         context.FontName = fontName;
         context.FontSize = fontSize;
         context.FillColor = color;
 
-        var lines = text.Split('\n');
-        for (int i = 0; i < lines.Length; i++)
-            context.FillText(lines[i], 0 + contentRect.X, 
+        for (int i = 0; i < text.Count; i++)
+            context.FillText(text[i], 0 + contentRect.X, 
                 fontSize * TEXT_BASELINE + i * fontSize * LINE_SPACING + (LINE_SPACING - 1) * fontSize * 0.5 + contentRect.Y);
     }
 

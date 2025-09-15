@@ -7,9 +7,9 @@ public partial class TextBox : Controllable
 {
     public TextBox()
     {
-        InitializeComponent();
+        InitializeControl();
     }
-    public Layoutable DefaultLayout => LayoutLabel.Instance;
+    public Layoutable DefaultLayout => LayoutText.Instance;
     public Drawable DefaultDraw => DrawLabel.Instance;
 
 }
