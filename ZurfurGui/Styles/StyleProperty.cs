@@ -9,7 +9,7 @@ namespace ZurfurGui.Styles;
 
 public class StyleProperty
 {
-    public required TextLines Selector { get; init; } = [];
+    public required TextLines Selectors { get; init; } = "";
     public Properties Properties { get; init; } = [];
 }
 

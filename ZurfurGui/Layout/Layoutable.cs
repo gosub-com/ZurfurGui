@@ -24,9 +24,10 @@ public interface Layoutable
     Size MeasureView(View view, MeasureContext measure, Size available);
 
     /// <summary>
-    /// Arrange the controls children.
+    /// Arrange the view's children.  
+    /// The view's Size, Position, and ContentRect are set before this function is called. 
     /// Similar to ArrangeOverride in WPF.
     /// </summary>
-    Size ArrangeViews(View view, MeasureContext measure, Size final, Rect contentRect);
+    void ArrangeViews(View view, MeasureContext measure);
 
 }

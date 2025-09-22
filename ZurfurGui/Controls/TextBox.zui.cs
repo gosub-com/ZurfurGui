@@ -8,8 +8,8 @@ public partial class TextBox : Controllable
     public TextBox()
     {
         InitializeControl();
+        View.Draw = DrawText.Instance;
+        View.Layout = LayoutText.Instance;
     }
-    public Layoutable DefaultLayout => LayoutText.Instance;
-    public Drawable DefaultDraw => DrawLabel.Instance;
 
 }

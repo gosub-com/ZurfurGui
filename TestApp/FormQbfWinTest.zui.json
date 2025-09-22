@@ -65,12 +65,6 @@
                         "Top": 50,
                         "Right": 20,
                         "Bottom": 50
-                    },
-                    "Margin": {
-                        "Left": 20,
-                        "Top": 0,
-                        "Right": 20,
-                        "Bottom": 0
                     }
                 }
             ]

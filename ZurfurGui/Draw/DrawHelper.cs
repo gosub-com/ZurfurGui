@@ -7,20 +7,20 @@ using ZurfurGui.Base;
 using ZurfurGui.Controls;
 
 namespace ZurfurGui.Draw;
-public static class DrawManager
+public static class DrawHelper
 {
     const byte ALPHA_HIT_THRESHOLD = 16; // Must be visible to user before it's a hit
 
     /// <summary>
     /// Draws a panel with a border & background.
     /// </summary>
-    public static void Draw(View view, DrawContext context)
+    public static void DrawBackground(View view, DrawContext context)
     {
         var backgroundRect = new Rect(new(), view.Size);
 
         // Draw background
-        var borderRadius = view.GetStyle(Zui.BorderRadius, null).Or(0);
-        var background = view.GetStyle(Zui.Background, null).Or(Colors.TransParent);
+        var borderRadius = view.GetStyle(Zui.BorderRadius).Or(0);
+        var background = view.GetStyle(Zui.Background).Or(Colors.TransParent);
         if (background.A != 0)
         {
             context.FillColor = background;
@@ -28,8 +28,8 @@ public static class DrawManager
         }
 
         // Draw border
-        var borderColor = view.GetStyle(Zui.BorderColor, null).Or(Colors.TransParent);
-        var borderWidth = view.GetStyle(Zui.BorderWidth, null).Or(0);
+        var borderColor = view.GetStyle(Zui.BorderColor).Or(Colors.TransParent);
+        var borderWidth = view.GetStyle(Zui.BorderWidth).Or(0);
         if (borderWidth > 0 && borderColor.A != 0)
         {
             context.LineWidth = borderWidth;
@@ -50,7 +50,7 @@ public static class DrawManager
             return false;
 
         // Check if the background is visible (TBD: on the border and border radius)
-        return view.GetProperty(Zui.Background, null).Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
+        return view.GetStyle(Zui.Background).Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
     }
 
 }

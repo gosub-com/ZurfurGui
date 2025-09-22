@@ -14,12 +14,8 @@ public partial class Text : Controllable
     public Text()
     {
         InitializeControl();
+        View.Draw = DrawText.Instance;
+        View.Layout = LayoutText.Instance;
     }
-
-    public Layoutable DefaultLayout => LayoutText.Instance;
-    public Drawable DefaultDraw => DrawLabel.Instance;
-
-    
-
 
 }

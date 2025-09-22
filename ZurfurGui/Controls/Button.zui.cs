@@ -15,9 +15,8 @@ public partial class Button : Controllable
     public Button()
     {
         InitializeControl();
+        View.Draw = DrawText.Instance;
+        View.Layout = LayoutText.Instance;
     }
-
-    public Layoutable DefaultLayout => LayoutText.Instance;
-    public Drawable? DefaultDraw => DrawButton.Instance;
 
 }

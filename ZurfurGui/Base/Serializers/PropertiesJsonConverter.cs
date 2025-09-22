@@ -37,6 +37,17 @@ internal class PropertiesJsonConverter : JsonConverter<Properties>
                     throw new JsonException("Property name cannot be null.");
                 }
 
+                if (propertyName.StartsWith("#"))
+                {
+                    // Ignore comments
+                    reader.Read(); // Move to the value (which we will ignore)
+                    if (reader.TokenType != JsonTokenType.String)
+                    {
+                        throw new JsonException("Expected a string value for comment.");
+                    }
+                    continue;
+                }
+
                 var propertyInfo = PropertyKeys.GetInfo(propertyName);
                 if (propertyInfo == null)
                 {
@@ -67,8 +78,11 @@ internal class PropertiesJsonConverter : JsonConverter<Properties>
 
         foreach (var (key, propertyValue) in value)
         {
-            writer.WritePropertyName(key.Name);
-            JsonSerializer.Serialize(writer, propertyValue, key.Type, options);
+            if (key.Info is PropertyKeyInfo info && info.Name != null && info.Type != null)
+            {
+                writer.WritePropertyName(info.Name);
+                JsonSerializer.Serialize(writer, propertyValue, info.Type, options);
+            }
         }
 
         writer.WriteEndObject();

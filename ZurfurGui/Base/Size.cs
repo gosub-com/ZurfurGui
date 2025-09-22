@@ -60,11 +60,21 @@ public struct Size : IEquatable<Size>
             Math.Clamp(Height, min.Height, max.Height));
     }
 
+    public Size Inflate(double thickness)
+    {
+        return Inflate(new Thickness(thickness));
+    }
+
     public Size Inflate(Thickness thickness)
     {
         return new Size(
             Math.Max(0, Width + thickness.Left + thickness.Right),
             Math.Max(0, Height + thickness.Top + thickness.Bottom));
+    }
+
+    public Size Deflate(double thickness)
+    {
+        return Deflate(new Thickness(thickness));
     }
 
     public Size Deflate(Thickness thickness)
@@ -73,6 +83,7 @@ public struct Size : IEquatable<Size>
             Math.Max(0, Width - thickness.Left - thickness.Right),
             Math.Max(0, Height - thickness.Top - thickness.Bottom));
     }
+
 
 
 }

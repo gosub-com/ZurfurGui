@@ -36,12 +36,11 @@ public partial class AppWindow : Controllable, Drawable
 
     public string DrawType => "AppWindow";
 
-    public Drawable DefaultDraw => this;
-
 
     public AppWindow()
     {
         InitializeControl();
+        View.Draw = this;
 
         // TBD: Should be code generated
         _mainAppView = View.FindByName("_mainAppView") ?? throw new Exception("Missing _mainAppView");
@@ -89,7 +88,7 @@ public partial class AppWindow : Controllable, Drawable
         return false;
     }
 
-    public void Draw(View view, DrawContext context, Rect contentRect)
+    public void Draw(View view, DrawContext context)
     {
         var left = 15;
         var top = 50;

@@ -63,6 +63,14 @@ public class TextLines : IEnumerable<string>, IReadOnlyList<string>
         return sb.ToString();
     }
 
+    public bool HasLine(TextLines textLines)
+    {
+        foreach (var line in textLines._lines)
+            if (_lines.Contains(line))
+                return true;
+        return false;
+    }
+
     /// <summary>
     /// A struct enumerator for TextLines that yields each string in _lines.
     /// </summary>

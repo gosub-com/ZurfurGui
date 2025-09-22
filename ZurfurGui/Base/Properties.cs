@@ -44,9 +44,11 @@ public static class PropertyKeys
         }
     }
 
-    internal static PropertyKeyInfo GetInfo(int id)
+    internal static PropertyKeyInfo? GetInfo(int id)
     {
-        return s_propertiesById[id];
+        if (id >= 0 && id < s_propertiesById.Count)
+            return s_propertiesById[id];
+        return null;
     }
 
     public static PropertyKeyInfo? GetInfo(string name)
@@ -70,8 +72,7 @@ public readonly struct PropertyKeyId : IEquatable<PropertyKeyId>
         _id = id;
     }
 
-    public string Name => PropertyKeys.GetInfo(_id).Name;
-    public Type Type => PropertyKeys.GetInfo(_id).Type;
+    public PropertyKeyInfo? Info => PropertyKeys.GetInfo(_id);
 
     public bool Equals(PropertyKeyId id) => _id == id._id;
     public override bool Equals(object? obj) => obj is PropertyKeyId id && Equals(id);
@@ -80,36 +81,42 @@ public readonly struct PropertyKeyId : IEquatable<PropertyKeyId>
     public override int GetHashCode() => _id;
     public override string ToString()
     {
-        return $"{_id}: '{Name}' is {Type.Name}";
+        if (Info is PropertyKeyInfo info)
+            return $"{_id}: '{info.Name}' is {info.Type}";
+        return $"{_id}: (unknown)";
     }
+
+    public int IdAsInt => _id;
+
 }
 
 
 /// <summary>
 /// Statically typed property key, used to lookup property name.
 /// </summary>
-public struct PropertyKey<T> : IEquatable<PropertyKey<T>>
+public class PropertyKey<T> : IEquatable<PropertyKey<T>>
 {
     readonly PropertyKeyId _id;
+    public readonly string Name;
+    public readonly Type Type;
+    public readonly T DefaultValue;
 
-    public PropertyKey(string name)
+    public PropertyKey(string name, T defaultValue)
     {
         _id = PropertyKeys.Create(name, typeof(T));
+        Name = name;
+        Type = typeof(T);
+        DefaultValue = defaultValue;
     }
 
-    public static implicit operator PropertyKeyId(PropertyKey<T> propertyIndex)
-    {
-        return propertyIndex._id;
-    }
 
-    public string Name => _id.Name;
-    public Type Type => _id.Type;
     public PropertyKeyId Id => _id;
+    public int IdAsInt => _id.IdAsInt;
 
-    public bool Equals(PropertyKey<T> id) => _id == id._id;
+    public bool Equals(PropertyKey<T>? id) => id is PropertyKey<T> && _id == id._id;
     public override bool Equals(object? obj) => obj is PropertyKey<T> id && Equals(id);
-    public static bool operator ==(PropertyKey<T> a, PropertyKey<T> b) => a.Equals(b);
-    public static bool operator !=(PropertyKey<T> a, PropertyKey<T> b) => !a.Equals(b);
+    public static bool operator ==(PropertyKey<T> a, PropertyKey<T> b) => a._id == b._id;
+    public static bool operator !=(PropertyKey<T> a, PropertyKey<T> b) => a._id != b._id;
     public override int GetHashCode() => _id.GetHashCode();
     public override string ToString()
     {
@@ -143,27 +150,13 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
     }
 
     /// <summary>
-    /// Add a property, throw an exception if it already exists in the collection.
-    /// This allows using collection expressions
-    /// TBD: Use dictionary collection, when they are added to C#.
+    /// Get a property, or return the property default when not present.
     /// </summary>
-    public void Add((PropertyKeyId key, object value) kv)
-    {
-        if (_properties.ContainsKey(kv.key))
-            throw new ArgumentException($"The property '{kv.key.Name}' already exists");
-        if (kv.key.Type != kv.value.GetType() && !kv.value.GetType().IsAssignableTo(kv.key.Type))
-            throw new ArgumentException($"The property '{kv.key.Name}' must have type '{kv.key.Type}', but has '{kv.value.GetType()}'");
-        _properties[kv.key] = kv.value;
-    }
-
-    /// <summary>
-    /// Get a property, or return the default when not present.
-    /// </summary>
-    public T? Get<T>(PropertyKey<T> property, T? defaultProperty = default)
+    public T Get<T>(PropertyKey<T> property)
     {
         if (_properties.TryGetValue(property.Id, out var value) && value is T v)
             return v;
-        return defaultProperty;
+        return property.DefaultValue;
     }
 
     public bool TryGet<T>(PropertyKey<T> property, [MaybeNullWhen(false)]  out T? value)
@@ -171,6 +164,17 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
         if (_properties.TryGetValue(property.Id, out var obj) && obj is T v)
         {
             value = v;
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
+    public bool TryGetById(PropertyKeyId property, [MaybeNullWhen(false)] out object value)
+    {
+        if (_properties.TryGetValue(property, out var obj))
+        {
+            value = obj;
             return true;
         }
         value = default;
@@ -194,10 +198,14 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
     {
         if (value is null)
             throw new ArgumentNullException(nameof(value), "Use Remove instead of assigning null");
-        if (property.Type.IsAssignableTo(typeof(Delegate)))
-            throw new ArgumentException($"Use AddEvent for delegate types", nameof(property));
-        if (property.Type != value.GetType())
-            throw new ArgumentException($"The property '{property.Name}' must have type '{property.Type}', but has '{value.GetType()}'");
+        if (property.Info is PropertyKeyInfo info)
+        {
+            // Check type if it's available
+            if (info.Type is not null && info.Type.IsAssignableTo(typeof(Delegate)))
+                throw new ArgumentException($"Use AddEvent for delegate types", nameof(property));
+            if (info.Type is not null && info.Type != value.GetType())
+                throw new ArgumentException($"The property '{info.Name}' must have type '{info.Type}', but has '{value.GetType()}'");
+        }
         _properties[property] = value;
     }
 

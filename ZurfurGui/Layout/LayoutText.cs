@@ -25,16 +25,15 @@ public class LayoutText : Layoutable
 
     static Size MeasureLabel(MeasureContext measure, View view)
     {
-        var fontName = view.GetStyle(Zui.FontName, "Arial");
-        var fontSize = view.GetStyle(Zui.FontSize, null).Or(16.0);
-        var text = view.GetStyle(Zui.Text, "�");
+        var fontName = view.GetStyle(Zui.FontName);
+        var fontSize = view.GetStyle(Zui.FontSize).Or(16.0);
+        var text = view.GetStyle(Zui.Text);
         var maxWidth = text.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
         return new Size(maxWidth, text.Count * Text.LINE_SPACING * fontSize);
     }
 
-    public Size ArrangeViews(View view, MeasureContext measure, Size final, Rect contentRect)
+    public void ArrangeViews(View view, MeasureContext measure)
     {
-        return final;
     }
 
 

@@ -1,12 +1,10 @@
 ﻿
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 
 namespace ZurfurGui.Draw;
-
 
 public class Renderer
 {
@@ -92,7 +90,7 @@ public class Renderer
         if (!clip.Contains(target))
             return null;
 
-        if (!view.GetStyle(Zui.IsVisible, true))
+        if (!view.GetStyle(Zui.IsVisible))
             return null;
 
         // Check children first
@@ -104,7 +102,7 @@ public class Renderer
                 return hit;
         }
 
-        if (!view.GetProperty(Zui.DisableHitTest, false))
+        if (!view.GetProperty(Zui.DisableHitTest))
         {
             // User content hit test
             if (view.Draw is Drawable renderable)
@@ -112,7 +110,7 @@ public class Renderer
                     return view;
 
             // Panel hit test
-            if (DrawManager.IsHitPanel(view, target))
+            if (DrawHelper.IsHitPanel(view, target))
                 return view;
         }
 
@@ -175,8 +173,11 @@ public class Renderer
     {
         var timer = Stopwatch.StartNew();
 
+
+        // Resize if the window size changed
         var view = _appWindow.View;
-        if (_mainWindowSize != _canvas.DeviceSize || _devicePixelRatio != _window.DevicePixelRatio
+        if (_mainWindowSize != _canvas.DeviceSize 
+            || _devicePixelRatio != _window.DevicePixelRatio
             || _appWindow.View.IsMeasureInvalid)
         {
             view.SetProperty(Zui.Magnification, _window.DevicePixelRatio);
@@ -184,8 +185,7 @@ public class Renderer
             _devicePixelRatio = _window.DevicePixelRatio;
             var measureConext = new Layout.MeasureContext(_canvas.Context);
             view.Measure(_mainWindowSize, measureConext);
-            view.Arrange(new Rect(new(0,0), _mainWindowSize), measureConext);
-            view.PostArrange(new(), 1);
+            view.Arrange(new Rect(new(0, 0), _mainWindowSize), measureConext);
         }
 
         _frameCount++;
@@ -203,55 +203,50 @@ public class Renderer
         _renderContext.SetPointerPosition(_pointerPosition);
         _appWindow.SetRenderStats(_frameCount, _fps, (int)_avgMs);
 
-        RenderView(view, new Rect(new(), view.toDevice(_mainWindowSize)));
+        _renderContext.SetCurrentViewInternal(view);
+        _renderContext.PushDeviceClip(new Rect(new(), view.toDevice(_mainWindowSize)));
+        RenderView(view);
+        _renderContext.PopDeviceClip(view);
         Debug.Assert(_renderContext.ClipLevel == 0);
+        _renderContext.SetCurrentViewInternal(null);
 
         _totalMs += timer.ElapsedMilliseconds;
     }
 
 
-    void RenderView(View view, Rect clip)
+    void RenderView(View view)
     {
         // Quick exit for invisible
-        if (!view.GetStyle(Zui.IsVisible, true))
+        if (!view.GetStyle(Zui.IsVisible))
             return;
 
-        var doClip = view.GetProperty(Zui.Clip, false);
-        if (doClip)
-        {
-            // Skip drawing when fully clipped
-            clip = clip.Intersect(view.toDevice(new Rect(new(), view.Size)));
-            if (clip.Width <= 0 || clip.Height <= 0)
-                return;
-         
-            _renderContext.ClipDevice(clip.X, clip.Y, clip.Width, clip.Height);
-        }
+
+        // Render panel background and border (without clipping since we know it's always in bounds)
+        _renderContext.SetCurrentViewInternal(view);
+        DrawHelper.DrawBackground(view, _renderContext);
+
+        // Clip the content rect if requested
+        if (view.GetProperty(Zui.Clip))
+            _renderContext.PushDeviceClip(view.toDevice(view.ContentRect));
 
         try
         {
-            _renderContext.SetOrigin(view.Origin, view.Scale);
-
-            // Render panel background & border
-            DrawManager.Draw(view, _renderContext);
-
-            var padding = view.GetStyle(Zui.Padding, null).Or(0) 
-                + new Thickness(view.GetStyle(Zui.BorderWidth, null).Or(0));
-            var contentRect = new Rect(new(), view.Size).Deflate(padding);
-
             var draw = view.Draw;
             if (draw is not null)
-                draw.Draw(view, _renderContext, contentRect);
-            
+                draw.Draw(view, _renderContext);
+
             foreach (var child in view.Children)
-                RenderView(child, clip);
+                RenderView(child);
 
             if (draw is not null)
-                draw.DrawOver(view, _renderContext, contentRect);
+            {
+                _renderContext.SetCurrentViewInternal(view);
+                draw.DrawOver(view, _renderContext);
+            }
         }
         finally
         {
-            if (doClip)
-                _renderContext.UnClip();
+            _renderContext.PopDeviceClip(view);
         }
 
     }

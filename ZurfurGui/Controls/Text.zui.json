@@ -1,3 +1,4 @@
 {
-    "Controller": "Text"
+    "Controller": "Text",
+    "Classes": [ "Text" ]
 }

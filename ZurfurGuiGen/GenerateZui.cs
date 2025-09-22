@@ -170,23 +170,22 @@ public class GenerateZui : IIncrementalGenerator
             throw new Exception($"The JSON 'Controller' key '{controllerTypeNameEnd}' must match the class name '{classNameEnd}'");
 
         var source = $@"
-            // This file is generated from '{Path.GetFileName(zuiPath)}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}
-            namespace {nameSpace};
+// This file is generated from '{Path.GetFileName(zuiPath)}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}
+namespace {nameSpace};
 
-            public sealed partial class {className}
-            {{
-                void InitializeControl() 
-                {{
-                    View = new(this);
-                    global::ZurfurGui.Loader.Load(this, _zuiJsonContent);
-                }}
-                public global::ZurfurGui.Base.Properties _zuiProperties;
-                public global::ZurfurGui.Controls.View View {{ get; private set; }}
-                public string TypeName => ""{controllerTypeName}""; 
-                public override string ToString() => View.ToString();
+public sealed partial class {className}
+{{
+    void InitializeControl() 
+    {{
+        View = new(this);
+        global::ZurfurGui.Loader.Load(this, _zuiJsonContent);
+    }}
+    public global::ZurfurGui.Controls.View View {{ get; private set; }}
+    public string TypeName => ""{controllerTypeName}""; 
+    public override string ToString() => View.ToString();
 
-                static string _zuiJsonContent => @""{zuiJsonContent}"";
-            }}";
+    static string _zuiJsonContent => @""{zuiJsonContent}"";
+}}";
         return source;
     }
 

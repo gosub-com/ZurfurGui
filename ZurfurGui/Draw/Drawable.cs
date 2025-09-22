@@ -20,12 +20,12 @@ public interface Drawable
     /// The view and is inside the margin, but contains padding and border.
     /// The contentRect is the area inside the padding and border.
     /// </summary>
-    public void Draw(View view, DrawContext context, Rect contentRect);
+    public void Draw(View view, DrawContext context);
 
     /// <summary>
     /// Draw over child views.
     /// </summary>
-    public void DrawOver(View view, DrawContext context, Rect contentRect) { }
+    public void DrawOver(View view, DrawContext context) { }
 
     public bool IsHit(View view, Point point);
 

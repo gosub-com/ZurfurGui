@@ -35,11 +35,11 @@ internal class StylePropertyJsonConverter : JsonConverter<StyleProperty>
                 var propertyName = reader.GetString();
                 reader.Read();
 
-                if (propertyName == "Selector")
+                if (propertyName == nameof(StyleProperty.Selectors))
                 {
                     selector = JsonSerializer.Deserialize<TextLines>(ref reader, options);
                 }
-                else if (propertyName == "Properties")
+                else if (propertyName == nameof(StyleProperty.Properties))
                 {
                     properties = JsonSerializer.Deserialize<Properties>(ref reader, options);
                 }
@@ -57,7 +57,7 @@ internal class StylePropertyJsonConverter : JsonConverter<StyleProperty>
 
         return new StyleProperty
         {
-            Selector = selector,
+            Selectors = selector,
             Properties = properties ?? []
         };
     }
@@ -70,7 +70,7 @@ internal class StylePropertyJsonConverter : JsonConverter<StyleProperty>
         writer.WriteStartObject();
 
         writer.WritePropertyName("Selector");
-        JsonSerializer.Serialize(writer, value.Selector, options);
+        JsonSerializer.Serialize(writer, value.Selectors, options);
 
         writer.WritePropertyName("Properties");
         JsonSerializer.Serialize(writer, value.Properties, options);

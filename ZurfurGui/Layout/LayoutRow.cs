@@ -17,23 +17,23 @@ public class LayoutRow : Layoutable
     {
         _measuredRects.Clear();
 
-        var wrap = view.GetStyle(Zui.Wrap, true);
+        var wrap = view.GetStyle(Zui.Wrap);
         var rowPosX = 0.0;
         var rowPosY = 0.0;
         var rowHeight = 0.0;
         var viewWidth = 0.0;
         var viewHeight = 0.0;
-        var spacing = view.GetStyle(Zui.Spacing, new Size(5, 5));
+        var spacing = view.GetStyle(Zui.Spacing);
         int arrangeIndex = 0;
         foreach (var childView in view.Children)
         {
             // Ignore invisible views
-            var viewIsVisible = childView.GetStyle(Zui.IsVisible, true);
+            var viewIsVisible = childView.GetStyle(Zui.IsVisible);
             if (!viewIsVisible)
                 continue;
 
             childView.Measure(available, measure);
-            var childSize = childView.DesiredSize;
+            var childSize = childView.DesiredTotalSize;
 
             if (wrap && rowPosX != 0 && rowPosX + childSize.Width > available.Width)
             {
@@ -60,12 +60,13 @@ public class LayoutRow : Layoutable
         return new Size(viewWidth, viewHeight);
     }
 
-    public Size ArrangeViews(View view, MeasureContext measure, Size final, Rect contentRect)
+    public void ArrangeViews(View view, MeasureContext measure)
     {
         var i = 0;
+        var contentRect = view.ContentRect;
         foreach (var childView in view.Children)
         {
-            if (childView.GetStyle(Zui.IsVisible, true))
+            if (childView.GetStyle(Zui.IsVisible))
             {
                
                 var measuredRect = i < _measuredRects.Count ? _measuredRects[i] : new();
@@ -74,6 +75,5 @@ public class LayoutRow : Layoutable
             }
         }
         Debug.Assert(i == _measuredRects.Count); // Visibility or child count changed between measure and arrange
-        return final;
     }
 }

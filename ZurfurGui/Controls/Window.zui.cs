@@ -89,7 +89,7 @@ public partial class Window : Controllable
         _mousePosition = position;
 
         // Update window offset
-        View.SetProperty(Zui.Offset, View.GetStyle(Zui.Offset, null).Or(0) + diff);
+        View.SetProperty(Zui.Offset, View.GetStyle(Zui.Offset).Or(0) + diff);
         View.InvalidateMeasure(); // TBD: Should be automatic
     }
 
@@ -109,9 +109,11 @@ public partial class Window : Controllable
         var diff = position - _mousePosition;
         _mousePosition = position;
 
-        // Update window offset
-        var size = View.GetStyle(Zui.SizeRequest, null).Or(View.Size);
-        View.SetProperty(Zui.SizeRequest, LayoutManager.ClampViewSize(View, size + diff, true));
+        // Update window offset, clamped SizeMin..SizeMaz
+        var size = View.GetStyle(Zui.SizeRequest).Or(View.Size) + diff;
+        var sizeMax = View.GetStyle(Zui.SizeMax).Or(double.PositiveInfinity);
+        var sizeMin = View.GetStyle(Zui.SizeMin).Or(0).MaxZero;
+        View.SetProperty(Zui.SizeRequest, size.Min(sizeMax).Max(sizeMin));
         View.InvalidateMeasure(); // TBD: Should be automatic
     }
 
@@ -121,7 +123,7 @@ public partial class Window : Controllable
     /// </summary>
     public bool IsWindowWrappingVisible
     {
-        get => _titleView.GetProperty(Zui.IsVisible, true);
+        get => _titleView.GetProperty(Zui.IsVisible);
         set
         {
             _titleView.SetProperty(Zui.IsVisible, value);

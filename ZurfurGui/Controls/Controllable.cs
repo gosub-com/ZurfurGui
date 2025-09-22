@@ -17,19 +17,6 @@ public interface Controllable
     View View { get; }
 
     /// <summary>
-    /// The component may supply a default layout, which can be overridden by setting the Layout 
-    /// property in the zui.json.  If no layout is specified (default to null), a Panel layout is used.  
-    /// </summary>
-    Layoutable? DefaultLayout { get { return null; } }
-
-
-    /// <summary>
-    /// The component may supply a default drawable.  
-    /// If no drawble is specified (default to null), only a panel is drawn (all components draw a panel).  
-    /// </summary>
-    Drawable? DefaultDraw { get { return null; } }
-
-    /// <summary>
     /// Load content.  By default, it's a Panel and content gets loaded accordingly.
     /// Windows, Tabs, and other complex controls may need to override this function.
     /// The contents parameter contains the contents from the components parent.

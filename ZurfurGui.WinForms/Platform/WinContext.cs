@@ -8,6 +8,7 @@ using System.Drawing.Drawing2D;
 using ZurfurGui.Platform;
 
 using Color = ZurfurGui.Base.Color;
+using System.Diagnostics;
 
 namespace ZurfurGui.WinForms.Interop;
 
@@ -30,6 +31,13 @@ internal class WinContext : OsContext
     /// </summary>
     const double TEXT_OFFSET_SCALE_Y = 0.075;
     const double TEXT_OFFSET_SCALE_X = 0.175;
+
+    static readonly RectangleF LAYOUT_RECT = new(0, 0, float.MaxValue, float.MaxValue);
+    StringFormat _stringFormat = new StringFormat(StringFormat.GenericTypographic)
+    {
+        FormatFlags = StringFormatFlags.MeasureTrailingSpaces
+    };
+
 
     static System.Drawing.Color WinColor(Color c)
         => System.Drawing.Color.FromArgb(c.A, c.R, c.G, c.B);
@@ -193,8 +201,19 @@ internal class WinContext : OsContext
 
     public double MeasureTextWidth(string text)
     {
-        return TextRenderer.MeasureText(text, GetFont(), new System.Drawing.Size(0,0), 
-            TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix).Width;
+        // NOTE: Graphics.MeasureString returns too much space (and doesn't measure trailing space)
+        if (text == "")
+            return 0;
+
+        var characterRanges = new[] { new CharacterRange(0, text.Length) };
+        _stringFormat.SetMeasurableCharacterRanges(characterRanges);
+
+        var regions = _graphics.MeasureCharacterRanges(text, GetFont(), LAYOUT_RECT, _stringFormat);
+        var textWidth = regions[0].GetBounds(_graphics).Width;
+        foreach (var r in regions)
+            r.Dispose();
+
+        return textWidth + _fontSize * TEXT_OFFSET_SCALE_X;
     }
 
     /// <summary>

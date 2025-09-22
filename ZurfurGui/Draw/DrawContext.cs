@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using ZurfurGui.Base;
+using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 
 namespace ZurfurGui.Draw;
@@ -12,10 +8,18 @@ namespace ZurfurGui.Draw;
 
 public class DrawContext
 {
+    static readonly Rect EMPTY_DEVICE_CLIP = new Rect(0, 0, double.MaxValue, double.MaxValue);
+
     OsContext _context;
-    public Point _origin;
-    public double _scale = 1.0;
-    public int ClipLevel { get; private set; }
+
+    View? _currentView;
+    Point _origin;
+    double _scale = 1.0;
+    Rect _clip = EMPTY_DEVICE_CLIP;
+    List<Rect> _clipStack = new List<Rect>();
+
+    public int ClipLevel => _clipStack.Count;
+    public Rect DeviceClip => _clip;
 
     // TBD: Turn into a class, PointerInfo
     public Point PointerPosition { get; private set; }
@@ -32,10 +36,17 @@ public class DrawContext
         return _context.MeasureTextWidth(text) * 0.001 * fontSize;
     }
 
-    internal void SetOrigin(Point origin, double scale)
+    /// <summary>
+    /// Set the currently rendering view, and  _origin and _scale.
+    /// </summary>
+    internal void SetCurrentViewInternal(View? view)
     {
-        _origin = origin;
-        _scale = scale;
+        _currentView = view;
+        if (view != null)
+        {
+            _origin = view.Origin;
+            _scale = view.Scale;
+        }
     }
 
     internal void SetPointerPosition(Point pos)
@@ -75,22 +86,43 @@ public class DrawContext
         => _context.FillText(text, p.X, p.Y);
 
     /// <summary>
-    /// Clip to the specified rectangle in device pixels (ignoring Origin and Scale).
-    /// Saves clip state to a stack.  Use UnClip to restore previous state.
+    /// Clip to the specified rectangle in device pixels.
+    /// Saves clip state to a stack. Restore is automatic and doesn't need to be done by user code.
     /// </summary>
-    internal void ClipDevice(double x, double y, double width, double height)
+    public void PushDeviceClip(Rect clip)
     { 
-        ClipLevel++;
-        _context.Clip(x, y, width, height);
+        if (_currentView == null)
+            throw new InvalidOperationException("No current view");
+        if (_currentView.PushedContentClip)
+            return; // Already pushed
+        _currentView.PushedContentClip = true;
+
+        _clipStack.Add(_clip);
+        _clip = _clip.Intersect(clip);
+        _context.Clip(_clip.X, _clip.Y, _clip.Width, _clip.Height);
     }
 
     /// <summary>
     /// Pops the old clip state from the stack.
     /// </summary>
-    internal void UnClip()
-    { 
-        ClipLevel--;
-        Debug.Assert(ClipLevel >= 0);
+    internal void PopDeviceClip(View view)
+    {
+        if (!view.PushedContentClip)
+            return;  // Not clipped
+        view.PushedContentClip = false;
+
+        if (_clipStack.Count == 0)
+        {
+            Debug.Assert(false, "UnClip without matching Clip");
+            _clip = EMPTY_DEVICE_CLIP;
+        }
+        else
+        {
+            _clip = _clipStack[^1];
+            _clipStack.RemoveAt(_clipStack.Count - 1);
+            if (_clipStack.Count == 0)
+                Debug.Assert(_clip == EMPTY_DEVICE_CLIP);
+        }
         _context.UnClip();
     }
 }

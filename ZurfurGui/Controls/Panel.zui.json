@@ -1,3 +1,4 @@
 {
-    "Controller":  "Panel"
+    "Controller": "Panel",
+    "Classes": [ "Panel" ]
 }

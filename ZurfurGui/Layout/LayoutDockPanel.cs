@@ -38,13 +38,13 @@ public class LayoutDockPanel : Layoutable
         {
             // Ignore invisible views
             var childView = childViews[i];
-            if (!childView.GetStyle(Zui.IsVisible, true))
+            if (!childView.GetStyle(Zui.IsVisible))
                 continue;
 
             _lastVisibleIndex = i;
             childView.Measure(constraint, measure);
-            var childSize = childView.DesiredSize;
-            var dock = childView.GetStyle(Zui.Dock, Dock.Left);
+            var childSize = childView.DesiredTotalSize;
+            var dock = childView.GetStyle(Zui.Dock);
             switch (dock)
             {
                 case Dock.Left:
@@ -63,8 +63,9 @@ public class LayoutDockPanel : Layoutable
         return (available - constraint).ToSize.Max(minSize).Min(available);
     }
 
-    public Size ArrangeViews(View view, MeasureContext measure, Size final, Rect contentRect)
+    public void ArrangeViews(View view, MeasureContext measure)
     {
+        var contentRect = view.ContentRect;
         var left = contentRect.X;
         var right = contentRect.Right;
         var top = contentRect.Y;
@@ -74,7 +75,7 @@ public class LayoutDockPanel : Layoutable
         {
             // Ignore invisible views
             var childView = childViews[i];
-            var viewIsVisible = childView.GetStyle(Zui.IsVisible, true);
+            var viewIsVisible = childView.GetStyle(Zui.IsVisible);
             if (!viewIsVisible)
                 continue;
             
@@ -82,8 +83,8 @@ public class LayoutDockPanel : Layoutable
             var childLocation = new Rect(left, top, Math.Max(0, right - left), Math.Max(0, bottom - top));
 
             // Update based on dock (last visible index always takes remaining space)
-            var childSize = childView.DesiredSize;
-            var dock = childView.GetStyle(Zui.Dock, Dock.Left);
+            var childSize = childView.DesiredTotalSize;
+            var dock = childView.GetStyle(Zui.Dock);
             if (i < _lastVisibleIndex)
             {
                 switch (dock)
@@ -113,8 +114,6 @@ public class LayoutDockPanel : Layoutable
             }
             childView.Arrange(childLocation, measure);
         }
-
-        return final;
     }
 
 }
