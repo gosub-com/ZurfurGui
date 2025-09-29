@@ -1,4 +1,4 @@
-﻿using static ZurfurGui.Base.Helpers;
+﻿using ZurfurGui.Base.Helpers;
 
 namespace ZurfurGui.Base;
 
@@ -52,7 +52,7 @@ public readonly struct Color : IEquatable<Color>
     public static bool operator ==(Color a, Color b) => a.Equals(b);
     public static bool operator !=(Color a, Color b) => !a.Equals(b);
     public override string ToString() => $"{R},{G},{B},{A}";
-    public override int GetHashCode() => HashMix((int)_rgba);
+    public override int GetHashCode() => (int)Hasher.HashMix(_rgba);
     public string CssColor => $"#{R:x2}{G:x2}{B:x2}{A:x2}";
 
     public static Color? ParseCss(string value)

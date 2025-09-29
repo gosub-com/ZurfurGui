@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using static ZurfurGui.Base.Helpers;
+﻿using ZurfurGui.Base.Helpers;
 
 namespace ZurfurGui.Base;
 
@@ -22,11 +21,11 @@ public struct Rect : IEquatable<Rect>
         $"{X.ToString(f)},{Y.ToString(f)},{Width.ToString(f)},{Height.ToString(f)}");
     public override int GetHashCode()
     {
-        var h = X.GetHashCode();
-        h += HashMix(h) + Y.GetHashCode();
-        h += HashMix(h) + Width.GetHashCode();
-        h += HashMix(h) + Height.GetHashCode();
-        return HashMix(h);
+        var h = new Hasher(X.GetHashCode());
+        h.Add(Y.GetHashCode());
+        h.Add(Width.GetHashCode());
+        h.Add(Height.GetHashCode());
+        return h.GetHashCode();
     }
     public Size Size => new Size(Width, Height);
     public Point Position => new Point(X, Y);

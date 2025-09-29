@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Base;
-using ZurfurGui.Controls;
 
 namespace ZurfurGui.Draw;
 
@@ -18,14 +17,14 @@ public class DrawText : Drawable
 
     public string DrawType => "Text";
 
-    public void Draw(View view, DrawContext context)
+    public void Draw(View view, RenderContext context)
     {
         // TBD: From style
         var color = Colors.White;
 
         // TBD: Temporary, for testing button hover
         if (view.Controller.TypeName == "Button")
-            view.SetProperty(Zui.Background, view.PointerHoverTarget ? Colors.Red : Colors.Gray);
+            view.SetProperty(Zui.BackColor, view.PointerHoverTarget ? Colors.Red : Colors.Gray);
         else
             color = view.PointerHoverTarget ? Colors.Red : Colors.White;
 
@@ -37,9 +36,10 @@ public class DrawText : Drawable
             context.PushDeviceClip(view.toDevice(view.ContentRect));
         }
 
-        var text = view.GetStyle(Zui.Text);
-        var fontName = view.GetStyle(Zui.FontName);
-        var fontSize = view.GetStyle(Zui.FontSize).Or(16.0);
+        var text = view.GetStyle(Zui.Text).Or(TextLines.Unknown);
+        var font = view.GetStyle(Zui.Font);
+        var fontName = font.Name ?? "Arial";
+        var fontSize = font.Size.Or(16.0);
         context.FontName = fontName;
         context.FontSize = fontSize;
         context.FillColor = color;

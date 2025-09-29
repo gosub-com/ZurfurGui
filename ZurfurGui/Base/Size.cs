@@ -1,4 +1,4 @@
-﻿using static ZurfurGui.Base.Helpers;
+﻿using ZurfurGui.Base.Helpers;
 
 namespace ZurfurGui.Base;
 
@@ -18,9 +18,9 @@ public struct Size : IEquatable<Size>
     public string ToString(string f) => FormattableString.Invariant($"{Width.ToString(f)},{Height.ToString(f)}");
     public override int GetHashCode()
     {
-        var h = Width.GetHashCode();
-        h += HashMix(h) + Height.GetHashCode();
-        return HashMix(h);
+        var h = new Hasher(Width.GetHashCode());
+        h.Add(Height.GetHashCode());
+        return h.GetHashCode();
     }
     public Vector ToVector => new Vector(Width, Height);
     public static Size operator +(Size a, Vector b) => new Size(a.Width+b.X, a.Height+b.Y);

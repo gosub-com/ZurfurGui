@@ -1,0 +1,107 @@
+{
+    "Controller": "Window",
+    "Classes": [ "Window" ],
+    "DefaultStyles": [
+        {
+            "BackColor": "LightSkyBlue",
+            "BorderRadius": 10.0,
+            "BorderWidth": 2,
+            "BorderColor": "AliceBlue",
+            "SizeMin": {
+                "Width": 160,
+                "Height": 80
+            }
+        }
+    ],
+    "Content": [
+        {
+            "Layout": "DockPanel",
+            "Content": [
+                {
+                    "Classes": [ "Window.Title" ],
+                    "Name": "_windowTitle",
+                    "Layout": "DockPanel",
+                    "DefaultStyles": [
+                        {
+                            "Padding": {
+                                "Left": 10,
+                                "Top": 4,
+                                "Right": 10,
+                                "Bottom": 0
+                            },
+                            "BackColor": "DarkSlateBlue",
+                            "BorderRadius": 10.0,
+                            "Dock": "Top",
+                            "AlignVertical": "Top"
+                        }
+                    ],
+                    "Content": [
+                        {
+                            "Controller": "Text",
+                            "Dock": "Left",
+                            "Text": "≡",
+                            "Font": { "Size": 24.0 }
+                        },
+                        {
+                            "Controller": "Text",
+                            "Name": "_closeButton",
+                            "Dock": "Right",
+                            "Text": "X",
+                            "Font": { "Size": 24.0 }
+                        },
+                        {
+                            "Classes": [ "Window.Title.Text" ],
+                            "Controller": "Text",
+                            "DisableHitTest": true,
+                            "DefaultStyles": [
+                                {
+                                    "Text": "Window Title",
+                                    "AlignHorizontal": "Center",
+                                    "AlignVertical": "Center",
+                                    "Font": { "Size": 24.0 }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "Name": "_windowContent",
+                    "Classes": [ "Window.Content" ],
+                    "Clip": true,
+                    "DefaultStyles": [
+                        {
+                            "Margin": {
+                                "Left": 10,
+                                "Top": 10,
+                                "Right": 10,
+                                "Bottom": 10
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "Name": "_resizeHandle",
+            "AlignHorizontal": "Right",
+            "AlignVertical": "Bottom",
+            "Margin": {
+                "Left": 0,
+                "Top": 0,
+                "Right": -5,
+                "Bottom": -13
+            },
+            "Content": [
+                {
+                    "Controller": "Text",
+                    "Text": "◢",
+                    "Offset": {
+                        "X": -0.5,
+                        "Y": -1
+                    },
+                    "Font": { "Size": 32.0 }
+                }
+            ]
+        }
+    ]
+}

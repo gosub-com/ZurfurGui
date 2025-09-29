@@ -1,4 +1,4 @@
-﻿using static ZurfurGui.Base.Helpers;
+﻿using ZurfurGui.Base.Helpers;
 
 namespace ZurfurGui.Base;
 
@@ -24,11 +24,11 @@ public struct Thickness : IEquatable<Thickness>
     public override string ToString() => FormattableString.Invariant($"{Left},{Top},{Right},{Bottom}");
     public override int GetHashCode()
     {
-        var h = Left.GetHashCode();
-        h += HashMix(h) + Top.GetHashCode();
-        h += HashMix(h) + Right.GetHashCode();
-        h += HashMix(h) + Bottom.GetHashCode();
-        return HashMix(h);
+        var h = new Hasher(Left.GetHashCode());
+        h.Add(Top.GetHashCode());
+        h.Add(Right.GetHashCode());
+        h.Add(Bottom.GetHashCode());
+        return h.GetHashCode();
     }
     public static Thickness operator +(Thickness a, Thickness b)
         => new Thickness(a.Left + b.Left, a.Top + b.Top, a.Right + b.Right, a.Bottom + b.Bottom);

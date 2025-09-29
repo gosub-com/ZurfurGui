@@ -23,7 +23,7 @@ public static class Json
     ///     false
     ///     null
     /// </summary>
-    public static Dictionary<string, object?> ParseJson(string json)
+    public static Dictionary<string, object?> Parse(string json)
     {
         int index = 0;
         SkipWhitespace(json, ref index);
@@ -212,11 +212,11 @@ public static class Json
 
     private static void SkipWhitespace(string json, ref int index)
     {
-        while (index < json.Length && char.IsWhiteSpace(json[index])) 
+        while (index < json.Length && char.IsWhiteSpace(json[index]))
             index++;
     }
 
-    
+
     static LocationException GetLocationException(string message, string json, int index)
     {
         var (line, column) = GetLineAndColumn(json, index);
@@ -242,6 +242,55 @@ public static class Json
         return (line, column);
     }
 
+    /// <summary>
+    /// Serialize a JSON parsed by Json.Parse.  The dictionary must only contain null, string,
+    /// decimal, double, long, bool, Dictionary<string, object?>, or List<object?> values.
+    /// </summary>
+    public static string Serialize(Dictionary<string, object?> obj)
+    {
+        return Serialize((object?)obj);
+    }
+
+
+    static string Serialize(object? obj)
+    {
+        if (obj == null)
+            return "null";
+
+        if (obj is string str)
+            return $"\"{EscapeString(str)}\"";
+
+        if (obj is bool boolean)
+            return boolean ? "true" : "false";
+
+        if (obj is double || obj is long || obj is int || obj is float || obj is decimal)
+            return Convert.ToString(obj, System.Globalization.CultureInfo.InvariantCulture);
+
+        if (obj is Dictionary<string, object?> dict)
+        {
+            var entries = new List<string>();
+            foreach (var kvp in dict)
+            {
+                entries.Add($"\"{EscapeString(kvp.Key)}\": {Serialize(kvp.Value)}");
+            }
+            return $"{{{string.Join(", ", entries)}}}";
+        }
+
+        if (obj is List<object?> list)
+        {
+            var items = new List<string>();
+            foreach (var item in list)
+                items.Add(Serialize(item));
+            return $"[{string.Join(", ", items)}]";
+        }
+
+        throw new InvalidOperationException($"Unsupported type: {obj.GetType()}");
+    }
+
+    private static string EscapeString(string str)
+    {
+        return str.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
+    }
 }
 
 /// <summary>

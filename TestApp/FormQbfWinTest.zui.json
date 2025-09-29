@@ -187,17 +187,17 @@
                 {
                     "Controller": "Text",
                     "Text": "The",
-                    "FontSize": 16.0
+                    "Font": { "Size": 16.0 }
                 },
                 {
                     "Controller": "Text",
                     "Text": "Quick",
-                    "FontSize": 32.0
+                    "Font": { "Size": 32.0 }
                 },
                 {
                     "Controller": "Text",
                     "Text": "Brown",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 }
             ]
         },
@@ -207,7 +207,7 @@
                 {
                     "Controller": "Text",
                     "Text": "The Quick Brown",
-                    "FontSize": 26.0,
+                    "Font": { "Size": 26.0 },
                     "Margin": {
                         "Left": -30,
                         "Top": 0,
@@ -218,12 +218,12 @@
                 {
                     "Controller": "Text",
                     "Text": "Fox &Jumps",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 },
                 {
                     "Controller": "Text",
                     "Text": "Over the lazy dog",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 }
             ]
         },
@@ -233,26 +233,22 @@
                 {
                     "Controller": "Text",
                     "Text": "Sans j",
-                    "FontSize": 26.0,
-                    "FontName": "sans-serif"
+                    "Font": { "Size": 26.0, "Name":  "sans-serif" }
                 },
                 {
                     "Controller": "Text",
                     "Text": "Arial j",
-                    "FontSize": 26.0,
-                    "FontName": "Arial"
+                    "Font": { "Size": 26.0, "Name":  "Arial" }
                 },
                 {
                     "Controller": "Text",
                     "Text": "﴿█j A﴿│|☰",
-                    "FontSize": 26.0,
-                    "FontName": "Arial"
+                    "Font": { "Size": 26.0, "Name":  "Arial" }
                 },
                 {
                     "Controller": "Text",
-                    "Text": "Serif j",
-                    "FontSize": 26.0,
-                    "FontName": "Times New Roman"
+                    "Text": "Serif tnr",
+                    "Font": { "Size": 24.0, "Name": "Times New Roman" }
                 }
             ]
         },
@@ -262,17 +258,17 @@
                 {
                     "Controller": "Text",
                     "Text": "TheQuickBrown",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 },
                 {
                     "Controller": "Text",
                     "Text": " ",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 },
                 {
                     "Controller": "Text",
                     "Text": "   ",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 }
             ]
         },
@@ -282,39 +278,38 @@
                 {
                     "Controller": "Text",
                     "Text": "1 The Quick Brown",
-                    "FontSize": 40.0,
-                    "FontName": "Times New ROman"
+                    "Font": { "Size": 40.0, "Name": "Times New Roman" }
                 },
                 {
                     "Controller": "Text",
                     "Text": "2 Fox Jumps Over",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 },
                 {
                     "Controller": "Text",
                     "Text": "3 The Lazy Dog",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 },
                 {
                     "Controller": "Text",
                     "Text": "4 And a Cow",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 },
                 {
                     "Controller": "Text",
                     "Text": "5 And a Zebra",
-                    "FontSize": 16.0,
+                    "Font": { "Size": 16.0 },
                     "AlignVertical": "Center"
                 },
                 {
                     "Controller": "Text",
                     "Text": "",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 },
                 {
                     "Controller": "Text",
                     "Text": "",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 }
             ]
         },
@@ -325,47 +320,46 @@
                 {
                     "Controller": "Text",
                     "Text": "The Quick Brown",
-                    "FontSize": 40.0,
-                    "FontName": "Times New Roman"
+                    "Font": { "Size": 40.0, "Name": "Times New Roman" }
                 },
                 {
                     "Controller": "Text",
                     "Text": "Fox Jumps Over",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 },
                 {
                     "Controller": "Text",
                     "Text": "The Lazy Dog",
-                    "FontSize": 26.0
+                    "Font": { "Size": 26.0 }
                 },
                 {
                     "Controller": "Text",
                     "Text": "And a Cow",
-                    "FontSize": 32.0,
+                    "Font": { "Size": 32.0 },
                     "AlignVertical": "Center"
                 },
                 {
                     "Controller": "Text",
                     "Text": "Center",
-                    "FontSize": 16.0,
+                    "Font": { "Size": 16.0 },
                     "AlignVertical": "Center"
                 },
                 {
                     "Controller": "Text",
                     "Text": "Top",
-                    "FontSize": 16.0,
+                    "Font": { "Size": 16.0 },
                     "AlignVertical": "Top"
                 },
                 {
                     "Controller": "Text",
                     "Text": "Bottom",
-                    "FontSize": 16.0,
+                    "Font": { "Size": 16.0 },
                     "AlignVertical": "Bottom"
                 },
                 {
                     "Controller": "Text",
                     "Text": "Stretch",
-                    "FontSize": 16.0,
+                    "Font": { "Size": 16.0 },
                     "AlignVertical": "Stretch"
                 }
             ]

@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ZurfurGui.Base;
-using ZurfurGui.Controls;
 
 namespace ZurfurGui.Layout;
 
@@ -38,7 +37,7 @@ public class LayoutDockPanel : Layoutable
         {
             // Ignore invisible views
             var childView = childViews[i];
-            if (!childView.GetStyle(Zui.IsVisible))
+            if (!childView.GetStyle(Zui.IsVisible).Or(true))
                 continue;
 
             _lastVisibleIndex = i;
@@ -75,7 +74,7 @@ public class LayoutDockPanel : Layoutable
         {
             // Ignore invisible views
             var childView = childViews[i];
-            var viewIsVisible = childView.GetStyle(Zui.IsVisible);
+            var viewIsVisible = childView.GetStyle(Zui.IsVisible).Or(true);
             if (!viewIsVisible)
                 continue;
             

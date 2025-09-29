@@ -1,9 +1,4 @@
-﻿using Microsoft.JSInterop;
-using System.Diagnostics;
-using System.Runtime.InteropServices.JavaScript;
-using System.Runtime.Versioning;
-
-using ZurfurGui.Browser;
+﻿using ZurfurGui.Browser;
 
 namespace TestApp.Browser;
 

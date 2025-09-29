@@ -1,8 +1,9 @@
 ﻿
 using System.Diagnostics;
 using ZurfurGui.Base;
-using ZurfurGui.Controls;
 using ZurfurGui.Platform;
+using ZurfurGui.Property;
+using ZurfurGui.Windows;
 
 namespace ZurfurGui.Draw;
 
@@ -11,13 +12,13 @@ public class Renderer
     OsWindow _window;
     OsCanvas _canvas;
     AppWindow _appWindow;
-    DrawContext _renderContext;
+    RenderContext _renderContext;
 
     View? _hoverView;
 
-    int _frameCount;
-    int _frameLastCountSecond;
-    int _fps;
+    long _frameCount;
+    long _frameLastCountSecond;
+    long _fps;
     int _second;
     long _totalMs;
     long _avgMs;
@@ -27,20 +28,28 @@ public class Renderer
 
     Point _pointerPosition;
 
+    public long Fps => _fps;
+    public double AvgMs => _avgMs;
+    public long FrameCount => _frameCount;
+    public OsCanvas Canvas => _canvas;
+    public OsWindow Window => _window;
+    public RenderContext RenderContext => _renderContext;
+
 
     public Renderer(OsWindow window, OsCanvas canvas, AppWindow appWindow)
     {
         _window = window;
         _canvas = canvas;
-        _renderContext = new DrawContext(_canvas.Context);
+        _renderContext = new RenderContext(_canvas.Context);
 
         _appWindow = appWindow;
-        _appWindow.SetRenderWindow(window, canvas);
+        _appWindow.SetRenderWindow(this);
 
         if (_canvas.PointerInput != null)
             throw new ArgumentException("Pointer input already taken", nameof(_canvas));
         _canvas.PointerInput = PointerInput;
     }
+
 
 
     void PointerInput(PointerEvent ev)
@@ -90,7 +99,7 @@ public class Renderer
         if (!clip.Contains(target))
             return null;
 
-        if (!view.GetStyle(Zui.IsVisible))
+        if (!view.GetStyle(Zui.IsVisible).Or(true))
             return null;
 
         // Check children first
@@ -102,7 +111,7 @@ public class Renderer
                 return hit;
         }
 
-        if (!view.GetProperty(Zui.DisableHitTest))
+        if (!view.GetProperty(Zui.DisableHitTest).Or(false))
         {
             // User content hit test
             if (view.Draw is Drawable renderable)
@@ -173,6 +182,8 @@ public class Renderer
     {
         var timer = Stopwatch.StartNew();
 
+        _appWindow.CallPreRenderFrame();
+
 
         // Resize if the window size changed
         var view = _appWindow.View;
@@ -201,8 +212,6 @@ public class Renderer
         }
 
         _renderContext.SetPointerPosition(_pointerPosition);
-        _appWindow.SetRenderStats(_frameCount, _fps, (int)_avgMs);
-
         _renderContext.SetCurrentViewInternal(view);
         _renderContext.PushDeviceClip(new Rect(new(), view.toDevice(_mainWindowSize)));
         RenderView(view);
@@ -217,7 +226,7 @@ public class Renderer
     void RenderView(View view)
     {
         // Quick exit for invisible
-        if (!view.GetStyle(Zui.IsVisible))
+        if (!view.GetStyle(Zui.IsVisible).Or(true))
             return;
 
 
@@ -226,7 +235,7 @@ public class Renderer
         DrawHelper.DrawBackground(view, _renderContext);
 
         // Clip the content rect if requested
-        if (view.GetProperty(Zui.Clip))
+        if (view.GetProperty(Zui.Clip).Or(false))
             _renderContext.PushDeviceClip(view.toDevice(view.ContentRect));
 
         try

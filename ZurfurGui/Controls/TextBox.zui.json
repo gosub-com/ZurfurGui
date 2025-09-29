@@ -1,25 +1,20 @@
 {
     "Controller": "TextBox",
     "Classes": [ "TextBox" ],
-    "DefaultStyle": {
-        "Styles": [
-            {
-                "Selectors": "TextBox",
-                "Properties": {
-                    "Background": "LightBlue",
-                    "BorderWidth": 2,
-                    "BorderColor": "Navy",
-                    "SizeMin": {
-                        "Width": 100
-                    },
-                    "Padding": {
-                        "Left": 2,
-                        "Top": 2,
-                        "Right": 0,
-                        "Bottom": 0
-                    }
-                }
+    "DefaultStyles": [
+        {
+            "BackColor": "LightBlue",
+            "BorderWidth": 2,
+            "BorderColor": "Navy",
+            "SizeMin": {
+                "Width": 100
+            },
+            "Padding": {
+                "Left": 2,
+                "Top": 2,
+                "Right": 0,
+                "Bottom": 0
             }
-        ]
-    }
+        }
+    ]
 }

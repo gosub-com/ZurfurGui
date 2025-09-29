@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
+using ZurfurGui.Base.Helpers;
+using ZurfurGui.Property;
 
 namespace ZurfurGui.Base;
 
@@ -16,9 +14,12 @@ namespace ZurfurGui.Base;
 /// search for and break apart strings.
 /// </summary>
 [CollectionBuilder(typeof(TextLinesBuilder), nameof(TextLinesBuilder.Create))]
-public class TextLines : IEnumerable<string>, IReadOnlyList<string>
+public class TextLines : IEquatable<TextLines>, IEnumerable<string>, IReadOnlyList<string>
 {
-    public static string[] Empty = Array.Empty<string>();
+    public static readonly TextLines Empty = new();
+    public static readonly TextLines Unknown = new("�");
+
+
     private readonly string[] _lines;
 
     public TextLines() => _lines = Array.Empty<string>();
@@ -34,13 +35,17 @@ public class TextLines : IEnumerable<string>, IReadOnlyList<string>
 
     public TextLines(ReadOnlySpan<string> lines)
     {
+        if (lines.Length == 0)
+        {
+            _lines = Array.Empty<string>();
+            return;
+        }
         var list = new List<string>();
         foreach (var line in lines)
             list.AddRange(line.Split(["\r\n", "\n", "\r"], StringSplitOptions.None));
         _lines = list.ToArray();
     }
 
-    public static implicit operator TextLines(string text) => new TextLines(text);
 
     public int Count => _lines.Length;
     public string this[int index] => _lines[index];
@@ -69,6 +74,57 @@ public class TextLines : IEnumerable<string>, IReadOnlyList<string>
             if (_lines.Contains(line))
                 return true;
         return false;
+    }
+
+    /// <summary>
+    /// Determines whether the current TextLines instance is equal to another TextLines instance.
+    /// </summary>
+    public bool Equals(TextLines? other)
+    {
+        if (other == null)
+            return false;
+
+        if (ReferenceEquals(this, other))
+            return true;
+
+        if (_lines.Length != other._lines.Length)
+            return false;
+
+        for (int i = 0; i < _lines.Length; i++)
+        {
+            if (_lines[i] != other._lines[i])
+                return false;
+        }
+
+        return true;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is TextLines other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        var hash = new Hasher(Count);
+        foreach (var line in _lines)
+        {
+            hash.Add(line.GetHashCode());
+        }
+        return hash.GetHashCode();
+    }
+
+    public static bool operator ==(TextLines? left, TextLines? right)
+    {
+        if (left is null)
+            return right is null;
+
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(TextLines? left, TextLines? right)
+    {
+        return !(left == right);
     }
 
     /// <summary>
@@ -104,8 +160,9 @@ public class TextLines : IEnumerable<string>, IReadOnlyList<string>
     {
         internal static TextLines Create(ReadOnlySpan<string> values)
         {
+            if (values.Length == 0)
+                return Empty;
             return new TextLines(values);
         }
     }
-
 }

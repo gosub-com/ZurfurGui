@@ -1,0 +1,11 @@
+{
+    "Controller": "DebugWindow",
+    "Text": [ "Stats Text" ],
+    "Layout": "Column",
+    "Content": [
+        {
+            "Controller": "Text",
+            "Name":  "_statsView"
+        }
+    ]
+}

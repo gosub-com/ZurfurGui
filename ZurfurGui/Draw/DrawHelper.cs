@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ZurfurGui.Base;
-using ZurfurGui.Controls;
 
 namespace ZurfurGui.Draw;
 public static class DrawHelper
@@ -14,13 +13,13 @@ public static class DrawHelper
     /// <summary>
     /// Draws a panel with a border & background.
     /// </summary>
-    public static void DrawBackground(View view, DrawContext context)
+    public static void DrawBackground(View view, RenderContext context)
     {
         var backgroundRect = new Rect(new(), view.Size);
 
         // Draw background
         var borderRadius = view.GetStyle(Zui.BorderRadius).Or(0);
-        var background = view.GetStyle(Zui.Background).Or(Colors.TransParent);
+        var background = view.GetStyle(Zui.BackColor).Or(Colors.TransParent);
         if (background.A != 0)
         {
             context.FillColor = background;
@@ -50,7 +49,7 @@ public static class DrawHelper
             return false;
 
         // Check if the background is visible (TBD: on the border and border radius)
-        return view.GetStyle(Zui.Background).Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
+        return view.GetStyle(Zui.BackColor).Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
     }
 
 }

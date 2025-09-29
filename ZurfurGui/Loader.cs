@@ -3,31 +3,47 @@ using System.Text.Json.Serialization;
 using ZurfurGui.Base;
 using ZurfurGui.Base.Serializers;
 using ZurfurGui.Controls;
-using ZurfurGui.Draw;
 using ZurfurGui.Layout;
-using ZurfurGui.Styles.Serializers;
+using ZurfurGui.Property;
+using ZurfurGui.Property.Serializers;
 
 namespace ZurfurGui;
+
+// Define a custom attribute
+public class ZurfurGuiAttribute : Attribute
+{
+    public string ControllerTypeName { get; }
+
+    public ZurfurGuiAttribute(string controllerTypeName)
+    {
+        ControllerTypeName = controllerTypeName;
+    }
+}
 
 /// <summary>
 /// Load and build controls from JSON
 /// </summary>
 public static class Loader
 {
+    static Dictionary<string, Type> s_controllers = new();
+
     public static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
     {
         Converters = {
-                new DoublePropJsonConverter(),
-                new PointPropJsonConverter(),
-                new SizePropJsonConverter(),
-                new ThicknessPropJsonConverter(),
-                new PropertiesJsonConverter(),
-                new TextLinesJsonConverter(),
-                new ColorPropJsonConverter(),
-                new StyleSheetJsonConverter(),
-                new StylePropertyJsonConverter(),
-                new JsonStringEnumConverter()
-            },
+            new BoolPropJsonConverter(),
+            new DoublePropJsonConverter(),
+            new PointPropJsonConverter(),
+            new SizePropJsonConverter(),
+            new ThicknessPropJsonConverter(),
+            new PropertiesJsonConverter(),
+            new TextLinesJsonConverter(),
+            new TextLinesPropJsonConverter(),
+            new ColorPropJsonConverter(),
+            new FontPropJsonConverter(),
+            new StyleSheetJsonConverter(),
+            new StylePropertyJsonConverter(),
+            new JsonStringEnumConverter()
+        },
         NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
     };
 
@@ -57,6 +73,12 @@ public static class Loader
         }
     }
 
+
+    public static void RegisterControl(string name, Type type)
+    {
+        s_controllers[name] = type;
+    }
+
     public static Controllable LoadJson(string json)
     {
         return CreateControl(LoadJsonProperties(json));
@@ -74,10 +96,19 @@ public static class Loader
         var controller = properties.Get(Zui.Controller);
         Controllable control;
         if (controller == "")
+        {
             control = new Panel();
+        }
         else
-            control = ControlManager.Create(controller)
-                ?? throw new ArgumentException($"'{controller}' is not a registered control");
+        {
+            if (!s_controllers.TryGetValue(controller, out var type))
+                throw new ArgumentException($"'{controller}' is not a registered control: "
+                    + $"{string.Join(",\r\n", s_controllers.Keys)}");
+
+            control = (Controllable?)Activator.CreateInstance(type)
+                ?? throw new ArgumentException($"Could not create instance of '{controller}'");
+
+        }
 
         // The properties become overrides, but the content becomes a parameter to LoadContent
         var contents = properties.Get(Zui.Content);

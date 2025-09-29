@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ZurfurGui.Base;
-using ZurfurGui.Controls;
 using static ZurfurGui.Base.Size;
 
 namespace ZurfurGui.Layout;
@@ -21,7 +20,7 @@ public static class LayoutHelper
         var windowMeasured = new Size();
         foreach (var child in view.Children)
         {
-            var viewIsVisible = child.GetStyle(Zui.IsVisible);
+            var viewIsVisible = child.GetStyle(Zui.IsVisible).Or(true);
             if (!viewIsVisible)
                 continue;
 
@@ -42,7 +41,7 @@ public static class LayoutHelper
         // All children get positioned at absolute coordinates in the contentRect
         var contentRect = view.ContentRect;
         foreach (var child in view.Children)
-            if (child.GetStyle(Zui.IsVisible))
+            if (child.GetStyle(Zui.IsVisible).Or(true))
                 child.Arrange(contentRect, measure);
     }
 

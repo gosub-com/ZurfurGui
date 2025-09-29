@@ -1,0 +1,23 @@
+{
+    "Controller": "AppWindow",
+    "Classes": [ "AppWindow" ],
+    "DefaultStyles": [
+        {
+            "BackColor": "#202080"
+        }
+    ],
+    "Content": [
+        {
+            "#1": "",
+            "#2": "*** Main App Window ***",
+            "#3": "",
+            "Name": "_mainAppView"
+        },
+        {
+            "#1": "",
+            "#2": "*** Floating windows, and dialogs on top ***",
+            "#3": "",
+            "Name": "_floatingWindows"
+        }
+    ]
+}

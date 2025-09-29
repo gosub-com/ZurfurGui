@@ -1,6 +1,5 @@
 ﻿using System.Reflection.Metadata;
 using ZurfurGui.Base;
-using ZurfurGui.Controls;
 
 namespace ZurfurGui.Layout;
 
@@ -21,7 +20,7 @@ public class LayoutColumn : Layoutable
         var visibleCount = 0;
         foreach (var childView in view.Children)
         {
-            var viewIsVisible = childView.GetStyle(Zui.IsVisible);
+            var viewIsVisible = childView.GetStyle(Zui.IsVisible).Or(true);
             if (!viewIsVisible)
                 continue;
 

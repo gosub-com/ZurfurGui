@@ -1,7 +1,6 @@
 ﻿
 using System.Diagnostics;
 using ZurfurGui.Base;
-using ZurfurGui.Controls;
 
 namespace ZurfurGui.Layout;
 
@@ -17,7 +16,7 @@ public class LayoutRow : Layoutable
     {
         _measuredRects.Clear();
 
-        var wrap = view.GetStyle(Zui.Wrap);
+        var wrap = view.GetStyle(Zui.Wrap).Or(true);
         var rowPosX = 0.0;
         var rowPosY = 0.0;
         var rowHeight = 0.0;
@@ -28,7 +27,7 @@ public class LayoutRow : Layoutable
         foreach (var childView in view.Children)
         {
             // Ignore invisible views
-            var viewIsVisible = childView.GetStyle(Zui.IsVisible);
+            var viewIsVisible = childView.GetStyle(Zui.IsVisible).Or(true);
             if (!viewIsVisible)
                 continue;
 
@@ -66,7 +65,7 @@ public class LayoutRow : Layoutable
         var contentRect = view.ContentRect;
         foreach (var childView in view.Children)
         {
-            if (childView.GetStyle(Zui.IsVisible))
+            if (childView.GetStyle(Zui.IsVisible).Or(true))
             {
                
                 var measuredRect = i < _measuredRects.Count ? _measuredRects[i] : new();

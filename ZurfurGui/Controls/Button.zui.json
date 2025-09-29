@@ -1,21 +1,16 @@
 {
     "Controller": "Button",
     "Classes": [ "Button" ],
-    "DefaultStyle": {
-        "Styles": [
-            {
-                "Selectors": "Button",
-                "Properties": {
-                    "BorderWidth": 2,
-                    "BorderColor": "Black",
-                    "Padding": {
-                        "Left": 2,
-                        "Top": 2,
-                        "Right": 2,
-                        "Bottom": 2
-                    }
-                }
+    "DefaultStyles": [
+        {
+            "BorderWidth": 2,
+            "BorderColor": "Black",
+            "Padding": {
+                "Left": 2,
+                "Top": 2,
+                "Right": 2,
+                "Bottom": 2
             }
-        ]
-    }
+        }
+    ]
 }

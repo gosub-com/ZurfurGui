@@ -3,19 +3,31 @@
 using ZurfurGui;
 using ZurfurGui.Components;
 using ZurfurGui.Controls;
+using ZurfurGui.Property;
+using ZurfurGui.Windows;
 
-using ZurfurGui.Base;
-
-public class ZurfurMain
+public static class ZurfurMain
 {
     public static void MainApp(AppWindow app)
     {
-        ControlManager.Add(() => new FormSearch());
-        ControlManager.Add(() => new FormSmallWinTest());
-        ControlManager.Add(() => new FormQbfWinTest());
-        ControlManager.Add(() => new FormMultiForm());
-
+        ZurfurControls.Register();
         app.SetMainappWindow(new FormQbfWinTest());
+
+        var win0 = Loader.LoadJson("""
+        {
+          "Controller": "Window",
+          "Offset": { "X": 10, "Y": 10 },
+          "AlignHorizontal": "Left",
+          "AlignVertical": "Top",
+          "Content": [
+            {
+              "Controller": "DebugWindow"
+            }
+          ]
+        }
+        """);
+        app.ShowWindow((Window)win0);
+
 
         var win1 = Loader.LoadJson("""
         {
@@ -51,7 +63,7 @@ public class ZurfurMain
         """);
         app.ShowWindow((Window)win2);
         var smallWinTest = (FormSmallWinTest)win2.View.FindByName("smallWinTest").Controller;
-        smallWinTest.button1.View.SetProperty(Zui.Text, "*BUTTON*");
+        smallWinTest.button1.View.SetProperty(Zui.Text, new(["*BUTTON*"]));
 
         var win3 = Loader.LoadJson("""
         {

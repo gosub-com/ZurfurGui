@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static ZurfurGui.Base.Helpers;
+﻿using ZurfurGui.Base.Helpers;
 
 namespace ZurfurGui.Base;
 
@@ -22,9 +17,9 @@ public struct Vector : IEquatable<Vector>
     public string ToString(string f) => FormattableString.Invariant($"{X.ToString(f)},{Y.ToString(f)}");
     public override int GetHashCode()
     {
-        var h = X.GetHashCode();
-        h += HashMix(h) + Y.GetHashCode();
-        return HashMix(h);
+        var h = new Hasher(X.GetHashCode());
+        h.Add(Y.GetHashCode());
+        return h.GetHashCode();
     }
     public Point ToPoint => new Point(X, Y);
     public Size ToSize => new Size(X, Y);
