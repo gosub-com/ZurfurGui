@@ -28,6 +28,10 @@ public class RenderContext
     public Stats RenderStats => _renderStats;
 
     public int ClipLevel => _clipStack.Count;
+
+    /// <summary>
+    /// The clipping rectangle in device pixels
+    /// </summary>
     public Rect DeviceClip => _clip;
 
     // TBD: Turn into a class, PointerInfo

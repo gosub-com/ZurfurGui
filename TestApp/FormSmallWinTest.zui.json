@@ -5,8 +5,7 @@
             "Controller": "Button",
             "Name": "button1",
             "Text": "Big Button Test",
-            "AlignVertical": "Top",
-            "AlignHorizontal": "Left",
+            "Align": { "Vertical": "Top", "Horizontal": "Left" },
             "SizeRequest": {
                 "Width": 100,
                 "Height": 100
@@ -22,8 +21,7 @@
             "Controller": "Button",
             "Name": "button2",
             "Text": "Test 2",
-            "AlignVertical": "Top",
-            "AlignHorizontal": "Left",
+            "Align": { "Vertical": "Top", "Horizontal": "Left" },
             "Margin": {
                 "Left": 10,
                 "Top": 20,
@@ -35,8 +33,7 @@
             "Controller": "Button",
             "Name": "button3",
             "Text": "Test 3",
-            "AlignVertical": "Top",
-            "AlignHorizontal": "Left",
+            "Align": { "Vertical": "Top", "Horizontal": "Left" },
             "Margin": {
                 "Left": 10,
                 "Top": 50,
@@ -47,74 +44,62 @@
         {
             "Controller": "Text",
             "Text": "TC",
-            "AlignVertical": "Top",
-            "AlignHorizontal": "Center"
+            "Align": { "Vertical": "Top", "Horizontal": "Center" }
         },
         {
             "Controller": "Text",
             "Text": "TS",
-            "AlignVertical": "Top",
-            "AlignHorizontal": "Stretch"
+            "Align": { "Vertical": "Top", "Horizontal": "Stretch" }
         },
         {
             "Controller": "Text",
             "Text": "TR",
-            "AlignVertical": "Top",
-            "AlignHorizontal": "Right"
+            "Align": { "Vertical": "Top", "Horizontal": "Right" }
         },
         {
             "Controller": "Text",
             "Text": "TL",
-            "AlignVertical": "Top",
-            "AlignHorizontal": "Left"
+            "Align": { "Vertical": "Top", "Horizontal": "Left" }
         },
         {
             "Controller": "Text",
             "Text": "Middle",
-            "AlignVertical": "Center",
-            "AlignHorizontal": "Center"
+            "Align": { "Vertical": "Center", "Horizontal": "Center" }
         },
         {
             "Controller": "Text",
             "Text": "CS",
-            "AlignVertical": "Center",
-            "AlignHorizontal": "Stretch"
+            "Align": { "Vertical": "Center", "Horizontal": "Stretch" }
         },
         {
             "Controller": "Text",
             "Text": "CR",
-            "AlignVertical": "Center",
-            "AlignHorizontal": "Right"
+            "Align": { "Vertical": "Center", "Horizontal": "Right" }
         },
         {
             "Controller": "Text",
             "Text": "CL",
-            "AlignVertical": "Center",
-            "AlignHorizontal": "Left"
+            "Align": { "Vertical": "Center", "Horizontal": "Left" }
         },
         {
             "Controller": "Text",
             "Text": "BC",
-            "AlignVertical": "Bottom",
-            "AlignHorizontal": "Center"
+            "Align": { "Vertical": "Bottom", "Horizontal": "Center" }
         },
         {
             "Controller": "Text",
             "Text": "BS",
-            "AlignVertical": "Bottom",
-            "AlignHorizontal": "Stretch"
+            "Align": { "Vertical": "Bottom", "Horizontal": "Stretch" }
         },
         {
             "Controller": "Text",
             "Text": "BR",
-            "AlignVertical": "Bottom",
-            "AlignHorizontal": "Right"
+            "Align": { "Vertical": "Bottom", "Horizontal": "Right" }
         },
         {
             "Controller": "Text",
             "Text": "BL",
-            "AlignVertical": "Bottom",
-            "AlignHorizontal": "Left"
+            "Align": { "Vertical": "Bottom", "Horizontal": "Left" }
         }
     ]
 }

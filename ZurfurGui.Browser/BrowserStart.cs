@@ -33,7 +33,7 @@ public static partial class BrowserStart
 
     public static void Start(string canvasId, Action<AppWindow> mainAppEntry)
     {
-        var appWindow = Zui.Init(mainAppEntry);
+        var appWindow = Loader.Init(mainAppEntry);
         var window = new BrowserWindow();
         var canvas = new BrowserCanvas(canvasId, window);
         var renderer = new Renderer(window, canvas, appWindow);

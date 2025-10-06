@@ -5,7 +5,7 @@ using ZurfurGui.Base;
 namespace ZurfurGui.Property.Serializers;
 
 /// <summary>
-/// Custom JSON converter for the ColorProp struct.
+/// Custom JSON converter for the ColorProp struct, which converts from CSS color strings.
 /// </summary>
 internal class ColorPropJsonConverter : JsonConverter<ColorProp>
 {

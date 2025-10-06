@@ -10,6 +10,7 @@ internal class PropertiesJsonConverter : JsonConverter<Properties>
 {
     /// <summary>
     /// Reads and converts the JSON to a Properties instance.
+    /// Ignores comments (i.e. properties starting with '#')
     /// </summary>
     public override Properties Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

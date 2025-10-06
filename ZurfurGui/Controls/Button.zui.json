@@ -3,8 +3,10 @@
     "Classes": [ "Button" ],
     "DefaultStyles": [
         {
-            "BorderWidth": 2,
-            "BorderColor": "Black",
+            "Back": {
+                "BorderWidth": 2,
+                "BorderColor": "Black"
+            },
             "Padding": {
                 "Left": 2,
                 "Top": 2,

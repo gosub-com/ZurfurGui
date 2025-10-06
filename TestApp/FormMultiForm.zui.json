@@ -5,9 +5,11 @@
     "Content": [
         {
             "Controller": "Panel",
-            "BorderRadius": 10.0,
-            "BorderWidth": 2.0,
-            "BorderColor": "Navy",
+            "Back": {
+                "Radius": 10.0,
+                "BorderWidth": 2.0,
+                "BorderColor": "Navy"
+            },
             "Padding": {
                 "Left": 15,
                 "Top": 15,
@@ -22,9 +24,11 @@
         },
         {
             "Controller": "Panel",
-            "BorderRadius": 10.0,
-            "BorderWidth": 2.0,
-            "BorderColor": "Green",
+            "Back": {
+                "Radius": 10.0,
+                "BorderWidth": 2.0,
+                "BorderColor": "Green"
+            },
             "Padding": {
                 "Left": 15,
                 "Top": 15,

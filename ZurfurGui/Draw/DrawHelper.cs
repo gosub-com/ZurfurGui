@@ -15,26 +15,28 @@ public static class DrawHelper
     /// </summary>
     public static void DrawBackground(View view, RenderContext context)
     {
-        var backgroundRect = new Rect(new(), view.Size);
+        // Quick exit when drawing outside the clip region
+        if (context.DeviceClip.Intersect(new Rect(view.Origin, view.toDevice(view.Size))).Width == 0)
+            return;
 
         // Draw background
-        var borderRadius = view.GetStyle(Zui.BorderRadius).Or(0);
-        var background = view.GetStyle(Zui.BackColor).Or(Colors.TransParent);
+        var back = view.GetStyle(Zui.Back);
+        var borderRadius = back.Radius.Or(0);
+        var background = back.Color.Or(Colors.TransParent);
         if (background.A != 0)
         {
             context.FillColor = background;
-            context.FillRect(backgroundRect, borderRadius);
+            context.FillRect(new Rect(new(), view.Size), borderRadius);
         }
 
         // Draw border
-        var borderColor = view.GetStyle(Zui.BorderColor).Or(Colors.TransParent);
-        var borderWidth = view.GetStyle(Zui.BorderWidth).Or(0);
+        var borderColor = back.BorderColor.Or(Colors.TransParent);
+        var borderWidth = back.BorderWidth.Or(0);
         if (borderWidth > 0 && borderColor.A != 0)
         {
             context.LineWidth = borderWidth;
             context.StrokeColor = borderColor;
-            backgroundRect = backgroundRect.Deflate(borderWidth / 2);
-            context.StrokeRect(backgroundRect, borderRadius);
+            context.StrokeRect(new Rect(new(), view.Size).Deflate(borderWidth / 2), borderRadius);
         }
     }
 
@@ -49,7 +51,7 @@ public static class DrawHelper
             return false;
 
         // Check if the background is visible (TBD: on the border and border radius)
-        return view.GetStyle(Zui.BackColor).Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
+        return view.GetStyle(Zui.Back).Color.Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
     }
 
 }

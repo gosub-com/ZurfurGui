@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace ZurfurGui.Property.Serializers;
 
 /// <summary>
-/// Custom JSON converter for the DoubleQ struct.
+/// Custom JSON converter for the DoubleProp struct.
 /// </summary>
 internal class DoublePropJsonConverter : JsonConverter<DoubleProp>
 {

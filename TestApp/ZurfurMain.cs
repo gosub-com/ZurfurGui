@@ -17,8 +17,7 @@ public static class ZurfurMain
         {
           "Controller": "Window",
           "Offset": { "X": 10, "Y": 10 },
-          "AlignHorizontal": "Left",
-          "AlignVertical": "Top",
+          "Align": { "Horizontal": "Left", "Vertical": "Top" },
           "Content": [
             {
               "Controller": "DebugWindow"
@@ -34,8 +33,7 @@ public static class ZurfurMain
           "Controller": "Window",
           "SizeRequest": { "Width": 400, "Height": 500 },
           "Offset": { "X": 95, "Y": 175 },
-          "AlignHorizontal": "Left",
-          "AlignVertical": "Top",
+          "Align": { "Horizontal": "Left", "Vertical": "Top" },
           "Content": [
             {
               "Controller": "TestApp.FormQbfWinTest"
@@ -51,8 +49,7 @@ public static class ZurfurMain
           "Controller": "Window",
           "Margin": { "Left": 600, "Top": 175, "Right": 0, "Bottom": 0 },
           "SizeRequest": { "Width": 200, "Height": 200 },
-          "AlignHorizontal": "Left",
-          "AlignVertical": "Top",
+          "Align": { "Horizontal": "Left", "Vertical": "Top" },
           "Content": [
             {
               "Controller": "TestApp.FormSmallWinTest",
@@ -69,8 +66,7 @@ public static class ZurfurMain
         {
           "Controller": "Window",
           "SizeRequest": { "Width": 200, "Height": 200 },
-          "AlignHorizontal": "Right",
-          "AlignVertical": "Bottom",
+          "Align": { "Horizontal": "Right", "Vertical": "Bottom" },
           "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
           "Content": [
             {
@@ -84,8 +80,7 @@ public static class ZurfurMain
         var win4 = Loader.LoadJson("""
         {
           "Controller": "Window",
-          "AlignHorizontal": "Left",
-          "AlignVertical": "Bottom",
+          "Align": { "Horizontal": "Left", "Vertical": "Bottom" },
           "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
           "Content": [
             {
@@ -101,8 +96,7 @@ public static class ZurfurMain
         var win5 = Loader.LoadJson("""
         {
           "Controller": "Window",
-          "AlignHorizontal": "Right",
-          "AlignVertical": "Top",
+          "Align": { "Horizontal": "Right", "Vertical": "Top" },
           "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
           "Content": [
             {

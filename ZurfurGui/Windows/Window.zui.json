@@ -3,10 +3,12 @@
     "Classes": [ "Window" ],
     "DefaultStyles": [
         {
-            "BackColor": "LightSkyBlue",
-            "BorderRadius": 10.0,
-            "BorderWidth": 2,
-            "BorderColor": "AliceBlue",
+            "Back": {
+                "Color": "LightSkyBlue",
+                "Radius": 10.0,
+                "BorderWidth": 2,
+                "BorderColor": "AliceBlue"
+            },
             "SizeMin": {
                 "Width": 160,
                 "Height": 80
@@ -29,10 +31,12 @@
                                 "Right": 10,
                                 "Bottom": 0
                             },
-                            "BackColor": "DarkSlateBlue",
-                            "BorderRadius": 10.0,
+                            "Back": {
+                                "Color": "DarkSlateBlue",
+                                "Radius": 10.0
+                            },
                             "Dock": "Top",
-                            "AlignVertical": "Top"
+                            "Align": { "Vertical": "Top" }
                         }
                     ],
                     "Content": [
@@ -56,8 +60,7 @@
                             "DefaultStyles": [
                                 {
                                     "Text": "Window Title",
-                                    "AlignHorizontal": "Center",
-                                    "AlignVertical": "Center",
+                                    "Align": { "Horizontal": "Center", "Vertical": "Center" },
                                     "Font": { "Size": 24.0 }
                                 }
                             ]
@@ -83,8 +86,7 @@
         },
         {
             "Name": "_resizeHandle",
-            "AlignHorizontal": "Right",
-            "AlignVertical": "Bottom",
+            "Align": { "Horizontal": "Right", "Vertical": "Bottom" },
             "Margin": {
                 "Left": 0,
                 "Top": 0,

@@ -3,7 +3,9 @@
     "Classes": [ "AppWindow" ],
     "DefaultStyles": [
         {
-            "BackColor": "#202080"
+            "Back": {
+                "Color": "#202080"
+            }
         }
     ],
     "Content": [

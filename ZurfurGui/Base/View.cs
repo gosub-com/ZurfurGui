@@ -75,7 +75,8 @@ public sealed class View
 
 
     /// <summary>
-    /// Actual content rect inside the view, which may be smaller than the DesiredContentSize
+    /// Content rect inside the view, accounting for padding and border.
+    /// Can be smaller than the DesiredContentSize.
     /// </summary>
     public Rect ContentRect { get; private set; }
 
@@ -249,7 +250,7 @@ public sealed class View
 
         // Include padding and border in the measurement
         var margin = GetStyle(Zui.Margin).Or(0);
-        var padding = GetStyle(Zui.Padding).Or(0) + new Thickness(GetStyle(Zui.BorderWidth).Or(0));
+        var padding = GetStyle(Zui.Padding).Or(0) + new Thickness(GetStyle(Zui.Back).BorderWidth.Or(0));
 
         var constrained = ClampViewSize(available.Deflate(margin)).Deflate(padding);
 
@@ -289,22 +290,24 @@ public sealed class View
         var y = finalRect.Y + margin.Top;
         var size = availableSize;
 
-        var horizontalAlignment = GetStyle(Zui.AlignHorizontal);
-        if (horizontalAlignment != AlignHorizontal.Stretch)
+        var align = GetStyle(Zui.Align);
+        var alignHor = align.Horizontal ?? AlignHorizontal.Stretch;
+        var alignVert = align.Vertical ?? AlignVertical.Stretch;
+
+        if (alignHor != AlignHorizontal.Stretch)
             size.Width = Math.Min(size.Width, DesiredTotalSize.Width - margin.Left - margin.Right);
 
-        var verticalAlignment = GetStyle(Zui.AlignVertical);
-        if (verticalAlignment != AlignVertical.Stretch)
+        if (alignVert != AlignVertical.Stretch)
             size.Height = Math.Min(size.Height, DesiredTotalSize.Height - margin.Top - margin.Bottom);
 
         size = ClampViewSize(size);
 
-        var padding = GetStyle(Zui.Padding).Or(0) + new Thickness(GetStyle(Zui.BorderWidth).Or(0));
+        var padding = GetStyle(Zui.Padding).Or(0) + new Thickness(GetStyle(Zui.Back).BorderWidth.Or(0));
 
         ContentRect = new Rect(new Point(0, 0), size).Deflate(padding);
         Size = size;
 
-        switch (horizontalAlignment)
+        switch (alignHor)
         {
             case AlignHorizontal.Center:
             case AlignHorizontal.Stretch:
@@ -315,7 +318,7 @@ public sealed class View
                 break;
         }
 
-        switch (verticalAlignment)
+        switch (alignVert)
         {
             case AlignVertical.Center:
             case AlignVertical.Stretch:

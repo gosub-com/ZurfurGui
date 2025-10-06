@@ -19,12 +19,20 @@ public class DrawText : Drawable
 
     public void Draw(View view, RenderContext context)
     {
+        // Quick exit when drawing outside the clip region
+        if (context.DeviceClip.Intersect(view.toDevice(view.ContentRect)).Width == 0)
+            return;
+
         // TBD: From style
         var color = Colors.White;
 
         // TBD: Temporary, for testing button hover
         if (view.Controller.TypeName == "Button")
-            view.SetProperty(Zui.BackColor, view.PointerHoverTarget ? Colors.Red : Colors.Gray);
+        {
+            var back = view.GetStyle(Zui.Back);
+            back = back with { Color = view.PointerHoverTarget ? Colors.Red : Colors.Gray };
+            view.SetProperty(Zui.Back, back);
+        }
         else
             color = view.PointerHoverTarget ? Colors.Red : Colors.White;
 

@@ -43,7 +43,7 @@ public class LayoutDockPanel : Layoutable
             _lastVisibleIndex = i;
             childView.Measure(constraint, measure);
             var childSize = childView.DesiredTotalSize;
-            var dock = childView.GetStyle(Zui.Dock);
+            var dock = childView.GetStyle(Zui.Dock).Or(Dock.Left);
             switch (dock)
             {
                 case Dock.Left:
@@ -83,7 +83,7 @@ public class LayoutDockPanel : Layoutable
 
             // Update based on dock (last visible index always takes remaining space)
             var childSize = childView.DesiredTotalSize;
-            var dock = childView.GetStyle(Zui.Dock);
+            var dock = childView.GetStyle(Zui.Dock).Or(Dock.Left);
             if (i < _lastVisibleIndex)
             {
                 switch (dock)

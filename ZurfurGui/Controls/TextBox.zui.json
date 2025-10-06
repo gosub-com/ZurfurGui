@@ -3,9 +3,11 @@
     "Classes": [ "TextBox" ],
     "DefaultStyles": [
         {
-            "BackColor": "LightBlue",
-            "BorderWidth": 2,
-            "BorderColor": "Navy",
+            "Back": {
+                "Color": "LightBlue",
+                "BorderWidth": 2,
+                "BorderColor": "Navy"
+            },
             "SizeMin": {
                 "Width": 100
             },

@@ -8,16 +8,20 @@
                 {
                     "Controller": "Text",
                     "Text": "T",
-                    "BorderColor": "Green",
-                    "BorderWidth": 2,
-                    "AlignVertical": "Top"
+                    "Back": {
+                        "BorderColor": "Green",
+                        "BorderWidth": 2
+                    },
+                    "Align": { "Vertical": "Top" }
                 },
                 {
                     "Controller": "Text",
                     "Text": "T B",
-                    "BorderColor": "Green",
-                    "BorderWidth": 2,
-                    "AlignVertical": "Bottom"
+                    "Back": {
+                        "BorderColor": "Green",
+                        "BorderWidth": 2
+                    },
+                    "Align": { "Vertical": "Bottom" }
                 },
                 {
                     "Controller": "Text",
@@ -28,8 +32,10 @@
                         "Right": 20,
                         "Bottom": 10
                     },
-                    "BorderColor": "Green",
-                    "BorderWidth": 2
+                    "Back": {
+                        "BorderColor": "Green",
+                        "BorderWidth": 2
+                    }
                 },
                 {
                     "Controller": "Text",
@@ -40,8 +46,10 @@
                         "Right": 20,
                         "Bottom": 10
                     },
-                    "BorderColor": "Green",
-                    "BorderWidth": 2
+                    "Back": {
+                        "BorderColor": "Green",
+                        "BorderWidth": 2
+                    }
                 },
                 {
                     "Controller": "Text",
@@ -52,14 +60,18 @@
                         "Right": 20,
                         "Bottom": 0
                     },
-                    "BorderColor": "Green",
-                    "BorderWidth": 2
+                    "Back": {
+                        "BorderColor": "Green",
+                        "BorderWidth": 2
+                    }
                 },
                 {
                     "Controller": "Text",
                     "Text": "T PMB",
-                    "BorderColor": "Red",
-                    "BorderWidth": 2,
+                    "Back": {
+                        "BorderColor": "Red",
+                        "BorderWidth": 2
+                    },
                     "Padding": {
                         "Left": 20,
                         "Top": 50,
@@ -148,7 +160,9 @@
                 {
                     "Controller": "TextBox",
                     "Text": "TB PMB",
-                    "BorderColor": "Red",
+                    "Back": {
+                        "BorderColor": "Red"
+                    },
                     "Padding": {
                         "Left": 20,
                         "Top": 10,
@@ -299,7 +313,7 @@
                     "Controller": "Text",
                     "Text": "5 And a Zebra",
                     "Font": { "Size": 16.0 },
-                    "AlignVertical": "Center"
+                    "Align": { "Vertical": "Center" }
                 },
                 {
                     "Controller": "Text",
@@ -336,31 +350,31 @@
                     "Controller": "Text",
                     "Text": "And a Cow",
                     "Font": { "Size": 32.0 },
-                    "AlignVertical": "Center"
+                    "Align": { "Vertical": "Center" }
                 },
                 {
                     "Controller": "Text",
                     "Text": "Center",
                     "Font": { "Size": 16.0 },
-                    "AlignVertical": "Center"
+                    "Align": { "Vertical": "Center" }
                 },
                 {
                     "Controller": "Text",
                     "Text": "Top",
                     "Font": { "Size": 16.0 },
-                    "AlignVertical": "Top"
+                    "Align": { "Vertical": "Top" }
                 },
                 {
                     "Controller": "Text",
                     "Text": "Bottom",
                     "Font": { "Size": 16.0 },
-                    "AlignVertical": "Bottom"
+                    "Align": { "Vertical": "Bottom" }
                 },
                 {
                     "Controller": "Text",
                     "Text": "Stretch",
                     "Font": { "Size": 16.0 },
-                    "AlignVertical": "Stretch"
+                    "Align": { "Vertical": "Stretch" }
                 }
             ]
         },

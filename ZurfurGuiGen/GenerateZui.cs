@@ -231,7 +231,6 @@ public static partial class ZurfurControls
 // This file is generated from '{Path.GetFileName(zuiPath)}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}
 namespace {nameSpace};
 
-[global::ZurfurGui.ZurfurGuiAttribute(""{controllerTypeName}"")]
 public sealed partial class {className}
 {{
     void InitializeControl() 

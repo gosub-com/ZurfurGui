@@ -7,7 +7,7 @@ using ZurfurGui.Property;
 namespace ZurfurGui.Property.Serializers
 {
     /// <summary>
-    /// JSON converter for TextLinesProp.
+    /// JSON converter for TextLinesProp, which accepts both a string and an array of strings.
     /// </summary>
     public class TextLinesPropJsonConverter : JsonConverter<TextLinesProp>
     {

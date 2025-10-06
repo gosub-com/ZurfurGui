@@ -2,11 +2,12 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Collections.Generic;
+using ZurfurGui.Base;
 
-namespace ZurfurGui.Base.Serializers;
+namespace ZurfurGui.Property.Serializers;
 
 /// <summary>
-/// Custom JSON converter for the TextLines class.
+/// Custom JSON converter for the TextLines class, which accepts both a string and an array of strings.
 /// </summary>
 internal class TextLinesJsonConverter : JsonConverter<TextLines>
 {
