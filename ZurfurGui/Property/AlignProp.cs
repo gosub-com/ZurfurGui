@@ -9,11 +9,6 @@ public readonly record struct AlignProp(AlignHorizontal? Horizontal, AlignVertic
     : IProperty<AlignProp>
 {
     /// <summary>
-    /// Default constructor initializes both fields to null.
-    /// </summary>
-    public AlignProp() : this(null, null) { }
-
-    /// <summary>
     /// Indicates whether both fields are non-null.
     /// </summary>
     public bool IsComplete => Horizontal.HasValue && Vertical.HasValue;

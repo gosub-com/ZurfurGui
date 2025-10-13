@@ -89,14 +89,12 @@ public class PropertyKey<T> : IEquatable<PropertyKey<T>>
     readonly PropertyKeyId _id;
     public readonly string Name;
     public readonly Type Type;
-    public readonly T DefaultValue;
 
-    public PropertyKey(string name, T defaultValue)
+    public PropertyKey(string name)
     {
         _id = PropertyKeys.Create(name, typeof(T));
         Name = name;
         Type = typeof(T);
-        DefaultValue = defaultValue;
     }
 
 
@@ -142,11 +140,11 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
     /// <summary>
     /// Get a property, or return the property default when not present.
     /// </summary>
-    public T Get<T>(PropertyKey<T> property)
+    public T? Get<T>(PropertyKey<T> property)
     {
         if (_properties.TryGetValue(property.Id, out var value) && value is T v)
             return v;
-        return property.DefaultValue;
+        return default;
     }
 
     public bool TryGet<T>(PropertyKey<T> property, [MaybeNullWhen(false)]  out T? value)

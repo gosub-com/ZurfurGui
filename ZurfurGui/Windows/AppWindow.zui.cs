@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Base;
 using ZurfurGui.Draw;
+using ZurfurGui.Property;
 
 namespace ZurfurGui.Windows;
 
@@ -21,9 +22,6 @@ public partial class AppWindow : Controllable, Drawable
 
     Renderer? _renderer;
 
-    readonly View _mainAppView;
-    readonly View _floatingWindows;
-
     internal List<View> _pointerCaptureList = new();
 
     public string DrawType => "AppWindow";
@@ -39,10 +37,6 @@ public partial class AppWindow : Controllable, Drawable
     {
         InitializeControl();
         View.Draw = this;
-
-        // TBD: Should be code generated
-        _mainAppView = View.FindByName("_mainAppView") ?? throw new Exception("Missing _mainAppView");
-        _floatingWindows = View.FindByName("_floatingWindows") ?? throw new Exception("Missing _floatingWindows");
     }
 
 
@@ -52,8 +46,8 @@ public partial class AppWindow : Controllable, Drawable
     public void SetMainappWindow(Controllable control)
     {
         View.InvalidateMeasure(); // TBD: Move to AddView
-        _mainAppView.ClearChildren();
-        _mainAppView.AddChild(control.View);
+        _mainAppView.View.ClearChildren();
+        _mainAppView.View.AddChild(control.View);
     }
 
     /// <summary>
@@ -62,7 +56,29 @@ public partial class AppWindow : Controllable, Drawable
     public void ShowWindow(Window window)
     {
         View.InvalidateMeasure(); // TBD: Move to AddView
-        _floatingWindows.AddChild(window.View);
+        _floatingWindows.View.AddChild(window.View);
+    }
+
+    /// <summary>
+    /// Show a control inside a window container.
+    /// TBD: Some of these properties should represent initial location settings, then they dissapear.
+    /// </summary>
+    public Window ShowWindow(Controllable control, 
+        PointProp? location = null,  AlignProp ?align = null, ThicknessProp? margin = null, SizeProp? sizeRequst = null)
+    {
+        var window = new Window();
+        window.View.SetProperty(Zui.Align, align ?? new(AlignHorizontal.Left, AlignVertical.Top));
+        if (location != null)
+            window.View.SetProperty(Zui.Offset, location.Value);
+        if (margin != null)
+            window.View.SetProperty(Zui.Margin, margin.Value);
+        if (sizeRequst != null)
+            window.View.SetProperty(Zui.SizeRequest, sizeRequst.Value);
+
+        window.LoadContent([control]);
+        View.InvalidateMeasure(); // TBD: Move to AddView
+        _floatingWindows.View.AddChild(window.View);
+        return window;
     }
 
     /// <summary>

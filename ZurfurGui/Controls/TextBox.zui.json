@@ -1,9 +1,10 @@
 {
     "Controller": "TextBox",
     "Classes": [ "TextBox" ],
-    "DefaultStyles": [
+    "Styles": [
         {
-            "Back": {
+            "Selectors": "default:TextBox",
+            "Background": {
                 "Color": "LightBlue",
                 "BorderWidth": 2,
                 "BorderColor": "Navy"

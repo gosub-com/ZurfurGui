@@ -4,8 +4,8 @@
     "Layout": "Column",
     "Content": [
         {
-            "Controller": "Text",
-            "Name":  "_statsView"
+            "(Name)": "_statsView",
+            "Controller": "Text"
         }
     ]
 }

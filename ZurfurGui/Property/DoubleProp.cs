@@ -1,24 +1,14 @@
 ﻿namespace ZurfurGui.Property;
 
-/// <summary>
-/// Type-safe ?double that never unwraps to NAN.  Defauts to null.
-/// </summary>
 public readonly struct DoubleProp : IProperty<DoubleProp>
 {
-    public readonly double _value;
-
-    public DoubleProp() => _value = double.NaN;
+    readonly double? _value;
 
     public DoubleProp(double value) => _value = value;
 
     public bool Equals(DoubleProp other)
     {
-        // Treat NaN as "null" and compare accordingly
-        if (!HasValue && !other.HasValue)
-            return true; 
-        if (!HasValue || !other.HasValue)
-            return false;
-        return _value.Equals(other._value);
+        return _value == other._value;
     }
 
     public override bool Equals(object? obj)
@@ -29,13 +19,13 @@ public readonly struct DoubleProp : IProperty<DoubleProp>
     public static bool operator ==(DoubleProp left, DoubleProp right) => left.Equals(right);
     public static bool operator !=(DoubleProp left, DoubleProp right) => !left.Equals(right);
     public override int GetHashCode() => _value.GetHashCode();
-    public override string ToString() => HasValue ? _value.ToString() : "null";
-    public string ToString(string format) => HasValue ? _value.ToString(format) : "null";
+    public override string ToString() => _value != null ? _value.Value.ToString() : "null";
+    public string ToString(string format) => _value != null ? _value.Value.ToString(format) : "null";
 
     /// <summary>
     /// Indicates whether the value is not NaN (i.e., not null).
     /// </summary>
-    public bool HasValue => !double.IsNaN(_value);
+    public bool HasValue => _value.HasValue;
 
     /// <summary>
     /// Gets the value or throws an InvalidOperationException if the value is null (NaN).
@@ -44,9 +34,9 @@ public readonly struct DoubleProp : IProperty<DoubleProp>
     {
         get
         {
-            if (!HasValue)
-                throw new InvalidOperationException("DoubleQ Value is null.");
-            return _value;
+            if (_value == null)
+                throw new InvalidOperationException("DoubleProp Value is null.");
+            return _value.Value;
         }
     }
 
@@ -65,16 +55,18 @@ public readonly struct DoubleProp : IProperty<DoubleProp>
     /// Return this value, or the other only if this is null.
     /// </summary>
     public double Or(double other) 
-        => HasValue ? _value : other;
+        => _value != null ? _value.Value : other;
 
     /// <summary>
     /// Interpolate from this value to the destination.  Return destination immediately if either is null.
     /// </summary>
     public DoubleProp Interpolate(DoubleProp destination, double percent)
     {
-        if (!HasValue || !destination.HasValue)
+        if (_value == null || destination == null)
             return destination;
-        return new DoubleProp(_value + (destination._value - _value) * percent);
+        var s = _value.Value;
+        var d = destination.Value;
+        return new DoubleProp(s + (d - s) * percent);
     }
 
     /// <summary>

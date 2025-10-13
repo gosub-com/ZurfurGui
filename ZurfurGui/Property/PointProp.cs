@@ -8,7 +8,6 @@ namespace ZurfurGui.Property;
 public readonly record struct PointProp(DoubleProp X, DoubleProp Y)
     : IProperty<PointProp>
 {
-    public PointProp() : this(new(), new()) { }
     public override string ToString() => $"X: {X}, Y: {Y}";
     public string ToString(string format) => $"X: {X.ToString(format)}, Y: {Y.ToString(format)}";
 

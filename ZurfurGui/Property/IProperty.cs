@@ -1,6 +1,6 @@
 ﻿namespace ZurfurGui.Property;
 
-public interface IProperty<T> : IEquatable<T>
+public interface IProperty<T> : IEquatable<T> where T : new()
 {
     /// <summary>
     /// Returns true if all components are non-null.

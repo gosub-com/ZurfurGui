@@ -8,7 +8,6 @@ namespace ZurfurGui.Property;
 public readonly record struct SizeProp(DoubleProp Width, DoubleProp Height)
     : IProperty<SizeProp>
 {
-    public SizeProp() : this(new(), new()) { }
     public override string ToString() => $"Width: {Width}, Height: {Height}";
     public string ToString(string format) => $"Width: {Width.ToString(format)}, Height: {Height.ToString(format)}";
 

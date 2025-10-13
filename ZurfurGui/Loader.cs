@@ -26,7 +26,7 @@ namespace ZurfurGui;
 [JsonSerializable(typeof(StyleSheet))]
 [JsonSerializable(typeof(StyleProperty))]
 [JsonSerializable(typeof(string[]))]
-[JsonSerializable(typeof(BackProp))]
+[JsonSerializable(typeof(BackgroundProp))]
 public partial class ZurfurJsonContext : JsonSerializerContext { }
 
 /// <summary>
@@ -61,7 +61,7 @@ public static class Loader
     public static AppWindow Init(Action<AppWindow> mainAppEntry)
     {
         _ = Zui.Name; // Force initialization of static properties
-        ZurfurControls.Register();
+        ZurfurMain.InitializeControls();
         RegisterLayout("Panel", () => null);
         RegisterLayout("DockPanel", () => new LayoutDockPanel());
         RegisterLayout("Row", () => new LayoutRow());
@@ -87,15 +87,15 @@ public static class Loader
                 throw new ArgumentException("The target control already has views");
             if (target.View.PropertiesCount != 0)
                 throw new ArgumentException("The target control already has properties");
-            if (properties.Get(Zui.Name) != "")
+            if (properties.Get(Zui.Name) != null)
                 throw new ArgumentException("Top level component properties may not be named");
-            var controller = properties.Get(Zui.Controller);
+            var controller = properties.Get(Zui.Controller) ?? "";
             if (controller != target.TypeName)
                 throw new ArgumentException($"Top level controller property '{controller}' must match target '{target.TypeName}");
 
             target.View.PropertiesSetUnionInternal(properties);
             SetLayout(properties, target.View);
-            foreach (var child in properties.Get(Zui.Content))
+            foreach (var child in properties.Get(Zui.Content) ?? [])
             {
                 target.View.AddChild(CreateControl(child).View);
             }
@@ -133,6 +133,9 @@ public static class Loader
         s_layouts[name] = layoutFactory;
     }
 
+    /// <summary>
+    /// Create a control from the given JSON
+    /// </summary>
     public static Controllable LoadJson(string json)
     {
         return CreateControl(LoadJsonProperties(json));
@@ -144,10 +147,13 @@ public static class Loader
         return properties ?? throw new Exception("Invalid or null properties JSON");
     }
 
+    /// <summary>
+    /// Create a control from the given properties
+    /// </summary>
     public static Controllable CreateControl(Properties properties)
     {
         // Create the control
-        var controller = properties.Get(Zui.Controller);
+        var controller = properties.Get(Zui.Controller) ?? "";
         Controllable control;
         if (controller == "")
         {
@@ -164,7 +170,7 @@ public static class Loader
         }
 
         // The properties become overrides, but the content becomes a parameter to LoadContent
-        var contents = properties.Get(Zui.Content);
+        var contents = properties.Get(Zui.Content) ?? [];
         properties.Remove(Zui.Content);
         control.View.PropertiesSetUnionInternal(properties);
         SetLayout(properties, control.View);
@@ -175,7 +181,7 @@ public static class Loader
 
     private static void SetLayout(Properties properties, View view)
     {
-        var layout = properties.Get(Zui.Layout);
+        var layout = properties.Get(Zui.Layout) ?? "";
         if (layout != "")
         {
             if (s_layouts.TryGetValue(layout, out var createFunc))

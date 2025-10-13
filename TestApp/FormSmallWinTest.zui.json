@@ -2,10 +2,13 @@
     "Controller": "TestApp.FormSmallWinTest",
     "Content": [
         {
+            "(Name)": "button1",
             "Controller": "Button",
-            "Name": "button1",
             "Text": "Big Button Test",
-            "Align": { "Vertical": "Top", "Horizontal": "Left" },
+            "Align": {
+                "Vertical": "Top",
+                "Horizontal": "Left"
+            },
             "SizeRequest": {
                 "Width": 100,
                 "Height": 100
@@ -18,10 +21,13 @@
             }
         },
         {
+            "(Name)": "button2",
             "Controller": "Button",
-            "Name": "button2",
             "Text": "Test 2",
-            "Align": { "Vertical": "Top", "Horizontal": "Left" },
+            "Align": {
+                "Vertical": "Top",
+                "Horizontal": "Left"
+            },
             "Margin": {
                 "Left": 10,
                 "Top": 20,
@@ -30,10 +36,13 @@
             }
         },
         {
+            "(Name)": "button3",
             "Controller": "Button",
-            "Name": "button3",
             "Text": "Test 3",
-            "Align": { "Vertical": "Top", "Horizontal": "Left" },
+            "Align": {
+                "Vertical": "Top",
+                "Horizontal": "Left"
+            },
             "Margin": {
                 "Left": 10,
                 "Top": 50,

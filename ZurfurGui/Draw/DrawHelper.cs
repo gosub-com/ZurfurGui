@@ -20,7 +20,7 @@ public static class DrawHelper
             return;
 
         // Draw background
-        var back = view.GetStyle(Zui.Back);
+        var back = view.GetStyle(Zui.Background);
         var borderRadius = back.Radius.Or(0);
         var background = back.Color.Or(Colors.TransParent);
         if (background.A != 0)
@@ -51,7 +51,7 @@ public static class DrawHelper
             return false;
 
         // Check if the background is visible (TBD: on the border and border radius)
-        return view.GetStyle(Zui.Back).Color.Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
+        return view.GetStyle(Zui.Background).Color.Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
     }
 
 }

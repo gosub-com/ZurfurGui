@@ -6,10 +6,12 @@ namespace ZurfurGui.Layout;
 
 public class LayoutRow : Layoutable
 {
+    readonly Size DEFAULT_SIZE = new Size(5, 5);
+
     List<Rect> _measuredRects = new List<Rect>();
 
-
     public string TypeName => "Row";
+
 
 
     public Size MeasureView(View view, MeasureContext measure, Size available)
@@ -22,7 +24,7 @@ public class LayoutRow : Layoutable
         var rowHeight = 0.0;
         var viewWidth = 0.0;
         var viewHeight = 0.0;
-        var spacing = view.GetStyle(Zui.Spacing);
+        var spacing = view.GetStyle(Zui.Spacing).Or(DEFAULT_SIZE);
         int arrangeIndex = 0;
         foreach (var childView in view.Children)
         {
@@ -42,14 +44,14 @@ public class LayoutRow : Layoutable
                 arrangeIndex = _measuredRects.Count;
 
                 rowPosX = 0.0;
-                rowPosY += rowHeight + spacing.Height.Or(0);
+                rowPosY += rowHeight + spacing.Height;
                 rowHeight = 0.0;
             }
             _measuredRects.Add(new(rowPosX, rowPosY, childSize.Width, 0));
             viewWidth = Math.Max(viewWidth, rowPosX + childSize.Width);
             viewHeight = Math.Max(viewHeight, rowPosY + childSize.Height);
 
-            rowPosX += childSize.Width + spacing.Width.Or(0);
+            rowPosX += childSize.Width + spacing.Width;
             rowHeight = Math.Max(rowHeight, childSize.Height);
         }
         // Equalize the height of the final row (or everything if not wrapped)

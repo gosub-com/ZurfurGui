@@ -1,111 +1,44 @@
 ﻿namespace TestApp;
 
 using ZurfurGui;
-using ZurfurGui.Components;
-using ZurfurGui.Controls;
+using ZurfurGui.Base;
 using ZurfurGui.Property;
 using ZurfurGui.Windows;
 
-public static class ZurfurMain
+public static partial class ZurfurMain
 {
     public static void MainApp(AppWindow app)
     {
-        ZurfurControls.Register();
+        InitializeControls();
+
         app.SetMainappWindow(new FormQbfWinTest());
 
-        var win0 = Loader.LoadJson("""
-        {
-          "Controller": "Window",
-          "Offset": { "X": 10, "Y": 10 },
-          "Align": { "Horizontal": "Left", "Vertical": "Top" },
-          "Content": [
-            {
-              "Controller": "DebugWindow"
-            }
-          ]
-        }
-        """);
-        app.ShowWindow((Window)win0);
+        app.ShowWindow(new DebugWindow(), location: new PointProp(10,10));
+
+        app.ShowWindow(new FormQbfWinTest(), 
+            location: new PointProp(95,175), 
+            sizeRequst: new SizeProp(400,500));
+
+        var swt1 = new FormSmallWinTest();
+        app.ShowWindow(swt1, 
+            sizeRequst: new SizeProp(200, 200), 
+            margin: new ThicknessProp(600, 175, 0, 0));
+        swt1.button1.View.SetProperty(Zui.Text, new (["*BUTTON*"]));
+
+        app.ShowWindow(new FormSmallWinTest(), 
+            sizeRequst: new SizeProp(200, 200), 
+            margin: new ThicknessProp(10, 10, 10, 10),
+            align: new AlignProp(AlignHorizontal.Right, AlignVertical.Bottom));
 
 
-        var win1 = Loader.LoadJson("""
-        {
-          "Controller": "Window",
-          "SizeRequest": { "Width": 400, "Height": 500 },
-          "Offset": { "X": 95, "Y": 175 },
-          "Align": { "Horizontal": "Left", "Vertical": "Top" },
-          "Content": [
-            {
-              "Controller": "TestApp.FormQbfWinTest"
-            }
-          ]
-        }
-        """);
-        app.ShowWindow((Window)win1);
+        var searchWin = app.ShowWindow(new FormSearch(), 
+            margin: new ThicknessProp(10, 10, 10, 10),
+            align: new AlignProp(AlignHorizontal.Left, AlignVertical.Bottom));
+        searchWin.IsWindowWrappingVisible = false;
 
-
-        var win2 = Loader.LoadJson("""
-        {
-          "Controller": "Window",
-          "Margin": { "Left": 600, "Top": 175, "Right": 0, "Bottom": 0 },
-          "SizeRequest": { "Width": 200, "Height": 200 },
-          "Align": { "Horizontal": "Left", "Vertical": "Top" },
-          "Content": [
-            {
-              "Controller": "TestApp.FormSmallWinTest",
-              "Name": "smallWinTest"
-            }
-          ]
-        }
-        """);
-        app.ShowWindow((Window)win2);
-        var smallWinTest = (FormSmallWinTest)win2.View.FindByName("smallWinTest").Controller;
-        smallWinTest.button1.View.SetProperty(Zui.Text, new(["*BUTTON*"]));
-
-        var win3 = Loader.LoadJson("""
-        {
-          "Controller": "Window",
-          "SizeRequest": { "Width": 200, "Height": 200 },
-          "Align": { "Horizontal": "Right", "Vertical": "Bottom" },
-          "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
-          "Content": [
-            {
-              "Controller": "TestApp.FormSmallWinTest"
-            }
-          ]
-        }
-        """);
-        app.ShowWindow((Window)win3);
-
-        var win4 = Loader.LoadJson("""
-        {
-          "Controller": "Window",
-          "Align": { "Horizontal": "Left", "Vertical": "Bottom" },
-          "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
-          "Content": [
-            {
-              "Controller": "TestApp.FormSearch"
-            }
-          ]
-        }
-        """);
-        app.ShowWindow((Window)win4);
-        ((Window)win4).IsWindowWrappingVisible = false;
-
-
-        var win5 = Loader.LoadJson("""
-        {
-          "Controller": "Window",
-          "Align": { "Horizontal": "Right", "Vertical": "Top" },
-          "Margin": { "Left": 10, "Top": 10, "Right": 10, "Bottom": 10 },
-          "Content": [
-            {
-              "Controller": "TestApp.FormMultiForm"
-            }
-          ]
-        }
-        """);
-        app.ShowWindow((Window)win5);
+        app.ShowWindow(new FormMultiForm(), 
+            margin: new ThicknessProp(10, 10, 10, 10),
+            align: new AlignProp(AlignHorizontal.Right, AlignVertical.Top));
 
     }
 

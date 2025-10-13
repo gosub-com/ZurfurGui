@@ -2,11 +2,10 @@
 
 namespace TestApp;
 
-public partial class FormQbfWinTest : Controllable
+public partial class FormTestNameSpace : Controllable
 {
-    public FormQbfWinTest()
+    public FormTestNameSpace()
     {
         InitializeControl();
     }
-
 }

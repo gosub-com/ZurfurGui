@@ -119,7 +119,7 @@ public sealed class View
 
     public override string ToString()
     {
-        var name = GetProperty(Zui.Name);
+        var name = GetProperty(Zui.Name) ?? "";
         return $"{Controller.TypeName}: {(name == "" ? "(no name)" : name)}";
     }
 
@@ -159,7 +159,7 @@ public sealed class View
     /// <summary>
     /// Get a property from the view's property collection, or return the property default when not found.
     /// </summary>
-    public T GetProperty<T>(PropertyKey<T> key)
+    public T? GetProperty<T>(PropertyKey<T> key)
     {
         return _properties.Get(key);
     }
@@ -174,47 +174,81 @@ public sealed class View
     /// or if it's not found walk up the tree to find a style property
     /// based on the classes property.
     /// </summary>
-    public T GetStyle<T>(PropertyKey<T> key)
+    public T GetStyle<T>(PropertyKey<T> key) where T : IProperty<T>, new()
     {
+        // Properties set by code take precedence
+        T property;
         if (_properties.TryGet(key, out var value) && value is T)
-            return value;
+        {
+            if (value.IsComplete)
+                return value;
+            property = value;
+        }
+        else
+        {
+            property = new T();
+        }
 
-        if (_properties.TryGetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_OFFSET), 
+        // Properties cached from style lookup below
+        if (_properties.TryGetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_OFFSET),
                 out var styledValue) && styledValue is T typedStyledValue)
-            return typedStyledValue;
+        {
+            return property.Or(typedStyledValue);
+        }
 
+        // Lookup styledProperty (matches first, then defaults)
+        var styledProperty = FindStyledProperty(key, new(), "");
+        if (!styledProperty.IsComplete)
+            styledProperty = FindStyledProperty(key, styledProperty, "default:");
 
-        var styledProperty = FindStyledProperty(key);
+        // Cache the styled property for quick lookup above
+        _properties.SetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_OFFSET), styledProperty);
 
-        // NOTE: Null forgiving operator here is OK since we checked for null above
-        _properties.SetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_OFFSET), styledProperty!);
-
-        return styledProperty;
+        return property.Or(styledProperty);
     }
 
-    T FindStyledProperty<T>(PropertyKey<T> key)
+    /// <summary>
+    /// Walk up the view tree to find a style property based on the classes property.
+    /// </summary>
+    T FindStyledProperty<T>(PropertyKey<T> key, T property, string selectContext) where T : IProperty<T>, new()
     {
         var classes = _properties.Get(Zui.Classes);
-        if (classes.Count == 0)
-            return key.DefaultValue;
+        if (classes == null || classes.Count == 0)
+            return new();
 
-
-        // Get the default style
-        if (_properties.TryGet(Zui.DefaultStyles, out var styles) && styles != null)
+        // Walk up the view tree
+        for (var view = this; view != null; view = view.Parent)
         {
-            foreach (var style in styles)
+            if (!view._properties.TryGet(Zui.Styles, out var styles) || styles == null)
+                continue;
+
+            foreach (var style in styles.Reverse())
             {
-                if (style.TryGet(key, out var styledProperty) && styledProperty != null)
+                if (style.TryGet(Zui.Selectors, out var selectors) && selectors != null)
                 {
-                    return styledProperty;
+                    if (style.TryGet(key, out var p) && p != null && StyleMatches(classes, selectors, selectContext))
+                    {
+                        property = property.Or(p);
+                        if (property.IsComplete)
+                            return property;
+                    }
                 }
             }
         }
+        return property;
+    }
 
-        // TBD: Walk up the tree to find a style property
-
-        return key.DefaultValue;
-
+    bool StyleMatches(TextLines classes, TextLines selectors, string selectContext)
+    {
+        foreach (var s in selectors)
+        {
+            foreach (var c in classes)
+            {
+                if (selectContext + c == s)
+                    return true;
+            }
+        }
+        return false;
     }
 
 
@@ -250,7 +284,7 @@ public sealed class View
 
         // Include padding and border in the measurement
         var margin = GetStyle(Zui.Margin).Or(0);
-        var padding = GetStyle(Zui.Padding).Or(0) + new Thickness(GetStyle(Zui.Back).BorderWidth.Or(0));
+        var padding = GetStyle(Zui.Padding).Or(0) + new Thickness(GetStyle(Zui.Background).BorderWidth.Or(0));
 
         var constrained = ClampViewSize(available.Deflate(margin)).Deflate(padding);
 
@@ -302,7 +336,7 @@ public sealed class View
 
         size = ClampViewSize(size);
 
-        var padding = GetStyle(Zui.Padding).Or(0) + new Thickness(GetStyle(Zui.Back).BorderWidth.Or(0));
+        var padding = GetStyle(Zui.Padding).Or(0) + new Thickness(GetStyle(Zui.Background).BorderWidth.Or(0));
 
         ContentRect = new Rect(new Point(0, 0), size).Deflate(padding);
         Size = size;

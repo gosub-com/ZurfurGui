@@ -29,9 +29,9 @@ public class DrawText : Drawable
         // TBD: Temporary, for testing button hover
         if (view.Controller.TypeName == "Button")
         {
-            var back = view.GetStyle(Zui.Back);
+            var back = view.GetStyle(Zui.Background);
             back = back with { Color = view.PointerHoverTarget ? Colors.Red : Colors.Gray };
-            view.SetProperty(Zui.Back, back);
+            view.SetProperty(Zui.Background, back);
         }
         else
             color = view.PointerHoverTarget ? Colors.Red : Colors.White;

@@ -6,12 +6,10 @@ namespace ZurfurGui.Property;
 /// <summary>
 /// View background properties.
 /// </summary>
-public readonly record struct BackProp(
+public readonly record struct BackgroundProp(
     ColorProp Color, ColorProp BorderColor, DoubleProp BorderWidth, DoubleProp Radius)
-    : IProperty<BackProp>
+    : IProperty<BackgroundProp>
 {
-    public BackProp() : this(new(), new(), new(), new()) { }
-
     public override string ToString() =>
         $"Color: {Color}, BorderColor: {BorderColor}, BorderWidth: {BorderWidth}, BorderRadius: {Radius}";
 
@@ -26,8 +24,8 @@ public readonly record struct BackProp(
     /// <summary>
     /// Return this value, or the other only if this is null (for each component).
     /// </summary>
-    public BackProp Or(BackProp other) =>
-        new BackProp(
+    public BackgroundProp Or(BackgroundProp other) =>
+        new BackgroundProp(
             Color.Or(other.Color),
             BorderColor.Or(other.BorderColor),
             BorderWidth.Or(other.BorderWidth),
@@ -37,9 +35,9 @@ public readonly record struct BackProp(
     /// <summary>
     /// Interpolate from this value to the destination.
     /// </summary>
-    public BackProp Interpolate(BackProp destination, double percent)
+    public BackgroundProp Interpolate(BackgroundProp destination, double percent)
     {
-        return new BackProp(
+        return new BackgroundProp(
             Color.Or(destination.Color), // Color interpolation is not defined, so use destination if null
             BorderColor.Or(destination.BorderColor), // Same for BorderColor
             BorderWidth.Interpolate(destination.BorderWidth, percent),

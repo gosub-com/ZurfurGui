@@ -143,9 +143,7 @@ public class Renderer
         for (int i = views.Count - 1; i >= 0; i--)
         {
             var view = views[i];
-            var e = view.GetProperty(property);
-            if (e != null)
-                e(null, ev);
+            view.GetProperty(property)?.Invoke(null, ev);
         }
 
         switch (ev.Type)
@@ -159,9 +157,7 @@ public class Renderer
         // Bubble
         foreach (var view in views)
         {
-            var e = view.GetProperty(property);
-            if (e != null)
-                e(null, ev);
+            view.GetProperty(property)?.Invoke(null, ev);
         }
     }
 

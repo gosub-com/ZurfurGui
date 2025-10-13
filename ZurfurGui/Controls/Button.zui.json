@@ -1,9 +1,10 @@
 {
     "Controller": "Button",
     "Classes": [ "Button" ],
-    "DefaultStyles": [
+    "Styles": [
         {
-            "Back": {
+            "Selectors": "default:Button",
+            "Background": {
                 "BorderWidth": 2,
                 "BorderColor": "Black"
             },

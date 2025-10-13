@@ -9,11 +9,6 @@ public readonly record struct FontProp(string? Name, DoubleProp Size)
     : IProperty<FontProp>
 {
     /// <summary>
-    /// Default constructor initializes both fields to null.
-    /// </summary>
-    public FontProp() : this(null, new DoubleProp()) { }
-
-    /// <summary>
     /// Indicates whether both fields are non-null.
     /// </summary>
     public bool IsComplete => Name != null && Size.HasValue;

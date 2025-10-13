@@ -11,8 +11,6 @@ public readonly struct ColorProp : IProperty<ColorProp>
 {
     public readonly Color ?_color;
 
-    public ColorProp() => _color = null;
-
     public ColorProp(Color value) => _color = value;
 
     public bool Equals(ColorProp other)

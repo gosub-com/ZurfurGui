@@ -1,9 +1,10 @@
 {
     "Controller": "Window",
     "Classes": [ "Window" ],
-    "DefaultStyles": [
+    "Styles": [
         {
-            "Back": {
+            "Selectors": "default:Window",
+            "Background": {
                 "Color": "LightSkyBlue",
                 "Radius": 10.0,
                 "BorderWidth": 2,
@@ -13,6 +14,39 @@
                 "Width": 160,
                 "Height": 80
             }
+        },
+        {
+            "Selectors": "default:Window.Title",
+            "Padding": {
+                "Left": 10,
+                "Top": 4,
+                "Right": 10,
+                "Bottom": 0
+            },
+            "Background": {
+                "Color": "DarkSlateBlue",
+                "Radius": 10.0
+            },
+            "Dock": "Top",
+            "Align": { "Vertical": "Top" }
+        },
+        {
+            "Selectors": "default:Window.Title.Text",
+            "Text": "Window Title",
+            "Align": {
+                "Horizontal": "Center",
+                "Vertical": "Center"
+            },
+            "Font": { "Size": 24.0 }
+        },
+        {
+            "Selectors": "default:Window.Content",
+            "Margin": {
+                "Left": 10,
+                "Top": 10,
+                "Right": 10,
+                "Bottom": 10
+            }
         }
     ],
     "Content": [
@@ -20,25 +54,9 @@
             "Layout": "DockPanel",
             "Content": [
                 {
+                    "(Name)": "_windowTitle",
                     "Classes": [ "Window.Title" ],
-                    "Name": "_windowTitle",
                     "Layout": "DockPanel",
-                    "DefaultStyles": [
-                        {
-                            "Padding": {
-                                "Left": 10,
-                                "Top": 4,
-                                "Right": 10,
-                                "Bottom": 0
-                            },
-                            "Back": {
-                                "Color": "DarkSlateBlue",
-                                "Radius": 10.0
-                            },
-                            "Dock": "Top",
-                            "Align": { "Vertical": "Top" }
-                        }
-                    ],
                     "Content": [
                         {
                             "Controller": "Text",
@@ -47,8 +65,8 @@
                             "Font": { "Size": 24.0 }
                         },
                         {
+                            "(Name)": "_closeButton",
                             "Controller": "Text",
-                            "Name": "_closeButton",
                             "Dock": "Right",
                             "Text": "X",
                             "Font": { "Size": 24.0 }
@@ -57,36 +75,22 @@
                             "Classes": [ "Window.Title.Text" ],
                             "Controller": "Text",
                             "DisableHitTest": true,
-                            "DefaultStyles": [
-                                {
-                                    "Text": "Window Title",
-                                    "Align": { "Horizontal": "Center", "Vertical": "Center" },
-                                    "Font": { "Size": 24.0 }
-                                }
-                            ]
                         }
                     ]
                 },
                 {
-                    "Name": "_windowContent",
+                    "(Name)": "_windowContent",
                     "Classes": [ "Window.Content" ],
-                    "Clip": true,
-                    "DefaultStyles": [
-                        {
-                            "Margin": {
-                                "Left": 10,
-                                "Top": 10,
-                                "Right": 10,
-                                "Bottom": 10
-                            }
-                        }
-                    ]
+                    "Clip": true
                 }
             ]
         },
         {
-            "Name": "_resizeHandle",
-            "Align": { "Horizontal": "Right", "Vertical": "Bottom" },
+            "(Name)": "_resizeHandle",
+            "Align": {
+                "Horizontal": "Right",
+                "Vertical": "Bottom"
+            },
             "Margin": {
                 "Left": 0,
                 "Top": 0,

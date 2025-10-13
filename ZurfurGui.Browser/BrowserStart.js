@@ -10,7 +10,9 @@ globalThis.ZurfurGui.getBrowserWindow = function () { return globalThis.window; 
 globalThis.ZurfurGui.getBoundingClientRect = function (canvas) { return canvas.getBoundingClientRect(); }
 
 globalThis.ZurfurGui.getContext = function (canvas, contextId) {
-    return canvas.getContext(contextId);
+
+    // NOTE: {alpha: false } makes canvas text rendering clearer
+    return canvas.getContext(contextId, { alpha: false});
 }
 
 globalThis.ZurfurGui.canvasHasFocus = function (canvas) {

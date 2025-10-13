@@ -8,8 +8,6 @@ public readonly struct EnumProp<T> : IProperty<EnumProp<T>>
 {
     public readonly T? _value;
 
-    public EnumProp() => _value = null;
-
     public EnumProp(T value) => _value = value;
 
     public bool Equals(EnumProp<T> other)

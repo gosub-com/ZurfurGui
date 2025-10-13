@@ -1,19 +1,15 @@
 ﻿using ZurfurGui.Base;
 using ZurfurGui.Draw;
-using ZurfurGui.Property;
 
 namespace ZurfurGui.Windows;
 
 public partial class DebugWindow : Controllable
 {
-    View _statsView;
     RenderContext.Stats _stats;
 
     public DebugWindow()
     {
         InitializeControl();
-
-        _statsView = View.FindByName("_statsView");
     }
 
 
@@ -39,7 +35,7 @@ public partial class DebugWindow : Controllable
         var textCount = newStats.FillText - _stats.FillText;
         var rectCount = newStats.FillRect - _stats.FillRect + newStats.StrokeRect - _stats.StrokeRect;
         var clipCount = newStats.PushClips - _stats.PushClips;
-        _statsView.SetProperty(Zui.Text, new ([
+        _statsView.View.SetProperty(Zui.Text, new ([
             $"fps={renderer.Fps}, ms={renderer.AvgMs}, count={renderer.FrameCount}",
             $"DPR={_window.DevicePixelRatio:F2}, CDS={canvasDeviceSize:F2}, CSS={canvasStyleSize:F2}",
             $"WIS={_window.InnerSize}, DPS={_canvas.DevicePixelSize?.ToString() ?? "?"}",
