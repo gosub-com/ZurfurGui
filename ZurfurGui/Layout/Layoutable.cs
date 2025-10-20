@@ -19,6 +19,7 @@ public interface Layoutable
     /// Called by View.Measure, should call View.Measure on child views.
     /// The size available accounts for margin, border, and padding.
     /// Similar to MeasureOverride in WPF.
+    /// NOTE: This MUST CALL View.Measure on each visible child view.
     /// </summary>
     Size MeasureView(View view, MeasureContext measure, Size available);
 
@@ -26,6 +27,7 @@ public interface Layoutable
     /// Arrange the view's children.  
     /// The view's Size, Position, and ContentRect are set before this function is called. 
     /// Similar to ArrangeOverride in WPF.
+    /// NOTE: This MUST CALL View.Arrange on each visible child view.
     /// </summary>
     void ArrangeViews(View view, MeasureContext measure);
 

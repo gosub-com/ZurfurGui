@@ -35,6 +35,8 @@ public class LayoutText : Layoutable
 
     public void ArrangeViews(View view, MeasureContext measure)
     {
+        if (view.Children.Count != 0)
+            throw new InvalidOperationException("Text layout does not support children");
     }
 
 

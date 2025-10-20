@@ -1,11 +1,14 @@
 ﻿using ZurfurGui.Base;
 using ZurfurGui.Draw;
+using ZurfurGui.Property;
 
 namespace ZurfurGui.Windows;
 
 public partial class DebugWindow : Controllable
 {
-    RenderContext.Stats _stats;
+    readonly bool UPDATE_ONCE_PER_SECOND = false;
+
+    RenderContext.Stats _prevStats;
 
     public DebugWindow()
     {
@@ -27,21 +30,31 @@ public partial class DebugWindow : Controllable
         if (View.AppWindow?.Renderer is not { } renderer)
             return;
 
+        if (UPDATE_ONCE_PER_SECOND && !renderer.FpsUpdatedOnceASecond)
+            return;
+
         var newStats = renderer.RenderContext.RenderStats;
         var _window = renderer.Window;
         var _canvas = renderer.Canvas;
         var canvasDeviceSize = _canvas.DeviceSize;
         var canvasStyleSize = _canvas.StyleSize;
-        var textCount = newStats.FillText - _stats.FillText;
-        var rectCount = newStats.FillRect - _stats.FillRect + newStats.StrokeRect - _stats.StrokeRect;
-        var clipCount = newStats.PushClips - _stats.PushClips;
-        _statsView.View.SetProperty(Zui.Text, new ([
-            $"fps={renderer.Fps}, ms={renderer.AvgMs}, count={renderer.FrameCount}",
+        var textCount = newStats.FillText - _prevStats.FillText;
+        var rectCount = newStats.FillRect - _prevStats.FillRect + newStats.StrokeRect - _prevStats.StrokeRect;
+        var clipCount = newStats.PushClips - _prevStats.PushClips;
+        TextLinesProp text = new([
+            $"fps={renderer.Fps}, ms={renderer.AvgMs}, frames={renderer.FrameCount}",
+            $"draws={renderer.DrawCount}, measures={renderer.MeasureCount}, styles={renderer.StyleCount}",
             $"DPR={_window.DevicePixelRatio:F2}, CDS={canvasDeviceSize:F2}, CSS={canvasStyleSize:F2}",
             $"WIS={_window.InnerSize}, DPS={_canvas.DevicePixelSize?.ToString() ?? "?"}",
             $"Screen size: ({_window.ScreenSize}), focus={_canvas.HasFocus}",
             $"Text: {textCount}, Rects: {rectCount}, Clips: {clipCount}"
-        ]));
-        _stats = newStats;
+        ]);
+
+        // Don't Invalidate measure
+        _statsView.View.SetPropertyNoFlags(Zui.Text, text);
+        _statsView.View.InvalidateDraw();
+        // _statsView.View.InvalidateMeasure();
+
+        _prevStats = newStats;
     }
 }

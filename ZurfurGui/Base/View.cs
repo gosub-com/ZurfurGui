@@ -6,27 +6,13 @@ using ZurfurGui.Windows;
 
 namespace ZurfurGui.Base;
 
-public enum AlignHorizontal : byte
-{
-    Stretch,
-    Left,
-    Center,
-    Right
-}
-
-public enum AlignVertical : byte
-{
-    Stretch,
-    Top,
-    Center,
-    Bottom
-}
 
 public sealed class View
 {
 
     // TBD: Should we be caching style lookups in the properties?
-    const int PROPERTY_STYLE_CACHE_OFFSET = 10000;
+    const int PROPERTY_STYLE_CACHE_BEGIN = 10000;
+    const int PROPERTY_STYLE_CACHE_END = 20000;
 
     /// <summary>
     /// All child views. 
@@ -73,7 +59,6 @@ public sealed class View
     /// </summary>
     public Size DesiredContentSize { get; private set; }
 
-
     /// <summary>
     /// Content rect inside the view, accounting for padding and border.
     /// Can be smaller than the DesiredContentSize.
@@ -100,8 +85,9 @@ public sealed class View
     /// </summary>
     public double Scale { get; private set; } = 1;
 
-    public bool IsMeasureInvalid { get; private set; }
-    public bool IsVisualInvalid { get; private set; }
+    public ViewFlags Flags { get; internal set; }
+    public ViewFlags FlagsChild { get; internal set; }
+
 
     internal bool PushedContentClip;
 
@@ -110,7 +96,27 @@ public sealed class View
     public Rect toDevice(Rect r) => new Rect(Origin.ToVector + r.Position * Scale, Scale * r.Size);
     public Point toClient(Point p) => ((p - Origin) / Scale).ToPoint;
 
-    public bool PointerHoverTarget { get; internal set; }
+    internal struct MeasureCache
+    {
+        public Size AvaliableAtMeasure;
+        public Rect FinalAtArrange;
+        public Point OriginAtArrange;
+        public double ScaleAtArrange;
+
+        // NOTE: Caching these might not be worth it since we bypass most measuring when nothing changes.
+        // TBD: Profile
+        public bool IsVisible;
+        public SizeProp SizeRequest;
+        public SizeProp SizeMin;
+        public SizeProp SizeMax;
+        public Thickness Padding;
+        public Thickness Margin;
+        public BackgroundProp Background;
+        public bool Clip;
+    }
+
+    internal MeasureCache _cache;
+
 
     public View(Controllable control)
     {
@@ -123,31 +129,35 @@ public sealed class View
         return $"{Controller.TypeName}: {(name == "" ? "(no name)" : name)}";
     }
 
+    /// <summary>
+    /// Call when a view's measurement becomes invalid and needs to be re-measured.
+    /// NOTE: This is called automatically when properties that affect measurement are changed.
+    /// </summary>
     public void InvalidateMeasure()
     {
-        if (IsMeasureInvalid)
-            return;
-
-        IsMeasureInvalid = true;
-        var parent = Parent;
-        while (parent != null && !parent.IsMeasureInvalid && parent.GetStyle(Zui.IsVisible).Or(true))
-        {
-            parent.InvalidateMeasure();
-            parent = parent.Parent;
-        }
+        SetFlags(ViewFlags.ReMeasure);
     }
 
-    public void InvalidateVisual()
+    /// <summary>
+    /// Call when a view's drawing becomes invalid and needs to be redrawn.
+    /// Note: This is called automatically when properties that affect drawing are changed.
+    /// </summary>
+    public void InvalidateDraw()
     {
-        if (IsVisualInvalid)
+        SetFlags(ViewFlags.ReDraw);
+    }
+
+    void SetFlags(ViewFlags flags)
+    {
+        if ((Flags & flags) == flags)
             return;
 
-        IsVisualInvalid = true;
-        var parent = Parent;
-        while (parent != null && !parent.IsVisualInvalid && parent.GetStyle(Zui.IsVisible).Or(true))
+        Flags |= flags;
+        var view = this;
+        while (view != null && (view.FlagsChild & flags) != flags)
         {
-            parent.InvalidateVisual();
-            parent = parent.Parent;
+            view.FlagsChild |= flags;
+            view = view.Parent;
         }
     }
 
@@ -165,6 +175,17 @@ public sealed class View
     }
 
     public void SetProperty<T>(PropertyKey<T> key, T value)
+    {
+        if (GetProperty(key) is T oldValue && oldValue.Equals(value))
+            return;
+        SetFlags(key.Flags);
+        _properties.Set(key, value);
+    }
+
+    /// <summary>
+    /// Set a property, don't invalidate
+    /// </summary>
+    internal void SetPropertyNoFlags<T>(PropertyKey<T> key, T value)
     {
         _properties.Set(key, value);
     }
@@ -190,27 +211,36 @@ public sealed class View
         }
 
         // Properties cached from style lookup below
-        if (_properties.TryGetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_OFFSET),
+        if (_properties.TryGetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN),
                 out var styledValue) && styledValue is T typedStyledValue)
         {
             return property.Or(typedStyledValue);
         }
 
         // Lookup styledProperty (matches first, then defaults)
-        var styledProperty = FindStyledProperty(key, new(), "");
-        if (!styledProperty.IsComplete)
-            styledProperty = FindStyledProperty(key, styledProperty, "default:");
+        var styledProperty = FindStyledProperty(key, new());
 
         // Cache the styled property for quick lookup above
-        _properties.SetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_OFFSET), styledProperty);
+        _properties.SetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN), styledProperty);
 
         return property.Or(styledProperty);
     }
 
+    internal void ClearStyleCache()
+    {
+        var keysToRemove = _properties
+            .Select(k => k.key)
+            .Where( k => k.IdAsInt >= PROPERTY_STYLE_CACHE_BEGIN && k.IdAsInt < PROPERTY_STYLE_CACHE_END)
+            .ToList();
+        foreach (var key in keysToRemove)
+            _properties.RemoveById(key);
+    }
+
+
     /// <summary>
     /// Walk up the view tree to find a style property based on the classes property.
     /// </summary>
-    T FindStyledProperty<T>(PropertyKey<T> key, T property, string selectContext) where T : IProperty<T>, new()
+    T FindStyledProperty<T>(PropertyKey<T> key, T property) where T : IProperty<T>, new()
     {
         var classes = _properties.Get(Zui.Classes);
         if (classes == null || classes.Count == 0)
@@ -224,28 +254,45 @@ public sealed class View
 
             foreach (var style in styles.Reverse())
             {
-                if (style.TryGet(Zui.Selectors, out var selectors) && selectors != null)
+                if (style.TryGet(Zui.Selectors, out var selectors) && selectors != null
+                    && style.TryGet(key, out var p) && p != null 
+                    && StyleMatches(selectors, classes))
                 {
-                    if (style.TryGet(key, out var p) && p != null && StyleMatches(classes, selectors, selectContext))
-                    {
-                        property = property.Or(p);
-                        if (property.IsComplete)
-                            return property;
-                    }
+                    property = property.Or(p);
+                    if (property.IsComplete)
+                        return property;
                 }
             }
         }
         return property;
     }
 
-    bool StyleMatches(TextLines classes, TextLines selectors, string selectContext)
+    bool StyleMatches(TextLines selectors, TextLines classes)
     {
-        foreach (var s in selectors)
+        foreach (var selector in selectors)
         {
+            var s = selector.Split(':');
             foreach (var c in classes)
             {
-                if (selectContext + c == s)
-                    return true;
+                if (c == s[0])
+                {
+                    // Check pseudo classes
+                    var match = true;
+                    for (int i = 1; i < s.Length; i++)
+                    {
+                        switch (s[i])
+                        {
+                            case "IsPointerOver":
+                                if (!GetProperty(Zui.IsPointerOver).Or(false))
+                                    match = false;
+                                break;
+                            default:
+                                match = false;
+                                break;
+                        }
+                    }
+                    return match;
+                }
             }
         }
         return false;
@@ -278,13 +325,30 @@ public sealed class View
     /// </summary>
     public void Measure(Size available, MeasureContext measure)
     {
-        if (!GetStyle(Zui.IsVisible).Or(true))
+        // Quick exit if invisible
+        _cache.IsVisible = GetStyle(Zui.IsVisible).Or(true);
+        if (!_cache.IsVisible)
             return;
-        IsMeasureInvalid = false;
+
+        // No need to re-measure if the last measurement is still valid
+        if ( ((Flags | FlagsChild) & ViewFlags.ReMeasure) == ViewFlags.None
+            && available == _cache.AvaliableAtMeasure)
+        {
+            return;
+        }
+
+        _cache.AvaliableAtMeasure = available;
+        _cache.SizeRequest = GetStyle(Zui.SizeRequest);
+        _cache.SizeMin = GetStyle(Zui.SizeMin);
+        _cache.SizeMax = GetStyle(Zui.SizeMax);
+        _cache.Padding = GetStyle(Zui.Padding).Or(0);
+        _cache.Margin = GetStyle(Zui.Margin).Or(0);
+        _cache.Background = GetStyle(Zui.Background);
+        _cache.Clip = GetStyle(Zui.Clip).Or(false);
 
         // Include padding and border in the measurement
-        var margin = GetStyle(Zui.Margin).Or(0);
-        var padding = GetStyle(Zui.Padding).Or(0) + new Thickness(GetStyle(Zui.Background).BorderWidth.Or(0));
+        var margin = _cache.Margin;
+        var padding = _cache.Padding + new Thickness(_cache.Background.BorderWidth.Or(0));
 
         var constrained = ClampViewSize(available.Deflate(margin)).Deflate(padding);
 
@@ -292,7 +356,7 @@ public sealed class View
         if (Layout is Layoutable layout)
             DesiredContentSize = layout.MeasureView(this, measure, constrained);
         else
-            DesiredContentSize = LayoutHelper.MeasurePanel(this, measure, constrained);
+            DesiredContentSize = LayoutPanel.MeasurePanel(this, measure, constrained);
 
         // Desired total view size includes padding and border
         var measured = DesiredContentSize.Inflate(padding);
@@ -311,17 +375,17 @@ public sealed class View
     /// Called to set the Position and Size of the control within the parent.
     /// Similar to ArrangeCore in WPF.
     /// </summary>
-    public void Arrange(Rect finalRect, MeasureContext measure)
+    public void Arrange(Rect final, MeasureContext measure)
     {
-        if (!GetStyle(Zui.IsVisible).Or(true))
+        // Quick exit if invisible
+        if (!_cache.IsVisible)
             return;
 
-        var margin = GetStyle(Zui.Margin).Or(0);
+        var margin = _cache.Margin;
+        var availableSize = final.Size.Deflate(margin);
 
-        var availableSize = finalRect.Size.Deflate(margin);
-
-        var x = finalRect.X + margin.Left;
-        var y = finalRect.Y + margin.Top;
+        var x = final.X + margin.Left;
+        var y = final.Y + margin.Top;
         var size = availableSize;
 
         var align = GetStyle(Zui.Align);
@@ -336,7 +400,7 @@ public sealed class View
 
         size = ClampViewSize(size);
 
-        var padding = GetStyle(Zui.Padding).Or(0) + new Thickness(GetStyle(Zui.Background).BorderWidth.Or(0));
+        var padding = _cache.Padding + new Thickness(_cache.Background.BorderWidth.Or(0));
 
         ContentRect = new Rect(new Point(0, 0), size).Deflate(padding);
         Size = size;
@@ -364,14 +428,27 @@ public sealed class View
         }
 
         Position = new Vector(x, y) + GetStyle(Zui.Offset).Or(0);
-        Scale = (Parent?.Scale??1) * GetStyle(Zui.Magnification).Or(1);
-        Origin = (Parent?.Origin??new()).ToVector + Scale * Position;
+        var scale = (Parent?.Scale??1) * GetStyle(Zui.Magnification).Or(1);
+        var origin = (Parent?.Origin??new()).ToVector + Scale * Position;
+
+        // No need to re-arrange children if nothing changed
+        if (((Flags | FlagsChild) & ViewFlags.ReMeasure) == ViewFlags.None
+            && final == _cache.FinalAtArrange && scale == _cache.ScaleAtArrange && origin == _cache.OriginAtArrange)
+        {
+            return;
+        }
+        _cache.FinalAtArrange = final;
+        _cache.ScaleAtArrange = scale;
+        _cache.OriginAtArrange = origin;
+        Scale = scale;
+        Origin = origin;
+
 
         // Arrange child views
         if (Layout is Layoutable layout)
             layout.ArrangeViews(Controller.View, measure);
         else
-            LayoutHelper.ArrangePanel(Controller.View, measure);
+            LayoutPanel.ArrangePanel(Controller.View, measure);
     }
 
     /// <summary>
@@ -379,11 +456,11 @@ public sealed class View
     /// Uses the view's SizeRequest property if it's avaliable and ignoreSizeRequest is false.
     /// NOTE: Always >= 0 and SizeMin (even if Size < SizeMin)
     /// </summary>
-    public Size ClampViewSize(Size requestedSize)
+    Size ClampViewSize(Size requestedSize)
     {
-        var size = GetStyle(Zui.SizeRequest).Or(requestedSize);
-        var sizeMax = GetStyle(Zui.SizeMax).Or(double.PositiveInfinity);
-        var sizeMin = GetStyle(Zui.SizeMin).Or(0).MaxZero;
+        var size = _cache.SizeRequest.Or(requestedSize);
+        var sizeMax = _cache.SizeMax.Or(double.PositiveInfinity);
+        var sizeMin = _cache.SizeMin.Or(0).MaxZero;
         return size.Min(sizeMax).Max(sizeMin);
     }
 
@@ -509,12 +586,12 @@ public sealed class View
     /// </summary>
     public bool CapturePointer
     {
-        get { return AppWindow?.GetIsPointerCaptured(this) ?? false; }
+        get { return AppWindow?.PointerHover?.GetIsPointerCaptured(this) ?? false; }
         set
         {
             if (AppWindow is not AppWindow appWindow)
                 throw new InvalidOperationException("View is not attached to main tree");
-            appWindow.SetIsPointerCapture(this, value);
+            appWindow?.PointerHover?.SetIsPointerCapture(this, value);
         }
     }
 

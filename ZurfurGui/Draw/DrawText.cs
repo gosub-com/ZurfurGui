@@ -14,7 +14,6 @@ public class DrawText : Drawable
     /// </summary>
     public static readonly DrawText Instance = new();
 
-
     public string DrawType => "Text";
 
     public void Draw(View view, RenderContext context)
@@ -23,18 +22,9 @@ public class DrawText : Drawable
         if (context.DeviceClip.Intersect(view.toDevice(view.ContentRect)).Width == 0)
             return;
 
-        // TBD: From style
-        var color = Colors.White;
-
-        // TBD: Temporary, for testing button hover
-        if (view.Controller.TypeName == "Button")
-        {
-            var back = view.GetStyle(Zui.Background);
-            back = back with { Color = view.PointerHoverTarget ? Colors.Red : Colors.Gray };
-            view.SetProperty(Zui.Background, back);
-        }
-        else
-            color = view.PointerHoverTarget ? Colors.Red : Colors.White;
+        var color = view.GetStyle(Zui.Color).Or(Colors.Black);
+        if (color.A == 0)
+            return; // Exit if clear
 
         // Clip if content size is larger than available size
         var contentSize = view.ContentRect.Size.Inflate(CLIP_ROUNDING_ERROR);

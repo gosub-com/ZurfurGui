@@ -1,23 +1,4 @@
 {
     "Controller": "TextBox",
-    "Classes": [ "TextBox" ],
-    "Styles": [
-        {
-            "Selectors": "default:TextBox",
-            "Background": {
-                "Color": "LightBlue",
-                "BorderWidth": 2,
-                "BorderColor": "Navy"
-            },
-            "SizeMin": {
-                "Width": 100
-            },
-            "Padding": {
-                "Left": 2,
-                "Top": 2,
-                "Right": 0,
-                "Bottom": 0
-            }
-        }
-    ]
+    "Classes": [ "TextBox" ]
 }

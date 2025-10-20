@@ -20,12 +20,9 @@ public partial class AppWindow : Controllable, Drawable
 {
     readonly bool DRAW_TEST_PATTERN = false;
 
-    Renderer? _renderer;
-
-    internal List<View> _pointerCaptureList = new();
-
     public string DrawType => "AppWindow";
-    public Renderer? Renderer => _renderer;
+    public Renderer? Renderer { get; private set; }
+    internal PointerOver? PointerHover { get; private set; }
 
     /// <summary>
     /// Triggered before rendering each frame
@@ -84,9 +81,10 @@ public partial class AppWindow : Controllable, Drawable
     /// <summary>
     /// Called by renderer so we can display some stats
     /// </summary>
-    internal void SetRenderWindow(Renderer renderer)
+    internal void SetAppWindowGlobals(Renderer renderer, PointerOver pointerHover)
     {
-        _renderer = renderer;
+        Renderer = renderer;
+        PointerHover = pointerHover;
     }
 
     public bool IsHit(View view, Point point)
@@ -143,41 +141,6 @@ public partial class AppWindow : Controllable, Drawable
         context.LineWidth = 16;
         context.StrokeColor = new Color(255, 0, 255);
         context.StrokeRect(210 + sx, 10, 50, 50);
-    }
-
-
-
-    internal bool GetIsPointerCaptured(View view)
-    {
-        return _pointerCaptureList.Contains(view);
-    }
-    internal void SetIsPointerCapture(View view, bool capture)
-    {
-        Debug.WriteLine($"Capture {capture}");
-        var i = _pointerCaptureList.IndexOf(view);
-        if (capture)
-        {
-            // TBD: Throw if not in pointer down
-            if (i < 0)
-                _pointerCaptureList.Add(view);
-        }
-        if (!capture)
-        {
-            if (i >= 0)
-            {
-                _pointerCaptureList.RemoveAt(i);
-                view.GetProperty(Zui.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
-            }
-        }
-    }
-
-    internal void ClearPointerCaptureList()
-    {
-        Debug.WriteLine("CaptureLost");
-        var c = _pointerCaptureList;
-        _pointerCaptureList = new();
-        foreach (var view in c)
-            view.GetProperty(Zui.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
     }
 
 }

@@ -13,24 +13,23 @@ public class Renderer
     OsCanvas _canvas;
     AppWindow _appWindow;
     RenderContext _renderContext;
+    PointerOver _pointerHover;
 
-    View? _hoverView;
-
-    long _frameCount;
     long _frameLastCountSecond;
-    long _fps;
     int _second;
     long _totalMs;
-    long _avgMs;
 
     double _devicePixelRatio = double.NaN;
     Size _mainWindowSize = new(double.NaN, double.NaN);
 
-    Point _pointerPosition;
 
-    public long Fps => _fps;
-    public double AvgMs => _avgMs;
-    public long FrameCount => _frameCount;
+    public long Fps { get; private set; }
+    public bool FpsUpdatedOnceASecond { get; private set; }
+    public double AvgMs { get; private set; }
+    public long FrameCount { get; private set; }
+    public long DrawCount { get; private set; }
+    public long MeasureCount { get; private set; }
+    public long StyleCount { get; private set; }
     public OsCanvas Canvas => _canvas;
     public OsWindow Window => _window;
     public RenderContext RenderContext => _renderContext;
@@ -40,137 +39,15 @@ public class Renderer
     {
         _window = window;
         _canvas = canvas;
-        _renderContext = new RenderContext(_canvas.Context);
-
         _appWindow = appWindow;
-        _appWindow.SetRenderWindow(this);
+
+        _renderContext = new RenderContext(_canvas.Context);
+        _pointerHover = new PointerOver(_appWindow);
+        _appWindow.SetAppWindowGlobals(this, _pointerHover);
 
         if (_canvas.PointerInput != null)
             throw new ArgumentException("Pointer input already taken", nameof(_canvas));
-        _canvas.PointerInput = PointerInput;
-    }
-
-
-
-    void PointerInput(PointerEvent ev)
-    {
-        _pointerPosition = ev.Position;
-
-        // Perform capture
-        if (_appWindow._pointerCaptureList.Count != 0)
-        {
-            // End hover target
-            if (_hoverView != null)
-                _hoverView.PointerHoverTarget = false;
-            _hoverView = null;
-
-            // Send events to captured views
-            if (ev.Type == "pointerup" || ev.Type == "pointerleave")
-                _appWindow.ClearPointerCaptureList();
-            else
-                SendPointerEvent(ev, _appWindow._pointerCaptureList);
-        }
-
-        // Update hover target        
-        var hit = FindHitTarget(_appWindow.View, ev.Position);
-        if (ev.Type == "pointermove")
-        {
-            if (hit != _hoverView)
-            {
-                if (_hoverView != null)
-                    _hoverView.PointerHoverTarget = false;
-                _hoverView = hit;
-                if (_hoverView != null)
-                    _hoverView.PointerHoverTarget = true;
-            }
-        }
-
-        var chain = new List<View>();
-        GetViewChain(hit, chain);
-
-        SendPointerEvent(ev, chain);
-
-    }
-
-    public static View? FindHitTarget(View view, Point target)
-    {
-        // Quick exit when not visible or not in clip region
-        var clip = new Rect(view.Origin, view.toDevice(view.Size));
-        if (!clip.Contains(target))
-            return null;
-
-        if (!view.GetStyle(Zui.IsVisible).Or(true))
-            return null;
-
-        // Check children first
-        var views = view.Children;
-        for (var i = views.Count - 1; i >= 0; i--)
-        {
-            var hit = FindHitTarget(views[i], target);
-            if (hit != null)
-                return hit;
-        }
-
-        if (!view.GetProperty(Zui.DisableHitTest).Or(false))
-        {
-            // User content hit test
-            if (view.Draw is Drawable renderable)
-                if (renderable.IsHit(view, target))
-                    return view;
-
-            // Panel hit test
-            if (DrawHelper.IsHitPanel(view, target))
-                return view;
-        }
-
-        return null;
-    }
-
-
-
-    private static void SendPointerEvent(PointerEvent ev, List<View> views)
-    {
-        PropertyKey<EventHandler<PointerEvent>> property;
-        switch (ev.Type)
-        {
-            case "pointermove": property = Zui.PreviewPointerMove; break;
-            case "pointerdown": property = Zui.PreviewPointerDown; break;
-            case "pointerup": property = Zui.PreviewPointerUp; break;
-            default: return;
-        }
-
-        // Preview
-        for (int i = views.Count - 1; i >= 0; i--)
-        {
-            var view = views[i];
-            view.GetProperty(property)?.Invoke(null, ev);
-        }
-
-        switch (ev.Type)
-        {
-            case "pointermove": property = Zui.PointerMove; break;
-            case "pointerdown": property = Zui.PointerDown; break;
-            case "pointerup": property = Zui.PointerUp; break;
-            default: return;
-        }
-
-        // Bubble
-        foreach (var view in views)
-        {
-            view.GetProperty(property)?.Invoke(null, ev);
-        }
-    }
-
-    /// <summary>
-    /// Retrieve views from the given child up to the root
-    /// </summary>
-    void GetViewChain(View? view, List<View> views)
-    {
-        while (view != null)
-        {
-            views.Add(view);
-            view = view.Parent;
-        }
+        _canvas.PointerInput = (ev) => _pointerHover.PointerInput(ev);
     }
 
 
@@ -182,56 +59,95 @@ public class Renderer
 
 
         // Resize if the window size changed
-        var view = _appWindow.View;
+        var appView = _appWindow.View;
         if (_mainWindowSize != _canvas.DeviceSize 
-            || _devicePixelRatio != _window.DevicePixelRatio
-            || _appWindow.View.IsMeasureInvalid)
+            || _devicePixelRatio != _window.DevicePixelRatio)
         {
-            view.SetProperty(Zui.Magnification, _window.DevicePixelRatio);
+            appView.SetProperty(Zui.Magnification, _window.DevicePixelRatio);
             _mainWindowSize = _canvas.DeviceSize / _window.DevicePixelRatio;
             _devicePixelRatio = _window.DevicePixelRatio;
-            var measureConext = new Layout.MeasureContext(_canvas.Context);
-            view.Measure(_mainWindowSize, measureConext);
-            view.Arrange(new Rect(new(0, 0), _mainWindowSize), measureConext);
+            appView.InvalidateMeasure();
         }
 
-        _frameCount++;
-        var now = DateTime.UtcNow;
-        if (now.Second != _second)
+        if ((appView.Flags | appView.FlagsChild).HasFlag(ViewFlags.RePseudo))
         {
-            _second = now.Second;
-            _fps = _frameCount - _frameLastCountSecond;
-            _frameLastCountSecond = _frameCount;
-            if (_fps != 0)
-                _avgMs = _totalMs / _fps;
-            _totalMs = 0;
+            StyleCount++;
+            InvalidatePseudo(appView);
         }
 
-        _renderContext.SetPointerPosition(_pointerPosition);
-        _renderContext.SetCurrentViewInternal(view);
-        _renderContext.PushDeviceClip(new Rect(new(), view.toDevice(_mainWindowSize)));
-        RenderView(view);
-        _renderContext.PopDeviceClip(view);
-        Debug.Assert(_renderContext.ClipLevel == 0);
-        _renderContext.SetCurrentViewInternal(null);
+        // Re-measure if necessary
+        if ((appView.Flags | appView.FlagsChild).HasFlag(ViewFlags.ReMeasure))
+        {
+            MeasureCount++;
+            var measureConext = new Layout.MeasureContext(_canvas.Context);
+            appView.Measure(_mainWindowSize, measureConext);
+            appView.Arrange(new Rect(new(0, 0), _mainWindowSize), measureConext);
+        }
+
+        // Re-draw if any flags changed
+        if ((appView.Flags | appView.FlagsChild) != ViewFlags.None)
+        {
+            _renderContext.SetPointerPosition(_pointerHover.PointerPosition);
+            _renderContext.SetCurrentViewInternal(appView);
+            _renderContext.PushDeviceClip(new Rect(new(), appView.toDevice(_mainWindowSize)));
+            DrawCount++;
+            RenderView(appView);
+            _renderContext.PopDeviceClip(appView);
+            Debug.Assert(_renderContext.ClipLevel == 0);
+            _renderContext.SetCurrentViewInternal(null);
+        }
 
         _totalMs += timer.ElapsedMilliseconds;
+
+        FrameCount++;
+        var now = DateTime.UtcNow;
+        FpsUpdatedOnceASecond = now.Second != _second;
+        if (FpsUpdatedOnceASecond)
+        {
+            _second = now.Second;
+            Fps = FrameCount - _frameLastCountSecond;
+            _frameLastCountSecond = FrameCount;
+            if (Fps != 0)
+                AvgMs = _totalMs / Fps;
+            _totalMs = 0;
+        }
+    }
+
+    void InvalidatePseudo(View view)
+    {
+        var needsClearCache = view.Flags.HasFlag(ViewFlags.RePseudo);
+        var needsChildTraverse = view.FlagsChild.HasFlag(ViewFlags.RePseudo);
+        view.Flags &= ~ViewFlags.RePseudo;
+        view.FlagsChild &= ~ViewFlags.RePseudo;
+
+        if (needsClearCache)
+        {
+            view.ClearStyleCache();
+            view.InvalidateMeasure();
+            view.InvalidateDraw();
+        }
+
+        if (needsChildTraverse)
+            foreach (var child in view.Children)
+                InvalidatePseudo(child);
     }
 
 
     void RenderView(View view)
     {
         // Quick exit for invisible
-        if (!view.GetStyle(Zui.IsVisible).Or(true))
+        if (!view._cache.IsVisible)
             return;
 
+        view.Flags = ViewFlags.None;
+        view.FlagsChild = ViewFlags.None;
 
         // Render panel background and border (without clipping since we know it's always in bounds)
         _renderContext.SetCurrentViewInternal(view);
         DrawHelper.DrawBackground(view, _renderContext);
 
         // Clip the content rect if requested
-        if (view.GetProperty(Zui.Clip).Or(false))
+        if (view._cache.Clip)
             _renderContext.PushDeviceClip(view.toDevice(view.ContentRect));
 
         try

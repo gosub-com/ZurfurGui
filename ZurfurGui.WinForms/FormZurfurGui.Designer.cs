@@ -31,7 +31,7 @@
             components = new System.ComponentModel.Container();
             pictureMain = new PictureBox();
             timer1 = new System.Windows.Forms.Timer(components);
-            labelMag = new Label();
+            labelInfo = new Label();
             ((System.ComponentModel.ISupportInitialize)pictureMain).BeginInit();
             SuspendLayout();
             // 
@@ -43,7 +43,6 @@
             pictureMain.Size = new System.Drawing.Size(954, 601);
             pictureMain.TabIndex = 1;
             pictureMain.TabStop = false;
-            pictureMain.Paint += pictureMain_Paint;
             // 
             // timer1
             // 
@@ -53,22 +52,22 @@
             // 
             // labelMag
             // 
-            labelMag.AutoSize = true;
-            labelMag.Font = new Font("Segoe UI", 16F);
-            labelMag.ImageAlign = ContentAlignment.MiddleRight;
-            labelMag.Location = new System.Drawing.Point(21, 22);
-            labelMag.Name = "labelMag";
-            labelMag.Size = new System.Drawing.Size(209, 30);
-            labelMag.TabIndex = 2;
-            labelMag.Text = "Magnification: 100%";
-            labelMag.TextAlign = ContentAlignment.MiddleLeft;
+            labelInfo.AutoSize = true;
+            labelInfo.Font = new Font("Segoe UI", 16F);
+            labelInfo.ImageAlign = ContentAlignment.MiddleRight;
+            labelInfo.Location = new System.Drawing.Point(21, 22);
+            labelInfo.Name = "labelMag";
+            labelInfo.Size = new System.Drawing.Size(209, 30);
+            labelInfo.TabIndex = 2;
+            labelInfo.Text = "Magnification: 100%";
+            labelInfo.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // FormZurfurGui
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(978, 625);
-            Controls.Add(labelMag);
+            Controls.Add(labelInfo);
             Controls.Add(pictureMain);
             MaximizeBox = false;
             MinimizeBox = false;
@@ -82,6 +81,6 @@
         #endregion
         private PictureBox pictureMain;
         private System.Windows.Forms.Timer timer1;
-        private Label labelMag;
+        private Label labelInfo;
     }
 }

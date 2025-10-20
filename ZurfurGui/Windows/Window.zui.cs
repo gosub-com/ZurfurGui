@@ -69,7 +69,6 @@ public partial class Window : Controllable
 
         // Update window offset
         View.SetProperty(Zui.Offset, View.GetStyle(Zui.Offset).Or(0) + diff);
-        View.InvalidateMeasure(); // TBD: Should be automatic
     }
 
     void _resizeHandle_PreviewPointerDown(object? s, PointerEvent e)
@@ -93,7 +92,6 @@ public partial class Window : Controllable
         var sizeMax = View.GetStyle(Zui.SizeMax).Or(double.PositiveInfinity);
         var sizeMin = View.GetStyle(Zui.SizeMin).Or(0).MaxZero;
         View.SetProperty(Zui.SizeRequest, size.Min(sizeMax).Max(sizeMin));
-        View.InvalidateMeasure(); // TBD: Should be automatic
     }
 
 

@@ -9,7 +9,7 @@ using static ZurfurGui.Base.Size;
 
 namespace ZurfurGui.Layout;
 
-public static class LayoutHelper
+public static class LayoutPanel
 {
 
     /// <summary>

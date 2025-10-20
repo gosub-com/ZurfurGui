@@ -1,5 +1,7 @@
-﻿using System.Reflection;
+﻿using System.Drawing;
+using System.Reflection;
 using System.Runtime.InteropServices.JavaScript;
+using ZurfurGui.Base;
 using ZurfurGui.Browser.Interop;
 using ZurfurGui.Draw;
 using ZurfurGui.Windows;
@@ -33,6 +35,7 @@ public static partial class BrowserStart
 
     public static void Start(string canvasId, Action<AppWindow> mainAppEntry)
     {
+        var lastSize = new Base.Size(-1, -1);
         var appWindow = Loader.Init(mainAppEntry);
         var window = new BrowserWindow();
         var canvas = new BrowserCanvas(canvasId, window);
@@ -42,7 +45,6 @@ public static partial class BrowserStart
         ScaleAndRender();
         BrowserWindow.RequestAnimationFrame(RetryScaleAndRender);
         return;
-
 
         void RetryScaleAndRender()
         {
@@ -57,7 +59,6 @@ public static partial class BrowserStart
             BrowserWindow.RequestAnimationFrame(RetryScaleAndRender);
         }
 
-
         void ScaleAndRender()
         {
             canvas.StyleSize = window.InnerSize;
@@ -65,16 +66,20 @@ public static partial class BrowserStart
             // Canvas size scales by device pixels
             var px = window.DevicePixelRatio;
             var deviceSize = canvas.DevicePixelSize;
-            if (deviceSize  != null && deviceSize.Value.Width > 0 && deviceSize.Value.Height > 0 )
+            Base.Size size;
+            if (deviceSize != null && deviceSize.Value.Width > 0 && deviceSize.Value.Height > 0)
             {
                 // Pixel perfect
-                canvas.DeviceSize = deviceSize.Value;
+                size = deviceSize.Value;
             }
             else
             {
                 // Close enough
-                canvas.DeviceSize = px * canvas.StyleSize;
+                size = px * canvas.StyleSize;
             }
+            if (size != lastSize)
+                canvas.DeviceSize = size;
+            lastSize = size;
 
             renderer.RenderFrame();
         }

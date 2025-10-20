@@ -3,6 +3,16 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ZurfurGui.Property;
 
+public enum ViewFlags : short
+{
+    None = 0,
+    ReDraw = 1 << 1,
+    ReMeasure = 1 << 2,
+    ReStyle = 1 << 3,
+    RePseudo = 1 << 4,
+}
+
+
 /// <summary>
 /// Property key info
 /// </summary>
@@ -89,11 +99,13 @@ public class PropertyKey<T> : IEquatable<PropertyKey<T>>
     readonly PropertyKeyId _id;
     public readonly string Name;
     public readonly Type Type;
+    public readonly ViewFlags Flags;
 
-    public PropertyKey(string name)
+    public PropertyKey(string name, ViewFlags flags = ViewFlags.None)
     {
         _id = PropertyKeys.Create(name, typeof(T));
         Name = name;
+        Flags = flags;
         Type = typeof(T);
     }
 
@@ -205,6 +217,11 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
         if (typeof(T).IsAssignableTo(typeof(Delegate)))
             throw new ArgumentException($"Use RemoveEvent for delegate types", nameof(T));
         _properties.Remove(property.Id);
+    }
+
+    public void RemoveById(PropertyKeyId property)
+    {
+        _properties.Remove(property);
     }
 
     /// <summary>

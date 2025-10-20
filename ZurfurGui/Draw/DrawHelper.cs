@@ -20,23 +20,23 @@ public static class DrawHelper
             return;
 
         // Draw background
-        var back = view.GetStyle(Zui.Background);
+        var back = view._cache.Background;
         var borderRadius = back.Radius.Or(0);
         var background = back.Color.Or(Colors.TransParent);
+        var borderWidth = Math.Min(back.BorderWidth.Or(0), Math.Min(view.Size.Width, view.Size.Height)/2);
         if (background.A != 0)
         {
             context.FillColor = background;
-            context.FillRect(new Rect(new(), view.Size), borderRadius);
+            context.FillRect(new Rect(new(), view.Size).Deflate(borderWidth/2), borderRadius);
         }
 
         // Draw border
         var borderColor = back.BorderColor.Or(Colors.TransParent);
-        var borderWidth = back.BorderWidth.Or(0);
         if (borderWidth > 0 && borderColor.A != 0)
         {
             context.LineWidth = borderWidth;
             context.StrokeColor = borderColor;
-            context.StrokeRect(new Rect(new(), view.Size).Deflate(borderWidth / 2), borderRadius);
+            context.StrokeRect(new Rect(new(), view.Size).Deflate(borderWidth/2), borderRadius);
         }
     }
 

@@ -12,5 +12,4 @@ public partial class TextBox : Controllable
         View.Draw = DrawText.Instance;
         View.Layout = LayoutText.Instance;
     }
-
 }

@@ -91,7 +91,11 @@ internal partial class BrowserCanvas : OsCanvas
     public Size DeviceSize
     {
         get => new Size(_canvas.GetPropertyAsDouble("width"), _canvas.GetPropertyAsDouble("height"));
-        set { _canvas.SetProperty("width", value.Width); _canvas.SetProperty("height", value.Height); }
+        set 
+        { 
+            _canvas.SetProperty("width", value.Width); 
+            _canvas.SetProperty("height", value.Height); 
+        }
     }
 
     public Size StyleSize

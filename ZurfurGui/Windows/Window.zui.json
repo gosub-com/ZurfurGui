@@ -1,54 +1,6 @@
 {
     "Controller": "Window",
     "Classes": [ "Window" ],
-    "Styles": [
-        {
-            "Selectors": "default:Window",
-            "Background": {
-                "Color": "LightSkyBlue",
-                "Radius": 10.0,
-                "BorderWidth": 2,
-                "BorderColor": "AliceBlue"
-            },
-            "SizeMin": {
-                "Width": 160,
-                "Height": 80
-            }
-        },
-        {
-            "Selectors": "default:Window.Title",
-            "Padding": {
-                "Left": 10,
-                "Top": 4,
-                "Right": 10,
-                "Bottom": 0
-            },
-            "Background": {
-                "Color": "DarkSlateBlue",
-                "Radius": 10.0
-            },
-            "Dock": "Top",
-            "Align": { "Vertical": "Top" }
-        },
-        {
-            "Selectors": "default:Window.Title.Text",
-            "Text": "Window Title",
-            "Align": {
-                "Horizontal": "Center",
-                "Vertical": "Center"
-            },
-            "Font": { "Size": 24.0 }
-        },
-        {
-            "Selectors": "default:Window.Content",
-            "Margin": {
-                "Left": 10,
-                "Top": 10,
-                "Right": 10,
-                "Bottom": 10
-            }
-        }
-    ],
     "Content": [
         {
             "Layout": "DockPanel",
@@ -60,6 +12,7 @@
                     "Content": [
                         {
                             "Controller": "Text",
+                            "Classes": [ "Window.Title.TextColor", "Window.Title.Menu" ],
                             "Dock": "Left",
                             "Text": "≡",
                             "Font": { "Size": 24.0 }
@@ -67,14 +20,15 @@
                         {
                             "(Name)": "_closeButton",
                             "Controller": "Text",
+                            "Classes": [ "Window.Title.TextColor", "Window.Title.Close" ],
                             "Dock": "Right",
                             "Text": "X",
                             "Font": { "Size": 24.0 }
                         },
                         {
-                            "Classes": [ "Window.Title.Text" ],
                             "Controller": "Text",
-                            "DisableHitTest": true,
+                            "Classes": [ "Window.Title.Text", "Window.Title.TextColor" ],
+                            "DisableHitTest": true
                         }
                     ]
                 },
