@@ -42,7 +42,6 @@ public partial class AppWindow : Controllable, Drawable
     /// </summary>
     public void SetMainappWindow(Controllable control)
     {
-        View.InvalidateMeasure(); // TBD: Move to AddView
         _mainAppView.View.ClearChildren();
         _mainAppView.View.AddChild(control.View);
     }
@@ -52,7 +51,6 @@ public partial class AppWindow : Controllable, Drawable
     /// </summary>
     public void ShowWindow(Window window)
     {
-        View.InvalidateMeasure(); // TBD: Move to AddView
         _floatingWindows.View.AddChild(window.View);
     }
 
@@ -73,7 +71,6 @@ public partial class AppWindow : Controllable, Drawable
             window.View.SetProperty(Zui.SizeRequest, sizeRequst.Value);
 
         window.LoadContent([control]);
-        View.InvalidateMeasure(); // TBD: Move to AddView
         _floatingWindows.View.AddChild(window.View);
         return window;
     }

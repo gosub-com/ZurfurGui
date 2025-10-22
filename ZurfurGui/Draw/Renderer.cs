@@ -19,8 +19,8 @@ public class Renderer
     int _second;
     long _totalMs;
 
-    double _devicePixelRatio = double.NaN;
-    Size _mainWindowSize = new(double.NaN, double.NaN);
+    double _devicePixelRatio = 0;
+    Size _mainWindowSize = new();
 
 
     public long Fps { get; private set; }
@@ -50,24 +50,25 @@ public class Renderer
         _canvas.PointerInput = (ev) => _pointerHover.PointerInput(ev);
     }
 
-
     public void RenderFrame()
     {
         var timer = Stopwatch.StartNew();
 
-        _appWindow.CallPreRenderFrame();
-
-
         // Resize if the window size changed
+        var devicePixelRatio = _window.DevicePixelRatio;
+        var deviceSize = _canvas.DeviceSize;
         var appView = _appWindow.View;
-        if (_mainWindowSize != _canvas.DeviceSize 
-            || _devicePixelRatio != _window.DevicePixelRatio)
+        if (_mainWindowSize != deviceSize / devicePixelRatio
+            || _devicePixelRatio != devicePixelRatio)
         {
-            appView.SetProperty(Zui.Magnification, _window.DevicePixelRatio);
-            _mainWindowSize = _canvas.DeviceSize / _window.DevicePixelRatio;
-            _devicePixelRatio = _window.DevicePixelRatio;
+            _mainWindowSize = deviceSize / devicePixelRatio;
+            _devicePixelRatio = devicePixelRatio;
+            appView.SetProperty(Zui.Magnification, devicePixelRatio);
             appView.InvalidateMeasure();
         }
+
+        _appWindow.CallPreRenderFrame();
+
 
         if ((appView.Flags | appView.FlagsChild).HasFlag(ViewFlags.RePseudo))
         {

@@ -153,7 +153,7 @@ public sealed class View
             return;
 
         Flags |= flags;
-        var view = this;
+        var view = Parent;
         while (view != null && (view.FlagsChild & flags) != flags)
         {
             view.FlagsChild |= flags;
@@ -429,7 +429,7 @@ public sealed class View
 
         Position = new Vector(x, y) + GetStyle(Zui.Offset).Or(0);
         var scale = (Parent?.Scale??1) * GetStyle(Zui.Magnification).Or(1);
-        var origin = (Parent?.Origin??new()).ToVector + Scale * Position;
+        var origin = (Parent?.Origin??new()).ToVector + scale * Position;
 
         // No need to re-arrange children if nothing changed
         if (((Flags | FlagsChild) & ViewFlags.ReMeasure) == ViewFlags.None
@@ -505,6 +505,8 @@ public sealed class View
             throw new InvalidOperationException("AddChild: AppWindow cannot be added to the view tree");
         child.Parent = this;
         _children.Add(child);
+        SetFlags(ViewFlags.ReDraw | ViewFlags.ReMeasure);
+        child.SetFlags(ViewFlags.ReDraw | ViewFlags.ReMeasure);
         if (AppWindow != null)
             SendAttachMessages(child);
     }
@@ -532,6 +534,7 @@ public sealed class View
             SendDetachMessages(child);
         _children.RemoveAt(index);
         child.Parent = null;
+        SetFlags(ViewFlags.ReDraw | ViewFlags.ReMeasure);
     }
 
     public void ClearChildren()

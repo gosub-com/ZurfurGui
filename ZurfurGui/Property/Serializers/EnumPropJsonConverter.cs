@@ -13,7 +13,6 @@ public class EnumPropJsonConverter<T> : JsonConverter<EnumProp<T>>
 {
     public override EnumProp<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        Console.WriteLine("EnumProp");
         if (reader.TokenType == JsonTokenType.Null)
         {
             return new EnumProp<T>(); // Default to null
