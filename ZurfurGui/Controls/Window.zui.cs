@@ -3,7 +3,7 @@ using ZurfurGui.Base;
 using ZurfurGui.Platform;
 using ZurfurGui.Property;
 
-namespace ZurfurGui.Windows;
+namespace ZurfurGui.Controls;
 
 /// <summary>
 /// A window is a wrapper to hold a component intended to be shown over the main app window.

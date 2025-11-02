@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Drawing.Imaging;
-using ZurfurGui.Draw;
-using ZurfurGui.Windows;
+using ZurfurGui.Render;
+using ZurfurGui.Controls;
 using ZurfurGui.WinForms.Interop;
 
 namespace ZurfurGui.WinForms;

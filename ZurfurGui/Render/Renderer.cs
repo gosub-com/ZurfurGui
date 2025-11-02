@@ -3,9 +3,9 @@ using System.Diagnostics;
 using ZurfurGui.Base;
 using ZurfurGui.Platform;
 using ZurfurGui.Property;
-using ZurfurGui.Windows;
+using ZurfurGui.Controls;
 
-namespace ZurfurGui.Draw;
+namespace ZurfurGui.Render;
 
 public class Renderer
 {

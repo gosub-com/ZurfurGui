@@ -3,9 +3,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace ZurfurGuiGen;
 
@@ -17,178 +19,320 @@ public class GenerateZui : IIncrementalGenerator
     class ZuiData
     {
         public Diagnostic? Diagnostic { get; set; }
-        public string ZuiPath { get; set; } = "";
-        public string Namespace { get; set; } = "";
-        public string Class { get; set; } = "";
+        public string Path { get; set; } = "";
+        public string FileName { get; set; } = "";
         public Dictionary<string, object?> JsonDocument { get; set; } = new();
-        public string ControllerTypeName { get; set; } = "";
-        public string NamespaceClass => $"{Namespace}.{Class}";
+        public bool HasSyntaxTree;
+        public string Namespace { get; set; } = "";
+        public string NamespaceFileName => $"{Namespace}.{FileName}";
     }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // Find all additional files ending with .zui.json
-        var zuiJsonFiles = context.AdditionalTextsProvider
-            .Where(file => file.Path.EndsWith(".zui.json", StringComparison.OrdinalIgnoreCase));
-
-        // Collect all syntax trees in the compilation
+        // Collect ZuiData for all ZUI.JSON files
         var syntaxTrees = context.CompilationProvider.Select((compilation, _) => compilation.SyntaxTrees.ToArray());
-
-        // Combine zuiJsonFiles and syntaxTrees
-        var combinedJsonSyntax = zuiJsonFiles.Combine(syntaxTrees);
-
-        // Collect data for all .zui.json files
-        var collectedData = combinedJsonSyntax.Select((combinedJsonSyntax, cancellationToken) =>
+        var zuiData = context.AdditionalTextsProvider
+            .Where(file => file.Path.EndsWith(".zui.json", StringComparison.OrdinalIgnoreCase))
+            .Combine(syntaxTrees)
+            .Select((combined, cancellationToken) =>
         {
-            var additionalText = combinedJsonSyntax.Left;
-            var zuiPath = additionalText.Path;
+            var text = combined.Left;
+            var syntax = combined.Right;
+            return CollectJsonFiles(text, syntax, cancellationToken);
+        });
+
+        // Collect ZuiData for all ZSS.JSON files
+        var zssData = context.AdditionalTextsProvider
+            .Where(file => file.Path.EndsWith(".zss.json", StringComparison.OrdinalIgnoreCase))
+            .Combine(syntaxTrees)
+            .Select((combined, cancellationToken) =>
+            {
+                var text = combined.Left;
+                var syntax = combined.Right;
+                return CollectJsonFiles(text, syntax, cancellationToken);
+            });
+
+        // Generate controller classes 
+        context.RegisterSourceOutput(zuiData.Collect(), (sourceProductionContext, collectedData) =>
+        {
+            GenerateControllerClasses(sourceProductionContext, collectedData);
+        });
+
+        // Generate the ZurfurMain partial class in each project
+        context.RegisterSourceOutput(zuiData.Collect().Combine(zssData.Collect())
+            .Combine(context.CompilationProvider), (sourceProductionContext, triple) =>
+        {
+            var collectedZuiData = triple.Left.Left;
+            var collectedZssData = triple.Left.Right;
+            var compilation = triple.Right;
+            GenerateZurfurMain(sourceProductionContext, collectedZuiData, compilation);
+        });
+    }
+
+    /// <summary>
+    /// Collect ZuiData from a ZUI.JSON or ZSS.JSON file.
+    /// If a corresponding .cs file exists, collect the namespace from it.
+    /// </summary>
+    static ZuiData CollectJsonFiles(AdditionalText text, SyntaxTree[] syntax, CancellationToken cancellationToken)
+    {
+        var zuiPath = text.Path;
+        var fullFileName = Path.GetFileNameWithoutExtension(zuiPath); // removes .json
+        var fileName = Path.GetFileNameWithoutExtension(fullFileName); // removes .zui
+
+        // Try to find the .cs file with the same name as the JSON file
+        var csTree = syntax.FirstOrDefault(tree =>
+        {
+            var csFileName = Path.GetFileNameWithoutExtension(tree.FilePath);
+            return string.Equals(csFileName, fullFileName, StringComparison.OrdinalIgnoreCase);
+        });
+
+        // Parse the json file (errors are collected into diagnostic)
+        Diagnostic? diagnostic = null;
+        Dictionary<string, object?> jsonDocument = new();
+        try
+        {
+            // Parse the JSON content
+            jsonDocument = Json.Parse(text.GetText(cancellationToken)?.ToString() ?? "");
+        }
+        catch (LocationException lex)
+        {
+            // Report a diagnostic error if there is a LocationException while parsing
+            var errorLocation = Location.Create(zuiPath, new TextSpan(0, 0),
+                new LinePositionSpan(new LinePosition(lex.Line, lex.Column), new LinePosition(lex.Line, lex.Column)));
+            diagnostic = GetDiagnostic(errorLocation,
+                "ZUI001", "ZUI JSON Parsing Error",
+                $"Error while parsing JSON '{Path.GetFileName(zuiPath)}': {lex.Message}");
+        }
+        catch (Exception ex)
+        {
+            // Report a diagnostic error if there is an exception while parsing
             var errorLocationTop = Location.Create(zuiPath,
                 new TextSpan(0, 0), new LinePositionSpan(new LinePosition(0, 0), new LinePosition(0, 0)));
+            diagnostic = GetDiagnostic(errorLocationTop, "ZUI002", "ZUI Code Generation Error",
+                $"Error while generating code from '{Path.GetFileName(zuiPath)}': {ex.Message}");
+        }
+
+        return new ZuiData
+        {
+            Path = zuiPath,
+            FileName = fileName,
+            HasSyntaxTree = csTree != null,
+            Namespace = GetNameSpace(csTree) ?? "",
+            JsonDocument = jsonDocument
+        };
+    }
+
+    static void GenerateControllerClasses(SourceProductionContext spc, ImmutableArray<ZuiData> collectedData)
+    {
+        foreach (var data in collectedData)
+        {
+            // Should have valid data here
+            var errorLocation = Location.Create(data?.Path ?? "(unknown path)", new(), new());
+            if (data == null)
+            {
+                var diagnostic = GetDiagnostic(errorLocation, "ZUI003", "Internal Error",
+                    $"An internal error occurred during code generation for '{data?.Path}'");
+                spc.ReportDiagnostic(diagnostic);
+                continue;
+            }
+
+            // Report any diagnostics collected during data gathering
+            if (data.Diagnostic != null)
+                spc.ReportDiagnostic(data.Diagnostic);
+
+            // Retrieve controller type name, report diagnostics if invalid
+            // NOTE: We will generate code even if controllerName is "", to avoid
+            //       cascading errors when compiling generated code or user code.
+            string controllerName = "";
+            if (data.Diagnostic == null)
+                controllerName = GetControllerTypeName(data, spc);
+            if (controllerName == "")
+                controllerName = data.NamespaceFileName;
+            if (data.Namespace == "")
+                continue; // But when namespace is invalid, so is the generated code, so skip it entirely
+
             try
             {
-                var syntaxTreesArray = combinedJsonSyntax.Right;
-                var fileName = Path.GetFileNameWithoutExtension(zuiPath); // removes .json
-                var className = Path.GetFileNameWithoutExtension(fileName); // removes .zui
-
-                // Try to find the .cs file with the same name as the class
-                var csTree = syntaxTreesArray.FirstOrDefault(tree =>
-                {
-                    var csFileName = Path.GetFileNameWithoutExtension(tree.FilePath);
-                    return string.Equals(csFileName, fileName, StringComparison.OrdinalIgnoreCase);
-                });
-
-                if (csTree == null)
-                    throw new Exception($"No '.cs' file found, expecting a file named '{fileName}.cs' in the project.");
-
-                // Try to get the namespace from the .cs file
-                var nameSpace = GetNameSpace(csTree);
-                if (nameSpace == null)
-                    throw new Exception("No namespace declaration found");
-
-                // Get the contents of the .zui.json file as a string
-                var zuiJsonContent = additionalText.GetText(cancellationToken)?.ToString() ?? "";
-                if (string.IsNullOrWhiteSpace(zuiJsonContent))
-                    throw new Exception("The .zui.json file is empty");
-
-                // Parse the JSON content
-                var jsonDocument = Json.Parse(zuiJsonContent);
-
-                // Retrieve and validate the controller type name
-                if (!jsonDocument.TryGetValue("Controller", out var controllerJsonObject))
-                    throw new Exception("Top level JSON must contain a 'Controller' key");
-                if (controllerJsonObject is not string controllerClassName || string.IsNullOrWhiteSpace(controllerClassName))
-                    throw new Exception("The JSON 'Controller' key must be a non-empty string");
-                if (!controllerClassName.Contains('.') && !nameSpace.StartsWith("ZurfurGui."))
-                    throw new Exception($"The JSON 'Controller' key must contain a dot, e.g. 'MyLibrary.MyControl'");
-                if (!nameSpace.StartsWith("ZurfurGui.") && controllerClassName != $"{nameSpace}.{className}")
-                    throw new Exception($"The JSON 'Controller' key must match the full class name '{nameSpace}.{className}', but is '{controllerClassName}' instead");
-
-                return new ZuiData
-                {
-                    ZuiPath = zuiPath,
-                    Class = className,
-                    Namespace = nameSpace,
-                    JsonDocument = jsonDocument,
-                    ControllerTypeName = controllerClassName
-                };
-            }
-            catch (LocationException lex)
-            {
-                // Report a diagnostic error if there is a LocationException
-                var errorLocation = Location.Create(zuiPath, new TextSpan(0, 0),
-                    new LinePositionSpan(new LinePosition(lex.Line, lex.Column), new LinePosition(lex.Line, lex.Column)));
-                var diagnostic = GetDiagnostic(errorLocation,
-                    "ZUI004", "ZUI JSON Parsing Error",
-                    $"Error while parsing JSON '{Path.GetFileName(zuiPath)}': {lex.Message}");
-                return new ZuiData { Diagnostic = diagnostic };
+                // Generate the source code for the control
+                var source = GenerateControllerClassSource(data, controllerName);
+                spc.AddSource($"{data.FileName}.g.cs", SourceText.From(source, Encoding.UTF8));
             }
             catch (Exception ex)
             {
                 // Report a diagnostic error if there is an exception during code generation
-                var diagnostic = GetDiagnostic(errorLocationTop, "ZUI005", "ZUI Code Generation Error",
-                    $"Error while generating code from '{Path.GetFileName(zuiPath)}': {ex.Message}");
-                return new ZuiData { Diagnostic = diagnostic };
+                var diagnostic = GetDiagnostic(errorLocation, "ZUI004", "ZUI Code Generation Error",
+                    $"Error while generating code from '{Path.GetFileName(data.Path)}': {ex.Message}");
+                spc.ReportDiagnostic(diagnostic);
             }
-        });
-
-        // Generate source code in the second phase
-        var generatedControls = new Dictionary<string, ZuiData>();
-        context.RegisterSourceOutput(collectedData.Collect(), (sourceProductionContext, collectedData) =>
-        {
-            // Find the generated controls
-            foreach (var data in collectedData)
-            {
-                if (data != null && data.ControllerTypeName != null)
-                    generatedControls[data.ControllerTypeName] = data;
-            }
-
-            foreach (var data in collectedData)
-            {
-                // Report any diagnostics collected during data gathering
-                if (data != null && data.Diagnostic != null)
-                {
-                    // Report any diagnostics collected during data gathering
-                    sourceProductionContext.ReportDiagnostic(data.Diagnostic);
-                    continue;
-                }
-
-                // Nothing should be null or empty here, errors should be reported above
-                var errorLocation = Location.Create(data?.ZuiPath??"(unknown path)", new(), new());
-                if (data == null || data.ZuiPath == "" || data.Namespace == "" 
-                    || data.Class == "" || data.ControllerTypeName == "")
-                { 
-                    var diagnostic = GetDiagnostic(errorLocation, "ZUI006", "Internal Error",
-                        $"An internal error occurred during code generation for '{data?.ZuiPath}'");
-                    sourceProductionContext.ReportDiagnostic(diagnostic);
-                    continue;
-                }
-
-                try
-                {
-                    // Generate the source code for the control
-                    var source = GenerateControllerClass(data);
-                    sourceProductionContext.AddSource($"{data.Class}.g.cs", SourceText.From(source, Encoding.UTF8));
-                }
-                catch (Exception ex)
-                {
-                    // Report a diagnostic error if there is an exception during code generation
-                    var diagnostic = GetDiagnostic(errorLocation, "ZUI007", "ZUI Code Generation Error",
-                        $"Error while generating code from '{Path.GetFileName(data.ZuiPath)}': {ex.Message}");
-                    sourceProductionContext.ReportDiagnostic(diagnostic);
-                }
-            }
-        });
-
-        // Generate the ZurfurMain partial class in each project
-        context.RegisterSourceOutput(context.CompilationProvider, (sourceProductionContext, compilation) =>
-        {
-            if (!generatedControls.Any())
-                return; // Skip if no controls were generated
-
-            var zurfurMainClass = compilation.GetSymbolsWithName("ZurfurMain")
-                .OfType<INamedTypeSymbol>()
-                .FirstOrDefault(symbol => symbol.TypeKind == TypeKind.Class);
-
-            if (zurfurMainClass == null)
-            {
-                // Report an error if there is no ZurfurMain class but generated controls exist
-                sourceProductionContext.ReportDiagnostic(GetDiagnostic(Location.None,
-                    "ZUI008", "Missing ZurfurMain Class",
-                    $"The project '{compilation.AssemblyName}' contains generated code and needs a 'ZurfurMain' class. "
-                        + "Add \"static partial class ZurfurMain\" to your project."));
-                return;
-            }
-
-            var zurfurMainNamespace = zurfurMainClass.ContainingNamespace.ToDisplayString();
-            var zurfurMainSource = GenerateZurfurMainClass(zurfurMainNamespace, generatedControls);
-            sourceProductionContext.AddSource("ZurfurMain.g.cs", SourceText.From(zurfurMainSource, Encoding.UTF8));
-        });
-
+        }
     }
 
 
-    private static string? GetNameSpace(SyntaxTree csTree)
+    private static string GenerateControllerClassSource(ZuiData data, string controllerName)
     {
+        // Serialize JSON and escape double quotes for verbatim string
+        var zuiJsonContent = Json.Serialize(data.JsonDocument)
+            .Replace("\"", "\"\"");
+
+        // Create named controls variables
+        var namedControls = FindNamedControls(data.JsonDocument).OrderBy(c => c.ControlName);
+        var namedControlsCode = string.Join("\r\n", namedControls.Select(a =>
+        {
+            var qualifier = a.ControlName.StartsWith("_") ? "private" : "public ";
+            var varType = "global::" + (a.Controller.Contains('.') ? "" : "ZurfurGui.Controls.") + a.Controller;
+            return $"    {qualifier} {varType} {a.ControlName};";
+        }));
+
+        // Create the controls initialization code
+        var initControlsCode = string.Join("\r\n", namedControls.Select(a =>
+        {
+            var qualifier = a.ControlName.StartsWith("_") ? "private" : "public ";
+            var varType = "global::" + (a.Controller.Contains('.') ? "" : "ZurfurGui.Controls.") + a.Controller;
+            return $"        {a.ControlName} = ({varType})View.FindByName(\"{a.ControlName}\").Controller;";
+        }));
+
+        var source = $@"
+// This file is generated from '{Path.GetFileName(data.Path)}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}
+namespace {data.Namespace};
+
+public sealed partial class {data.FileName}
+{{
+    public global::ZurfurGui.Base.View View {{ get; private set; }}
+    public string TypeName => ""{controllerName}""; 
+
+    // Named controls (public unless name starts with '_')
+{namedControlsCode}
+
+    void InitializeControl() 
+    {{
+        View = new(this);
+        global::ZurfurGui.Loader.Load(this, _zuiJsonContent);
+
+        // Initialize named controls
+{initControlsCode}
+    }}
+
+    static string _zuiJsonContent => @""{zuiJsonContent}"";
+}}";
+        return source;
+    }
+
+
+    static void GenerateZurfurMain(SourceProductionContext sourceProductionContext, ImmutableArray<ZuiData> collectedZuiData, Compilation compilation)
+    {
+        // Build a list of generated controls
+        // NOTE: Failed GetControllerTypeName's were reported in GenerateControllerClasses,
+        //       so can be ignored here.  Also namespace is verified to exist there.
+        var generatedControls = collectedZuiData
+            .Where(data => data != null && data.Diagnostic == null && GetControllerTypeName(data, null) != "")
+            .Select(data => (data, GetControllerTypeName(data, null)));
+
+        if (!generatedControls.Any())
+            return; // Skip if no controls were generated
+
+        // Find and validate the ZurfurMain class in the compilation
+        var zurfurMainClass = compilation.GetSymbolsWithName("ZurfurMain")
+            .OfType<INamedTypeSymbol>()
+            .FirstOrDefault(symbol => symbol.TypeKind == TypeKind.Class);
+
+        if (zurfurMainClass == null)
+        {
+            // Report an error if there is no ZurfurMain class but generated controls exist
+            sourceProductionContext.ReportDiagnostic(GetDiagnostic(Location.None,
+                "ZUI005", "Missing ZurfurMain Class",
+                $"The project '{compilation.AssemblyName}' contains generated code and needs a 'ZurfurMain' class. "
+                    + "Add \"static partial class ZurfurMain\" to your project."));
+            return;
+        }
+
+        var zurfurMainNamespace = zurfurMainClass.ContainingNamespace.ToDisplayString();
+        var zurfurMainSource = GenerateZurfurMainSource(zurfurMainNamespace, generatedControls);
+        sourceProductionContext.AddSource("ZurfurMain.g.cs", SourceText.From(zurfurMainSource, Encoding.UTF8));
+    }
+
+
+    private static string GenerateZurfurMainSource(string nameSpace, 
+        IEnumerable<(ZuiData data, string controller)> generatedControls)
+    {
+        var registerCalls = string.Join("\r\n", generatedControls.Select(t =>
+            $"        global::ZurfurGui.Loader.RegisterControl(\"{t.controller}\", typeof(global::{t.data.NamespaceFileName}));"));
+        var createControls = string.Join("\r\n", generatedControls.Select(t =>
+            $"            _ = new global::{t.data.NamespaceFileName}();"));
+
+        return $@"
+namespace {nameSpace};
+
+// Each project should have a user created partial class named ZurfurMain
+// with a function named MainApp that calls InitializeControls.
+static partial class ZurfurMain
+{{
+    public static bool s_create = false; // Keep AOT trimming from removing constructors
+
+    // The user created function MainApp should call this function
+    private static void InitializeControls()
+    {{
+{registerCalls}
+
+        // Keep AOT trimming from removing constructors, but don't actually create them
+        if (s_create)
+        {{
+{createControls}
+        }}
+    }}
+}}";
+    }
+
+
+    /// <summary>
+    /// Find and validate the controller type name from the ZuiData.
+    /// Returns "" if not found or invalid.
+    /// Optionally report a diagnstic if spc is provided.
+    /// </summary>
+    private static string GetControllerTypeName(ZuiData data, SourceProductionContext? spc)
+    {
+        try
+        {
+            // Verify .cs file exists
+            var fileName = data.FileName;
+            if (!data.HasSyntaxTree)
+                throw new Exception($"No '.cs' file found, expecting a file named '{fileName}.cs' in the project.");
+
+            // Verify it has a namespace
+            var nameSpace = data.Namespace;
+            if (nameSpace == "")
+                throw new Exception($"No namespace declaration found in {fileName}.cs");
+
+            // Retrieve and validate the controller type name
+            if (!data.JsonDocument.TryGetValue("Controller", out var controllerJsonObject))
+                throw new Exception("Top level JSON must contain a 'Controller' key");
+
+            if (controllerJsonObject is not string controllerClassName || string.IsNullOrWhiteSpace(controllerClassName))
+                throw new Exception("The JSON 'Controller' key must be a non-empty string");
+
+            if (!nameSpace.StartsWith("ZurfurGui.") && !controllerClassName.Contains('.'))
+                throw new Exception($"The JSON 'Controller' key must contain a dot, e.g. 'MyLibrary.MyControl'");
+
+            if (!nameSpace.StartsWith("ZurfurGui.") && controllerClassName != $"{nameSpace}.{fileName}")
+                throw new Exception($"The JSON 'Controller' key must match the full class name '{nameSpace}.{fileName}', but is '{controllerClassName}' instead");
+
+            return controllerClassName;
+        }
+        catch (Exception ex)
+        {
+            // Report a diagnostic if spc is provided
+            var errorLocation = Location.Create(data.Path, new(), new(new(), new()));
+            var diagnostic = GetDiagnostic(errorLocation, "ZUI006", "ZUI Code Generation Error",
+                $"Error while generating code from '{Path.GetFileName(data.Path)}': {ex.Message}");
+            spc?.ReportDiagnostic(diagnostic);
+            return "";
+        }
+    }
+
+    private static string? GetNameSpace(SyntaxTree? csTree)
+    {
+        if (csTree == null)
+            return null;
+
         var root = csTree.GetRoot();
 
         // Try to get the namespace from the namespace declaration
@@ -244,83 +388,11 @@ public class GenerateZui : IIncrementalGenerator
         return Diagnostic.Create(descriptor, location);
     }
 
-    private static string GenerateZurfurMainClass(string nameSpace, Dictionary<string, ZuiData> generatedControls)
-    {
-        var registerCalls = string.Join("\r\n", generatedControls.Values.Select(t =>
-            $"        global::ZurfurGui.Loader.RegisterControl(\"{t.ControllerTypeName}\", typeof(global::{t.NamespaceClass}));"));
-        var createControls = string.Join("\r\n", generatedControls.Values.Select(t =>
-            $"            _ = new global::{t.NamespaceClass}();"));
-
-        return $@"
-namespace {nameSpace};
-static partial class ZurfurMain
-{{
-    public static bool s_create = false; // Keep AOT trimming from removing constructors
-
-    public static void InitializeControls()
-    {{
-{registerCalls}
-
-        // Keep AOT trimming from removing constructors, but don't actually create them
-        if (s_create)
-        {{
-{createControls}
-        }}
-    }}
-}}";
-    }
-
-    private static string GenerateControllerClass(ZuiData data)
-    {
-        // Remove whitespace and add escapes to embed the JSON in the source code
-        var zuiJsonContent = Json.Serialize(data.JsonDocument)
-            .Replace("\"", "\"\"").Replace("\r", "").Replace("\n", "");
-
-        // Create named controls variables
-        var namedControls = FindNamedControls(data.JsonDocument).OrderBy(c => c.ControlName);
-        var namedControlsCode = string.Join("\r\n", namedControls.Select(a => 
-        {
-            var qualifier = a.ControlName.StartsWith("_") ? "private" : "public ";
-            var varType = "global::" + (a.Controller.Contains('.') ? "" : "ZurfurGui.Controls.") + a.Controller;
-            return $"    {qualifier} {varType} {a.ControlName};";
-        }));
-
-        // Create the controls initialization code
-        var initControlsCode = string.Join("\r\n", namedControls.Select(a =>
-        {
-            var qualifier = a.ControlName.StartsWith("_") ? "private" : "public ";
-            var varType = "global::" + (a.Controller.Contains('.') ? "" : "ZurfurGui.Controls.") + a.Controller;
-            return $"        {a.ControlName} = ({varType})View.FindByName(\"{a.ControlName}\").Controller;";
-        }));
 
 
-        var source = $@"
-// This file is generated from '{Path.GetFileName(data.ZuiPath)}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}
-namespace {data.Namespace};
-
-public sealed partial class {data.Class}
-{{
-    public global::ZurfurGui.Base.View View {{ get; private set; }}
-    public string TypeName => ""{data.ControllerTypeName}""; 
-
-    // Named controls (public unless name starts with '_')
-{namedControlsCode}
-
-    void InitializeControl() 
-    {{
-        View = new(this);
-        global::ZurfurGui.Loader.Load(this, _zuiJsonContent);
-
-        // Initialize named controls
-{initControlsCode}
-    }}
-
-    static string _zuiJsonContent => @""{zuiJsonContent}"";
-}}";
-        return source;
-    }
-
-
+    /// <summary>
+    /// Recursively scan JSON control, looking for named controls.
+    /// </summary>
     private static List<(string Controller, string ControlName)> FindNamedControls(Dictionary<string, object?> json)
     {
         var result = new List<(string Controller, string ControlName)>();
@@ -331,14 +403,14 @@ public sealed partial class {data.Class}
         void ScanJson(Dictionary<string, object?> currentJson)
         {
             // Check if the current dictionary contains both "Controller" and "(Name)"
-            if (currentJson.TryGetValue("(Name)", out var controlNameObj) 
+            if (currentJson.TryGetValue("(Name)", out var controlNameObj)
                 && controlNameObj is string controlName)
             {
                 var controller = "Panel";
                 if (currentJson.TryGetValue("Controller", out var controllerObj)
-                    && controllerObj is string controllerStr) 
-                { 
-                    controller = controllerStr; 
+                    && controllerObj is string controllerStr)
+                {
+                    controller = controllerStr;
                 }
                 result.Add((controller, controlName));
             }

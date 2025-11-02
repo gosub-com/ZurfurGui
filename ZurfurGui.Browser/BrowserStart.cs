@@ -3,8 +3,8 @@ using System.Reflection;
 using System.Runtime.InteropServices.JavaScript;
 using ZurfurGui.Base;
 using ZurfurGui.Browser.Interop;
-using ZurfurGui.Draw;
-using ZurfurGui.Windows;
+using ZurfurGui.Render;
+using ZurfurGui.Controls;
 
 namespace ZurfurGui.Browser;
 

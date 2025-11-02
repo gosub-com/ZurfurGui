@@ -1,8 +1,8 @@
 ﻿using ZurfurGui.Base;
-using ZurfurGui.Draw;
+using ZurfurGui.Render;
 using ZurfurGui.Property;
 
-namespace ZurfurGui.Windows;
+namespace ZurfurGui.Controls;
 
 public partial class DebugWindow : Controllable
 {

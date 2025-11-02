@@ -1,7 +1,6 @@
-﻿using System.Diagnostics;
-using ZurfurGui.Base;
+﻿using ZurfurGui.Base;
 
-namespace ZurfurGui.Draw;
+namespace ZurfurGui.Render;
 
 public class DrawText : Drawable
 {

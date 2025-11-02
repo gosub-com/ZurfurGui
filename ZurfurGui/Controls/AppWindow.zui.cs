@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Base;
-using ZurfurGui.Draw;
+using ZurfurGui.Render;
 using ZurfurGui.Property;
 
-namespace ZurfurGui.Windows;
+namespace ZurfurGui.Controls;
 
 /// <summary>
 /// The AppWindow is either the main browser window, or a canvas inside a web page,

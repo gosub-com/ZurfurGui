@@ -2,9 +2,9 @@
 using ZurfurGui.Base;
 using ZurfurGui.Platform;
 using ZurfurGui.Property;
-using ZurfurGui.Windows;
+using ZurfurGui.Controls;
 
-namespace ZurfurGui.Draw;
+namespace ZurfurGui.Render;
 
 /// <summary>
 /// Keep track of the pointer hover target and send pointer events

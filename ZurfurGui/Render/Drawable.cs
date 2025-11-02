@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ZurfurGui.Base;
+﻿using ZurfurGui.Base;
 
-namespace ZurfurGui.Draw;
+namespace ZurfurGui.Render;
 
 public interface Drawable
 {

@@ -5,7 +5,7 @@ using ZurfurGui.Controls;
 using ZurfurGui.Layout;
 using ZurfurGui.Property;
 using ZurfurGui.Property.Serializers;
-using ZurfurGui.Windows;
+using ZurfurGui.Controls;
 
 namespace ZurfurGui;
 
@@ -61,7 +61,7 @@ public static class Loader
     public static AppWindow Init(Action<AppWindow> mainAppEntry)
     {
         _ = Zui.Name; // Force initialization of static properties
-        ZurfurMain.InitializeControls();
+        ZurfurMain.MainApp();
         RegisterLayout("Panel", () => null);
         RegisterLayout("DockPanel", () => new LayoutDockPanel());
         RegisterLayout("Row", () => new LayoutRow());
@@ -131,14 +131,6 @@ public static class Loader
         if (s_layouts.ContainsKey(name))
             throw new ArgumentException($"Layout '{name}' is already registered");
         s_layouts[name] = layoutFactory;
-    }
-
-    /// <summary>
-    /// Create a control from the given JSON
-    /// </summary>
-    public static Controllable LoadJson(string json)
-    {
-        return CreateControl(LoadJsonProperties(json));
     }
 
     static Properties LoadJsonProperties(string json)

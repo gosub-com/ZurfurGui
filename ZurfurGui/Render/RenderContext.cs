@@ -2,7 +2,7 @@
 using ZurfurGui.Base;
 using ZurfurGui.Platform;
 
-namespace ZurfurGui.Draw;
+namespace ZurfurGui.Render;
 
 
 public class RenderContext
