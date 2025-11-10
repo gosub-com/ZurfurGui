@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ZurfurGuiGen\ZurfurGuiGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="**\*.zui.json" />
+    <AdditionalFiles Include="**\*.zss.json" />
   </ItemGroup>
 
 </Project>

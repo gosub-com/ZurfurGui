@@ -111,7 +111,10 @@ public sealed class View
         public SizeProp SizeMax;
         public Thickness Padding;
         public Thickness Margin;
-        public BackgroundProp Background;
+        public Color BackgroundColor;
+        public Color BorderColor;
+        public double BorderWidth;
+        public double BorderRadius;
         public bool Clip;
     }
 
@@ -249,18 +252,24 @@ public sealed class View
         // Walk up the view tree
         for (var view = this; view != null; view = view.Parent)
         {
-            if (!view._properties.TryGet(Zui.Styles, out var styles) || styles == null)
+            if (!view._properties.TryGet(Zui.UseStyles, out var useStyles) || useStyles == null)
                 continue;
 
-            foreach (var style in styles.Reverse())
+            foreach (var useStyle in useStyles.Reverse())
             {
-                if (style.TryGet(Zui.Selectors, out var selectors) && selectors != null
-                    && style.TryGet(key, out var p) && p != null 
-                    && StyleMatches(selectors, classes))
+                if (Loader.GetStyleSheet(useStyle) is not StyleSheet styleSheet)
+                    continue;
+
+                foreach (var style in styleSheet.Styles.Reverse())
                 {
-                    property = property.Or(p);
-                    if (property.IsComplete)
-                        return property;
+                    if (style.TryGet(Zui.Selectors, out var selectors) && selectors != null
+                        && style.TryGet(key, out var p) && p != null
+                        && StyleMatches(selectors, classes))
+                    {
+                        property = property.Or(p);
+                        if (property.IsComplete)
+                            return property;
+                    }
                 }
             }
         }
@@ -284,6 +293,26 @@ public sealed class View
                         {
                             case "IsPointerOver":
                                 if (!GetProperty(Zui.IsPointerOver).Or(false))
+                                    match = false;
+                                break;
+                            case "!IsPointerOver":
+                                if (GetProperty(Zui.IsPointerOver).Or(false))
+                                    match = false;
+                                break;
+                            case "IsPressed":
+                                if (!GetProperty(Zui.IsPressed).Or(false))
+                                    match = false;
+                                break;
+                            case "!IsPressed":
+                                if (GetProperty(Zui.IsPressed).Or(false))
+                                    match = false;
+                                break;
+                            case "IsDarkMode":
+                                if (!AppWindow?.IsDarkMode ?? false)
+                                    match = false;
+                                break;
+                            case "!IsDarkMode":
+                                if (AppWindow?.IsDarkMode ?? false)
                                     match = false;
                                 break;
                             default:
@@ -343,12 +372,15 @@ public sealed class View
         _cache.SizeMax = GetStyle(Zui.SizeMax);
         _cache.Padding = GetStyle(Zui.Padding).Or(0);
         _cache.Margin = GetStyle(Zui.Margin).Or(0);
-        _cache.Background = GetStyle(Zui.Background);
+        _cache.BackgroundColor = GetStyle(Zui.BackgroundColor).Or(new());
+        _cache.BorderColor = GetStyle(Zui.BorderColor).Or(new());
+        _cache.BorderWidth = GetStyle(Zui.BorderWidth).Or(0);
+        _cache.BorderRadius = GetStyle(Zui.BorderRadius).Or(0);
         _cache.Clip = GetStyle(Zui.Clip).Or(false);
 
         // Include padding and border in the measurement
         var margin = _cache.Margin;
-        var padding = _cache.Padding + new Thickness(_cache.Background.BorderWidth.Or(0));
+        var padding = _cache.Padding + new Thickness(_cache.BorderWidth);
 
         var constrained = ClampViewSize(available.Deflate(margin)).Deflate(padding);
 
@@ -400,7 +432,7 @@ public sealed class View
 
         size = ClampViewSize(size);
 
-        var padding = _cache.Padding + new Thickness(_cache.Background.BorderWidth.Or(0));
+        var padding = _cache.Padding + new Thickness(_cache.BorderWidth);
 
         ContentRect = new Rect(new Point(0, 0), size).Deflate(padding);
         Size = size;

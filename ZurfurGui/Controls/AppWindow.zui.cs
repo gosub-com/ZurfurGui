@@ -75,6 +75,13 @@ public partial class AppWindow : Controllable, Drawable
         return window;
     }
 
+
+    public bool IsDarkMode
+    {
+        get => View.GetProperty(Zui.IsDarkMode).Or(false);
+        set => View.SetProperty(Zui.IsDarkMode, value);
+    }
+
     /// <summary>
     /// Called by renderer so we can display some stats
     /// </summary>

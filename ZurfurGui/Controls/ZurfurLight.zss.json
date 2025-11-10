@@ -1,19 +1,25 @@
 {
-    "Name": "ZuiDefaultStyles",
+    //
+    // Zurfur default styles for light mode
+    //
+    "Name": "ZurfurLight",
     "Styles": [
+        // AppWindow
         {
             "Selectors": "AppWindow",
-            "Background": {
-                "Color": "LightSkyBlue"
-            }
+            "BackgroundColor": "LightSkyBlue"
         },
+        // Text
+        {
+            "Selectors": "Text",
+            "Color": "Black"
+        },
+        // Button
         {
             "Selectors": "Button",
-            "Background": {
-                "BorderWidth": 2,
-                "BorderColor": "DarkGray",
-                "Color": "LightGray"
-            },
+            "BorderWidth": 2,
+            "BorderColor": "#606060",
+            "BackgroundColor": "#DDDDDD",
             "Color": "Black",
             "Padding": {
                 "Left": 2,
@@ -22,37 +28,30 @@
                 "Bottom": 2
             }
         },
+        // Button hover
         {
             "Selectors": "Button:IsPointerOver",
-            "Background": {
-                "BorderColor": "Gray",
-                "Color": "Silver"
-            },
-            "Color": "Red",
-            "Padding": {
-                "Left": 2,
-                "Top": 2,
-                "Right": 2,
-                "Bottom": 2
-            },
-            "Offset": {
-                "X": 2,
-                "Y": 2
-            }
+            "BorderColor": "#3C7FB1",
+            "BackgroundColor": "#BEE6FD"
         },
+        // Button pressed
+        {
+            "Selectors": "Button:IsPressed",
+            "BackgroundColor": "#8EB6FD"
+        },
+        // Window
         {
             "Selectors": "Window",
-            "Background": {
-                "Color": "AliceBlue",
-                "Radius": 10.0,
-                "BorderWidth": 2,
-                "BorderColor": "Navy"
-            },
+            "BackgroundColor": "White",
+            "BorderRadius": 10.0,
+            "BorderWidth": 2,
+            "BorderColor": "Navy",
             "SizeMin": {
                 "Width": 160,
                 "Height": 80
             }
         },
+        // Window Title
         {
             "Selectors": "Window.Title",
             "Padding": {
@@ -61,13 +60,12 @@
                 "Right": 10,
                 "Bottom": 0
             },
-            "Background": {
-                "Color": "SlateBlue",
-                "Radius": 9
-            },
+            "BackgroundColor": "SlateBlue",
+            "BorderRadius": 9,
             "Dock": "Top",
             "Align": { "Vertical": "Top" }
         },
+        // Window Title Text
         {
             "Selectors": "Window.Title.Text",
             "Text": "Window Title",
@@ -77,10 +75,12 @@
             },
             "Font": { "Size": 24.0 }
         },
+        // Window Title Text Color
         {
             "Selectors": "Window.Title.TextColor",
             "Color": "White"
         },
+        // Window.Title.Close:IsPointerOver
         {
             "Selectors": "Window.Title.Close:IsPointerOver",
             "Color": "LightSkyBlue"
@@ -96,11 +96,9 @@
         },
         {
             "Selectors": "TextBox",
-            "Background": {
-                "Color": "LightBlue",
-                "BorderWidth": 2,
-                "BorderColor": "Navy"
-            },
+            "BackgroundColor": "LightBlue",
+            "BorderWidth": 2,
+            "BorderColor": "Navy",
             "SizeMin": {
                 "Width": 100
             },

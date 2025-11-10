@@ -1,129 +1,25 @@
 {
+    // The AppWindow is either the main browser window, or a canvas inside a web page,
+    // or the computer desktop when running as a native applications.   It is the root 
+    // of the view tree and holds global app state.
+    // 
+    // It holds all the other windows:
+    //     MainAppView: The background app contained in the browser, canvas, or desktop application.
+    //     FloatingWindows: Modal and modeless windows that can be moved around by the user.
     "Controller": "AppWindow",
     "Classes": [ "AppWindow" ],
-    "Styles": [
-        {
-            "Selectors": "AppWindow",
-            "Background": {
-                "Color": "LightSkyBlue"
-            }
-        },
-        {
-            "Selectors": "Button",
-            "Background": {
-                "BorderWidth": 2,
-                "BorderColor": "DarkGray",
-                "Color": "LightGray"
-            },
-            "Color": "Black",
-            "Padding": {
-                "Left": 2,
-                "Top": 2,
-                "Right": 2,
-                "Bottom": 2
-            }
-        },
-        {
-            "Selectors": "Button:IsPointerOver",
-            "Background": {
-                "BorderColor": "Gray",
-                "Color": "Silver"
-            },
-            "Color": "Red",
-            "Padding": {
-                "Left": 2,
-                "Top": 2,
-                "Right": 2,
-                "Bottom": 2
-            },
-            "Offset": {
-                "X": 2,
-                "Y": 2
-            }
-        },
-        {
-            "Selectors": "Window",
-            "Background": {
-                "Color": "AliceBlue",
-                "Radius": 10.0,
-                "BorderWidth": 2,
-                "BorderColor": "Navy"
-            },
-            "SizeMin": {
-                "Width": 160,
-                "Height": 80
-            }
-        },
-        {
-            "Selectors": "Window.Title",
-            "Padding": {
-                "Left": 10,
-                "Top": 4,
-                "Right": 10,
-                "Bottom": 0
-            },
-            "Background": {
-                "Color": "SlateBlue",
-                "Radius": 9
-            },
-            "Dock": "Top",
-            "Align": { "Vertical": "Top" }
-        },
-        {
-            "Selectors": "Window.Title.Text",
-            "Text": "Window Title",
-            "Align": {
-                "Horizontal": "Center",
-                "Vertical": "Center"
-            },
-            "Font": { "Size": 24.0 }
-        },
-        {
-            "Selectors": "Window.Title.TextColor",
-            "Color": "White"
-        },
-        {
-            "Selectors": "Window.Title.Close:IsPointerOver",
-            "Color": "LightSkyBlue"
-        },
-        {
-            "Selectors": "Window.Content",
-            "Margin": {
-                "Left": 10,
-                "Top": 10,
-                "Right": 10,
-                "Bottom": 10
-            }
-        },
-        {
-            "Selectors": "TextBox",
-            "Background": {
-                "Color": "LightBlue",
-                "BorderWidth": 2,
-                "BorderColor": "Navy"
-            },
-            "SizeMin": {
-                "Width": 100
-            },
-            "Padding": {
-                "Left": 2,
-                "Top": 2,
-                "Right": 0,
-                "Bottom": 0
-            }
-        }
-    ],
+    "UseStyles": [ "ZurfurLight", "ZurfurDark" ],
     "Content": [
         {
-            "#1": "",
-            "#2": "*** Main App Window ***",
-            "#3": "",
+            //
+            // Main App Window
+            //
             "(Name)": "_mainAppView"
         },
         {
-            "#1": "",
-            "#2": "*** Floating windows, and dialogs on top ***",
-            "#3": "",
+            //
+            // Floating windows, and dialogs on top
+            //
             "(Name)": "_floatingWindows"
         }
     ]

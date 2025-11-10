@@ -28,20 +28,25 @@ public static class Zui
     public static readonly PropertyKey<EnumProp<bool>> Clip = new("Clip", ViewFlags.ReMeasure);
     public static readonly PropertyKey<PointProp> Offset = new("Offset", ViewFlags.ReMeasure);
     public static readonly PropertyKey<ThicknessProp> Padding = new("Padding", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<BackgroundProp> Background = new("Background", ViewFlags.ReMeasure);
+    public static readonly PropertyKey<ColorProp> BackgroundColor = new("BackgroundColor", ViewFlags.ReDraw);
+    public static readonly PropertyKey<ColorProp> BorderColor = new("BorderColor", ViewFlags.ReDraw);
+    public static readonly PropertyKey<DoubleProp> BorderWidth = new("BorderWidth", ViewFlags.ReMeasure);
+    public static readonly PropertyKey<DoubleProp> BorderRadius = new("BorderRadius", ViewFlags.ReDraw);
 
     // Style
-    public static readonly PropertyKey<TextLines> Selectors = new("Selectors", ViewFlags.ReStyle);
-    public static readonly PropertyKey<TextLines> Classes = new("Classes", ViewFlags.ReStyle);
-    public static readonly PropertyKey<Properties[]> Styles = new("Styles", ViewFlags.ReStyle);
+    public static readonly PropertyKey<TextLines> Selectors = new("Selectors", ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<TextLines> Classes = new("Classes", ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<TextLines> UseStyles = new("UseStyles", ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<Properties[]> Styles = new("Styles", ViewFlags.ReStyleDown);
 
     // Pseudo classes
-    public static readonly PropertyKey<EnumProp<bool>> IsPointerOver = new("IsPointerOver", ViewFlags.RePseudo);
-    public static readonly PropertyKey<EnumProp<bool>> IsEnabled = new("IsEnabled", ViewFlags.RePseudo);
-    public static readonly PropertyKey<EnumProp<bool>> IsWindowActive = new("IsWindowInactive", ViewFlags.RePseudo);
-    public static readonly PropertyKey<EnumProp<bool>> IsPressed = new("IsPressed", ViewFlags.RePseudo);
-    public static readonly PropertyKey<EnumProp<bool>> IsFocused = new("IsFocused", ViewFlags.RePseudo);
-    public static readonly PropertyKey<EnumProp<bool>> IsFocusWithin = new("IsFocusWithin", ViewFlags.RePseudo);
+    public static readonly PropertyKey<EnumProp<bool>> IsPointerOver = new("IsPointerOver", ViewFlags.ReStyleThis);
+    public static readonly PropertyKey<EnumProp<bool>> IsEnabled = new("IsEnabled", ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<EnumProp<bool>> IsWindowActive = new("IsWindowInactive", ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<EnumProp<bool>> IsDarkMode = new("IsDarkMode", ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<EnumProp<bool>> IsPressed = new("IsPressed", ViewFlags.ReStyleThis);
+    public static readonly PropertyKey<EnumProp<bool>> IsFocused = new("IsFocused", ViewFlags.ReStyleThis);
+    public static readonly PropertyKey<EnumProp<bool>> IsFocusWithin = new("IsFocusWithin", ViewFlags.ReStyleThis);
 
     // Label, Window, Button, Checkbox, etc.
     public static readonly PropertyKey<TextLinesProp> Text = new("Text", ViewFlags.ReMeasure);
@@ -58,9 +63,11 @@ public static class Zui
     public static readonly PropertyKey<EventHandler<PointerEvent>> PointerDown = new("PointerDown");
     public static readonly PropertyKey<EventHandler<PointerEvent>> PointerMove = new("PointerMove");
     public static readonly PropertyKey<EventHandler<PointerEvent>> PointerUp = new("PointerUp");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerClick = new("PointerClick");
     public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerDown = new("PreviewPointerDown");
     public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerMove = new("PreviewPointerMove");
     public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerUp = new("PreviewPointerUp");
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerClick = new("PreviewPointerClick");
     public static readonly PropertyKey<EventHandler> PointerCaptureLost = new("PointerCaptureLost");
 
 }

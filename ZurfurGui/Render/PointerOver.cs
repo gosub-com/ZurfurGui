@@ -15,7 +15,11 @@ internal class PointerOver
     View? _hoverView;
     Point _pointerPosition;
     List<View> _pointerCaptureList = new();
+
     List<View> _hoverChain = new();
+    List<View> _pressChain = new();
+    List<View> _currentPressChain = new();  // Intersect of _hoverchan and _presschain
+
 
     public Point PointerPosition => _pointerPosition;
 
@@ -42,41 +46,70 @@ internal class PointerOver
         }
 
         // Find hit target chain
-        var chain = new List<View>();
         View? hit;
         if (ev.Type == "pointerleave")
             hit = null;
         else
             hit = FindHitTarget(_appWindow.View, ev.Position);
-        GetViewChain(hit, chain);
+
+        var chain = GetViewChain(hit);
+
+        // Update press target
+        if (ev.Type == "pointerdown")
+            _pressChain = chain;
 
         // Update hover target        
-        if (hit != _hoverView)
+        if (hit != _hoverView || ev.Type == "pointerdown" || ev.Type == "pointerup")
         {
             _hoverView = hit;
-
-            // Add views to hover chain
-            foreach (var view in chain)
-            {
-                if (!_hoverChain.Contains(view))
-                {
-                    _hoverChain.Add(view);
-                    view.SetProperty(Zui.IsPointerOver, true);
-                }
-            }
-            // Remove views from hover chain
-            _hoverChain.RemoveAll(view =>
-            {
-                if (!chain.Contains(view))
-                {
-                    view.SetProperty(Zui.IsPointerOver, false);
-                    return true;
-                }
-                return false;
-            });
+            UpdateViewChain(_hoverChain, chain, Zui.IsPointerOver);
+            UpdateViewChain(_currentPressChain, IntersectViewChain(_hoverChain, _pressChain), Zui.IsPressed);
         }
 
+        // Send low level mouse event (move, up, down)
         SendPointerEvent(ev, chain);
+
+        // Send click event
+        if (ev.Type == "pointerup")
+        {
+           SendPointerEvent(ev with { Type = "pointerclick" }, _currentPressChain);
+            _pressChain = new();
+           UpdateViewChain(_currentPressChain, IntersectViewChain(_hoverChain, _pressChain), Zui.IsPressed);
+        }
+    }
+
+    private static void UpdateViewChain(List<View> updateChain, List<View> newChain, PropertyKey<EnumProp<bool>> property)
+    {
+        // Add views to hover chain
+        foreach (var view in newChain)
+        {
+            if (!updateChain.Contains(view))
+            {
+                updateChain.Add(view);
+                view.SetProperty(property, true);
+            }
+        }
+        // Remove views from hover chain
+        updateChain.RemoveAll(view =>
+        {
+            if (!newChain.Contains(view))
+            {
+                view.SetProperty(property, false);
+                return true;
+            }
+            return false;
+        });
+    }
+
+    private static List<View> IntersectViewChain(List<View> chain1, List<View> chain2)
+    {
+        var result = new List<View>();
+        foreach (var view in chain1)
+        {
+            if (chain2.Contains(view))
+                result.Add(view);
+        }
+        return result;
     }
 
     static View? FindHitTarget(View view, Point target)
@@ -121,6 +154,7 @@ internal class PointerOver
             case "pointermove": property = Zui.PreviewPointerMove; break;
             case "pointerdown": property = Zui.PreviewPointerDown; break;
             case "pointerup": property = Zui.PreviewPointerUp; break;
+            case "pointerclick": property = Zui.PreviewPointerClick; break;
             default: return;
         }
 
@@ -136,6 +170,7 @@ internal class PointerOver
             case "pointermove": property = Zui.PointerMove; break;
             case "pointerdown": property = Zui.PointerDown; break;
             case "pointerup": property = Zui.PointerUp; break;
+            case "pointerclick": property = Zui.PointerClick; break;
             default: return;
         }
 
@@ -149,14 +184,17 @@ internal class PointerOver
     /// <summary>
     /// Retrieve views from the given child up to the root
     /// </summary>
-    static void GetViewChain(View? view, List<View> views)
+    static List<View> GetViewChain(View? view)
     {
+        var views = new List<View>();
         while (view != null)
         {
             views.Add(view);
             view = view.Parent;
         }
+        return views;
     }
+
     internal bool GetIsPointerCaptured(View view)
     {
         return _pointerCaptureList.Contains(view);

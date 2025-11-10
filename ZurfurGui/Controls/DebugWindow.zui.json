@@ -6,6 +6,12 @@
         {
             "(Name)": "_statsView",
             "Controller": "Text"
+        },
+        {
+            "(Name)": "_buttonDark",
+            "Controller": "Button",
+            "Text": [ "Dark Mode" ],
+            "Align": { "Horizontal": "Left" }
         }
     ]
 }

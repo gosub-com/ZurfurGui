@@ -212,8 +212,24 @@ public static class Json
 
     private static void SkipWhitespace(string json, ref int index)
     {
+        index = SkipComments(json, index);
         while (index < json.Length && char.IsWhiteSpace(json[index]))
+        {
             index++;
+            index = SkipComments(json, index);
+        }
+    }
+
+    private static int SkipComments(string json, int index)
+    {
+        if (index < json.Length && json[index] == '/' && index+1 < json.Length && json[index+1] == '/')
+        {
+            // Skip comment
+            index += 2;
+            while (index < json.Length && json[index] != '\n' && json[index] != '\r')
+                index++;
+        }
+        return index;
     }
 
 

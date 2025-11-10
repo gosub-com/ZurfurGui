@@ -5,7 +5,6 @@ using ZurfurGui.Controls;
 using ZurfurGui.Layout;
 using ZurfurGui.Property;
 using ZurfurGui.Property.Serializers;
-using ZurfurGui.Controls;
 
 namespace ZurfurGui;
 
@@ -24,9 +23,7 @@ namespace ZurfurGui;
 [JsonSerializable(typeof(EnumProp<bool>))]
 [JsonSerializable(typeof(EnumProp<Dock>))]
 [JsonSerializable(typeof(StyleSheet))]
-[JsonSerializable(typeof(StyleProperty))]
 [JsonSerializable(typeof(string[]))]
-[JsonSerializable(typeof(BackgroundProp))]
 public partial class ZurfurJsonContext : JsonSerializerContext { }
 
 /// <summary>
@@ -36,6 +33,7 @@ public static class Loader
 {
     static Dictionary<string, Type> s_controllers = new();
     static Dictionary<string, Func<Layoutable?>> s_layouts = new();
+    static Dictionary<string, StyleSheet> s_styleSheets = new();
 
     // Combine source-generated context with custom converters
     public static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
@@ -105,6 +103,23 @@ public static class Loader
             Console.WriteLine($"Error loading control '{target.TypeName}': {ex.Message}, type={ex.GetType()}");
             throw;
         }
+    }
+
+    public static void RegisterStyleSheet(string json) 
+    { 
+        var styleSheet = JsonSerializer.Deserialize<StyleSheet>(json, JsonSerializerOptions);
+        if (styleSheet == null || styleSheet.Name == "")
+            throw new ArgumentException("Invalid style sheet, missing name");
+        if (s_styleSheets.ContainsKey(styleSheet.Name))
+            throw new ArgumentException($"Style sheet '{styleSheet.Name}' is already registered");
+        s_styleSheets[styleSheet.Name] = styleSheet;
+    }
+
+    public static StyleSheet? GetStyleSheet(string name)
+    {
+        if (s_styleSheets.TryGetValue(name, out var styleSheet))
+            return styleSheet;
+        return null;
     }
 
     public static void RegisterControl(string name, Type type)

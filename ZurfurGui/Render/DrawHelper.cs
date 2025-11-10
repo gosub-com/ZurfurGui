@@ -15,10 +15,9 @@ public static class DrawHelper
             return;
 
         // Draw background
-        var back = view._cache.Background;
-        var borderRadius = back.Radius.Or(0);
-        var background = back.Color.Or(Colors.TransParent);
-        var borderWidth = Math.Min(back.BorderWidth.Or(0), Math.Min(view.Size.Width, view.Size.Height)/2);
+        var borderRadius = view._cache.BorderRadius;
+        var background = view._cache.BackgroundColor;
+        var borderWidth = Math.Min(view._cache.BorderWidth, Math.Min(view.Size.Width, view.Size.Height)/2);
         if (background.A != 0)
         {
             context.FillColor = background;
@@ -26,7 +25,7 @@ public static class DrawHelper
         }
 
         // Draw border
-        var borderColor = back.BorderColor.Or(Colors.TransParent);
+        var borderColor = view._cache.BorderColor;
         if (borderWidth > 0 && borderColor.A != 0)
         {
             context.LineWidth = borderWidth;
@@ -46,7 +45,7 @@ public static class DrawHelper
             return false;
 
         // Check if the background is visible (TBD: on the border and border radius)
-        return view.GetStyle(Zui.Background).Color.Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
+        return view.GetStyle(Zui.BackgroundColor).Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
     }
 
 }

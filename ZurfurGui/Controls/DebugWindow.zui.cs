@@ -1,6 +1,7 @@
 ﻿using ZurfurGui.Base;
-using ZurfurGui.Render;
+using ZurfurGui.Platform;
 using ZurfurGui.Property;
+using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
@@ -13,6 +14,19 @@ public partial class DebugWindow : Controllable
     public DebugWindow()
     {
         InitializeControl();
+
+        _buttonDark.View.AddEvent(Zui.PointerClick, _buttonDark_PointerDown);
+    }
+
+
+    void _buttonDark_PointerDown(object? s, PointerEvent e)
+    {
+        var appWindow = View.AppWindow;
+        if (appWindow != null)
+        {
+            appWindow.IsDarkMode = !appWindow.IsDarkMode;
+            _buttonDark.View.SetProperty(Zui.Text, new(appWindow.IsDarkMode ? "Light Mode" : "Dark Mode"));
+        }
     }
 
 

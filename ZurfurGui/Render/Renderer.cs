@@ -70,10 +70,10 @@ public class Renderer
         _appWindow.CallPreRenderFrame();
 
 
-        if ((appView.Flags | appView.FlagsChild).HasFlag(ViewFlags.RePseudo))
+        if (((appView.Flags | appView.FlagsChild) & (ViewFlags.ReStyleThis | ViewFlags.ReStyleDown)) != ViewFlags.None)
         {
             StyleCount++;
-            InvalidatePseudo(appView);
+            InvalidateStyle(appView, false);
         }
 
         // Re-measure if necessary
@@ -114,12 +114,14 @@ public class Renderer
         }
     }
 
-    void InvalidatePseudo(View view)
+    void InvalidateStyle(View view, bool nukem)
     {
-        var needsClearCache = view.Flags.HasFlag(ViewFlags.RePseudo);
-        var needsChildTraverse = view.FlagsChild.HasFlag(ViewFlags.RePseudo);
-        view.Flags &= ~ViewFlags.RePseudo;
-        view.FlagsChild &= ~ViewFlags.RePseudo;
+        if (view.Flags.HasFlag(ViewFlags.ReStyleDown))
+            nukem = true;
+        var needsClearCache = nukem || view.Flags.HasFlag(ViewFlags.ReStyleThis);
+        var needsChildTraverse = nukem || (view.FlagsChild & (ViewFlags.ReStyleThis | ViewFlags.ReStyleDown)) != ViewFlags.None;
+        view.Flags &= ~ViewFlags.ReStyleThis;
+        view.FlagsChild &= ~ViewFlags.ReStyleThis;
 
         if (needsClearCache)
         {
@@ -130,7 +132,7 @@ public class Renderer
 
         if (needsChildTraverse)
             foreach (var child in view.Children)
-                InvalidatePseudo(child);
+                InvalidateStyle(child, nukem);
     }
 
 

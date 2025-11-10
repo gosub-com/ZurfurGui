@@ -1,0 +1,43 @@
+//
+// Zurfur styles for dark mode
+//
+{
+    "Name": "ZurfurDark",
+    "Styles": [
+        // AppWindow dark
+        {
+            "Selectors": "AppWindow:IsDarkMode",
+            "BackgroundColor": "#1F1F1F"
+        },
+        // Text dark
+        {
+            "Selectors": "Text:IsDarkMode",
+            "Color": "#DDDDDD"
+        },
+        // Button dark
+        {
+            "Selectors": "Button:IsDarkMode",
+            "BorderColor": "Gray",
+            "BackgroundColor": "#505050",
+            "Color": "#F0F0F0"
+        },
+        // Button dark hover
+        {
+            "Selectors": "Button:IsDarkMode:IsPointerOver",
+            "BorderColor": "#3C7FB1",
+            "BackgroundColor": "#606060"
+        },
+        // Button dark pressed
+        {
+            "Selectors": "Button:IsDarkMode:IsPressed",
+            "BorderColor": "#3C7FB1",
+            "BackgroundColor": "#707070"
+        },
+        // Window dark
+        {
+            "Selectors": "Window:IsDarkMode",
+            "BackgroundColor": "#383838",
+            "BorderColor": "Gray"
+        }
+    ]
+}

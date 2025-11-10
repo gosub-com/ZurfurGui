@@ -1,15 +1,15 @@
 {
-    "### Multiform Test ###": "",
+    //
+    // Multiform Test
+    //
     "Controller": "TestApp.FormMultiForm",
     "Layout": "Column",
     "Content": [
         {
             "Controller": "Panel",
-            "Background": {
-                "Radius": 10.0,
-                "BorderWidth": 2.0,
-                "BorderColor": "Navy"
-            },
+            "BorderRadius": 10.0,
+            "BorderWidth": 2.0,
+            "BorderColor": "Navy",
             "Padding": {
                 "Left": 15,
                 "Top": 15,
@@ -24,11 +24,9 @@
         },
         {
             "Controller": "Panel",
-            "Background": {
-                "Radius": 10.0,
-                "BorderWidth": 2.0,
-                "BorderColor": "Green"
-            },
+            "BorderRadius": 10.0,
+            "BorderWidth": 2.0,
+            "BorderColor": "Green",
             "Padding": {
                 "Left": 15,
                 "Top": 15,

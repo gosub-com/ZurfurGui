@@ -8,8 +8,8 @@ public enum ViewFlags : short
     None = 0,
     ReDraw = 1 << 1,
     ReMeasure = 1 << 2,
-    ReStyle = 1 << 3,
-    RePseudo = 1 << 4,
+    ReStyleThis = 1 << 3,
+    ReStyleDown = 1 << 4,
 }
 
 

@@ -8,19 +8,15 @@
                 {
                     "Controller": "Text",
                     "Text": "T",
-                    "Background": {
-                        "BorderColor": "Green",
-                        "BorderWidth": 2
-                    },
+                    "BorderColor": "Green",
+                    "BorderWidth": 2,
                     "Align": { "Vertical": "Top" }
                 },
                 {
                     "Controller": "Text",
                     "Text": "T B",
-                    "Background": {
-                        "BorderColor": "Green",
-                        "BorderWidth": 2
-                    },
+                    "BorderColor": "Green",
+                    "BorderWidth": 2,
                     "Align": { "Vertical": "Bottom" }
                 },
                 {
@@ -32,10 +28,8 @@
                         "Right": 20,
                         "Bottom": 10
                     },
-                    "Background": {
-                        "BorderColor": "Green",
-                        "BorderWidth": 2
-                    }
+                    "BorderColor": "Green",
+                    "BorderWidth": 2
                 },
                 {
                     "Controller": "Text",
@@ -46,10 +40,8 @@
                         "Right": 20,
                         "Bottom": 10
                     },
-                    "Background": {
-                        "BorderColor": "Green",
-                        "BorderWidth": 2
-                    }
+                    "BorderColor": "Green",
+                    "BorderWidth": 2
                 },
                 {
                     "Controller": "Text",
@@ -60,18 +52,14 @@
                         "Right": 20,
                         "Bottom": 0
                     },
-                    "Background": {
-                        "BorderColor": "Green",
-                        "BorderWidth": 2
-                    }
+                    "BorderColor": "Green",
+                    "BorderWidth": 2
                 },
                 {
                     "Controller": "Text",
                     "Text": "T PMB",
-                    "Background": {
-                        "BorderColor": "Red",
-                        "BorderWidth": 2
-                    },
+                    "BorderColor": "Red",
+                    "BorderWidth": 2,
                     "Padding": {
                         "Left": 20,
                         "Top": 50,
@@ -136,9 +124,7 @@
                 {
                     "Controller": "TextBox",
                     "Text": "",
-                    "Background": {
-                        "Color": "White"
-                    }
+                    "BackgroundColor": "White"
                 },
                 {
                     "Controller": "TextBox",
@@ -163,9 +149,7 @@
                 {
                     "Controller": "TextBox",
                     "Text": "TB PMB",
-                    "Background": {
-                        "BorderColor": "Red"
-                    },
+                    "BorderColor": "Red",
                     "Padding": {
                         "Left": 20,
                         "Top": 10,
