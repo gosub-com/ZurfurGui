@@ -1,4 +1,4 @@
-﻿using ZurfurGui.Controls;
+﻿using ZurfurGui.Windows;
 
 namespace ZurfurGui.WinForms;
 

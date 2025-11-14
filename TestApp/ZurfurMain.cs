@@ -3,7 +3,7 @@
 using ZurfurGui;
 using ZurfurGui.Base;
 using ZurfurGui.Property;
-using ZurfurGui.Controls;
+using ZurfurGui.Windows;
 
 
 /// <summary>
@@ -30,7 +30,7 @@ public static partial class ZurfurMain
         app.ShowWindow(swt1, 
             sizeRequst: new SizeProp(200, 200), 
             margin: new ThicknessProp(600, 175, 0, 0));
-        swt1.button1.View.SetProperty(Zui.Text, new (["*BUTTON*"]));
+        swt1.bigButton.View.SetProperty(Zui.Text, new (["*BUTTON*"]));
 
         app.ShowWindow(new FormSmallWinTest(), 
             sizeRequst: new SizeProp(200, 200), 

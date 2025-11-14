@@ -2,7 +2,7 @@
     "Controller": "TestApp.FormSmallWinTest",
     "Content": [
         {
-            "(Name)": "button1",
+            "(Name)": "bigButton",
             "Controller": "Button",
             "Text": "Big Button Test",
             "Align": {

@@ -3,7 +3,7 @@ using ZurfurGui.Base;
 using ZurfurGui.Render;
 using ZurfurGui.Property;
 
-namespace ZurfurGui.Controls;
+namespace ZurfurGui.Windows;
 
 /// <summary>
 /// The AppWindow is either the main browser window, or a canvas inside a web page,
