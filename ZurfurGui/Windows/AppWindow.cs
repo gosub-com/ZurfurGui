@@ -58,8 +58,13 @@ public partial class AppWindow : Controllable, Drawable
     /// Show a control inside a window container.
     /// TBD: Some of these properties should represent initial location settings, then they dissapear.
     /// </summary>
-    public Window ShowWindow(Controllable control, 
-        PointProp? location = null,  AlignProp ?align = null, ThicknessProp? margin = null, SizeProp? sizeRequst = null)
+    public Window ShowWindow(
+        Controllable control,
+        string? title = null,
+        PointProp? location = null,  
+        AlignProp ?align = null, 
+        ThicknessProp? margin = null, 
+        SizeProp? sizeRequst = null)
     {
         var window = new Window();
         window.View.SetProperty(Zui.Align, align ?? new(AlignHorizontal.Left, AlignVertical.Top));
@@ -69,6 +74,8 @@ public partial class AppWindow : Controllable, Drawable
             window.View.SetProperty(Zui.Margin, margin.Value);
         if (sizeRequst != null)
             window.View.SetProperty(Zui.SizeRequest, sizeRequst.Value);
+        if (title != null)
+            window.SetTitle(title);
 
         window.LoadContent([control]);
         _floatingWindows.View.AddChild(window.View);

@@ -1,0 +1,16 @@
+{
+    ".controller": "TextEdit",
+    ".namespace": "ZurfurGui.Controls",
+    ".classes": [ "TextEdit" ],
+    ".data": [
+        "Text : TextLines = _textContent.Text"
+    ],
+    ".content": [
+        {
+            ".name": "_textContent",
+            ".controller": "TextView",
+            ".classes": [ "TextEdit.Text" ],
+            "text": "TextEdit"
+        }
+    ]
+}

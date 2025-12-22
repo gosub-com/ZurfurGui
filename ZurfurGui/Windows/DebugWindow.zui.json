@@ -1,17 +1,18 @@
 {
-    "Controller": "DebugWindow",
-    "Text": [ "Stats Text" ],
-    "Layout": "Column",
-    "Content": [
+    ".controller": "DebugWindow",
+    ".namespace": "ZurfurGui.Windows",
+    "text": [ "Stats Text" ],
+    ".layout": "Column",
+    ".content": [
         {
-            "(Name)": "_statsView",
-            "Controller": "Text"
+            ".name": "_statsView",
+            ".controller": "TextView"
         },
         {
-            "(Name)": "_buttonDark",
-            "Controller": "Button",
-            "Text": [ "Dark Mode" ],
-            "Align": { "Horizontal": "Left" }
+            ".name": "_buttonDark",
+            ".controller": "Button",
+            "text": [ "Dark Mode" ],
+            ".align": { "horizontal": "left" }
         }
     ]
 }

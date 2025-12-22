@@ -11,63 +11,59 @@ namespace ZurfurGui;
 /// </summary>
 public static class Zui
 {
-    // Basic View functionality
-    public static readonly PropertyKey<string> Name = new("(Name)");
-    public static readonly PropertyKey<string> Controller = new("Controller");
-    public static readonly PropertyKey<string> Layout = new("Layout");
-    public static readonly PropertyKey<Properties[]> Content = new("Content", ViewFlags.ReMeasure);
+    // Basic panel functionality
+    public static readonly PropertyKey<string> Name = new(".name", typeof(Panel));
+    public static readonly PropertyKey<string> Controller = new(".controller", typeof(Panel));
+    public static readonly PropertyKey<string> Namespace = new(".namespace", typeof(Panel));
+    public static readonly PropertyKey<string> Layout = new(".layout", typeof(Panel));
+    public static readonly PropertyKey<Properties[]> Content = new(".content", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<TextLines> Data = new(".data", typeof(Panel), ViewFlags.ReMeasure);
 
-    // Basic View
-    public static readonly PropertyKey<EnumProp<bool>> IsVisible = new("IsVisible", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<AlignProp> Align = new("Align", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<ThicknessProp> Margin = new("Margin", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<SizeProp> SizeRequest = new("SizeRequest", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<SizeProp> SizeMax = new("SizeMax", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<SizeProp> SizeMin = new("SizeMin", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<DoubleProp> Magnification = new("Magnification", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<EnumProp<bool>> Clip = new("Clip", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<PointProp> Offset = new("Offset", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<ThicknessProp> Padding = new("Padding", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<ColorProp> BackgroundColor = new("BackgroundColor", ViewFlags.ReDraw);
-    public static readonly PropertyKey<ColorProp> BorderColor = new("BorderColor", ViewFlags.ReDraw);
-    public static readonly PropertyKey<DoubleProp> BorderWidth = new("BorderWidth", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<DoubleProp> BorderRadius = new("BorderRadius", ViewFlags.ReDraw);
+    public static readonly PropertyKey<EnumProp<bool>> IsVisible = new(".isVisible", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<AlignProp> Align = new(".align", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<ThicknessProp> Margin = new(".margin", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<SizeProp> SizeRequest = new(".sizeRequest", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<SizeProp> SizeMax = new(".sizeMax", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<SizeProp> SizeMin = new(".sizeMin", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<DoubleProp> Magnification = new(".magnification", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<EnumProp<bool>> Clip = new(".clip", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<PointProp> Offset = new(".offset", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<ThicknessProp> Padding = new(".padding", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<ColorProp> BackgroundColor = new(".backgroundColor", typeof(Panel), ViewFlags.ReDraw);
+    public static readonly PropertyKey<ColorProp> BorderColor = new(".borderColor", typeof(Panel), ViewFlags.ReDraw);
+    public static readonly PropertyKey<DoubleProp> BorderWidth = new(".borderWidth", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<DoubleProp> BorderRadius = new(".borderRadius", typeof(Panel), ViewFlags.ReDraw);
 
     // Style
-    public static readonly PropertyKey<TextLines> Selectors = new("Selectors", ViewFlags.ReStyleDown);
-    public static readonly PropertyKey<TextLines> Classes = new("Classes", ViewFlags.ReStyleDown);
-    public static readonly PropertyKey<TextLines> UseStyles = new("UseStyles", ViewFlags.ReStyleDown);
-    public static readonly PropertyKey<Properties[]> Styles = new("Styles", ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<TextLines> Selectors = new(".selectors", typeof(Panel), ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<TextLines> Classes = new(".classes", typeof(Panel), ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<TextLines> UseStyles = new(".useStyles", typeof(Panel), ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<Properties[]> Styles = new(".styles", typeof(Panel), ViewFlags.ReStyleDown);
 
     // Pseudo classes
-    public static readonly PropertyKey<EnumProp<bool>> IsPointerOver = new("IsPointerOver", ViewFlags.ReStyleThis);
-    public static readonly PropertyKey<EnumProp<bool>> IsEnabled = new("IsEnabled", ViewFlags.ReStyleDown);
-    public static readonly PropertyKey<EnumProp<bool>> IsWindowActive = new("IsWindowInactive", ViewFlags.ReStyleDown);
-    public static readonly PropertyKey<EnumProp<bool>> IsDarkMode = new("IsDarkMode", ViewFlags.ReStyleDown);
-    public static readonly PropertyKey<EnumProp<bool>> IsPressed = new("IsPressed", ViewFlags.ReStyleThis);
-    public static readonly PropertyKey<EnumProp<bool>> IsFocused = new("IsFocused", ViewFlags.ReStyleThis);
-    public static readonly PropertyKey<EnumProp<bool>> IsFocusWithin = new("IsFocusWithin", ViewFlags.ReStyleThis);
-
-    // Label, Window, Button, Checkbox, etc.
-    public static readonly PropertyKey<TextLinesProp> Text = new("Text", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<FontProp> Font = new("Font", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<ColorProp> Color = new("Color", ViewFlags.ReDraw);
+    public static readonly PropertyKey<EnumProp<bool>> IsPointerOver = new(".isPointerOver", typeof(Panel), ViewFlags.ReStyleThis);
+    public static readonly PropertyKey<EnumProp<bool>> IsEnabled = new(".isEnabled", typeof(Panel), ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<EnumProp<bool>> IsWindowActive = new(".isWindowInactive", typeof(Panel), ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<EnumProp<bool>> IsDarkMode = new(".isDarkMode", typeof(Panel), ViewFlags.ReStyleDown);
+    public static readonly PropertyKey<EnumProp<bool>> IsPressed = new(".isPressed", typeof(Panel), ViewFlags.ReStyleThis);
+    public static readonly PropertyKey<EnumProp<bool>> IsFocused = new(".isFocused", typeof(Panel), ViewFlags.ReStyleThis);
+    public static readonly PropertyKey<EnumProp<bool>> IsFocusWithin = new(".isFocusWithin", typeof(Panel), ViewFlags.ReStyleThis);
 
     // Row, Column, DockPanel, etc.
-    public static readonly PropertyKey<EnumProp<bool>> Wrap = new("Wrap", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<SizeProp> Spacing = new("Spacing", ViewFlags.ReMeasure);
-    public static readonly PropertyKey<EnumProp<Dock>> Dock = new("Dock", ViewFlags.ReMeasure);
+    public static readonly PropertyKey<EnumProp<bool>> Wrap = new("cell.wrap", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<SizeProp> Spacing = new("cell.spacing", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<EnumProp<Dock>> Dock = new("dock.align", typeof(Panel), ViewFlags.ReMeasure);
 
     // Common UI interaction
-    public static readonly PropertyKey<EnumProp<bool>> DisableHitTest = new("DisableHitTest");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerDown = new("PointerDown");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerMove = new("PointerMove");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerUp = new("PointerUp");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerClick = new("PointerClick");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerDown = new("PreviewPointerDown");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerMove = new("PreviewPointerMove");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerUp = new("PreviewPointerUp");
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerClick = new("PreviewPointerClick");
-    public static readonly PropertyKey<EventHandler> PointerCaptureLost = new("PointerCaptureLost");
+    public static readonly PropertyKey<EnumProp<bool>> DisableHitTest = new(".disableHitTest", typeof(Panel));
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerDown = new(".pointerDown", typeof(Panel));
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerMove = new(".pointerMove", typeof(Panel));
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerUp = new(".pointerUp", typeof(Panel));
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerClick = new(".pointerClick", typeof(Panel));
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerDown = new(".previewPointerDown", typeof(Panel));
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerMove = new(".previewPointerMove", typeof(Panel));
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerUp = new(".previewPointerUp", typeof(Panel));
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerClick = new(".previewPointerClick", typeof(Panel));
+    public static readonly PropertyKey<EventHandler> PointerCaptureLost = new(".pointerCaptureLost", typeof(Panel));
 
 }

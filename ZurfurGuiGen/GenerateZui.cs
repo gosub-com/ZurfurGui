@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Threading;
 
@@ -34,24 +35,30 @@ public class GenerateZui : IIncrementalGenerator
         /// <summary>
         /// The controller or style name value from the JSON document (of "" if missing)
         /// </summary>
-        public string Name = "";
+        public string ControllerName = "";
 
         /// <summary>
-        /// Namespace extracted from the .cs file (or "" if no syntax tree)
+        /// Namespace (or "" for styles)
         /// </summary>
         public string Namespace { get; set; } = "";
 
         /// <summary>
-        /// When generating code for a class, return Namespace.FileName.
-        /// When generating an entire class, return the JsonName which is the controller name.
+        /// Set to true if there is a user supplied controller class
         /// </summary>
-        public string NamespaceFileName => Namespace != "" ? $"{Namespace}.{FileName}" : Name;
+        public bool UserSuppliedControllerClass { get; set; }
+
+        /// <summary>
+        /// Full namespace + controller class name
+        /// </summary>
+        public string NamespaceFileName => $"{Namespace}.{ControllerName}";
     }
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        // Collect zuiData for all ZUI.JSON files
         var syntaxTrees = context.CompilationProvider.Select((compilation, _) => compilation.SyntaxTrees.ToArray());
+
+
+        // Collect zuiData for all ZUI.JSON files
         var zuiData = context.AdditionalTextsProvider
             .Where(file => file.Path.EndsWith(".zui.json", StringComparison.OrdinalIgnoreCase))
             .Combine(syntaxTrees)
@@ -94,29 +101,48 @@ public class GenerateZui : IIncrementalGenerator
     static FileInfo CollectJsonFiles(AdditionalText text, SyntaxTree[] syntax, CancellationToken cancellationToken)
     {
         var zuiPath = text.Path;
-        var fileNameWithoutJsonExt = Path.GetFileNameWithoutExtension(zuiPath); // removes .json
+        var jsonNameWithoutJsonExt = Path.GetFileNameWithoutExtension(zuiPath); // removes .json
+        var jsonNameWithoutAnyExt = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui or .zss
 
-        // Try to find the .cs file with the same name as the JSON file
-        var csTree = syntax.FirstOrDefault(tree =>
-        {
-            var csFileName = Path.GetFileNameWithoutExtension(tree.FilePath);
-            return string.Equals(csFileName, fileNameWithoutJsonExt, StringComparison.OrdinalIgnoreCase);
-        });
 
         // Parse the json file (errors are collected into diagnostic)
         Diagnostic? diagnostic = null;
         Dictionary<string, object?> jsonDocument = new();
-        var jsonName = "";
-        var nameSpace = GetNameSpace(csTree) ?? "";
-        var fileNameOnly = Path.GetFileNameWithoutExtension(fileNameWithoutJsonExt); // removes .zui or .zss
+        var controllerName = "";
+        var nameSpace = "";
+        var fileNameOnly = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui or .zss
+        var userSuppliedControllerClass = false;
         try
         {
             // Parse the JSON content, find the controller or style name
             jsonDocument = Json.Parse(text.GetText(cancellationToken)?.ToString() ?? "");
-            if (Path.GetExtension(fileNameWithoutJsonExt).ToLower() == ".zss")
-                jsonName = GetStyleName(fileNameOnly, jsonDocument);
+
+
+            if (Path.GetExtension(jsonNameWithoutJsonExt).ToLower() == ".zss")
+            {
+                controllerName = GetStyleName(fileNameOnly, jsonDocument);
+            }
             else
-                jsonName = GetControllerName(fileNameOnly, csTree != null, nameSpace, jsonDocument);
+            {
+                nameSpace = GetJsonValue(jsonDocument, ".namespace");
+
+                // Try to find the .cs file with the same name as the JSON file
+                var csTree = syntax.FirstOrDefault(tree =>
+                {
+                    var csFileName = Path.GetFileNameWithoutExtension(tree.FilePath);
+                    return csFileName == jsonNameWithoutAnyExt;
+                });
+
+                var csFileNamespace = GetNameSpace(csTree) ?? "";
+                userSuppliedControllerClass = csFileNamespace != "";
+
+                // Verify the .cs file namespace (if any) matches the JSON namespace
+                if (csFileNamespace != "" && csFileNamespace != nameSpace)
+                    throw new Exception($"The JSON '.namespace' must match the namespace in {fileNameOnly}.cs, "
+                        + $"but is '{nameSpace}' instead of '{csFileNamespace}'");
+
+                controllerName = GetControllerName(fileNameOnly, nameSpace, jsonDocument);
+            }
         }
         catch (LocationException lex)
         {
@@ -142,48 +168,48 @@ public class GenerateZui : IIncrementalGenerator
             FileName = fileNameOnly,
             Diagnostic = diagnostic,
             JsonDocument = jsonDocument,
-            Name = jsonName,
+            ControllerName = controllerName,
             Namespace = nameSpace,
+            UserSuppliedControllerClass = userSuppliedControllerClass
         };
     }
+
 
     /// <summary>
     /// Find and validate the controller name from the json.
     /// Throws an exception if invalid.
     /// </summary>
     private static string GetControllerName(string fileName, 
-        bool hasSyntaxTree, string nameSpace, Dictionary<string, object?> jsonDocument)
+        string nameSpace, Dictionary<string, object?> jsonDocument)
     {
-        // Verify the .cs has a namespace
-        if (hasSyntaxTree && nameSpace == "")
-            throw new Exception($"No namespace declaration found in {fileName}.cs");
-
         // Verify controller key is present
-        if (!jsonDocument.TryGetValue("Controller", out var controllerKey))
-            throw new Exception("Top level JSON must contain a 'Controller' key");
-        if (controllerKey is not string controllerName || string.IsNullOrWhiteSpace(controllerName))
-            throw new Exception("The JSON 'Controller' key must be a non-empty string");
+        string controllerName = GetJsonValue(jsonDocument, ".controller");
 
         // Verify controller and namespace are valid (allow empty namespace in ZurfurGui components)
-        if (!nameSpace.StartsWith("ZurfurGui."))
-        {
-            var dotCount = controllerName.Count(c => c == '.');
-            if (dotCount == 0)
-                throw new Exception($"The JSON 'Controller' key must contain a namespace, e.g. 'MyLibrary.MyControl'");
-            if (dotCount != 1)
-                throw new Exception($"The JSON 'Controller' key must not contain nested namespaces (yet...)");
-            if (nameSpace != "" && controllerName != $"{nameSpace}.{fileName}")
-                throw new Exception($"The JSON 'Controller' key must match the full namespace and class name '{nameSpace}.{fileName}', but is '{controllerName}' instead");
-        }
+        if (controllerName != fileName)
+            throw new Exception($"The JSON '.controller' key must match the class and file name '{fileName}', but is '{controllerName}' instead");
 
+        return controllerName;
+    }
+
+    /// <summary>
+    /// Retrieve a non-empty string value from the JSON document.
+    /// Throws an exception if the key doesn't exist, is not a string, or is empty.
+    /// </summary>
+    private static string GetJsonValue(Dictionary<string, object?> jsonDocument, string key)
+    {
+        if (!jsonDocument.TryGetValue(key, out var controllerKey))
+            throw new Exception($"Top level JSON must contain a '{key}' key");
+        if (controllerKey is not string controllerName || string.IsNullOrWhiteSpace(controllerName))
+            throw new Exception($"The JSON '{key}' key must be a non-empty string");
         return controllerName;
     }
 
     static string GetStyleName(string fileName, Dictionary<string, object?> jsonDocument)
     {
         // Retrieve and validate the style name
-        if (!jsonDocument.TryGetValue("Name", out var styleJsonObject))
-            throw new Exception("Top level JSON must contain a 'Style' key");
+        if (!jsonDocument.TryGetValue("name", out var styleJsonObject))
+            throw new Exception("Top level JSON must contain a 'name' key");
         if (styleJsonObject is not string styleName || string.IsNullOrWhiteSpace(styleName))
             throw new Exception("The JSON 'Name' key must be a non-empty string");
         if (styleName != fileName)
@@ -207,7 +233,10 @@ public class GenerateZui : IIncrementalGenerator
 
             // Report any diagnostics collected during data gathering
             if (data.Diagnostic != null)
+            {
                 spc.ReportDiagnostic(data.Diagnostic);
+                continue;
+            }
 
             try
             {
@@ -229,34 +258,22 @@ public class GenerateZui : IIncrementalGenerator
 
     private static string GenerateControllerClassSource(FileInfo data)
     {
-        // Retrieve controller type name
-        // NOTE: We will generate code even if controllerName is invalid.
-        //       This helps to avoid cascading errors when compiling user code.
-        string controllerName = "";
-        if (data.Diagnostic == null)
-            controllerName = data.Name;
-        if (controllerName == "")
-            controllerName = data.NamespaceFileName;
-        
-        var nameSpace = data.Namespace == "" ? controllerName.Split('.')[0] : data.Namespace;
-
         var partialKeyword = "";
         var constructor = "";
-        if (data.Namespace == "")
+        if (data.UserSuppliedControllerClass)
         {
-            // No .cs class supplied
-            constructor = $"    // No .cs file detected, so generate constructor\r\n"
-                + $"    public {data.FileName}()\r\n    {{\r\n        InitializeControl();\r\n    }}\r\n";
+            // .cs class is supplied (user must provide constructor)
+            partialKeyword = "partial ";
         }
         else
         {
-            // .cs class is supplied
-            partialKeyword = "partial ";
+            // .cs class is not supplied (create a constructor)
+            constructor = $"    // No .cs file detected, so generate constructor\r\n"
+                + $"    public {data.FileName}()\r\n    {{\r\n        InitializeControl();\r\n    }}\r\n";
         }
 
         // Serialize JSON and escape double quotes for verbatim string
-        var zuiJsonContent = Json.Serialize(data.JsonDocument)
-                .Replace("\"", "\"\"");
+        var zuiJsonContent = Json.Serialize(data.JsonDocument).Replace("\"", "\"\"");
 
         // Create named controls variables
         var namedControls = FindNamedControls(data.JsonDocument).OrderBy(c => c.ControlName);
@@ -279,12 +296,12 @@ public class GenerateZui : IIncrementalGenerator
 // This file is generated from '{Path.GetFileName(data.Path)}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}
 using ZurfurGui.Base;
 
-namespace {nameSpace};
+namespace {data.Namespace};
 
 public sealed {partialKeyword}class {data.FileName} : global::ZurfurGui.Base.Controllable
 {{
     public global::ZurfurGui.Base.View View {{ get; private set; }}
-    public string TypeName => ""{controllerName}""; 
+    public string TypeName => ""{data.ControllerName}""; 
 
     // Named controls (public unless name starts with '_')
 {namedControlsCode}
@@ -315,7 +332,7 @@ public sealed {partialKeyword}class {data.FileName} : global::ZurfurGui.Base.Con
     {
         // Build a list of generated controls (errors already reported in GenerateControllerClasses)
         var generatedControls = zuiData
-            .Where(data => data.Diagnostic == null && data.Name != "");
+            .Where(data => data.Diagnostic == null && data.ControllerName != "");
 
         // Build a list of generated styles (report errors here)
         var generatedStyles = zssData
@@ -355,22 +372,25 @@ public sealed {partialKeyword}class {data.FileName} : global::ZurfurGui.Base.Con
     }
 
 
-    private static string GenerateZurfurMainSource(string nameSpace, 
+    private static string GenerateZurfurMainSource(string zurfurMainNamespace, 
         IEnumerable<FileInfo> generatedControls, IEnumerable<FileInfo> generatedStyles)
     {
+        var runStaticConstructors = string.Join("\r\n", generatedControls.Select(t =>
+            $"        global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::{t.NamespaceFileName}).TypeHandle);"));
+
         var registerControls = string.Join("\r\n", generatedControls.Select(t =>
-            $"        global::ZurfurGui.Loader.RegisterControl(\"{t.Name}\", typeof(global::{t.NamespaceFileName}));"));
+            $"        global::ZurfurGui.Loader.RegisterControl(\"{t.NamespaceFileName}\", typeof(global::{t.NamespaceFileName}));"));
         
         var createControls = string.Join("\r\n", generatedControls.Select(t =>
             $"            _ = new global::{t.NamespaceFileName}();"));
 
         var registerStyles = string.Join("\r\n", generatedStyles.Select(t =>
-            $"\r\n        // Register style '{t.Name}'\r\n"
+            $"\r\n        // Register style '{t.ControllerName}'\r\n"
             + $"        global::ZurfurGui.Loader.RegisterStyleSheet(@\"{Json.Serialize(t.JsonDocument).Replace("\"", "\"\"")}\");\r\n"));
 
 
         return $@"
-namespace {nameSpace};
+namespace {zurfurMainNamespace};
 
 // Each project should have a user created partial class named ZurfurMain
 // with a function named MainApp that calls InitializeControls.
@@ -381,6 +401,9 @@ static partial class ZurfurMain
     // The user created function MainApp should call this function
     private static void InitializeControls()
     {{
+        // Run static constructors to register control properties
+{runStaticConstructors}
+
         // Reister Controls
 {registerControls}
 
@@ -468,13 +491,12 @@ static partial class ZurfurMain
         // Helper function to recursively scan the JSON
         void ScanJson(Dictionary<string, object?> currentJson)
         {
-            // Check if the current dictionary contains both "Controller" and "(Name)"
-            if (currentJson.TryGetValue("(Name)", out var controlNameObj)
+            // Check if the current dictionary contains both ".controller" and ".Name"
+            if (currentJson.TryGetValue(".name", out var controlNameObj)
                 && controlNameObj is string controlName)
             {
                 var controller = "Panel";
-                if (currentJson.TryGetValue("Controller", out var controllerObj)
-                    && controllerObj is string controllerStr)
+                if (currentJson.TryGetValue(".controller", out var controllerObj) && controllerObj is string controllerStr)
                 {
                     controller = controllerStr;
                 }

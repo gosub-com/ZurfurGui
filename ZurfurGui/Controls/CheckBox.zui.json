@@ -1,0 +1,21 @@
+{
+    ".controller": "CheckBox",
+    ".namespace": "ZurfurGui.Controls",
+    ".layout": "Row",
+    ".data": [
+        "IsChecked : bool",
+        "Text : TextLines = _checkText.Text"
+    ],
+    ".content": [
+        {
+            ".name": "_checkMark",
+            ".controller": "TextView",
+            "text": "[X]"
+        },
+        {
+            ".name": "_checkText",
+            ".controller": "TextView",
+            "text": "CheckText"
+        }
+    ]
+}

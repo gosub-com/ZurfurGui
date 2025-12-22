@@ -1,65 +1,68 @@
 {
-    "Controller": "Window",
-    "Classes": [ "Window" ],
-    "Content": [
+    ".controller": "Window",
+    ".namespace": "ZurfurGui.Windows",
+    ".classes": [ "Window" ],
+    ".content": [
         {
-            "Layout": "DockPanel",
-            "Content": [
+            ".layout": "DockPanel",
+            ".content": [
                 {
-                    "(Name)": "_windowTitle",
-                    "Classes": [ "Window.Title" ],
-                    "Layout": "DockPanel",
-                    "Content": [
+                    ".name": "_windowTitle",
+                    ".classes": [ "Window.Title" ],
+                    ".layout": "DockPanel",
+                    ".content": [
                         {
-                            "Controller": "Text",
-                            "Classes": [ "Window.Title.TextColor", "Window.Title.Menu" ],
-                            "Dock": "Left",
-                            "Text": "≡",
-                            "Font": { "Size": 24.0 }
+                            ".controller": "TextView",
+                            ".classes": [ "Window.Title.TextColor", "Window.Title.Menu" ],
+                            "dock.align": "left",
+                            "text": "≡",
+                            "font": { "size": 24.0 }
                         },
                         {
-                            "(Name)": "_closeButton",
-                            "Controller": "Text",
-                            "Classes": [ "Window.Title.TextColor", "Window.Title.Close" ],
-                            "Dock": "Right",
-                            "Text": "X",
-                            "Font": { "Size": 24.0 }
+                            ".name": "_closeButton",
+                            ".controller": "TextView",
+                            ".classes": [ "Window.Title.TextColor", "Window.Title.Close" ],
+                            "dock.align": "right",
+                            "text": "X",
+                            "font": { "size": 24.0 }
                         },
                         {
-                            "Controller": "Text",
-                            "Classes": [ "Window.Title.Text", "Window.Title.TextColor" ],
-                            "DisableHitTest": true
+                            ".controller": "TextView",
+                            ".name": "_title",
+                            ".classes": [ "Window.Title.Text", "Window.Title.TextColor" ],
+                            "text": "Hello",
+                            ".disableHitTest": true
                         }
                     ]
                 },
                 {
-                    "(Name)": "_windowContent",
-                    "Classes": [ "Window.Content" ],
-                    "Clip": true
+                    ".name": "_windowContent",
+                    ".classes": [ "Window.Content" ],
+                    ".clip": true
                 }
             ]
         },
         {
-            "(Name)": "_resizeHandle",
-            "Align": {
-                "Horizontal": "Right",
-                "Vertical": "Bottom"
+            ".name": "_resizeHandle",
+            ".align": {
+                "horizontal": "right",
+                "vertical": "bottom"
             },
-            "Margin": {
-                "Left": 0,
-                "Top": 0,
-                "Right": -5,
-                "Bottom": -13
+            ".margin": {
+                "left": 0,
+                "top": 0,
+                "right": -5,
+                "bottom": -13
             },
-            "Content": [
+            ".content": [
                 {
-                    "Controller": "Text",
-                    "Text": "◢",
-                    "Offset": {
-                        "X": -0.5,
-                        "Y": -1
+                    ".controller": "TextView",
+                    "text": "◢",
+                    ".offset": {
+                        "x": -0.5,
+                        "y": -1
                     },
-                    "Font": { "Size": 32.0 }
+                    "font": { "size": 32.0 }
                 }
             ]
         }

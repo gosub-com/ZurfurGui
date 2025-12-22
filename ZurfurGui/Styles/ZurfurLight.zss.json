@@ -2,111 +2,110 @@
     //
     // Zurfur default styles for light mode
     //
-    "Name": "ZurfurLight",
-    "Styles": [
+    "name": "ZurfurLight",
+    "styles": [
         // AppWindow
         {
-            "Selectors": "AppWindow",
-            "BackgroundColor": "LightSkyBlue"
+            ".selectors": "AppWindow",
+            ".backgroundColor": "LightSkyBlue"
         },
         // Text
         {
-            "Selectors": "Text",
-            "Color": "Black"
+            ".selectors": "Text",
+            "color": "Black"
         },
         // Button
         {
-            "Selectors": "Button",
-            "BorderWidth": 2,
-            "BorderColor": "#606060",
-            "BackgroundColor": "#DDDDDD",
-            "Color": "Black",
-            "Padding": {
-                "Left": 2,
-                "Top": 2,
-                "Right": 2,
-                "Bottom": 2
+            ".selectors": "Button",
+            ".borderWidth": 2,
+            ".borderColor": "#606060",
+            ".backgroundColor": "#DDDDDD",
+            "color": "Black",
+            ".padding": {
+                "left": 2,
+                "top": 2,
+                "right": 2,
+                "bottom": 2
             }
         },
         // Button hover
         {
-            "Selectors": "Button:IsPointerOver",
-            "BorderColor": "#3C7FB1",
-            "BackgroundColor": "#BEE6FD"
+            ".selectors": "Button:IsPointerOver",
+            ".borderColor": "#3C7FB1",
+            ".backgroundColor": "#BEE6FD"
         },
         // Button pressed
         {
-            "Selectors": "Button:IsPressed",
-            "BackgroundColor": "#8EB6FD"
+            ".selectors": "Button:IsPressed",
+            ".backgroundColor": "#8EB6FD"
         },
         // Window
         {
-            "Selectors": "Window",
-            "BackgroundColor": "White",
-            "BorderRadius": 10.0,
-            "BorderWidth": 2,
-            "BorderColor": "Navy",
-            "SizeMin": {
-                "Width": 160,
-                "Height": 80
+            ".selectors": "Window",
+            ".backgroundColor": "White",
+            ".borderRadius": 10.0,
+            ".borderWidth": 2,
+            ".borderColor": "Navy",
+            ".sizeMin": {
+                "width": 160,
+                "height": 80
             }
         },
         // Window Title
         {
-            "Selectors": "Window.Title",
-            "Padding": {
-                "Left": 10,
-                "Top": 4,
-                "Right": 10,
-                "Bottom": 0
+            ".selectors": "Window.Title",
+            ".padding": {
+                "left": 10,
+                "top": 4,
+                "right": 10,
+                "bottom": 0
             },
-            "BackgroundColor": "SlateBlue",
-            "BorderRadius": 9,
-            "Dock": "Top",
-            "Align": { "Vertical": "Top" }
+            ".backgroundColor": "SlateBlue",
+            ".borderRadius": 9,
+            "dock.align": "top",
+            ".align": { "vertical": "top" }
         },
         // Window Title Text
         {
-            "Selectors": "Window.Title.Text",
-            "Text": "Window Title",
-            "Align": {
-                "Horizontal": "Center",
-                "Vertical": "Center"
+            ".selectors": "Window.Title.Text",
+            ".align": {
+                "horizontal": "center",
+                "vertical": "center"
             },
-            "Font": { "Size": 24.0 }
+            "font": { "size": 24.0 }
         },
         // Window Title Text Color
         {
-            "Selectors": "Window.Title.TextColor",
-            "Color": "White"
+            ".selectors": "Window.Title.TextColor",
+            "color": "White"
         },
         // Window.Title.Close:IsPointerOver
         {
-            "Selectors": "Window.Title.Close:IsPointerOver",
-            "Color": "LightSkyBlue"
+            ".selectors": "Window.Title.Close:IsPointerOver",
+            "color": "LightSkyBlue"
         },
         {
-            "Selectors": "Window.Content",
-            "Margin": {
-                "Left": 10,
-                "Top": 10,
-                "Right": 10,
-                "Bottom": 10
+            ".selectors": "Window.Content",
+            ".margin": {
+                "left": 10,
+                "top": 10,
+                "right": 10,
+                "bottom": 10
             }
         },
         {
-            "Selectors": "TextBox",
-            "BackgroundColor": "LightBlue",
-            "BorderWidth": 2,
-            "BorderColor": "Navy",
-            "SizeMin": {
-                "Width": 100
+            ".selectors": "TextEdit",
+            ".backgroundColor": "LightBlue",
+            ".borderWidth": 2,
+            ".borderColor": "Navy",
+            ".sizeMin": {
+                "width": 100
             },
-            "Padding": {
-                "Left": 2,
-                "Top": 2,
-                "Right": 0,
-                "Bottom": 0
+            ".padding": {
+                "left": 2,
+                "top": 2,
+                "right": 0,
+                "bottom": 0
             }
         }
     ]

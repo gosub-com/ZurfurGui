@@ -1,0 +1,5 @@
+{
+    ".controller": "TextView",
+    ".namespace": "ZurfurGui.Controls",
+    ".classes": [ "TextView" ]
+}

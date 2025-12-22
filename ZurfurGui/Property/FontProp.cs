@@ -1,12 +1,14 @@
-using ZurfurGui.Base;
+using System.Text.Json.Serialization;
 
 namespace ZurfurGui.Property;
 
 /// <summary>
 /// Represents a font property with a name and size. Both fields are optional.
 /// </summary>
-public readonly record struct FontProp(string? Name, DoubleProp Size)
-    : IProperty<FontProp>
+public readonly record struct FontProp(
+    [property: JsonPropertyName("name")] string? Name,
+    [property: JsonPropertyName("size")] DoubleProp Size
+) : IProperty<FontProp>
 {
     /// <summary>
     /// Indicates whether both fields are non-null.

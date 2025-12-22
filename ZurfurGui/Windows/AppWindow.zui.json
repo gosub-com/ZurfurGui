@@ -6,21 +6,22 @@
     // It holds all the other windows:
     //     MainAppView: The background app contained in the browser, canvas, or desktop application.
     //     FloatingWindows: Modal and modeless windows that can be moved around by the user.
-    "Controller": "AppWindow",
-    "Classes": [ "AppWindow" ],
-    "UseStyles": [ "ZurfurLight", "ZurfurDark" ],
-    "Content": [
+    ".controller": "AppWindow",
+    ".namespace": "ZurfurGui.Windows",
+    ".classes": [ "AppWindow" ],
+    ".useStyles": [ "ZurfurLight", "ZurfurDark" ],
+    ".content": [
         {
             //
             // Main App Window
             //
-            "(Name)": "_mainAppView"
+            ".name": "_mainAppView"
         },
         {
             //
             // Floating windows, and dialogs on top
             //
-            "(Name)": "_floatingWindows"
+            ".name": "_floatingWindows"
         }
     ]
 }

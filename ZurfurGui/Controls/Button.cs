@@ -4,12 +4,12 @@ using ZurfurGui.Layout;
 
 namespace ZurfurGui.Controls;
 
-public partial class TextBox : Controllable
+public partial class Button : Controllable
 {
-    public TextBox()
+
+    public Button()
     {
         InitializeControl();
-        View.Draw = DrawText.Instance;
-        View.Layout = LayoutText.Instance;
     }
+
 }

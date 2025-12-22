@@ -2,42 +2,42 @@
 // Zurfur styles for dark mode
 //
 {
-    "Name": "ZurfurDark",
-    "Styles": [
+    "name": "ZurfurDark",
+    "styles": [
         // AppWindow dark
         {
-            "Selectors": "AppWindow:IsDarkMode",
-            "BackgroundColor": "#1F1F1F"
+            ".selectors": "AppWindow:IsDarkMode",
+            ".backgroundColor": "#1F1F1F"
         },
         // Text dark
         {
-            "Selectors": "Text:IsDarkMode",
-            "Color": "#DDDDDD"
+            ".selectors": "Text:IsDarkMode",
+            "color": "#DDDDDD"
         },
         // Button dark
         {
-            "Selectors": "Button:IsDarkMode",
-            "BorderColor": "Gray",
-            "BackgroundColor": "#505050",
-            "Color": "#F0F0F0"
+            ".selectors": "Button:IsDarkMode",
+            ".borderColor": "Gray",
+            ".backgroundColor": "#505050",
+            "color": "#F0F0F0"
         },
         // Button dark hover
         {
-            "Selectors": "Button:IsDarkMode:IsPointerOver",
-            "BorderColor": "#3C7FB1",
-            "BackgroundColor": "#606060"
+            ".selectors": "Button:IsDarkMode:IsPointerOver",
+            ".borderColor": "#3C7FB1",
+            ".backgroundColor": "#606060"
         },
         // Button dark pressed
         {
-            "Selectors": "Button:IsDarkMode:IsPressed",
-            "BorderColor": "#3C7FB1",
-            "BackgroundColor": "#707070"
+            ".selectors": "Button:IsDarkMode:IsPressed",
+            ".borderColor": "#3C7FB1",
+            ".backgroundColor": "#707070"
         },
         // Window dark
         {
-            "Selectors": "Window:IsDarkMode",
-            "BackgroundColor": "#383838",
-            "BorderColor": "Gray"
+            ".selectors": "Window:IsDarkMode",
+            ".backgroundColor": "#383838",
+            ".borderColor": "Gray"
         }
     ]
 }

@@ -1,4 +1,5 @@
 ﻿using ZurfurGui.Base;
+using ZurfurGui.Controls;
 
 namespace ZurfurGui.Render;
 
@@ -21,7 +22,7 @@ public class DrawText : Drawable
         if (context.DeviceClip.Intersect(view.toDevice(view.ContentRect)).Width == 0)
             return;
 
-        var color = view.GetStyle(Zui.Color).Or(Colors.Black);
+        var color = view.GetStyle(TextView.Color).Or(Colors.Black);
         if (color.A == 0)
             return; // Exit if clear
 
@@ -33,8 +34,8 @@ public class DrawText : Drawable
             context.PushDeviceClip(view.toDevice(view.ContentRect));
         }
 
-        var text = view.GetStyle(Zui.Text).Or(TextLines.Unknown);
-        var font = view.GetStyle(Zui.Font);
+        var text = view.GetStyle(TextView.Text).Or(TextLines.Unknown);
+        var font = view.GetStyle(TextView.Font);
         var fontName = font.Name ?? "Arial";
         var fontSize = font.Size.Or(16.0);
         context.FontName = fontName;

@@ -1,12 +1,15 @@
-﻿using ZurfurGui.Base;
+﻿using System.Text.Json.Serialization;
+using ZurfurGui.Base;
 
 namespace ZurfurGui.Property;
 
 /// <summary>
 /// A type-safe Point that allows each component to be optional.  Defaults to null.
 /// </summary>
-public readonly record struct PointProp(DoubleProp X, DoubleProp Y)
-    : IProperty<PointProp>
+public readonly record struct PointProp(
+    [property: JsonPropertyName("x")] DoubleProp X, 
+    [property: JsonPropertyName("y")] DoubleProp Y
+) : IProperty<PointProp>
 {
     public override string ToString() => $"X: {X}, Y: {Y}";
     public string ToString(string format) => $"X: {X.ToString(format)}, Y: {Y.ToString(format)}";

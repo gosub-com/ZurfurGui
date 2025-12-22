@@ -2,6 +2,7 @@
 
 using ZurfurGui;
 using ZurfurGui.Base;
+using ZurfurGui.Controls;
 using ZurfurGui.Property;
 using ZurfurGui.Windows;
 
@@ -20,30 +21,30 @@ public static partial class ZurfurMain
 
         app.SetMainappWindow(new FormQbfWinTest());
 
-        app.ShowWindow(new DebugWindow(), location: new PointProp(10,10));
+        app.ShowWindow(new DebugWindow(), "Debug Window", location: new PointProp(10,10));
 
-        app.ShowWindow(new FormQbfWinTest(), 
+        app.ShowWindow(new FormQbfWinTest(), "Qbf Win Test",
             location: new PointProp(95,175), 
             sizeRequst: new SizeProp(400,500));
 
         var swt1 = new FormSmallWinTest();
-        app.ShowWindow(swt1, 
+        app.ShowWindow(swt1, "Small Win Test",
             sizeRequst: new SizeProp(200, 200), 
             margin: new ThicknessProp(600, 175, 0, 0));
-        swt1.bigButton.View.SetProperty(Zui.Text, new (["*BUTTON*"]));
+        swt1.bigButton.View.SetProperty(TextView.Text, new (["*BUTTON*"]));
 
-        app.ShowWindow(new FormSmallWinTest(), 
+        app.ShowWindow(new FormSmallWinTest(), "Small Win Test",
             sizeRequst: new SizeProp(200, 200), 
             margin: new ThicknessProp(10, 10, 10, 10),
             align: new AlignProp(AlignHorizontal.Right, AlignVertical.Bottom));
 
 
-        var searchWin = app.ShowWindow(new FormSearch(), 
+        var searchWin = app.ShowWindow(new FormSearch(), "Search",
             margin: new ThicknessProp(10, 10, 10, 10),
             align: new AlignProp(AlignHorizontal.Left, AlignVertical.Bottom));
         searchWin.IsWindowWrappingVisible = false;
 
-        app.ShowWindow(new FormMultiForm(), 
+        app.ShowWindow(new FormMultiForm(), "Multi Form",
             margin: new ThicknessProp(10, 10, 10, 10),
             align: new AlignProp(AlignHorizontal.Right, AlignVertical.Top));
 

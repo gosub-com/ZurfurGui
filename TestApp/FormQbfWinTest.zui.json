@@ -1,386 +1,405 @@
 {
-    "Controller": "TestApp.FormQbfWinTest",
-    "Layout": "Column",
-    "Content": [
+    ".controller": "FormQbfWinTest",
+    ".namespace": "TestApp",
+    ".layout": "Column",
+    ".content": [
         {
-            "Layout": "Row",
-            "Content": [
+            ".layout": "Row",
+            ".content": [
                 {
-                    "Controller": "Text",
-                    "Text": "T",
-                    "BorderColor": "Green",
-                    "BorderWidth": 2,
-                    "Align": { "Vertical": "Top" }
+                    ".controller": "TextView",
+                    "text": "T",
+                    ".borderColor": "Green",
+                    ".borderWidth": 2,
+                    ".align": { "vertical": "top" }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "T B",
-                    "BorderColor": "Green",
-                    "BorderWidth": 2,
-                    "Align": { "Vertical": "Bottom" }
+                    ".controller": "TextView",
+                    "text": "T B",
+                    ".borderColor": "Green",
+                    ".borderWidth": 2,
+                    ".align": { "vertical": "bottom" }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "T P",
-                    "Padding": {
-                        "Left": 20,
-                        "Top": 10,
-                        "Right": 20,
-                        "Bottom": 10
+                    ".controller": "TextView",
+                    "text": "T P",
+                    ".padding": {
+                        "left": 20,
+                        "top": 10,
+                        "right": 20,
+                        "bottom": 10
                     },
-                    "BorderColor": "Green",
-                    "BorderWidth": 2
+                    ".borderColor": "Green",
+                    ".borderWidth": 2
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "T M1",
-                    "Margin": {
-                        "Left": 20,
-                        "Top": 10,
-                        "Right": 20,
-                        "Bottom": 10
+                    ".controller": "TextView",
+                    "text": "T M1",
+                    ".margin": {
+                        "left": 20,
+                        "top": 10,
+                        "right": 20,
+                        "bottom": 10
                     },
-                    "BorderColor": "Green",
-                    "BorderWidth": 2
+                    ".borderColor": "Green",
+                    ".borderWidth": 2
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "T M2",
-                    "Margin": {
-                        "Left": 20,
-                        "Top": 0,
-                        "Right": 20,
-                        "Bottom": 0
+                    ".controller": "TextView",
+                    "text": "T M2",
+                    ".margin": {
+                        "left": 20,
+                        "top": 0,
+                        "right": 20,
+                        "bottom": 0
                     },
-                    "BorderColor": "Green",
-                    "BorderWidth": 2
+                    ".borderColor": "Green",
+                    ".borderWidth": 2
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "T PMB",
-                    "BorderColor": "Red",
-                    "BorderWidth": 2,
-                    "Padding": {
-                        "Left": 20,
-                        "Top": 50,
-                        "Right": 20,
-                        "Bottom": 50
+                    ".controller": "TextView",
+                    "text": "T PMB",
+                    ".borderColor": "Red",
+                    ".borderWidth": 2,
+                    ".padding": {
+                        "left": 20,
+                        "top": 50,
+                        "right": 20,
+                        "bottom": 50
                     }
                 }
             ]
         },
         {
-            "Layout": "Row",
-            "Content": [
+            ".layout": "Row",
+            ".content": [
                 {
-                    "Controller": "Button",
-                    "Text": "B"
+                    ".controller": "Button",
+                    "text": "B"
                 },
                 {
-                    "Controller": "Button",
-                    "Text": "B P",
-                    "Padding": {
-                        "Left": 20,
-                        "Top": 10,
-                        "Right": 20,
-                        "Bottom": 10
+                    ".controller": "Button",
+                    "text": "B P",
+                    ".padding": {
+                        "left": 20,
+                        "top": 10,
+                        "right": 20,
+                        "bottom": 10
                     }
                 },
                 {
-                    "Controller": "Button",
-                    "Text": "B M",
-                    "Margin": {
-                        "Left": 20,
-                        "Top": 10,
-                        "Right": 20,
-                        "Bottom": 10
+                    ".controller": "Button",
+                    "text": "B M",
+                    ".margin": {
+                        "left": 20,
+                        "top": 10,
+                        "right": 20,
+                        "bottom": 10
                     }
                 },
                 {
-                    "Controller": "Button",
-                    "Text": "B PM",
-                    "Padding": {
-                        "Left": 20,
-                        "Top": 10,
-                        "Right": 20,
-                        "Bottom": 10
+                    ".controller": "Button",
+                    "text": "B PM",
+                    ".padding": {
+                        "left": 20,
+                        "top": 10,
+                        "right": 20,
+                        "bottom": 10
                     },
-                    "Margin": {
-                        "Left": 20,
-                        "Top": 10,
-                        "Right": 20,
-                        "Bottom": 10
+                    ".margin": {
+                        "left": 20,
+                        "top": 10,
+                        "right": 20,
+                        "bottom": 10
                     }
                 }
             ]
         },
         {
-            "Layout": "Row",
-            "Content": [
+            ".layout": "Row",
+            ".content": [
                 {
-                    "Controller": "TextBox",
-                    "Text": "TB"
+                    ".controller": "TextEdit",
+                    "text": "TB"
                 },
                 {
-                    "Controller": "TextBox",
-                    "Text": "",
-                    "BackgroundColor": "White"
+                    ".controller": "TextEdit",
+                    "text": "",
+                    ".backgroundColor": "White"
                 },
                 {
-                    "Controller": "TextBox",
-                    "Text": "TB P",
-                    "Padding": {
-                        "Left": 20,
-                        "Top": 10,
-                        "Right": 20,
-                        "Bottom": 10
+                    ".controller": "TextEdit",
+                    "text": "TB P",
+                    ".padding": {
+                        "left": 20,
+                        "top": 10,
+                        "right": 20,
+                        "bottom": 10
                     }
                 },
                 {
-                    "Controller": "TextBox",
-                    "Text": "TB M - This is a longer text box",
-                    "Margin": {
-                        "Left": 20,
-                        "Top": 10,
-                        "Right": 20,
-                        "Bottom": 10
+                    ".controller": "TextEdit",
+                    "text": "TB M - This is a longer text box",
+                    ".margin": {
+                        "left": 20,
+                        "top": 10,
+                        "right": 20,
+                        "bottom": 10
                     }
                 },
                 {
-                    "Controller": "TextBox",
-                    "Text": "TB PMB",
-                    "BorderColor": "Red",
-                    "Padding": {
-                        "Left": 20,
-                        "Top": 10,
-                        "Right": 20,
-                        "Bottom": 10
+                    ".controller": "TextEdit",
+                    "text": "TB PMB",
+                    ".borderColor": "Red",
+                    ".padding": {
+                        "left": 20,
+                        "top": 10,
+                        "right": 20,
+                        "bottom": 10
                     },
-                    "Margin": {
-                        "Left": 20,
-                        "Top": 10,
-                        "Right": 20,
-                        "Bottom": 10
+                    ".margin": {
+                        "left": 20,
+                        "top": 10,
+                        "right": 20,
+                        "bottom": 10
                     }
                 }
             ]
         },
         {
-            "Layout": "Row",
-            "Content": [
+            ".layout": "Row",
+            ".content": [
                 {
-                    "Controller": "Text",
-                    "Text": "The"
+                    ".controller": "TextView",
+                    "text": "The"
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Quick Brown Fox Jumps Over"
+                    ".controller": "TextView",
+                    "text": "Quick Brown Fox Jumps Over"
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "The lazy dog"
+                    ".controller": "TextView",
+                    "text": "The lazy dog"
                 }
             ]
         },
         {
-            "Layout": "Row",
-            "Content": [
+            ".layout": "Row",
+            ".content": [
                 {
-                    "Controller": "Text",
-                    "Text": "The",
-                    "Font": { "Size": 16.0 }
+                    ".controller": "TextView",
+                    "text": "The",
+                    "font": { "size": 16.0 }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Quick",
-                    "Font": { "Size": 32.0 }
+                    ".controller": "TextView",
+                    "text": "Quick",
+                    "font": { "size": 32.0 }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Brown",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "Brown",
+                    "font": { "size": 26.0 }
                 }
             ]
         },
         {
-            "Layout": "Row",
-            "Content": [
+            ".layout": "Row",
+            ".content": [
                 {
-                    "Controller": "Text",
-                    "Text": "The Quick Brown",
-                    "Font": { "Size": 26.0 },
-                    "Margin": {
-                        "Left": -30,
-                        "Top": 0,
-                        "Right": 0,
-                        "Bottom": 0
+                    ".controller": "TextView",
+                    "text": "The Quick Brown",
+                    "font": { "size": 26.0 },
+                    ".margin": {
+                        "left": -30,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
                     }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Fox &Jumps",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "Fox &Jumps",
+                    "font": { "size": 26.0 }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Over the lazy dog",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "Over the lazy dog",
+                    "font": { "size": 26.0 }
                 }
             ]
         },
         {
-            "Layout": "Row",
-            "Content": [
+            ".layout": "Row",
+            ".content": [
                 {
-                    "Controller": "Text",
-                    "Text": "Sans j",
-                    "Font": { "Size": 26.0, "Name":  "sans-serif" }
+                    ".controller": "TextView",
+                    "text": "Sans j",
+                    "font": {
+                        "size": 26.0,
+                        "name": "sans-serif"
+                    }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Arial j",
-                    "Font": { "Size": 26.0, "Name":  "Arial" }
+                    ".controller": "TextView",
+                    "text": "Arial j",
+                    "font": {
+                        "size": 26.0,
+                        "name": "Arial"
+                    }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "﴿█j A﴿│|☰",
-                    "Font": { "Size": 26.0, "Name":  "Arial" }
+                    ".controller": "TextView",
+                    "text": "﴿█j A﴿│|☰",
+                    "font": {
+                        "size": 26.0,
+                        "name": "Arial"
+                    }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Serif tnr",
-                    "Font": { "Size": 24.0, "Name": "Times New Roman" }
+                    ".controller": "TextView",
+                    "text": "Serif tnr",
+                    "font": {
+                        "size": 24.0,
+                        "name": "Times New Roman"
+                    }
                 }
             ]
         },
         {
-            "Layout": "Row",
-            "Content": [
+            ".layout": "Row",
+            ".content": [
                 {
-                    "Controller": "Text",
-                    "Text": "TheQuickBrown",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "TheQuickBrown",
+                    "font": { "size": 26.0 }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": " ",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": " ",
+                    "font": { "size": 26.0 }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "   ",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "   ",
+                    "font": { "size": 26.0 }
                 }
             ]
         },
         {
-            "Layout": "Row",
-            "Content": [
+            ".layout": "Row",
+            ".content": [
                 {
-                    "Controller": "Text",
-                    "Text": "1 The Quick Brown",
-                    "Font": { "Size": 40.0, "Name": "Times New Roman" }
+                    ".controller": "TextView",
+                    "text": "1 The Quick Brown",
+                    "font": {
+                        "size": 40.0,
+                        "name": "Times New Roman"
+                    }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "2 Fox Jumps Over",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "2 Fox Jumps Over",
+                    "font": { "size": 26.0 }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "3 The Lazy Dog",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "3 The Lazy Dog",
+                    "font": { "size": 26.0 }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "4 And a Cow",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "4 And a Cow",
+                    "font": { "size": 26.0 }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "5 And a Zebra",
-                    "Font": { "Size": 16.0 },
-                    "Align": { "Vertical": "Center" }
+                    ".controller": "TextView",
+                    "text": "5 And a Zebra",
+                    "font": { "size": 16.0 },
+                    ".align": { "vertical": "center" }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "",
+                    "font": { "size": 26.0 }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "",
+                    "font": { "size": 26.0 }
                 }
             ]
         },
         {
-            "Layout": "Row",
-            "Wrap": true,
-            "Content": [
+            ".layout": "Row",
+            "cell.wrap": true,
+            ".content": [
                 {
-                    "Controller": "Text",
-                    "Text": "The Quick Brown",
-                    "Font": { "Size": 40.0, "Name": "Times New Roman" }
+                    ".controller": "TextView",
+                    "text": "The Quick Brown",
+                    "font": {
+                        "size": 40.0,
+                        "name": "Times New Roman"
+                    }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Fox Jumps Over",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "Fox Jumps Over",
+                    "font": { "size": 26.0 }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "The Lazy Dog",
-                    "Font": { "Size": 26.0 }
+                    ".controller": "TextView",
+                    "text": "The Lazy Dog",
+                    "font": { "size": 26.0 }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "And a Cow",
-                    "Font": { "Size": 32.0 },
-                    "Align": { "Vertical": "Center" }
+                    ".controller": "TextView",
+                    "text": "And a Cow",
+                    "font": { "size": 32.0 },
+                    ".align": { "vertical": "center" }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Center",
-                    "Font": { "Size": 16.0 },
-                    "Align": { "Vertical": "Center" }
+                    ".controller": "TextView",
+                    "text": "Center",
+                    "font": { "size": 16.0 },
+                    ".align": { "vertical": "center" }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Top",
-                    "Font": { "Size": 16.0 },
-                    "Align": { "Vertical": "Top" }
+                    ".controller": "TextView",
+                    "text": "Top",
+                    "font": { "size": 16.0 },
+                    ".align": { "vertical": "top" }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Bottom",
-                    "Font": { "Size": 16.0 },
-                    "Align": { "Vertical": "Bottom" }
+                    ".controller": "TextView",
+                    "text": "Bottom",
+                    "font": { "size": 16.0 },
+                    ".align": { "vertical": "bottom" }
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Stretch",
-                    "Font": { "Size": 16.0 },
-                    "Align": { "Vertical": "Stretch" }
+                    ".controller": "TextView",
+                    "text": "Stretch",
+                    "font": { "size": 16.0 },
+                    ".align": { "vertical": "stretch" }
                 }
             ]
         },
         {
-            "Layout": "Row",
-            "Content": [
+            ".layout": "Row",
+            ".content": [
                 {
-                    "Controller": "Text",
-                    "Text": "Done - row"
+                    ".controller": "TextView",
+                    "text": "Done - row"
                 }
             ]
         },
         {
-            "Controller": "Text",
-            "Text": "Done - Text"
+            ".controller": "TextView",
+            "text": "Done - Text"
         },
         {
-            "Controller": "Button",
-            "Text": "Done - Button"
+            ".controller": "Button",
+            "text": "Done - Button"
         }
     ]
 }

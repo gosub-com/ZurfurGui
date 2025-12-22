@@ -38,9 +38,7 @@ internal class PropertiesJsonConverter : JsonConverter<Properties>
 
                 var propertyInfo = PropertyKeys.GetInfo(propertyName);
                 if (propertyInfo == null)
-                {
                     throw new JsonException($"Unknown property name: '{propertyName}'.");
-                }
 
                 reader.Read();
 

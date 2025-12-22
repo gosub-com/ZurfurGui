@@ -1,126 +1,128 @@
 {
-    "Controller": "TestApp.FormSearch",
-    "Layout": "Column",
-    "Content": [
+    ".controller": "FormSearch",
+    ".namespace": "TestApp",
+    ".layout": "Column",
+    ".content": [
         {
-            "Layout": "DockPanel",
-            "Content": [
+            ".layout": "DockPanel",
+            ".content": [
                 {
-                    "Controller": "Button",
-                    "Text": "[X]",
-                    "Dock": "Right"
+                    ".controller": "Button",
+                    "text": "X",
+                    "dock.align": "right"
                 },
                 {
-                    "Controller": "Text",
-                    "Margin": {
-                        "Left": 0,
-                        "Top": 0,
-                        "Right": 10,
-                        "Bottom": 0
+                    ".controller": "CheckBox",
+                    ".margin": {
+                        "left": 0,
+                        "top": 0,
+                        "right": 10,
+                        "bottom": 0
                     },
-                    "Text": "[X] Replace",
-                    "Dock": "Right"
+                    "text": "Replace",
+                    //"isChecked": true,
+                    "dock.align": "right"
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Search Form:",
-                    "Dock": "Left"
+                    ".controller": "TextView",
+                    "text": "Search Form:",
+                    "dock.align": "left"
                 }
             ]
         },
         {
-            "Layout": "DockPanel",
-            "Content": [
+            ".layout": "DockPanel",
+            ".content": [
                 {
-                    "Controller": "Button",
-                    "Text": "Find (F3)",
-                    "SizeRequest": {
-                        "Width": 120
+                    ".controller": "Button",
+                    "text": "Find (F3)",
+                    ".sizeRequest": {
+                        "width": 120
                     },
-                    "Dock": "Right",
-                    "Margin": {
-                        "Left": 10,
-                        "Top": 0,
-                        "Right": 10,
-                        "Bottom": 0
+                    "dock.align": "right",
+                    ".margin": {
+                        "left": 10,
+                        "top": 0,
+                        "right": 10,
+                        "bottom": 0
                     }
                 },
                 {
-                    "Controller": "TextBox",
-                    "Text": "Search Text",
-                    "Dock": "Left"
+                    ".controller": "TextEdit",
+                    "text": "Search Text",
+                    "dock.align": "left"
                 }
             ]
         },
         {
-            "Layout": "DockPanel",
-            "Content": [
+            ".layout": "DockPanel",
+            ".content": [
                 {
-                    "Controller": "Text",
-                    "Text": "Matches (#)",
-                    "SizeRequest": {
-                        "Width": 120
+                    ".controller": "TextView",
+                    "text": "Matches (#)",
+                    ".sizeRequest": {
+                        "width": 120
                     },
-                    "Dock": "Right"
+                    "dock.align": "right"
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "Replace with:"
+                    ".controller": "TextView",
+                    "text": "Replace with:"
                 }
             ]
         },
         {
-            "Layout": "DockPanel",
-            "Content": [
+            ".layout": "DockPanel",
+            ".content": [
                 {
-                    "Controller": "Button",
-                    "Text": "Replace",
-                    "SizeRequest": {
-                        "Width": 120
+                    ".controller": "Button",
+                    "text": "Replace",
+                    ".sizeRequest": {
+                        "width": 120
                     },
-                    "Margin": {
-                        "Left": 10,
-                        "Top": 0,
-                        "Right": 0,
-                        "Bottom": 0
+                    ".margin": {
+                        "left": 10,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
                     },
-                    "Dock": "Right"
+                    "dock.align": "right"
                 },
                 {
-                    "Controller": "TextBox",
-                    "Text": "Replace Text"
+                    ".controller": "TextEdit",
+                    "text": "Replace Text"
                 }
             ]
         },
         {
-            "Layout": "DockPanel",
-            "Content": [
+            ".layout": "DockPanel",
+            ".content": [
                 {
-                    "Controller": "Button",
-                    "Text": "Replace All",
-                    "SizeRequest": {
-                        "Width": 120
+                    ".controller": "Button",
+                    "text": "Replace All",
+                    ".sizeRequest": {
+                        "width": 120
                     },
-                    "Margin": {
-                        "Left": 10,
-                        "Top": 0,
-                        "Right": 0,
-                        "Bottom": 0
+                    ".margin": {
+                        "left": 10,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
                     },
-                    "Dock": "Right"
+                    "dock.align": "right"
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "[X] Match Case"
+                    ".controller": "CheckBox",
+                    "text": "Match Case"
                 },
                 {
-                    "Controller": "Text",
-                    "Text": "[X] Match Whole Word",
-                    "Margin": {
-                        "Left": 10,
-                        "Top": 0,
-                        "Right": 0,
-                        "Bottom": 0
+                    ".controller": "CheckBox",
+                    "text": "Match Whole Word",
+                    ".margin": {
+                        "left": 10,
+                        "top": 0,
+                        "right": 0,
+                        "bottom": 0
                     }
                 }
             ]

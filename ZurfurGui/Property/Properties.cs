@@ -98,15 +98,17 @@ public class PropertyKey<T> : IEquatable<PropertyKey<T>>
 {
     readonly PropertyKeyId _id;
     public readonly string Name;
-    public readonly Type Type;
+    public readonly Type ValueType;
+    public readonly Type OwnerType;
     public readonly ViewFlags Flags;
 
-    public PropertyKey(string name, ViewFlags flags = ViewFlags.None)
+    public PropertyKey(string name, Type ownerType, ViewFlags flags = ViewFlags.None)
     {
         _id = PropertyKeys.Create(name, typeof(T));
         Name = name;
         Flags = flags;
-        Type = typeof(T);
+        ValueType = typeof(T);
+        OwnerType = ownerType;
     }
 
 

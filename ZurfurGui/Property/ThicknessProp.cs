@@ -1,12 +1,17 @@
-﻿using ZurfurGui.Base;
+﻿using System.Text.Json.Serialization;
+using ZurfurGui.Base;
 
 namespace ZurfurGui.Property;
 
 /// <summary>
 /// A type-safe Point that allows each component to be optional.  Defaults to null.
 /// </summary>
-public readonly record struct ThicknessProp(DoubleProp Left, DoubleProp Top, DoubleProp Right, DoubleProp Bottom)
-    : IProperty<ThicknessProp>
+public readonly record struct ThicknessProp(
+    [property: JsonPropertyName("left")] DoubleProp Left, 
+    [property: JsonPropertyName("top")] DoubleProp Top, 
+    [property: JsonPropertyName("right")] DoubleProp Right, 
+    [property: JsonPropertyName("bottom")] DoubleProp Bottom
+) : IProperty<ThicknessProp>
 {
     public ThicknessProp() : this(new (), new (), new(), new()) { }
     public override string ToString() => $"Left: {Left}, Top: {Top}, Right: {Right}, Bottom: {Bottom}";

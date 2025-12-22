@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using ZurfurGui.Base;
 
 namespace ZurfurGui.Property;
@@ -5,8 +6,10 @@ namespace ZurfurGui.Property;
 /// <summary>
 /// Represents an alignment property with horizontal and vertical components. Both fields are optional.
 /// </summary>
-public readonly record struct AlignProp(AlignHorizontal? Horizontal, AlignVertical? Vertical)
-    : IProperty<AlignProp>
+public readonly record struct AlignProp(
+    [property: JsonPropertyName("horizontal")] AlignHorizontal? Horizontal,
+    [property: JsonPropertyName("vertical")] AlignVertical? Vertical
+) : IProperty<AlignProp>
 {
     /// <summary>
     /// Indicates whether both fields are non-null.

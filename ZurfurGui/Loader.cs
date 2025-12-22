@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
@@ -10,6 +11,7 @@ using ZurfurGui.Windows;
 namespace ZurfurGui;
 
 // Source-generated JSON context
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(Properties))]
 [JsonSerializable(typeof(Properties[]))]
 [JsonSerializable(typeof(AlignProp))]
@@ -27,6 +29,7 @@ namespace ZurfurGui;
 [JsonSerializable(typeof(string[]))]
 public partial class ZurfurJsonContext : JsonSerializerContext { }
 
+
 /// <summary>
 /// Load and build controls from JSON
 /// </summary>
@@ -37,7 +40,7 @@ public static class Loader
     static Dictionary<string, StyleSheet> s_styleSheets = new();
 
     // Combine source-generated context with custom converters
-    public static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
+    public static readonly JsonSerializerOptions s_jsonSerializerOptions = new JsonSerializerOptions
     {
         TypeInfoResolver = ZurfurJsonContext.Default, // Use source-generated context
         Converters = {
@@ -49,7 +52,7 @@ public static class Loader
             new TextLinesJsonConverter(),
             new TextLinesPropJsonConverter(),
             new ColorPropJsonConverter(),
-            new JsonStringEnumConverter()
+            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
         },
         NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
     };
@@ -59,7 +62,8 @@ public static class Loader
     /// </summary>
     public static AppWindow Init(Action<AppWindow> mainAppEntry)
     {
-        _ = Zui.Name; // Force initialization of static properties
+        RuntimeHelpers.RunClassConstructor(typeof(Zui).TypeHandle);
+
         ZurfurMain.MainApp();
         RegisterLayout("Panel", () => null);
         RegisterLayout("DockPanel", () => new LayoutDockPanel());
@@ -83,11 +87,11 @@ public static class Loader
         {
             var properties = LoadJsonProperties(json);
             if (target.View.Children.Count != 0)
-                throw new ArgumentException("The target control already has views");
+                throw new ArgumentException($"The target control '{target.TypeName}' already has views");
             if (target.View.PropertiesCount != 0)
-                throw new ArgumentException("The target control already has properties");
+                throw new ArgumentException($"The target control '{target.TypeName}' already has properties");
             if (properties.Get(Zui.Name) != null)
-                throw new ArgumentException("Top level component properties may not be named");
+                throw new ArgumentException($"Top level component properties of '{target.TypeName}' may not be named");
             var controller = properties.Get(Zui.Controller) ?? "";
             if (controller != target.TypeName)
                 throw new ArgumentException($"Top level controller property '{controller}' must match target '{target.TypeName}");
@@ -107,9 +111,9 @@ public static class Loader
     }
 
     public static void RegisterStyleSheet(string json) 
-    { 
-        var styleSheet = JsonSerializer.Deserialize<StyleSheet>(json, JsonSerializerOptions);
-        if (styleSheet == null || styleSheet.Name == "")
+    {
+        var styleSheet = JsonSerializer.Deserialize<StyleSheet>(json, s_jsonSerializerOptions);
+        if (styleSheet == null || styleSheet.Name ==  null || styleSheet.Name == "")
             throw new ArgumentException("Invalid style sheet, missing name");
         if (s_styleSheets.ContainsKey(styleSheet.Name))
             throw new ArgumentException($"Style sheet '{styleSheet.Name}' is already registered");
@@ -151,7 +155,7 @@ public static class Loader
 
     static Properties LoadJsonProperties(string json)
     {
-        var properties = JsonSerializer.Deserialize<Properties>(json, JsonSerializerOptions);
+        var properties = JsonSerializer.Deserialize<Properties>(json, s_jsonSerializerOptions);
         return properties ?? throw new Exception("Invalid or null properties JSON");
     }
 
@@ -169,9 +173,12 @@ public static class Loader
         }
         else
         {
-            if (!s_controllers.TryGetValue(controller, out var type))
+            if (!s_controllers.TryGetValue(controller, out var type)
+                && !s_controllers.TryGetValue($"ZurfurGui.Controls.{controller}", out type))
+            {
                 throw new ArgumentException($"'{controller}' is not a registered control: "
                     + $"{string.Join(",\r\n", s_controllers.Keys)}");
+            }
 
             control = (Controllable?)Activator.CreateInstance(type)
                 ?? throw new ArgumentException($"Could not create instance of '{controller}'");

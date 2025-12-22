@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using ZurfurGui.Base;
+﻿using ZurfurGui.Base;
+using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 using ZurfurGui.Property;
 
@@ -117,5 +117,9 @@ public partial class Window : Controllable
         _windowContent.View.AddChild(content);
     }
 
+    public void SetTitle(string title)
+    {
+        _title.View.SetProperty(TextView.Text, new (title));
+    }
 
 }

@@ -1,0 +1,23 @@
+{
+    ".controller": "ControlCard",
+    ".namespace": "TestApp.Controls",
+    ".layout": "Column",
+    ".content": [
+        {
+            ".controller": "TextView",
+            ".name": "_title",
+            "text": "Control Card Title",
+            "font": { "size": 18.0 }
+        },
+        {
+            ".controller": "TextView",
+            ".name": "_description",
+            "text": "This is a description of the control card. "
+        },
+        {
+            ".controller": "TextView",
+            ".name": "_byline",
+            "text": "By Line"
+        }
+    ]
+}

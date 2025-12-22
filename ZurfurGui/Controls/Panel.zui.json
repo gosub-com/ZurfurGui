@@ -1,4 +1,5 @@
 {
-    "Controller": "Panel",
-    "Classes": [ "Panel" ]
+    ".controller": "Panel",
+    ".namespace": "ZurfurGui.Controls",
+    ".classes": [ "Panel" ]
 }

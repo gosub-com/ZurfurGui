@@ -2,6 +2,7 @@
 using ZurfurGui.Platform;
 using ZurfurGui.Property;
 using ZurfurGui.Render;
+using ZurfurGui.Controls;
 
 namespace ZurfurGui.Windows;
 
@@ -25,7 +26,7 @@ public partial class DebugWindow : Controllable
         if (appWindow != null)
         {
             appWindow.IsDarkMode = !appWindow.IsDarkMode;
-            _buttonDark.View.SetProperty(Zui.Text, new(appWindow.IsDarkMode ? "Light Mode" : "Dark Mode"));
+            _buttonDark.View.SetProperty(TextView.Text, new(appWindow.IsDarkMode ? "Light Mode" : "Dark Mode"));
         }
     }
 
@@ -65,7 +66,7 @@ public partial class DebugWindow : Controllable
         ]);
 
         // Don't Invalidate measure
-        _statsView.View.SetPropertyNoFlags(Zui.Text, text);
+        _statsView.View.SetPropertyNoFlags(TextView.Text, text);
         _statsView.View.InvalidateDraw();
         // _statsView.View.InvalidateMeasure();
 

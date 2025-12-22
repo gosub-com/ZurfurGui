@@ -1,12 +1,15 @@
-﻿using ZurfurGui.Base;
+﻿using System.Text.Json.Serialization;
+using ZurfurGui.Base;
 
 namespace ZurfurGui.Property;
 
 /// <summary>
 /// A type-safe Size that allows each component to be optional.  Defaults to null.
 /// </summary>
-public readonly record struct SizeProp(DoubleProp Width, DoubleProp Height)
-    : IProperty<SizeProp>
+public readonly record struct SizeProp(
+    [property: JsonPropertyName("width")] DoubleProp Width,
+    [property: JsonPropertyName("height")] DoubleProp Height
+) : IProperty<SizeProp>
 {
     public override string ToString() => $"Width: {Width}, Height: {Height}";
     public string ToString(string format) => $"Width: {Width.ToString(format)}, Height: {Height.ToString(format)}";

@@ -1,14 +1,16 @@
-﻿namespace ZurfurGui.Property;
+﻿using System.Text.Json.Serialization;
+
+namespace ZurfurGui.Property;
 
 /// <summary>
 /// This is like a css file
 /// </summary>
-public record class StyleSheet
+public class StyleSheet
 {
-    /// <summary>
-    /// Unique name of style sheet, or "" if not named
-    /// </summary>
+    [JsonPropertyName("name")]
     public string Name { get; init; } = "";
+
+    [JsonPropertyName("styles")]
     public Properties[] Styles { get; init; } = [];
 }
 
