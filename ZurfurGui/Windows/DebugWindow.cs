@@ -16,7 +16,7 @@ public partial class DebugWindow : Controllable
     {
         InitializeControl();
 
-        _buttonDark.View.AddEvent(Zui.PointerClick, _buttonDark_Click);
+        _buttonDark.View.AddEvent(Panel.PointerClick, _buttonDark_Click);
     }
 
 

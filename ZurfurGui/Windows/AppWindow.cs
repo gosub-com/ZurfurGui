@@ -1,7 +1,8 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Base;
-using ZurfurGui.Render;
+using ZurfurGui.Controls;
 using ZurfurGui.Property;
+using ZurfurGui.Render;
 
 namespace ZurfurGui.Windows;
 
@@ -67,13 +68,13 @@ public partial class AppWindow : Controllable, Drawable
         SizeProp? sizeRequst = null)
     {
         var window = new Window();
-        window.View.SetProperty(Zui.Align, align ?? new(AlignHorizontal.Left, AlignVertical.Top));
+        window.View.SetProperty(Panel.Align, align ?? new(AlignHorizontal.Left, AlignVertical.Top));
         if (location != null)
-            window.View.SetProperty(Zui.Offset, location.Value);
+            window.View.SetProperty(Panel.Offset, location.Value);
         if (margin != null)
-            window.View.SetProperty(Zui.Margin, margin.Value);
+            window.View.SetProperty(Panel.Margin, margin.Value);
         if (sizeRequst != null)
-            window.View.SetProperty(Zui.SizeRequest, sizeRequst.Value);
+            window.View.SetProperty(Panel.SizeRequest, sizeRequst.Value);
         if (title != null)
             window.SetTitle(title);
 
@@ -85,8 +86,8 @@ public partial class AppWindow : Controllable, Drawable
 
     public bool IsDarkMode
     {
-        get => View.GetProperty(Zui.IsDarkMode).Or(false);
-        set => View.SetProperty(Zui.IsDarkMode, value);
+        get => View.GetProperty(Panel.IsDarkMode).Or(false);
+        set => View.SetProperty(Panel.IsDarkMode, value);
     }
 
     /// <summary>

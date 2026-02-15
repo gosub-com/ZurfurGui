@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Base;
+using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 using ZurfurGui.Property;
 using ZurfurGui.Windows;
@@ -63,8 +64,8 @@ internal class PointerOver
         if (hit != _hoverView || ev.Type == "pointerdown" || ev.Type == "pointerup")
         {
             _hoverView = hit;
-            UpdateViewChain(_hoverChain, chain, Zui.IsPointerOver);
-            UpdateViewChain(_currentPressChain, IntersectViewChain(_hoverChain, _pressChain), Zui.IsPressed);
+            UpdateViewChain(_hoverChain, chain, Panel.IsPointerOver);
+            UpdateViewChain(_currentPressChain, IntersectViewChain(_hoverChain, _pressChain), Panel.IsPressed);
         }
 
         // Send low level mouse event (move, up, down)
@@ -75,7 +76,7 @@ internal class PointerOver
         {
            SendPointerEvent(ev with { Type = "pointerclick" }, _currentPressChain);
             _pressChain = new();
-           UpdateViewChain(_currentPressChain, IntersectViewChain(_hoverChain, _pressChain), Zui.IsPressed);
+           UpdateViewChain(_currentPressChain, IntersectViewChain(_hoverChain, _pressChain), Panel.IsPressed);
         }
     }
 
@@ -120,7 +121,7 @@ internal class PointerOver
         if (!clip.Contains(target))
             return null;
 
-        if (!view.GetStyle(Zui.IsVisible).Or(true))
+        if (!view.GetStyle(Panel.IsVisible).Or(true))
             return null;
 
         // Check children first
@@ -132,7 +133,7 @@ internal class PointerOver
                 return hit;
         }
 
-        if (!view.GetProperty(Zui.DisableHitTest).Or(false))
+        if (!view.GetProperty(Panel.DisableHitTest).Or(false))
         {
             // User content hit test
             if (view.Draw is Drawable renderable)
@@ -152,10 +153,10 @@ internal class PointerOver
         PropertyKey<EventHandler<PointerEvent>> property;
         switch (ev.Type)
         {
-            case "pointermove": property = Zui.PreviewPointerMove; break;
-            case "pointerdown": property = Zui.PreviewPointerDown; break;
-            case "pointerup": property = Zui.PreviewPointerUp; break;
-            case "pointerclick": property = Zui.PreviewPointerClick; break;
+            case "pointermove": property = Panel.PreviewPointerMove; break;
+            case "pointerdown": property = Panel.PreviewPointerDown; break;
+            case "pointerup": property = Panel.PreviewPointerUp; break;
+            case "pointerclick": property = Panel.PreviewPointerClick; break;
             default: return;
         }
 
@@ -168,10 +169,10 @@ internal class PointerOver
 
         switch (ev.Type)
         {
-            case "pointermove": property = Zui.PointerMove; break;
-            case "pointerdown": property = Zui.PointerDown; break;
-            case "pointerup": property = Zui.PointerUp; break;
-            case "pointerclick": property = Zui.PointerClick; break;
+            case "pointermove": property = Panel.PointerMove; break;
+            case "pointerdown": property = Panel.PointerDown; break;
+            case "pointerup": property = Panel.PointerUp; break;
+            case "pointerclick": property = Panel.PointerClick; break;
             default: return;
         }
 
@@ -216,7 +217,7 @@ internal class PointerOver
             if (i >= 0)
             {
                 _pointerCaptureList.RemoveAt(i);
-                view.GetProperty(Zui.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
+                view.GetProperty(Panel.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
             }
         }
     }
@@ -227,7 +228,7 @@ internal class PointerOver
         var c = _pointerCaptureList;
         _pointerCaptureList = new();
         foreach (var view in c)
-            view.GetProperty(Zui.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
+            view.GetProperty(Panel.PointerCaptureLost)?.Invoke(view, EventArgs.Empty);
     }
 
 

@@ -4,12 +4,12 @@
     ".classes": [ "Window" ],
     ".content": [
         {
-            ".layout": "DockPanel",
+            ".layout": "Dock",
             ".content": [
                 {
                     ".name": "_windowTitle",
                     ".classes": [ "Window.Title" ],
-                    ".layout": "DockPanel",
+                    ".layout": "Dock",
                     ".content": [
                         {
                             ".controller": "TextView",

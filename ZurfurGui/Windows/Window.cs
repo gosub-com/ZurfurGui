@@ -20,21 +20,21 @@ public partial class Window : Controllable
         InitializeControl();
 
         // Click on any control brings window to foreground
-        View.AddEvent(Zui.PreviewPointerDown, (s, e) =>
+        View.AddEvent(Panel.PreviewPointerDown, (s, e) =>
         {
             View.BringToFront();
         });
 
         // Title events
-        _windowTitle.View.AddEvent(Zui.PreviewPointerDown, _windowTitle_PreviewPointerDown);
-        _windowTitle.View.AddEvent(Zui.PreviewPointerMove, _windowTitle_PreviewPointerMove);
-        _windowTitle.View.AddEvent(Zui.PointerCaptureLost, (s, e) =>_mouseDown = false);
+        _windowTitle.View.AddEvent(Panel.PreviewPointerDown, _windowTitle_PreviewPointerDown);
+        _windowTitle.View.AddEvent(Panel.PreviewPointerMove, _windowTitle_PreviewPointerMove);
+        _windowTitle.View.AddEvent(Panel.PointerCaptureLost, (s, e) =>_mouseDown = false);
 
-        _resizeHandle.View.AddEvent(Zui.PreviewPointerDown, _resizeHandle_PreviewPointerDown);
-        _resizeHandle.View.AddEvent(Zui.PreviewPointerMove, _resizeHandle_PreviewPointerMove);
-        _resizeHandle.View.AddEvent(Zui.PointerCaptureLost, (s, e) => _mouseDown = false);
+        _resizeHandle.View.AddEvent(Panel.PreviewPointerDown, _resizeHandle_PreviewPointerDown);
+        _resizeHandle.View.AddEvent(Panel.PreviewPointerMove, _resizeHandle_PreviewPointerMove);
+        _resizeHandle.View.AddEvent(Panel.PointerCaptureLost, (s, e) => _mouseDown = false);
 
-        _closeButton.View.AddEvent(Zui.PointerUp, (s, e) => View.Parent?.RemoveChild(View));
+        _closeButton.View.AddEvent(Panel.PointerUp, (s, e) => View.Parent?.RemoveChild(View));
     }
 
     public void LoadContent(Properties[]? contents)
@@ -68,7 +68,7 @@ public partial class Window : Controllable
         _mousePosition = position;
 
         // Update window offset
-        View.SetProperty(Zui.Offset, View.GetStyle(Zui.Offset).Or(0) + diff);
+        View.SetProperty(Panel.Offset, View.GetStyle(Panel.Offset).Or(0) + diff);
     }
 
     void _resizeHandle_PreviewPointerDown(object? s, PointerEvent e)
@@ -88,10 +88,10 @@ public partial class Window : Controllable
         _mousePosition = position;
 
         // Update window offset, clamped SizeMin..SizeMaz
-        var size = View.GetStyle(Zui.SizeRequest).Or(View.Size) + diff;
-        var sizeMax = View.GetStyle(Zui.SizeMax).Or(double.PositiveInfinity);
-        var sizeMin = View.GetStyle(Zui.SizeMin).Or(0).MaxZero;
-        View.SetProperty(Zui.SizeRequest, size.Min(sizeMax).Max(sizeMin));
+        var size = View.GetStyle(Panel.SizeRequest).Or(View.Size) + diff;
+        var sizeMax = View.GetStyle(Panel.SizeMax).Or(double.PositiveInfinity);
+        var sizeMin = View.GetStyle(Panel.SizeMin).Or(0).MaxZero;
+        View.SetProperty(Panel.SizeRequest, size.Min(sizeMax).Max(sizeMin));
     }
 
 
@@ -100,11 +100,11 @@ public partial class Window : Controllable
     /// </summary>
     public bool IsWindowWrappingVisible
     {
-        get => _windowTitle.View.GetProperty(Zui.IsVisible).Or(true);
+        get => _windowTitle.View.GetProperty(Panel.IsVisible).Or(true);
         set
         {
-            _windowTitle.View.SetProperty(Zui.IsVisible, value);
-            _resizeHandle.View.SetProperty(Zui.IsVisible, value);
+            _windowTitle.View.SetProperty(Panel.IsVisible, value);
+            _resizeHandle.View.SetProperty(Panel.IsVisible, value);
         }
     }
 

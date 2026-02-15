@@ -1,7 +1,8 @@
 ﻿using System.Diagnostics;
-using ZurfurGui.Render;
+using ZurfurGui.Controls;
 using ZurfurGui.Layout;
 using ZurfurGui.Property;
+using ZurfurGui.Render;
 using ZurfurGui.Windows;
 
 namespace ZurfurGui.Base;
@@ -128,7 +129,7 @@ public sealed class View
 
     public override string ToString()
     {
-        var name = GetProperty(Zui.Name) ?? "";
+        var name = GetProperty(Panel.Name) ?? "";
         return $"{Controller.TypeName}: {(name == "" ? "(no name)" : name)}";
     }
 
@@ -245,14 +246,14 @@ public sealed class View
     /// </summary>
     T FindStyledProperty<T>(PropertyKey<T> key, T property) where T : IProperty<T>, new()
     {
-        var classes = _properties.Get(Zui.Classes);
+        var classes = _properties.Get(Panel.Classes);
         if (classes == null || classes.Count == 0)
             return new();
 
         // Walk up the view tree
         for (var view = this; view != null; view = view.Parent)
         {
-            if (!view._properties.TryGet(Zui.UseStyles, out var useStyles) || useStyles == null)
+            if (!view._properties.TryGet(Panel.UseStyles, out var useStyles) || useStyles == null)
                 continue;
 
             foreach (var useStyle in useStyles.Reverse())
@@ -262,7 +263,7 @@ public sealed class View
 
                 foreach (var style in styleSheet.Styles.Reverse())
                 {
-                    if (style.TryGet(Zui.Selectors, out var selectors) && selectors != null
+                    if (style.TryGet(Panel.Selectors, out var selectors) && selectors != null
                         && style.TryGet(key, out var p) && p != null
                         && StyleMatches(selectors, classes))
                     {
@@ -292,19 +293,19 @@ public sealed class View
                         switch (s[i])
                         {
                             case "IsPointerOver":
-                                if (!GetProperty(Zui.IsPointerOver).Or(false))
+                                if (!GetProperty(Panel.IsPointerOver).Or(false))
                                     match = false;
                                 break;
                             case "!IsPointerOver":
-                                if (GetProperty(Zui.IsPointerOver).Or(false))
+                                if (GetProperty(Panel.IsPointerOver).Or(false))
                                     match = false;
                                 break;
                             case "IsPressed":
-                                if (!GetProperty(Zui.IsPressed).Or(false))
+                                if (!GetProperty(Panel.IsPressed).Or(false))
                                     match = false;
                                 break;
                             case "!IsPressed":
-                                if (GetProperty(Zui.IsPressed).Or(false))
+                                if (GetProperty(Panel.IsPressed).Or(false))
                                     match = false;
                                 break;
                             case "IsDarkMode":
@@ -355,7 +356,7 @@ public sealed class View
     public void Measure(Size available, MeasureContext measure)
     {
         // Quick exit if invisible
-        _cache.IsVisible = GetStyle(Zui.IsVisible).Or(true);
+        _cache.IsVisible = GetStyle(Panel.IsVisible).Or(true);
         if (!_cache.IsVisible)
             return;
 
@@ -367,16 +368,16 @@ public sealed class View
         }
 
         _cache.AvaliableAtMeasure = available;
-        _cache.SizeRequest = GetStyle(Zui.SizeRequest);
-        _cache.SizeMin = GetStyle(Zui.SizeMin);
-        _cache.SizeMax = GetStyle(Zui.SizeMax);
-        _cache.Padding = GetStyle(Zui.Padding).Or(0);
-        _cache.Margin = GetStyle(Zui.Margin).Or(0);
-        _cache.BackgroundColor = GetStyle(Zui.BackgroundColor).Or(new());
-        _cache.BorderColor = GetStyle(Zui.BorderColor).Or(new());
-        _cache.BorderWidth = GetStyle(Zui.BorderWidth).Or(0);
-        _cache.BorderRadius = GetStyle(Zui.BorderRadius).Or(0);
-        _cache.Clip = GetStyle(Zui.Clip).Or(false);
+        _cache.SizeRequest = GetStyle(Panel.SizeRequest);
+        _cache.SizeMin = GetStyle(Panel.SizeMin);
+        _cache.SizeMax = GetStyle(Panel.SizeMax);
+        _cache.Padding = GetStyle(Panel.Padding).Or(0);
+        _cache.Margin = GetStyle(Panel.Margin).Or(0);
+        _cache.BackgroundColor = GetStyle(Panel.BackgroundColor).Or(new());
+        _cache.BorderColor = GetStyle(Panel.BorderColor).Or(new());
+        _cache.BorderWidth = GetStyle(Panel.BorderWidth).Or(0);
+        _cache.BorderRadius = GetStyle(Panel.BorderRadius).Or(0);
+        _cache.Clip = GetStyle(Panel.Clip).Or(false);
 
         // Include padding and border in the measurement
         var margin = _cache.Margin;
@@ -420,7 +421,7 @@ public sealed class View
         var y = final.Y + margin.Top;
         var size = availableSize;
 
-        var align = GetStyle(Zui.Align);
+        var align = GetStyle(Panel.Align);
         var alignHor = align.Horizontal ?? AlignHorizontal.Stretch;
         var alignVert = align.Vertical ?? AlignVertical.Stretch;
 
@@ -459,8 +460,8 @@ public sealed class View
                 break;
         }
 
-        Position = new Vector(x, y) + GetStyle(Zui.Offset).Or(0);
-        var scale = (Parent?.Scale??1) * GetStyle(Zui.Magnification).Or(1);
+        Position = new Vector(x, y) + GetStyle(Panel.Offset).Or(0);
+        var scale = (Parent?.Scale??1) * GetStyle(Panel.Magnification).Or(1);
         var origin = (Parent?.Origin??new()).ToVector + scale * Position;
 
         // No need to re-arrange children if nothing changed
@@ -523,7 +524,7 @@ public sealed class View
 
     void FindAllByName(string name, List<View> views)
     {
-        if (GetProperty(Zui.Name) == name)
+        if (GetProperty(Panel.Name) == name)
             views.Add(this);
         foreach (var view in Children)
             view.FindAllByName(name, views);
@@ -545,7 +546,6 @@ public sealed class View
 
     void SendAttachMessages(View view)
     {
-        Debug.WriteLine($"Attach: {view.Controller.TypeName}");
         view.Controller.OnAttach();
         foreach (var child in view.Children)
             SendAttachMessages(child);

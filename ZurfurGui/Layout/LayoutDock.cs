@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ZurfurGui.Base;
+﻿using ZurfurGui.Base;
+using ZurfurGui.Controls;
+using ZurfurGui.Property;
 
 namespace ZurfurGui.Layout;
 
-public enum Dock
+public enum DockEnum
 {
     Left,
     Bottom,
@@ -17,8 +12,11 @@ public enum Dock
     Top
 }
 
-public class LayoutDockPanel : Layoutable
+public class LayoutDock : Layoutable
 {
+    public static readonly PropertyKey<EnumProp<DockEnum>> Dock = new("dock.align", typeof(Panel), ViewFlags.ReMeasure);
+
+
     int _lastVisibleIndex;
 
     public string TypeName => "DockPanel";
@@ -37,22 +35,22 @@ public class LayoutDockPanel : Layoutable
         {
             // Ignore invisible views
             var childView = childViews[i];
-            if (!childView.GetStyle(Zui.IsVisible).Or(true))
+            if (!childView.GetStyle(Panel.IsVisible).Or(true))
                 continue;
 
             _lastVisibleIndex = i;
             childView.Measure(constraint, measure);
             var childSize = childView.DesiredTotalSize;
-            var dock = childView.GetStyle(Zui.Dock).Or(Dock.Left);
+            var dock = childView.GetStyle(Dock).Or(DockEnum.Left);
             switch (dock)
             {
-                case Dock.Left:
-                case Dock.Right:
+                case DockEnum.Left:
+                case DockEnum.Right:
                     constraint.Width = Math.Max(0, constraint.Width - childSize.Width);
                     minSize.Height = Math.Max(minSize.Height, available.Height - constraint.Height + childSize.Height);
                     break;
-                case Dock.Top: 
-                case Dock.Bottom:
+                case DockEnum.Top: 
+                case DockEnum.Bottom:
                     constraint.Height = Math.Max(0, constraint.Height - childSize.Height);
                     minSize.Width = Math.Max(minSize.Width, available.Width - constraint.Width + childSize.Width);
                     break;
@@ -74,7 +72,7 @@ public class LayoutDockPanel : Layoutable
         {
             // Ignore invisible views
             var childView = childViews[i];
-            var viewIsVisible = childView.GetStyle(Zui.IsVisible).Or(true);
+            var viewIsVisible = childView.GetStyle(Panel.IsVisible).Or(true);
             if (!viewIsVisible)
                 continue;
             
@@ -83,28 +81,28 @@ public class LayoutDockPanel : Layoutable
 
             // Update based on dock (last visible index always takes remaining space)
             var childSize = childView.DesiredTotalSize;
-            var dock = childView.GetStyle(Zui.Dock).Or(Dock.Left);
+            var dock = childView.GetStyle(Dock).Or(DockEnum.Left);
             if (i < _lastVisibleIndex)
             {
                 switch (dock)
                 {
-                    case Dock.Left:
+                    case DockEnum.Left:
                         childLocation.Width = childSize.Width;
                         left += childSize.Width;
                         break;
 
-                    case Dock.Right:
+                    case DockEnum.Right:
                         right -= childSize.Width;
                         childLocation.X = right;
                         childLocation.Width = childSize.Width;
                         break;
 
-                    case Dock.Top:
+                    case DockEnum.Top:
                         childLocation.Height = childSize.Height;
                         top += childSize.Height;
                         break;
 
-                    case Dock.Bottom:
+                    case DockEnum.Bottom:
                         bottom -= childSize.Height;
                         childLocation.Y = bottom;
                         childLocation.Height = childSize.Height;

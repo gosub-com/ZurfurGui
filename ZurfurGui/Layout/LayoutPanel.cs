@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ZurfurGui.Base;
-using static ZurfurGui.Base.Size;
+﻿using ZurfurGui.Base;
+using ZurfurGui.Controls;
 
 namespace ZurfurGui.Layout;
 
@@ -20,7 +14,7 @@ public static class LayoutPanel
         var windowMeasured = new Size();
         foreach (var child in view.Children)
         {
-            var viewIsVisible = child.GetStyle(Zui.IsVisible).Or(true);
+            var viewIsVisible = child.GetStyle(Panel.IsVisible).Or(true);
             if (!viewIsVisible)
                 continue;
 
@@ -41,7 +35,7 @@ public static class LayoutPanel
         // All children get positioned at absolute coordinates in the contentRect
         var contentRect = view.ContentRect;
         foreach (var child in view.Children)
-            if (child.GetStyle(Zui.IsVisible).Or(true))
+            if (child.GetStyle(Panel.IsVisible).Or(true))
                 child.Arrange(contentRect, measure);
     }
 

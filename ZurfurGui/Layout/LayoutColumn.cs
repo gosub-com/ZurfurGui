@@ -1,8 +1,11 @@
-﻿using System.Reflection.Metadata;
-using ZurfurGui.Base;
+﻿using ZurfurGui.Base;
+using ZurfurGui.Controls;
 
 namespace ZurfurGui.Layout;
 
+/// <summary>
+/// Layout columns.  TBD: This will be replaced with LayoutRow, so no new devlopment here.
+/// </summary>
 public class LayoutColumn : Layoutable
 {
 
@@ -20,7 +23,7 @@ public class LayoutColumn : Layoutable
         var visibleCount = 0;
         foreach (var childView in view.Children)
         {
-            var viewIsVisible = childView.GetStyle(Zui.IsVisible).Or(true);
+            var viewIsVisible = childView.GetStyle(Panel.IsVisible).Or(true);
             if (!viewIsVisible)
                 continue;
 

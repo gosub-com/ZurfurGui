@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Layout;
@@ -24,9 +25,8 @@ namespace ZurfurGui;
 [JsonSerializable(typeof(PointProp))]
 [JsonSerializable(typeof(DoubleProp))]
 [JsonSerializable(typeof(EnumProp<bool>))]
-[JsonSerializable(typeof(EnumProp<Dock>))]
+[JsonSerializable(typeof(EnumProp<DockEnum>))]
 [JsonSerializable(typeof(StyleSheet))]
-[JsonSerializable(typeof(string[]))]
 public partial class ZurfurJsonContext : JsonSerializerContext { }
 
 
@@ -42,12 +42,14 @@ public static class Loader
     // Combine source-generated context with custom converters
     public static readonly JsonSerializerOptions s_jsonSerializerOptions = new JsonSerializerOptions
     {
-        TypeInfoResolver = ZurfurJsonContext.Default, // Use source-generated context
+        TypeInfoResolver = JsonTypeInfoResolver.Combine(
+            ZurfurJsonContext.Default,
+            new DefaultJsonTypeInfoResolver()),
         Converters = {
             // Add custom converters
             new PropertiesJsonConverter(),
             new EnumPropJsonConverter<bool>(),
-            new EnumPropJsonConverter<Dock>(),
+            new EnumPropJsonConverter<DockEnum>(),
             new DoublePropJsonConverter(),
             new TextLinesJsonConverter(),
             new TextLinesPropJsonConverter(),
@@ -62,14 +64,16 @@ public static class Loader
     /// </summary>
     public static AppWindow Init(Action<AppWindow> mainAppEntry)
     {
-        RuntimeHelpers.RunClassConstructor(typeof(Zui).TypeHandle);
+        RuntimeHelpers.RunClassConstructor(typeof(LayoutRow).TypeHandle);
+        RuntimeHelpers.RunClassConstructor(typeof(LayoutDock).TypeHandle);
 
-        ZurfurMain.MainApp();
         RegisterLayout("Panel", () => null);
-        RegisterLayout("DockPanel", () => new LayoutDockPanel());
+        RegisterLayout("Dock", () => new LayoutDock());
         RegisterLayout("Row", () => new LayoutRow());
         RegisterLayout("Column", () => new LayoutColumn());
         RegisterLayout("Text", () => LayoutText.Instance);
+
+        ZurfurMain.MainApp();
 
         var appWindow = new AppWindow();
         mainAppEntry(appWindow);
@@ -90,15 +94,15 @@ public static class Loader
                 throw new ArgumentException($"The target control '{target.TypeName}' already has views");
             if (target.View.PropertiesCount != 0)
                 throw new ArgumentException($"The target control '{target.TypeName}' already has properties");
-            if (properties.Get(Zui.Name) != null)
+            if (properties.Get(Panel.Name) != null)
                 throw new ArgumentException($"Top level component properties of '{target.TypeName}' may not be named");
-            var controller = properties.Get(Zui.Controller) ?? "";
+            var controller = properties.Get(Panel.Controller) ?? "";
             if (controller != target.TypeName)
                 throw new ArgumentException($"Top level controller property '{controller}' must match target '{target.TypeName}");
 
             target.View.PropertiesSetUnionInternal(properties);
             SetLayout(properties, target.View);
-            foreach (var child in properties.Get(Zui.Content) ?? [])
+            foreach (var child in properties.Get(Panel.Content) ?? [])
             {
                 target.View.AddChild(CreateControl(child).View);
             }
@@ -165,7 +169,7 @@ public static class Loader
     public static Controllable CreateControl(Properties properties)
     {
         // Create the control
-        var controller = properties.Get(Zui.Controller) ?? "";
+        var controller = properties.Get(Panel.Controller) ?? "";
         Controllable control;
         if (controller == "")
         {
@@ -180,13 +184,21 @@ public static class Loader
                     + $"{string.Join(",\r\n", s_controllers.Keys)}");
             }
 
-            control = (Controllable?)Activator.CreateInstance(type)
-                ?? throw new ArgumentException($"Could not create instance of '{controller}'");
+            try
+            {
+                control = (Controllable?)Activator.CreateInstance(type)
+                    ?? throw new ArgumentException($"Could not create instance of '{controller}'");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error creating control '{controller}': {ex.Message}, exception type={ex.GetType()}");
+                throw;
+            }
         }
 
         // The properties become overrides, but the content becomes a parameter to LoadContent
-        var contents = properties.Get(Zui.Content) ?? [];
-        properties.Remove(Zui.Content);
+        var contents = properties.Get(Panel.Content) ?? [];
+        properties.Remove(Panel.Content);
         control.View.PropertiesSetUnionInternal(properties);
         SetLayout(properties, control.View);
         control.LoadContent(contents);
@@ -196,7 +208,7 @@ public static class Loader
 
     private static void SetLayout(Properties properties, View view)
     {
-        var layout = properties.Get(Zui.Layout) ?? "";
+        var layout = properties.Get(Panel.Layout) ?? "";
         if (layout != "")
         {
             if (s_layouts.TryGetValue(layout, out var createFunc))

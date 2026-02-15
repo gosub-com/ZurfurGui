@@ -1,6 +1,7 @@
 ﻿
 using System.Diagnostics;
 using ZurfurGui.Base;
+using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 using ZurfurGui.Property;
 using ZurfurGui.Windows;
@@ -63,7 +64,7 @@ public class Renderer
         {
             _mainWindowSize = deviceSize / devicePixelRatio;
             _devicePixelRatio = devicePixelRatio;
-            appView.SetProperty(Zui.Magnification, devicePixelRatio);
+            appView.SetProperty(Panel.Magnification, devicePixelRatio);
             appView.InvalidateMeasure();
         }
 

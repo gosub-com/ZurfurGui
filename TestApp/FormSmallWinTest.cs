@@ -1,4 +1,5 @@
 ﻿using ZurfurGui;
+using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 
 namespace TestApp;
@@ -9,7 +10,7 @@ public partial class FormSmallWinTest
     {
         InitializeControl();
 
-        bigButton.View.AddEvent(Zui.PointerClick, bigButton_Click);
+        bigButton.View.AddEvent(Panel.PointerClick, bigButton_Click);
 
     }
 

@@ -2,10 +2,10 @@
     ".controller": "CheckBox",
     ".namespace": "ZurfurGui.Controls",
     ".layout": "Row",
-    ".data": [
-        "IsChecked : bool",
-        "Text : TextLines = _checkText.Text"
-    ],
+    ".data": {
+        "IsChecked": " : bool",
+        "Text": " : TextLines = _checkText.Text"
+    },
     ".content": [
         {
             ".name": "_checkMark",

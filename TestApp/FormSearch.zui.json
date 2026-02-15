@@ -4,7 +4,7 @@
     ".layout": "Column",
     ".content": [
         {
-            ".layout": "DockPanel",
+            ".layout": "Dock",
             ".content": [
                 {
                     ".controller": "Button",
@@ -31,7 +31,7 @@
             ]
         },
         {
-            ".layout": "DockPanel",
+            ".layout": "Dock",
             ".content": [
                 {
                     ".controller": "Button",
@@ -55,7 +55,7 @@
             ]
         },
         {
-            ".layout": "DockPanel",
+            ".layout": "Dock",
             ".content": [
                 {
                     ".controller": "TextView",
@@ -72,7 +72,7 @@
             ]
         },
         {
-            ".layout": "DockPanel",
+            ".layout": "Dock",
             ".content": [
                 {
                     ".controller": "Button",
@@ -95,7 +95,7 @@
             ]
         },
         {
-            ".layout": "DockPanel",
+            ".layout": "Dock",
             ".content": [
                 {
                     ".controller": "Button",

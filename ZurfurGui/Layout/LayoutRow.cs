@@ -1,11 +1,21 @@
 ﻿
 using System.Diagnostics;
 using ZurfurGui.Base;
+using ZurfurGui.Controls;
+using ZurfurGui.Property;
 
 namespace ZurfurGui.Layout;
 
+
+/// <summary>
+/// Layout rows.  TBD: This will do column as well.
+/// </summary>
 public class LayoutRow : Layoutable
 {
+
+    public static readonly PropertyKey<EnumProp<bool>> Wrap = new("cell.wrap", typeof(LayoutRow), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<SizeProp> Spacing = new("cell.spacing", typeof(LayoutRow), ViewFlags.ReMeasure);
+
     readonly Size DEFAULT_SIZE = new Size(5, 5);
 
     List<Rect> _measuredRects = new List<Rect>();
@@ -18,18 +28,18 @@ public class LayoutRow : Layoutable
     {
         _measuredRects.Clear();
 
-        var wrap = view.GetStyle(Zui.Wrap).Or(true);
+        var wrap = view.GetStyle(Wrap).Or(true);
         var rowPosX = 0.0;
         var rowPosY = 0.0;
         var rowHeight = 0.0;
         var viewWidth = 0.0;
         var viewHeight = 0.0;
-        var spacing = view.GetStyle(Zui.Spacing).Or(DEFAULT_SIZE);
+        var spacing = view.GetStyle(Spacing).Or(DEFAULT_SIZE);
         int arrangeIndex = 0;
         foreach (var childView in view.Children)
         {
             // Ignore invisible views
-            var viewIsVisible = childView.GetStyle(Zui.IsVisible).Or(true);
+            var viewIsVisible = childView.GetStyle(Panel.IsVisible).Or(true);
             if (!viewIsVisible)
                 continue;
 
@@ -67,7 +77,7 @@ public class LayoutRow : Layoutable
         var contentRect = view.ContentRect;
         foreach (var childView in view.Children)
         {
-            if (childView.GetStyle(Zui.IsVisible).Or(true))
+            if (childView.GetStyle(Panel.IsVisible).Or(true))
             {
                
                 var measuredRect = i < _measuredRects.Count ? _measuredRects[i] : new();

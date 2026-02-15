@@ -6,6 +6,7 @@ using ZurfurGui.Property;
 
 namespace ZurfurGui.Base;
 
+
 /// <summary>
 /// A read-only list of strings, where strings cannot contain new lines (CR or LF).
 /// During creation, CR and LF are converted into new array entries.
