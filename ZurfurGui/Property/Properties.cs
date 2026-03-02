@@ -12,7 +12,6 @@ public enum ViewFlags : short
     ReStyleDown = 1 << 4,
 }
 
-
 /// <summary>
 /// Property key info
 /// </summary>
@@ -90,6 +89,18 @@ public readonly struct PropertyKeyId : IEquatable<PropertyKeyId>
 
 }
 
+/// <summary>
+/// A key for a style property that supports field-wise merging with <see cref="IProperty{T}"/>.
+/// </summary>
+public sealed class PropertyKeyMerge<T> : PropertyKey<T>
+    where T : IProperty<T>
+{
+    public PropertyKeyMerge(string name, Type ownerType, T styleDefault, ViewFlags flags = ViewFlags.None)
+        : base(name, ownerType, styleDefault, flags)
+    {
+    }
+}
+
 
 /// <summary>
 /// Statically typed property key, used to lookup property name.
@@ -101,14 +112,26 @@ public class PropertyKey<T> : IEquatable<PropertyKey<T>>
     public readonly Type ValueType;
     public readonly Type OwnerType;
     public readonly ViewFlags Flags;
+    public readonly T StyleDefault;
 
-    public PropertyKey(string name, Type ownerType, ViewFlags flags = ViewFlags.None)
+    public PropertyKey(string name, Type ownerType, T styleDefault, ViewFlags flags = ViewFlags.None)
     {
+        // Ensure mergable properties use PropertyKeyMerge
+        var mergableInterface = typeof(IProperty<>).MakeGenericType(typeof(T));
+        if (mergableInterface.IsAssignableFrom(typeof(T)))
+        {
+            var isMergeKey = GetType().IsGenericType
+                && GetType().GetGenericTypeDefinition() == typeof(PropertyKeyMerge<>);
+            if (!isMergeKey)
+                throw new ArgumentException($"Mergable property type '{typeof(T)}' must use '{typeof(PropertyKeyMerge<>)}'", nameof(styleDefault));
+        }
+
         _id = PropertyKeys.Create(name, typeof(T));
         Name = name;
         Flags = flags;
         ValueType = typeof(T);
         OwnerType = ownerType;
+        StyleDefault = styleDefault;
     }
 
 

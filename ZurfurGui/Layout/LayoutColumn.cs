@@ -23,7 +23,7 @@ public class LayoutColumn : Layoutable
         var visibleCount = 0;
         foreach (var childView in view.Children)
         {
-            var viewIsVisible = childView.GetStyle(Panel.IsVisible).Or(true);
+            var viewIsVisible = childView.GetStyle(Panel.IsVisible);
             if (!viewIsVisible)
                 continue;
 

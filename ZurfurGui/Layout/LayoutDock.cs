@@ -14,7 +14,7 @@ public enum DockEnum
 
 public class LayoutDock : Layoutable
 {
-    public static readonly PropertyKey<EnumProp<DockEnum>> Dock = new("dock.align", typeof(Panel), ViewFlags.ReMeasure);
+    public static readonly PropertyKeyMerge<EnumProp<DockEnum>> Dock = new("dock.align", typeof(Panel), new(), ViewFlags.ReMeasure);
 
 
     int _lastVisibleIndex;
@@ -35,7 +35,7 @@ public class LayoutDock : Layoutable
         {
             // Ignore invisible views
             var childView = childViews[i];
-            if (!childView.GetStyle(Panel.IsVisible).Or(true))
+            if (!childView.GetStyle(Panel.IsVisible))
                 continue;
 
             _lastVisibleIndex = i;
@@ -72,7 +72,7 @@ public class LayoutDock : Layoutable
         {
             // Ignore invisible views
             var childView = childViews[i];
-            var viewIsVisible = childView.GetStyle(Panel.IsVisible).Or(true);
+            var viewIsVisible = childView.GetStyle(Panel.IsVisible);
             if (!viewIsVisible)
                 continue;
             

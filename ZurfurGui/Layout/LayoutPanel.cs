@@ -14,7 +14,7 @@ public static class LayoutPanel
         var windowMeasured = new Size();
         foreach (var child in view.Children)
         {
-            var viewIsVisible = child.GetStyle(Panel.IsVisible).Or(true);
+            var viewIsVisible = child.GetStyle(Panel.IsVisible);
             if (!viewIsVisible)
                 continue;
 
@@ -35,7 +35,7 @@ public static class LayoutPanel
         // All children get positioned at absolute coordinates in the contentRect
         var contentRect = view.ContentRect;
         foreach (var child in view.Children)
-            if (child.GetStyle(Panel.IsVisible).Or(true))
+            if (child.GetStyle(Panel.IsVisible))
                 child.Arrange(contentRect, measure);
     }
 

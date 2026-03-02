@@ -13,8 +13,8 @@ namespace ZurfurGui.Layout;
 public class LayoutRow : Layoutable
 {
 
-    public static readonly PropertyKey<EnumProp<bool>> Wrap = new("cell.wrap", typeof(LayoutRow), ViewFlags.ReMeasure);
-    public static readonly PropertyKey<SizeProp> Spacing = new("cell.spacing", typeof(LayoutRow), ViewFlags.ReMeasure);
+    public static readonly PropertyKeyMerge<EnumProp<bool>> Wrap = new("cell.wrap", typeof(LayoutRow), new(), ViewFlags.ReMeasure);
+    public static readonly PropertyKeyMerge<SizeProp> Spacing = new("cell.spacing", typeof(LayoutRow), new(), ViewFlags.ReMeasure);
 
     readonly Size DEFAULT_SIZE = new Size(5, 5);
 
@@ -39,7 +39,7 @@ public class LayoutRow : Layoutable
         foreach (var childView in view.Children)
         {
             // Ignore invisible views
-            var viewIsVisible = childView.GetStyle(Panel.IsVisible).Or(true);
+            var viewIsVisible = childView.GetStyle(Panel.IsVisible);
             if (!viewIsVisible)
                 continue;
 
@@ -77,7 +77,7 @@ public class LayoutRow : Layoutable
         var contentRect = view.ContentRect;
         foreach (var childView in view.Children)
         {
-            if (childView.GetStyle(Panel.IsVisible).Or(true))
+            if (childView.GetStyle(Panel.IsVisible))
             {
                
                 var measuredRect = i < _measuredRects.Count ? _measuredRects[i] : new();

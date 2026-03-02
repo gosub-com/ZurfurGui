@@ -1,5 +1,8 @@
 ﻿namespace ZurfurGui.Property;
 
+/// <summary>
+/// Allow mergable properties
+/// </summary>
 public interface IProperty<T> : IEquatable<T>
 {
     /// <summary>

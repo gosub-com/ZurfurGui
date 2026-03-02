@@ -199,7 +199,7 @@ public sealed class View
     /// or if it's not found walk up the tree to find a style property
     /// based on the classes property.
     /// </summary>
-    public T GetStyle<T>(PropertyKey<T> key) where T : IProperty<T>, new()
+    public T GetStyle<T>(PropertyKeyMerge<T> key) where T : IProperty<T>
     {
         // Properties set by code take precedence
         T property;
@@ -211,7 +211,7 @@ public sealed class View
         }
         else
         {
-            property = new T();
+            property = key.StyleDefault;
         }
 
         // Properties cached from style lookup below
@@ -222,12 +222,34 @@ public sealed class View
         }
 
         // Lookup styledProperty (matches first, then defaults)
-        var styledProperty = FindStyledProperty(key, new());
+        var styledProperty = FindStyledProperty(key, key.StyleDefault);
 
         // Cache the styled property for quick lookup above
         _properties.SetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN), styledProperty);
 
         return property.Or(styledProperty);
+    }
+
+    public T GetStyle<T>(PropertyKey<T> key)
+    {
+        // Properties set by code take precedence
+        if (_properties.TryGet(key, out var value) && value is T typedValue)
+            return typedValue;
+
+        // Properties cached from style lookup below
+        if (_properties.TryGetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN),
+                out var styledValue) && styledValue is T typedStyledValue)
+        {
+            return typedStyledValue;
+        }
+
+        // Lookup styled value (matches first, then defaults)
+        var styledProperty = FindStyledValue(key);
+
+        // Cache the styled property for quick lookup above
+        _properties.SetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN), styledProperty!);
+
+        return styledProperty;
     }
 
     internal void ClearStyleCache()
@@ -244,11 +266,11 @@ public sealed class View
     /// <summary>
     /// Walk up the view tree to find a style property based on the classes property.
     /// </summary>
-    T FindStyledProperty<T>(PropertyKey<T> key, T property) where T : IProperty<T>, new()
+    T FindStyledProperty<T>(PropertyKeyMerge<T> key, T property) where T : IProperty<T>
     {
         var classes = _properties.Get(Panel.Classes);
         if (classes == null || classes.Count == 0)
-            return new();
+            return key.StyleDefault;
 
         // Walk up the view tree
         for (var view = this; view != null; view = view.Parent)
@@ -274,7 +296,43 @@ public sealed class View
                 }
             }
         }
+
         return property;
+    }
+
+    /// <summary>
+    /// Walk up the view tree to find a non-mergeable style property based on the classes property.
+    /// </summary>
+    T FindStyledValue<T>(PropertyKey<T> key)
+    {
+        var classes = _properties.Get(Panel.Classes);
+        if (classes == null || classes.Count == 0)
+            return key.StyleDefault;
+
+        // Walk up the view tree
+        for (var view = this; view != null; view = view.Parent)
+        {
+            if (!view._properties.TryGet(Panel.UseStyles, out var useStyles) || useStyles == null)
+                continue;
+
+            foreach (var useStyle in useStyles.Reverse())
+            {
+                if (Loader.GetStyleSheet(useStyle) is not StyleSheet styleSheet)
+                    continue;
+
+                foreach (var style in styleSheet.Styles.Reverse())
+                {
+                    if (style.TryGet(Panel.Selectors, out var selectors) && selectors != null
+                        && style.TryGet(key, out var p) && p != null
+                        && StyleMatches(selectors, classes))
+                    {
+                        return p;
+                    }
+                }
+            }
+        }
+
+        return key.StyleDefault;
     }
 
     bool StyleMatches(TextLines selectors, TextLines classes)
@@ -356,7 +414,7 @@ public sealed class View
     public void Measure(Size available, MeasureContext measure)
     {
         // Quick exit if invisible
-        _cache.IsVisible = GetStyle(Panel.IsVisible).Or(true);
+        _cache.IsVisible = GetStyle(Panel.IsVisible);
         if (!_cache.IsVisible)
             return;
 

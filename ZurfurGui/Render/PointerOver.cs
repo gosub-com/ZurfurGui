@@ -121,7 +121,7 @@ internal class PointerOver
         if (!clip.Contains(target))
             return null;
 
-        if (!view.GetStyle(Panel.IsVisible).Or(true))
+        if (!view.GetStyle(Panel.IsVisible))
             return null;
 
         // Check children first

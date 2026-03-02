@@ -3,8 +3,13 @@
     ".namespace": "ZurfurGui.Controls",
     ".layout": "Row",
     ".data": {
-        "IsChecked": " : bool",
-        "Text": " : TextLines = _checkText.Text"
+        "isChecked": {
+            "type": "Bool"
+        },
+        "text": {
+            "type": "TextLines",
+            "binding": "_checkText.text"
+        }
     },
     ".content": [
         {

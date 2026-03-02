@@ -16,6 +16,12 @@ namespace ZurfurGuiGen;
 public class GenerateZui : IIncrementalGenerator
 {
 
+    class DataBinding
+    {
+        public string Name { get; set; } = "";
+        public string Type { get; set; } = "";
+    }
+
     // NOTE: We can't use record class here because code generators must target netstandard2.0
     class FileInfo
     {
@@ -43,9 +49,19 @@ public class GenerateZui : IIncrementalGenerator
         public string Namespace { get; set; } = "";
 
         /// <summary>
+        /// Optional extra C# using directives (one per line) to include in generated output.
+        /// </summary>
+        public List<string> Use { get; set; } = new();
+
+        /// <summary>
         /// Set to true if there is a user supplied controller class
         /// </summary>
         public bool UserSuppliedControllerClass { get; set; }
+
+        /// <summary>
+        /// Set to true if there is a user supplied data class (<ViewName>.Data.cs)
+        /// </summary>
+        public bool UserSuppliedDataClass { get; set; }
 
         /// <summary>
         /// Full namespace + controller class name
@@ -112,6 +128,8 @@ public class GenerateZui : IIncrementalGenerator
         var nameSpace = "";
         var fileNameOnly = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui or .zss
         var userSuppliedControllerClass = false;
+        var userSuppliedDataClass = false;
+        var use = new List<string>();
         try
         {
             // Parse the JSON content, find the controller or style name
@@ -126,20 +144,36 @@ public class GenerateZui : IIncrementalGenerator
             {
                 nameSpace = GetJsonValue(jsonDocument, ".namespace");
 
-                // Try to find the .cs file with the same name as the JSON file
+                use = GetUsingLines(jsonDocument);
+
+                // Try to find the .cs file with the same name as the JSON file (code-behind)
                 var csTree = syntax.FirstOrDefault(tree =>
                 {
                     var csFileName = Path.GetFileNameWithoutExtension(tree.FilePath);
-                    return csFileName == jsonNameWithoutAnyExt;
+                    return csFileName == $"{jsonNameWithoutAnyExt}.Control";
+                });
+
+                var csDataTree = syntax.FirstOrDefault(tree =>
+                {
+                    var csFileName = Path.GetFileNameWithoutExtension(tree.FilePath);
+                    return csFileName == $"{jsonNameWithoutAnyExt}.Data";
                 });
 
                 var csFileNamespace = GetNameSpace(csTree) ?? "";
                 userSuppliedControllerClass = csFileNamespace != "";
 
+                var csDataFileNamespace = GetNameSpace(csDataTree) ?? "";
+                userSuppliedDataClass = csDataFileNamespace != "";
+
                 // Verify the .cs file namespace (if any) matches the JSON namespace
                 if (csFileNamespace != "" && csFileNamespace != nameSpace)
-                    throw new Exception($"The JSON '.namespace' must match the namespace in {fileNameOnly}.cs, "
+                    throw new Exception($"The JSON '.namespace' must match the namespace in {fileNameOnly}.Control.cs, "
                         + $"but is '{nameSpace}' instead of '{csFileNamespace}'");
+
+                // Verify the *Data.cs file namespace (if any) matches the JSON namespace
+                if (csDataFileNamespace != "" && csDataFileNamespace != nameSpace)
+                    throw new Exception($"The JSON '.namespace' must match the namespace in {fileNameOnly}.Data.cs, "
+                        + $"but is '{nameSpace}' instead of '{csDataFileNamespace}'");
 
                 controllerName = GetControllerName(fileNameOnly, nameSpace, jsonDocument);
             }
@@ -170,8 +204,47 @@ public class GenerateZui : IIncrementalGenerator
             JsonDocument = jsonDocument,
             ControllerName = controllerName,
             Namespace = nameSpace,
+            Use = use,
             UserSuppliedControllerClass = userSuppliedControllerClass
+            ,
+            UserSuppliedDataClass = userSuppliedDataClass
         };
+    }
+
+    /// <summary>
+    /// Retrieve optional extra using directive lines from ZUI JSON `.use`.
+    /// The value may be a string or an array of strings.
+    /// </summary>
+    static List<string> GetUsingLines(Dictionary<string, object?> jsonDocument)
+    {
+        if (!jsonDocument.TryGetValue(".use", out var useObj) || useObj == null)
+            return new List<string>();
+
+        if (useObj is List<object?> list)
+        {
+            var result = new List<string>();
+            foreach (var item in list)
+            {
+                if (item is string s && !string.IsNullOrWhiteSpace(s))
+                    result.Add(s);
+                else
+                    throw new Exception("The JSON '.use' array must contain only strings");
+            }
+            return result;
+        }
+
+        throw new Exception("The JSON '.use' key must be an array of strings");
+    }
+
+    static string GenerateUsingCode(FileInfo data)
+    {
+        if (data.Use == null || data.Use.Count == 0)
+            return "";
+
+        var sb = new StringBuilder();
+        foreach (var u in data.Use)
+            sb.Append($"using {u};\r\n");
+        return sb.ToString();
     }
 
 
@@ -243,7 +316,17 @@ public class GenerateZui : IIncrementalGenerator
                 // Generate the source code for the control
                 var source = GenerateControllerClassSource(data);
                 if (source != "")
-                    spc.AddSource($"{data.FileName}.g.cs", SourceText.From(source, Encoding.UTF8));
+                    spc.AddSource($"{data.FileName}.Control.g.cs", SourceText.From(source, Encoding.UTF8));
+
+                // Generate the source code for the data contract (interface)
+                var dataContractSource = GenerateDataContractInterfaceSource(data);
+                if (dataContractSource != "")
+                    spc.AddSource($"{data.FileName}.DataContract.g.cs", SourceText.From(dataContractSource, Encoding.UTF8));
+
+                // Generate the source code for the data implementation (partial if *Data.cs exists)
+                var dataImplSource = GenerateDataImplementationSource(data);
+                if (dataImplSource != "")
+                    spc.AddSource($"{data.FileName}.Data.g.cs", SourceText.From(dataImplSource, Encoding.UTF8));
             }
             catch (Exception ex)
             {
@@ -253,6 +336,136 @@ public class GenerateZui : IIncrementalGenerator
                 spc.ReportDiagnostic(diagnostic);
             }
         }
+
+    static List<DataBinding> GetDataProperties(FileInfo data)
+    {
+        if (!data.JsonDocument.TryGetValue(".data", out var dataSectionObj) || dataSectionObj == null)
+            return new List<DataBinding>();
+
+        if (dataSectionObj is not Dictionary<string, object?> dataSection)
+            throw new Exception("The JSON '.data' key must be an object");
+
+        var result = new List<DataBinding>();
+        foreach (var kvp in dataSection)
+        {
+            if (kvp.Value is not Dictionary<string, object?> entry)
+                throw new Exception($"The JSON '.data.{kvp.Key}' value must be an object");
+
+            if (!entry.TryGetValue("type", out var typeObj) || typeObj is not string typeName || string.IsNullOrWhiteSpace(typeName))
+                throw new Exception($"The JSON '.data.{kvp.Key}.type' must be a non-empty string");
+
+            result.Add(new DataBinding { Name = ToPascalIdentifier(kvp.Key), Type = NormalizeTypeName(typeName) });
+        }
+
+        return result;
+    }
+
+    static string NormalizeTypeName(string typeName)
+    {
+        // Allow simple aliases in JSON
+        switch (typeName)
+        {
+            case "Bool":
+            case "bool":
+                return "bool";
+            case "Int":
+            case "int":
+                return "int";
+            case "Long":
+            case "long":
+                return "long";
+            case "Double":
+            case "double":
+                return "double";
+            case "String":
+            case "string":
+                return "string";
+            default:
+                return typeName;
+        }
+    }
+
+    static string ToPascalIdentifier(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "_";
+
+        // Convert common schema keys like "text" or "isChecked" into PascalCase property names.
+        // Keep underscores as word separators.
+        var sb = new StringBuilder(name.Length);
+        var makeUpper = true;
+        foreach (var ch in name)
+        {
+            if (ch == '_' || ch == '-' || ch == ' ')
+            {
+                makeUpper = true;
+                continue;
+            }
+
+            if (sb.Length == 0)
+            {
+                sb.Append(char.IsLetter(ch) ? char.ToUpperInvariant(ch) : '_');
+                makeUpper = false;
+                continue;
+            }
+
+            sb.Append(makeUpper ? char.ToUpperInvariant(ch) : ch);
+            makeUpper = false;
+        }
+        return sb.ToString();
+    }
+
+    static string GenerateDataContractInterfaceSource(FileInfo data)
+    {
+        var properties = GetDataProperties(data).OrderBy(p => p.Name).ToList();
+        if (properties.Count == 0)
+            return "";
+
+        var interfaceName = $"I{data.FileName}Data";
+        var propertiesCode = string.Join("\r\n", properties.Select(p =>
+            $"    {p.Type} {p.Name} {{ get; set; }}"));
+
+        return $@"
+// This file is generated from '{Path.GetFileName(data.Path)}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}
+using ZurfurGui.Base;
+
+{GenerateUsingCode(data)}
+
+namespace {data.Namespace};
+
+public interface {interfaceName}
+{{
+{propertiesCode}
+}}";
+    }
+
+    static string GenerateDataImplementationSource(FileInfo data)
+    {
+        var properties = GetDataProperties(data).OrderBy(p => p.Name).ToList();
+        if (properties.Count == 0)
+            return "";
+
+        var interfaceName = $"I{data.FileName}Data";
+        var className = $"{data.FileName}Data";
+
+        var partialKeyword = data.UserSuppliedDataClass ? "partial " : "";
+
+        var propertiesCode = string.Join("\r\n", properties.Select(p =>
+            $"    public {p.Type} {p.Name} {{ get; set; }}"));
+
+        return $@"
+// This file is generated from '{Path.GetFileName(data.Path)}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}
+using ZurfurGui.Base;
+
+{GenerateUsingCode(data)}
+
+namespace {data.Namespace};
+
+public {partialKeyword}class {className} : {interfaceName}
+{{
+{propertiesCode}
+}}";
+    }
     }
 
 
@@ -295,6 +508,8 @@ public class GenerateZui : IIncrementalGenerator
         var source = $@"
 // This file is generated from '{Path.GetFileName(data.Path)}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}
 using ZurfurGui.Base;
+
+{GenerateUsingCode(data)}
 
 namespace {data.Namespace};
 

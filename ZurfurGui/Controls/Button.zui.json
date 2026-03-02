@@ -3,7 +3,10 @@
     ".namespace": "ZurfurGui.Controls",
     ".classes": [ "Button" ],
     ".data": {
-        "Text": " : TextLines = _buttonText.Text"
+        "text": {
+            "type": "TextLines",
+            "binding": "_buttonText.text"
+        }
     },
     ".content": [
         {

@@ -7,10 +7,16 @@
     ".layout": "Column",
     ".content": [
         {
-            ".controller": "TestApp.Controls.ControlCard"
+            ".controller": "TestApp.Controls.ControlCard",
+            "title": "Attack of the PogaÄar",
+            "description": "A story about PogaÄar, the champion bicyclist!",
+            "byLine": "The Crowd"        
         },
         {
-            ".controller": "TestApp.Controls.ControlCard"
+            ".controller": "TestApp.Controls.ControlCard",
+            "title": "Attack of the Vingegaard",
+            "description": "A story about Vingegaard, the champion bicyclist!",
+            "byLine": "The Crowd"
         },
         {
             ".controller": "Panel",

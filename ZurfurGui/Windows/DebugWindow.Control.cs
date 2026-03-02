@@ -56,14 +56,14 @@ public partial class DebugWindow : Controllable
         var textCount = newStats.FillText - _prevStats.FillText;
         var rectCount = newStats.FillRect - _prevStats.FillRect + newStats.StrokeRect - _prevStats.StrokeRect;
         var clipCount = newStats.PushClips - _prevStats.PushClips;
-        TextLinesProp text = new([
+        TextLines text = [
             $"fps={renderer.Fps}, ms={renderer.AvgMs}, frames={renderer.FrameCount}",
             $"draws={renderer.DrawCount}, measures={renderer.MeasureCount}, styles={renderer.StyleCount}",
             $"DPR={_window.DevicePixelRatio:F2}, CDS={canvasDeviceSize:F2}, CSS={canvasStyleSize:F2}",
             $"WIS={_window.InnerSize}, DPS={_canvas.DevicePixelSize?.ToString() ?? "?"}",
             $"Screen size: ({_window.ScreenSize}), focus={_canvas.HasFocus}",
             $"Text: {textCount}, Rects: {rectCount}, Clips: {clipCount}"
-        ]);
+        ];
 
         // Don't Invalidate measure
         _statsView.View.SetPropertyNoFlags(TextView.Text, text);

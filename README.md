@@ -9,8 +9,19 @@ a minimal C# WebAssembly GUI would be.  So far, the full download is only about
 You can see the result here: https://gosub.com/zurfurgui
 
 This project is exploring **MDV/MDCV** as an alternative to MVVM. 
-For an overview of how it works, see the [AGENTS.md](AGENTS.md) notes.  
+For an overview of how it works, see the [AGENTS.md](AGENTS.md) notes.
 The main idea is to replace runtime bindings with generated, compile-time contracts.
+
+## For contributors / AI agents
+
+Before changing ZUI JSON schema, naming conventions, or code generation outputs, read
+[AGENTS.md](AGENTS.md) first.
+
+Key entry points:
+
+- Source generator: `ZurfurGuiGen/GenerateZui.cs`
+- Generator JSON parser: `ZurfurGuiGen/Json.cs`
+- Runtime loader / JSON deserialization: `ZurfurGui/Loader.cs`
 
 ## Design Goals
 
@@ -25,12 +36,12 @@ might look like.
 ## Model Data View (MDV)	
 
 Zurfur Gui uses a Model Data View (MDV) pattern.  The view (V) declares the
-data it needs in the ZUI JSON `data` section, and then build-time code generation
-creates a strongly-typed data interface plus a concrete data class (D).
-The view consumes only the interface.  You can use D directly (for example,
-deserialize JSON into it) or extend D as a partial class that maps to/from the 
-domain model. This makes the view’s data requirements explicit and keeps bindings
-compile-time checked.
+data it needs in the ZUI JSON `.data` section, and then build-time code
+generation via the `ZurfurGuiGen` source generator creates a strongly-typed
+data interface plus a concrete data class (D).  The view consumes only the
+interface.  You can use D directly (for example, deserialize JSON into it) or
+extend D as a partial class that maps to/from the domain model. This makes the
+view’s data requirements explicit and keeps bindingscompile-time checked.
 
 
 

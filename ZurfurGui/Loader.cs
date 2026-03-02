@@ -1,7 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Layout;
@@ -27,6 +26,9 @@ namespace ZurfurGui;
 [JsonSerializable(typeof(EnumProp<bool>))]
 [JsonSerializable(typeof(EnumProp<DockEnum>))]
 [JsonSerializable(typeof(StyleSheet))]
+[JsonSerializable(typeof(DataBinding))]
+[JsonSerializable(typeof(Dictionary<string,DataBinding>))]
+[JsonSerializable(typeof(string[]))]
 public partial class ZurfurJsonContext : JsonSerializerContext { }
 
 
@@ -42,9 +44,7 @@ public static class Loader
     // Combine source-generated context with custom converters
     public static readonly JsonSerializerOptions s_jsonSerializerOptions = new JsonSerializerOptions
     {
-        TypeInfoResolver = JsonTypeInfoResolver.Combine(
-            ZurfurJsonContext.Default,
-            new DefaultJsonTypeInfoResolver()),
+        TypeInfoResolver = ZurfurJsonContext.Default,
         Converters = {
             // Add custom converters
             new PropertiesJsonConverter(),
@@ -56,6 +56,7 @@ public static class Loader
             new ColorPropJsonConverter(),
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
         },
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
     };
 

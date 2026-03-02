@@ -28,7 +28,7 @@ public class LayoutText : Layoutable
         var font = view.GetStyle(TextView.Font);
         var fontName = font.Name ?? "Arial";
         var fontSize = font.Size.Or(16.0);
-        var text = view.GetStyle(TextView.Text).Or(TextLines.Unknown);
+        var text = view.GetStyle(TextView.Text);
         var maxWidth = text.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
         return new Size(maxWidth, text.Count * TextView.LINE_SPACING * fontSize);
     }

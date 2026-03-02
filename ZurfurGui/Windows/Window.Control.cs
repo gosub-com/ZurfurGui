@@ -100,7 +100,7 @@ public partial class Window : Controllable
     /// </summary>
     public bool IsWindowWrappingVisible
     {
-        get => _windowTitle.View.GetProperty(Panel.IsVisible).Or(true);
+        get => _windowTitle.View.GetProperty(Panel.IsVisible);
         set
         {
             _windowTitle.View.SetProperty(Panel.IsVisible, value);

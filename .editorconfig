@@ -1,2 +1,10 @@
 [*.cs]
 csharp_style_namespace_declarations=file_scoped:suggestion
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+[*.json]
+indent_style = space
+indent_size = 4
+tab_width = 4

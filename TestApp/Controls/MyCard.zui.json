@@ -1,0 +1,45 @@
+{
+    ".controller": "MyCard",
+    ".namespace": "TestApp.Controls",
+    ".layout": "Column",
+    ".data": {
+        "title": {
+            "type": "TextLines",
+            "binding": "_bigTitle.text",
+            "default": "(big title goes here)"
+        },
+        "card1": {
+            "type": "TestApp.Controls.IControlCardData",
+            "binding": "_card1"
+        },
+        "description": {
+            "type": "TextLines",
+            "binding": "_card2.description",
+            "default": "(card2 description goes here)"
+        },
+        "byLine": {
+            "type": "TextLines",
+            "binding": "_card2.byLine",
+            "default": "(byLine goes here)"
+        }
+
+    },
+    ".content": [
+        {
+            ".controller": "TextView",
+            ".name": "_bigTitle",
+            "text": "(default bigTitle)",
+            "font": { "size": 24.0 }
+        },
+        {
+            ".controller": "TestApp.Controls.ControlCard",
+            ".name": "_card1",
+            "title": "(default card1 title if not set)"
+        },
+        {
+            ".controller": "TestApp.Controls.ControlCard",
+            ".name": "_card2",
+            "title": "Card 2 Title (not settable outside control)"
+        }
+    ]
+}
