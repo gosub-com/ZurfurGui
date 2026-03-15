@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ZurfurGui.Base;
@@ -37,6 +38,15 @@ public partial class ZurfurJsonContext : JsonSerializerContext { }
 /// </summary>
 public static class Loader
 {
+    public readonly record struct ControlCreationContext(
+        string TypeName,
+        string TypeNamespace,
+        TextLines TypeUses)
+    {
+        public static ControlCreationContext From(Controllable control)
+            => new(control.TypeName, control.TypeNamespace, control.TypeUses);
+    }
+
     static Dictionary<string, Type> s_controllers = new();
     static Dictionary<string, Func<Layoutable?>> s_layouts = new();
     static Dictionary<string, StyleSheet> s_styleSheets = new();
@@ -84,7 +94,7 @@ public static class Loader
 
     /// <summary>
     /// Load a JSON file into the target object. This is the function that gets
-    /// called from the InitializeComponent function in the generated code.
+    /// called from the InitializeControl function in the generated code.
     /// </summary>
     public static void Load(Controllable target, string json)
     {
@@ -101,18 +111,24 @@ public static class Loader
             if (controller != target.TypeName)
                 throw new ArgumentException($"Top level controller property '{controller}' must match target '{target.TypeName}");
 
-            target.View.PropertiesSetUnionInternal(properties);
-            SetLayout(properties, target.View);
-            foreach (var child in properties.Get(Panel.Content) ?? [])
-            {
-                target.View.AddChild(CreateControl(child).View);
-            }
+            BuildContent(target, properties, ControlCreationContext.From(target));
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading control '{target.TypeName}': {ex.Message}, type={ex.GetType()}");
             throw;
         }
+    }
+
+    private static void BuildContent(Controllable control, Properties properties, ControlCreationContext context)
+    {
+        // The properties become overrides, but the content becomes a parameter to LoadContent
+        // TBD: Maybe don't send content as parameter here (let LoadContent do it)?
+        var content = properties.Get(Panel.Content);
+        properties.Remove(Panel.Content);
+        control.View.PropertiesSetUnionInternal(properties);
+        SetLayout(properties, control.View);
+        control.LoadContent(content, context);
     }
 
     public static void RegisterStyleSheet(string json) 
@@ -165,46 +181,57 @@ public static class Loader
     }
 
     /// <summary>
-    /// Create a control from the given properties
+    /// Create a control from the given properties with a parent/type context.
+    /// (Context is not yet used for controller resolution; it is threaded through for future use.)
     /// </summary>
-    public static Controllable CreateControl(Properties properties)
+    public static Controllable CreateControl(Properties properties, ControlCreationContext context)
     {
         // Create the control
         var controller = properties.Get(Panel.Controller) ?? "";
+        var type = FindControllerType(controller, context);
         Controllable control;
-        if (controller == "")
+        try
         {
-            control = new Panel();
+            control = (Controllable?)Activator.CreateInstance(type)
+                ?? throw new ArgumentException($"Could not create instance of '{controller}'");
         }
-        else
+        catch (TargetInvocationException tex)
         {
-            if (!s_controllers.TryGetValue(controller, out var type)
-                && !s_controllers.TryGetValue($"ZurfurGui.Controls.{controller}", out type))
-            {
-                throw new ArgumentException($"'{controller}' is not a registered control: "
-                    + $"{string.Join(",\r\n", s_controllers.Keys)}");
-            }
-
-            try
-            {
-                control = (Controllable?)Activator.CreateInstance(type)
-                    ?? throw new ArgumentException($"Could not create instance of '{controller}'");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error creating control '{controller}': {ex.Message}, exception type={ex.GetType()}");
-                throw;
-            }
+            if (tex.InnerException != null)
+                throw tex.InnerException;
+            throw;
         }
 
-        // The properties become overrides, but the content becomes a parameter to LoadContent
-        var contents = properties.Get(Panel.Content) ?? [];
-        properties.Remove(Panel.Content);
-        control.View.PropertiesSetUnionInternal(properties);
-        SetLayout(properties, control.View);
-        control.LoadContent(contents);
+        BuildContent(control, properties, context);
 
         return control;
+    }
+
+    static Type FindControllerType(string controller, ControlCreationContext context)
+    {
+        // Use Panel if controller is not specified
+        if (controller == "")
+            return typeof(Panel); // Default to panel when no controller specified
+
+        // Check fully qualified name
+        if (s_controllers.TryGetValue(controller, out var type))
+            return type;
+
+        // Use namespace
+        if (s_controllers.TryGetValue($"{context.TypeNamespace}.{controller}", out type))
+            return type;
+
+        // Check uses
+        foreach (var use in context.TypeUses)
+            if (s_controllers.TryGetValue($"{use}.{controller}", out type))
+                return type;
+
+        // Check base library
+        if (s_controllers.TryGetValue($"ZurfurGui.Controls.{controller}", out type))
+            return type;
+
+        throw new ArgumentException($"'{controller}' is not a registered control: "
+            + $"{string.Join(",\r\n", s_controllers.Keys)}");
     }
 
     private static void SetLayout(Properties properties, View view)

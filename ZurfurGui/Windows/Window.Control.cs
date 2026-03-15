@@ -37,13 +37,6 @@ public partial class Window : Controllable
         _closeButton.View.AddEvent(Panel.PointerUp, (s, e) => View.Parent?.RemoveChild(View));
     }
 
-    public void LoadContent(Properties[]? contents)
-    {
-        if (contents != null)
-            foreach (var property in contents)
-                _windowContent.View.AddChild(Loader.CreateControl(property).View);
-    }
-
     public void LoadContent(Controllable[] contents)
     {
         foreach (var control in contents)

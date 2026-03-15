@@ -4,16 +4,23 @@
     //
     ".controller": "FormMultiForm",
     ".namespace": "TestApp",
+    ".use": ["TestApp.Controls"],
     ".layout": "Column",
     ".content": [
         {
-            ".controller": "TestApp.Controls.ControlCard",
+            ".controller": "ControlCard",
             "title": "Attack of the PogaÄar",
             "description": "A story about PogaÄar, the champion bicyclist!",
-            "byLine": "The Crowd"        
+            "byLine": "The Crowd"
         },
         {
-            ".controller": "TestApp.Controls.ControlCard",
+            ".controller": "ControlCard",
+            "title": "Attack of the Vingegaard",
+            "description": "A story about Vingegaard, the champion bicyclist!",
+            "byLine": "The Crowd"
+        },
+        {
+            ".controller": "MyCard",
             "title": "Attack of the Vingegaard",
             "description": "A story about Vingegaard, the champion bicyclist!",
             "byLine": "The Crowd"
@@ -31,7 +38,7 @@
             },
             ".content": [
                 {
-                    ".controller": "TestApp.FormSmallWinTest"
+                    ".controller": "FormSmallWinTest"
                 }
             ]
         },
@@ -48,7 +55,7 @@
             },
             ".content": [
                 {
-                    ".controller": "TestApp.FormSearch"
+                    ".controller": "FormSearch"
                 }
             ]
         }

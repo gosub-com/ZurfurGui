@@ -5,36 +5,33 @@
     ".data": {
         "title": {
             "type": "TextLines",
-            "binding": "_title.text",
-            "default": "(title goes here)"
+            "binding": "_title.text"
         },
         "description": {
             "type": "TextLines",
-            "binding": "_description.text",
-            "default": "(description goes here)"
+            "binding": "_description.text"
         },
         "byLine": {
             "type": "TextLines",
-            "binding": "_byline.text",
-            "default": "(byLine goes here)"
+            "binding": "_byline.text"
         }
     },
     ".content": [
         {
             ".controller": "TextView",
             ".name": "_title",
-            "text": "Control Card Title",
+            "text": "Default control card title",
             "font": { "size": 18.0 }
         },
         {
             ".controller": "TextView",
             ".name": "_description",
-            "text": "This is a description of the control card. "
+            "text": "Defaut control card description. "
         },
         {
             ".controller": "TextView",
             ".name": "_byline",
-            "text": "By Line"
+            "text": "Default control card title"
         }
     ]
 }

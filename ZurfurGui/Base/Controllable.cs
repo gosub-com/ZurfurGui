@@ -1,13 +1,24 @@
 ﻿using ZurfurGui.Property;
+using static ZurfurGui.Loader;
 
 namespace ZurfurGui.Base;
 
 public interface Controllable
 {
     /// <summary>
-    /// Unique type name of control, which should be set by generated code
+    /// Control type name, set by generated code
     /// </summary>
     string TypeName { get; }
+
+    /// <summary>
+    /// Control type namespace, set by generated code
+    /// </summary>
+    string TypeNamespace { get; }
+
+    /// <summary>
+    /// Control uses, set by generated code
+    /// </summary>
+    TextLines TypeUses { get; }
 
     /// <summary>
     /// The main control view.  Each control must have a MainView, that is readonly (i.e. never changes)
@@ -24,11 +35,11 @@ public interface Controllable
     ///      component.  This components content is part of the visual tree, while the
     ///      parent content is part of the logical tree.  We will get that sorted out later.
     /// </summary>
-    void LoadContent(Properties[]? contents) 
+    void LoadContent(Properties[]? contents, ControlCreationContext context) 
     { 
         if (contents != null)
             foreach (var property in contents)
-                View.AddChild(Loader.CreateControl(property).View);
+                View.AddChild(Loader.CreateControl(property, context).View);
     }
 
     /// <summary>

@@ -5,22 +5,18 @@
     ".data": {
         "title": {
             "type": "TextLines",
-            "binding": "_bigTitle.text",
-            "default": "(big title goes here)"
+            "binding": "_bigTitle.text"
         },
         "card1": {
-            "type": "TestApp.Controls.IControlCardData",
-            "binding": "_card1"
+            "type": "IControlCardData"
         },
         "description": {
             "type": "TextLines",
-            "binding": "_card2.description",
-            "default": "(card2 description goes here)"
+            "binding": "_card2.description"
         },
         "byLine": {
             "type": "TextLines",
-            "binding": "_card2.byLine",
-            "default": "(byLine goes here)"
+            "binding": "_card2.byLine"
         }
 
     },
@@ -28,18 +24,18 @@
         {
             ".controller": "TextView",
             ".name": "_bigTitle",
-            "text": "(default bigTitle)",
-            "font": { "size": 24.0 }
+            "text": "Default MyCard Title",
+            "font": { "size": 34.0 }
         },
         {
-            ".controller": "TestApp.Controls.ControlCard",
+            ".controller": "ControlCard",
             ".name": "_card1",
-            "title": "(default card1 title if not set)"
+            "title": "Default MyCard.card1 title"
         },
         {
-            ".controller": "TestApp.Controls.ControlCard",
+            ".controller": "ControlCard",
             ".name": "_card2",
-            "title": "Card 2 Title (not settable outside control)"
+            "title": "Default MyCard.card2 Title"
         }
     ]
 }
