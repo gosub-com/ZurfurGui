@@ -24,6 +24,7 @@ internal static class ZuiEmit
     static string GenerateUsingCode(ZuiTypes.FileInfo data)
     {
         var sb = new StringBuilder();
+        sb.Append("using System.ComponentModel;\r\n");
         sb.Append("using ZurfurGui.Base;\r\n");
         sb.Append("using ZurfurGui.Controls;\r\n\r\n");
 
@@ -48,7 +49,7 @@ internal static class ZuiEmit
         sb.Append(GenerateUsingCode(data));
         sb.Append($"namespace {data.Namespace};\r\n\r\n");
 
-        sb.Append($"public interface {interfaceName}\r\n{{\r\n");
+        sb.Append($"public interface {interfaceName} : INotifyPropertyChanged\r\n{{\r\n");
         foreach (var p in data.Bindings)
             AppendIndentedLine(sb, 1, $"{p.Type} {p.Name} {{ get; set; }}");
         sb.Append("}");
@@ -60,6 +61,22 @@ internal static class ZuiEmit
         if (data.Bindings.Count == 0)
             return "";
 
+        // Verify bindings are valid
+        var namedControls = ZuiSchema.FindNamedControlsDictionary(data.JsonDocument);
+        foreach (var binding in data.Bindings)
+        {
+            if (binding.Bind == "")
+                continue;
+            var bindingPath = binding.Bind.Split('.');
+            var bindingName = bindingPath[0];
+
+            if (!namedControls.ContainsKey(bindingName))
+            {
+                throw new Exception($"The binding for '{binding.Name}' does not match a valid control name. Binding: '{binding.Bind}'");
+            }
+
+        }
+
         var interfaceName = $"I{data.FileName}Data";
         var className = $"{data.FileName}Data";
 
@@ -70,11 +87,57 @@ internal static class ZuiEmit
         sb.Append(GenerateUsingCode(data));
         sb.Append($"namespace {data.Namespace};\r\n\r\n");
 
-        sb.Append($"public {partialKeyword}class {className} : {interfaceName}\r\n{{\r\n");
+        sb.Append($"public sealed {partialKeyword}class {className} : {interfaceName}\r\n{{\r\n");
+
+        // Generate static PropertyChangedEventArgs for each property
         foreach (var p in data.Bindings)
-            AppendIndentedLine(sb, 1, $"public {p.Type} {p.Name} {{ get; set; }}");
+            AppendIndentedLine(sb, 1, $"static readonly PropertyChangedEventArgs s_{ToCamelCase(p.Name)}EventArgs = new(nameof({p.Name}));");
+        sb.Append("\r\n");
+
+        // Generate backing fields
+        foreach (var p in data.Bindings)
+            AppendIndentedLine(sb, 1, $"{p.Type} __{ToCamelCase(p.Name)};");
+        sb.Append("\r\n");
+
+        // Generate INotifyPropertyChanged implementation
+        AppendIndentedLine(sb, 1, "public event PropertyChangedEventHandler PropertyChanged;");
+        sb.Append("\r\n");
+        AppendIndentedLine(sb, 1, "void OnPropertyChanged(PropertyChangedEventArgs args)");
+        AppendIndentedLine(sb, 1, "{");
+        AppendIndentedLine(sb, 2, "PropertyChanged?.Invoke(this, args);");
+        AppendIndentedLine(sb, 1, "}");
+        sb.Append("\r\n");
+
+        // Generate properties with INotifyPropertyChanged implementation
+        foreach (var p in data.Bindings)
+        {
+            var backingField = $"__{ToCamelCase(p.Name)}";
+            var eventArgsField = $"s_{ToCamelCase(p.Name)}EventArgs";
+            AppendIndentedLine(sb, 1, $"public required {p.Type} {p.Name}");
+            AppendIndentedLine(sb, 1, "{");
+            AppendIndentedLine(sb, 2, $"get => {backingField};");
+            AppendIndentedLine(sb, 2, "set");
+            AppendIndentedLine(sb, 2, "{");
+            AppendIndentedLine(sb, 3, $"if (!EqualityComparer<{p.Type}>.Default.Equals({backingField}, value))");
+            AppendIndentedLine(sb, 3, "{");
+            AppendIndentedLine(sb, 4, $"{backingField} = value;");
+            AppendIndentedLine(sb, 4, $"OnPropertyChanged({eventArgsField});");
+            AppendIndentedLine(sb, 3, "}");
+            AppendIndentedLine(sb, 2, "}");
+            AppendIndentedLine(sb, 1, "}");
+            sb.Append("\r\n");
+        }
+
+
         sb.Append("}");
         return sb.ToString();
+    }
+
+    static string ToCamelCase(string name)
+    {
+        if (string.IsNullOrEmpty(name) || char.IsLower(name[0]))
+            return name;
+        return char.ToLowerInvariant(name[0]) + name.Substring(1);
     }
 
     internal static string GenerateControllerClassSource(ZuiTypes.FileInfo data)
@@ -101,23 +164,20 @@ internal static class ZuiEmit
 
         // Data bindings
         if (data.Bindings.Count != 0)
-            AppendIndentedLine(sb, 1, $"public I{data.ControllerName}Data DataContext = new {data.ControllerName}Data();");
+            AppendIndentedLine(sb, 1, $"public I{data.ControllerName}Data DataContext {{ get; set; }} = null!;");
         sb.Append("\r\n");
 
         // Create named control variables
-        var namedControls = ZuiSchema.FindNamedControls(data.JsonDocument).OrderBy(c => c.ControlName);
-        var namedControlsCode = string.Join("\r\n", namedControls.Select(a =>
-        {
-            var qualifier = a.ControlName.StartsWith("_") ? "private" : "public ";
-            return $"    {qualifier} {a.ControlType} {a.ControlName};";
-        }));
-
-        // Add named control variables
+        var namedControlsDict = ZuiSchema.FindNamedControlsDictionary(data.JsonDocument);
+        var controlNames = namedControlsDict.Keys.OrderBy(n => n);
         AppendIndentedLine(sb, 1, "// Named controls (public unless name starts with '_')");
-        if (!string.IsNullOrWhiteSpace(namedControlsCode))
-            sb.Append(namedControlsCode).Append("\r\n");
+        foreach (var name in controlNames)
+        {
+            var qualifier = name.StartsWith("_") ? "private" : "public ";
+            AppendIndentedLine(sb, 1, $"{qualifier} {namedControlsDict[name]} {name};");
+        }
 
-        // Add constructor
+        // Add constructor if no .cs file is supplied
         var constructor = "";
         if (!data.UserSuppliedControllerClass)
         {
@@ -135,24 +195,66 @@ internal static class ZuiEmit
         AppendIndentedLine(sb, 2, "global::ZurfurGui.Loader.Load(this, _zuiJsonContent);");
         sb.Append("\r\n");
 
-        // Create InitializeControl code to initialize named controls
-        var initControlsCode = string.Join("\r\n", namedControls.Select(a =>
-        {
-            var qualifier = a.ControlName.StartsWith("_") ? "private" : "public ";
-            return $"        {a.ControlName} = ({a.ControlType})View.FindByName(\"{a.ControlName}\").Controller;";
-        }));
-
         // Add InitializeControl code to initialize named controls
         AppendIndentedLine(sb, 2, "// Initialize named controls");
-        if (!string.IsNullOrWhiteSpace(initControlsCode))
-            sb.Append(initControlsCode).Append("\r\n");
+        foreach (var name in controlNames)
+            AppendIndentedLine(sb, 2, $"{name} = ({namedControlsDict[name]})View.FindByName(\"{name}\").Controller;");
+
+        // Initialize DataContext after controls are loaded
+        if (data.Bindings.Count != 0)
+        {
+            sb.Append("\r\n");
+            AppendIndentedLine(sb, 2, "// Initialize DataContext");
+            AppendIndentedLine(sb, 2, "DataContext = CreateDefaultDataContext();");
+        }
+
         AppendIndentedLine(sb, 1, "}");
+
+        // Generate CreateDefaultDataContext factory method
+        if (data.Bindings.Count != 0)
+        {
+            sb.Append("\r\n");
+            AppendIndentedLine(sb, 1, $"I{data.ControllerName}Data CreateDefaultDataContext()");
+            AppendIndentedLine(sb, 1, "{");
+            AppendIndentedLine(sb, 2, $"return new {data.ControllerName}Data");
+            AppendIndentedLine(sb, 2, "{");
+
+            var initLines = new List<string>();
+            foreach (var binding in data.Bindings)
+            {
+                var initCode = GenerateDataInitializationCode(binding, namedControlsDict);
+                if (!string.IsNullOrEmpty(initCode))
+                    initLines.Add(initCode);
+            }
+
+            for (int i = 0; i < initLines.Count; i++)
+            {
+                var line = initLines[i];
+                var suffix = i < initLines.Count - 1 ? "," : "";
+                AppendIndentedLine(sb, 3, line + suffix);
+            }
+
+            AppendIndentedLine(sb, 2, "};");
+            AppendIndentedLine(sb, 1, "}");
+        }
 
         // Access to JSON content
         sb.Append("\r\n");
         AppendIndentedLine(sb, 1, $"static string _zuiJsonContent => @\"{zuiJsonContent}\";");
         sb.Append("}");
         return sb.ToString();
+    }
+
+    static string GenerateDataInitializationCode(ZuiTypes.DataBinding binding, Dictionary<string, string> namedControls)
+    {        
+        // If this binds directly to a named control, use the data context
+        if (namedControls.ContainsKey(binding.Bind))
+        {
+            return $"{binding.Name} = {binding.Bind}.DataContext";
+        }
+
+        // For all other types, initialize with new instance
+        return $"{binding.Name} = new {binding.Type}()";
     }
 
     internal static string GenerateZurfurMainSource(string zurfurMainNamespace,

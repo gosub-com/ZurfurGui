@@ -85,13 +85,64 @@ It generates these outputs:
   - registers generated controls with `Loader.RegisterControl(...)`
   - registers styles with `Loader.RegisterStyleSheet(...)`
 
-High-level runtime flow: your app’s entry point calls the generated initialization, then creates a generated controller
+High-level runtime flow: your app's entry point calls the generated initialization, then creates a generated controller
 (or loads one by name) to build and render the UI.
+
+## Two-tree architecture
+
+MDV creates **two parallel, independent graphs**:
+
+1. **Control tree** (`Controllable` → `View` → child `View` nodes)
+   - Built depth-first by `Loader.Load()` deserializing ZUI JSON
+   - Each control has a `View` with optional children, layout, and draw handlers
+   - Hierarchy: parent `View` → `_children` list → child `View` instances
+
+2. **DataContext tree** (strongly-typed data objects implementing generated interfaces)
+   - Built after control tree initialization
+   - Uses `INotifyPropertyChanged` for reactivity
+   - **May** include references to sub-control `DataContext` objects, but only when explicitly declared by the view's `.data` section
+	 (i.e., the data graph is *selectively composed* and is not required to mirror the control tree)
+
+**Key principle:** Controls reference data; data may reference other data objects—but **data never references controls**.
+The control tree and data graph are logically independent; the data graph shape is determined by what the view declares
+in `.data`.
+
+### Initialization sequence (per control)
+
+Generated `InitializeControl()` runs in this order:
+
+1. **Create View**: `View = new(this)` — attaches controller to view
+2. **Build control tree**: `Loader.Load(this, _zuiJsonContent)`
+   - Deserializes JSON properties
+   - Recursively creates child controls via `Loader.CreateControl()` (which calls child's `InitializeControl()`)
+   - Adds child views via `View.AddChild()`
+3. **Cache named controls**: `_title = (TextView)View.FindByName("_title").Controller` — stores references to named children
+4. **Create DataContext tree**: `DataContext = CreateDefaultDataContext()`
+   - For primitive types: initializes with default values (e.g., `new TextLines()`)
+   - For sub-control data (optional): if a `.data` binding targets a named control itself (e.g., `"bind": "card1"`), the
+	 generated initializer uses the child's already-initialized `DataContext` (e.g., `Card1 = card1.DataContext`)
+   - Otherwise, the initializer creates new view-shaped data objects (e.g., `Title = new TextLines()`)
+
+**Critical:** Child controls are fully initialized (including their `DataContext`, if any) before the parent's
+`CreateDefaultDataContext()` runs, so parent data can safely reference child data when explicitly declared.
+
+### Relation to MVVM
+
+This is similar in spirit to MVVM having a visual/control tree plus a ViewModel object graph, but MDV does not assume
+a 1:1 tree shape. Like MVVM, the data side should not reach into controls; integration should happen through declared
+contracts/bindings.
+
+### Data binding (in progress)
+
+- Bindings declared in `.data` section specify target control properties (e.g., `"binding": "_title.text"`)
+- When `DataContext` changes, view subscribes to `PropertyChanged` events
+- Notifications trigger updates to bound control properties via generated or runtime binding logic
 
 ## Where to look first (for AI agents)
 
 - `ZurfurGuiGen/GenerateZui.cs`: source generator (controller + data contract generation).
 - `ZurfurGuiGen/Json.cs`: generator JSON parser (does not use `System.Text.Json`).
+- `ZurfurGuiGen/ZuiEmit.cs`: code emission for controllers and data classes, including `CreateDefaultDataContext()`.
 - `ZurfurGui/Loader.cs`: runtime loader/registration and JSON deserialization pipeline.
 - `ZurfurGui/Controls/*.zui.json`: view/control definitions and `.data` declarations.
 

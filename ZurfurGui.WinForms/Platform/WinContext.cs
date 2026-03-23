@@ -22,11 +22,6 @@ internal class WinContext : OsContext
 {
 
     /// <summary>
-    /// Winforms uses points, so we scale to pixels
-    /// </summary>
-    const float PIXEL_TO_POINT = 72.0f / 96;
-
-    /// <summary>
     /// Fudge factor to make Winforms text offset the same as the browser canvas
     /// </summary>
     const double TEXT_OFFSET_SCALE_Y = 0.075;
@@ -67,7 +62,10 @@ internal class WinContext : OsContext
     Font GetFont()
     {
         if (_font == null)
-            _font = new Font(_fontName, (float)(_fontSize * PIXEL_TO_POINT));
+        {
+            // Use GraphicsUnit.Pixel to specify font size in pixels, which properly handles DPI scaling
+            _font = new Font(_fontName, (float)_fontSize, GraphicsUnit.Pixel);
+        }
         return _font;
     }
 

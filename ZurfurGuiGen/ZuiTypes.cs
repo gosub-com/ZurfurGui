@@ -9,6 +9,7 @@ internal static class ZuiTypes
     {
         public string Name { get; set; } = "";
         public string Type { get; set; } = "";
+        public string Bind { get; set; } = "";
     }
 
     // NOTE: We can't use record class here because code generators must target netstandard2.0

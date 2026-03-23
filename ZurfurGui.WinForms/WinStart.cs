@@ -12,7 +12,7 @@ public static class WinStart
         // see https://aka.ms/applicationconfiguration.
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
-        Application.SetHighDpiMode(HighDpiMode.SystemAware);
+        Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
 
         Application.Run(new FormZurfurGui(mainAppEntry));
     }

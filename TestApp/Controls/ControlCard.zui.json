@@ -5,15 +5,15 @@
     ".data": {
         "title": {
             "type": "TextLines",
-            "binding": "_title.text"
+            "bind": "_title.text"
         },
         "description": {
             "type": "TextLines",
-            "binding": "_description.text"
+            "bind": "_description.text"
         },
         "byLine": {
             "type": "TextLines",
-            "binding": "_byline.text"
+            "bind": "_byline.text"
         }
     },
     ".content": [

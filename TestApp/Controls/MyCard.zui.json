@@ -5,18 +5,19 @@
     ".data": {
         "title": {
             "type": "TextLines",
-            "binding": "_bigTitle.text"
+            "bind": "_bigTitle.text"
         },
         "card1": {
-            "type": "IControlCardData"
+            "type": "IControlCardData",
+            "bind": "_card1"
         },
         "description": {
             "type": "TextLines",
-            "binding": "_card2.description"
+            "bind": "_card2.description"
         },
         "byLine": {
             "type": "TextLines",
-            "binding": "_card2.byLine"
+            "bind": "_card2.byLine"
         }
 
     },

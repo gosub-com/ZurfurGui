@@ -8,7 +8,7 @@
         },
         "text": {
             "type": "TextLines",
-            "binding": "_checkText.text"
+            "bind": "_checkText.text"
         }
     },
     ".content": [

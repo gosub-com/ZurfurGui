@@ -47,7 +47,11 @@ public partial class FormZurfurGui : Form
                 _bitmap = new Bitmap(pictureMain.Width, pictureMain.Height, PixelFormat.Format32bppRgb);
 
             using var gr = Graphics.FromImage(_bitmap);
-            _window.DevicePixelRatio = _mag[_magIndex];
+
+            // Set DevicePixelRatio based on actual system DPI and manual magnification
+            // 96 DPI is the baseline (1.0), so at 144 DPI (150% scaling) this will be 1.5
+            var systemDpiRatio = gr.DpiX / 96.0;
+            _window.DevicePixelRatio = systemDpiRatio * _mag[_magIndex];
 
             // Hack the graphics into the context since Winforms requires us to use the supplied version
             ((WinContext)_canvas.Context)._graphics = gr;

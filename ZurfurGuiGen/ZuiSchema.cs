@@ -24,7 +24,9 @@ internal static class ZuiSchema
             if (!entry.TryGetValue("type", out var typeObj) || typeObj is not string typeName || string.IsNullOrWhiteSpace(typeName))
                 throw new Exception($"The JSON '.data.{kvp.Key}.type' must be a non-empty string");
 
-            result.Add(new ZuiTypes.DataBinding { Name = ToPascalIdentifier(kvp.Key), Type = NormalizeTypeName(typeName) });
+            var binding = entry.TryGetValue("bind", out var bindingObj) && bindingObj is string bindingStr ? bindingStr : "";
+
+            result.Add(new ZuiTypes.DataBinding { Name = ToPascalIdentifier(kvp.Key), Type = NormalizeTypeName(typeName), Bind = binding });
         }
 
         return result;
@@ -87,17 +89,18 @@ internal static class ZuiSchema
 
     /// <summary>
     /// Recursively scan JSON control, looking for named controls.
+    /// Returns a dictionary of ControlName -> ControlType.
+    /// Throws if duplicate ControlName is detected.
     /// </summary>
-    internal static List<(string ControlType, string ControlName)> FindNamedControls(Dictionary<string, object?> json)
+    internal static Dictionary<string, string> FindNamedControlsDictionary(Dictionary<string, object?> json)
     {
-        var result = new List<(string ControlType, string ControlName)>();
+        var result = new Dictionary<string, string>(StringComparer.Ordinal);
         ScanJson(json);
         return result;
 
         // Helper function to recursively scan the JSON
         void ScanJson(Dictionary<string, object?> currentJson)
         {
-            // Check if the current dictionary contains both ".controller" and ".Name"
             if (currentJson.TryGetValue(".name", out var controlNameObj)
                 && controlNameObj is string controlName)
             {
@@ -106,7 +109,11 @@ internal static class ZuiSchema
                 {
                     controller = controllerStr;
                 }
-                result.Add((controller, controlName));
+
+                if (result.ContainsKey(controlName))
+                    throw new Exception($"Duplicate control name '{controlName}' detected");
+
+                result.Add(controlName, controller);
             }
 
             // Recursively scan nested dictionaries or arrays

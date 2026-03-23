@@ -12,16 +12,10 @@ This project is exploring **MDV/MDCV** as an alternative to MVVM.
 For an overview of how it works, see the [AGENTS.md](AGENTS.md) notes.
 The main idea is to replace runtime bindings with generated, compile-time contracts.
 
-## For contributors / AI agents
+## For contributors and AI agents
 
-Before changing ZUI JSON schema, naming conventions, or code generation outputs, read
-[AGENTS.md](AGENTS.md) first.
-
-Key entry points:
-
-- Source generator: `ZurfurGuiGen/GenerateZui.cs`
-- Generator JSON parser: `ZurfurGuiGen/Json.cs`
-- Runtime loader / JSON deserialization: `ZurfurGui/Loader.cs`
+For an overview of the MDV architecture, code generation, and system internals,
+see [AGENTS.md](AGENTS.md).
 
 ## Design Goals
 
@@ -41,7 +35,4 @@ generation via the `ZurfurGuiGen` source generator creates a strongly-typed
 data interface plus a concrete data class (D).  The view consumes only the
 interface.  You can use D directly (for example, deserialize JSON into it) or
 extend D as a partial class that maps to/from the domain model. This makes the
-view’s data requirements explicit and keeps bindingscompile-time checked.
-
-
-
+view's data requirements explicit and keeps bindings compile-time checked.
