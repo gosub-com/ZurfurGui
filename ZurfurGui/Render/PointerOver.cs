@@ -80,7 +80,7 @@ internal class PointerOver
         }
     }
 
-    private static void UpdateViewChain(List<View> updateChain, List<View> newChain, PropertyKey<EnumProp<bool>> property)
+    private static void UpdateViewChain(List<View> updateChain, List<View> newChain, PropertyKey<bool> property)
     {
         // Add views to hover chain
         foreach (var view in newChain)
@@ -133,7 +133,7 @@ internal class PointerOver
                 return hit;
         }
 
-        if (!view.GetProperty(Panel.DisableHitTest).Or(false))
+        if (!view.GetProperty(Panel.DisableHitTest))
         {
             // User content hit test
             if (view.Draw is Drawable renderable)

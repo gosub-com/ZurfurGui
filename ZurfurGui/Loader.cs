@@ -17,19 +17,18 @@ namespace ZurfurGui;
 [JsonSerializable(typeof(Properties[]))]
 [JsonSerializable(typeof(AlignProp))]
 [JsonSerializable(typeof(TextLines))]
-[JsonSerializable(typeof(TextLinesProp))]
 [JsonSerializable(typeof(FontProp))]
-[JsonSerializable(typeof(ColorProp))]
 [JsonSerializable(typeof(SizeProp))]
 [JsonSerializable(typeof(ThicknessProp))]
 [JsonSerializable(typeof(PointProp))]
 [JsonSerializable(typeof(DoubleProp))]
-[JsonSerializable(typeof(EnumProp<bool>))]
-[JsonSerializable(typeof(EnumProp<DockEnum>))]
 [JsonSerializable(typeof(StyleSheet))]
 [JsonSerializable(typeof(DataBinding))]
 [JsonSerializable(typeof(Dictionary<string,DataBinding>))]
 [JsonSerializable(typeof(string[]))]
+[JsonSerializable(typeof(bool))]
+[JsonSerializable(typeof(DockEnum))]
+[JsonSerializable(typeof(Color))]
 public partial class ZurfurJsonContext : JsonSerializerContext { }
 
 
@@ -58,12 +57,9 @@ public static class Loader
         Converters = {
             // Add custom converters
             new PropertiesJsonConverter(),
-            new EnumPropJsonConverter<bool>(),
-            new EnumPropJsonConverter<DockEnum>(),
             new DoublePropJsonConverter(),
             new TextLinesJsonConverter(),
-            new TextLinesPropJsonConverter(),
-            new ColorPropJsonConverter(),
+            new ColorJsonConverter(),
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
         },
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,

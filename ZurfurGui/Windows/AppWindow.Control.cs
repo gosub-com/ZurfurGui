@@ -86,7 +86,7 @@ public partial class AppWindow : Controllable, Drawable
 
     public bool IsDarkMode
     {
-        get => View.GetProperty(Panel.IsDarkMode).Or(false);
+        get => View.GetProperty(Panel.IsDarkMode);
         set => View.SetProperty(Panel.IsDarkMode, value);
     }
 

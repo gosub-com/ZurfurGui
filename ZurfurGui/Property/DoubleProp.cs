@@ -1,6 +1,6 @@
 ﻿namespace ZurfurGui.Property;
 
-public readonly struct DoubleProp : IProperty<DoubleProp>
+public readonly struct DoubleProp : IMergable<DoubleProp>
 {
     readonly double? _value;
 

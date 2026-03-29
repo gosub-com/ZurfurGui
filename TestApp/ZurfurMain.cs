@@ -5,6 +5,7 @@ using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Property;
 using ZurfurGui.Windows;
+using TestApp.Controls;
 
 
 /// <summary>
@@ -47,6 +48,10 @@ public static partial class ZurfurMain
         app.ShowWindow(new FormMultiForm(), "Multi Form",
             margin: new ThicknessProp(10, 10, 10, 10),
             align: new AlignProp(AlignHorizontal.Right, AlignVertical.Top));
+
+        app.ShowWindow(new StyleTestCard(), "StyleTest",
+            location: new PointProp(380, 120),
+            sizeRequst: new SizeProp(250, 280));
 
     }
 

@@ -8,7 +8,7 @@
     //     FloatingWindows: Modal and modeless windows that can be moved around by the user.
     ".controller": "AppWindow",
     ".namespace": "ZurfurGui.Windows",
-    ".classes": [ "AppWindow" ],
+    ".classes": [ "AppWindow" ], // TBD: Remove, as this is the element type (not class)
     ".useStyles": [ "ZurfurLight", "ZurfurDark" ],
     ".content": [
         {

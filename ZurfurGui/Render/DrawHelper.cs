@@ -46,7 +46,7 @@ public static class DrawHelper
             return false;
 
         // Check if the background is visible (TBD: on the border and border radius)
-        return view.GetStyle(Panel.BackgroundColor).Or(Colors.TransParent).A > ALPHA_HIT_THRESHOLD;
+        return view.GetStyle(Panel.BackgroundColor).A > ALPHA_HIT_THRESHOLD;
     }
 
 }

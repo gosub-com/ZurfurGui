@@ -1,7 +1,7 @@
 {
     ".controller": "Button",
     ".namespace": "ZurfurGui.Controls",
-    ".classes": [ "Button" ],
+    ".classes": [ "Button" ], // TBD: Remove, as this is the element type (not class)
     ".data": {
         "text": {
             "type": "TextLines",

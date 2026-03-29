@@ -42,7 +42,9 @@ internal static class ZuiEmit
         if (data.Bindings.Count == 0)
             return "";
 
-        var interfaceName = $"I{data.FileName}Data";
+        var namedControls = ZuiSchema.FindNamedControlsDictionary(data.JsonDocument);
+
+        var interfaceName = $"I{data.ControllerName}Data";
 
         var sb = new StringBuilder();
         AppendFileHeader(sb, Path.GetFileName(data.Path));
@@ -51,7 +53,7 @@ internal static class ZuiEmit
 
         sb.Append($"public interface {interfaceName} : INotifyPropertyChanged\r\n{{\r\n");
         foreach (var p in data.Bindings)
-            AppendIndentedLine(sb, 1, $"{p.Type} {p.Name} {{ get; set; }}");
+            AppendIndentedLine(sb, 1, $"{GetBindingDataType(p, namedControls)} {p.Name} {{ get; set; }}");
         sb.Append("}");
         return sb.ToString();
     }
@@ -70,15 +72,15 @@ internal static class ZuiEmit
             var bindingPath = binding.Bind.Split('.');
             var bindingName = bindingPath[0];
 
-            if (!namedControls.ContainsKey(bindingName))
+            if (!IsNamedControl(bindingName, namedControls))
             {
                 throw new Exception($"The binding for '{binding.Name}' does not match a valid control name. Binding: '{binding.Bind}'");
             }
 
         }
 
-        var interfaceName = $"I{data.FileName}Data";
-        var className = $"{data.FileName}Data";
+        var interfaceName = $"I{data.ControllerName}Data";
+        var className = $"{data.ControllerName}Data";
 
         var partialKeyword = data.UserSuppliedDataClass ? "partial " : "";
 
@@ -96,7 +98,42 @@ internal static class ZuiEmit
 
         // Generate backing fields
         foreach (var p in data.Bindings)
-            AppendIndentedLine(sb, 1, $"{p.Type} __{ToCamelCase(p.Name)};");
+            AppendIndentedLine(sb, 1, $"{GetBindingDataType(p, namedControls)} __{ToCamelCase(p.Name)};");
+        sb.Append("\r\n");
+
+        // Parameterless constructor initializing default values
+        // (mirrors the controller's CreateDefaultDataContext initialization)
+        AppendIndentedLine(sb, 1, $"public {className}()");
+        AppendIndentedLine(sb, 1, "{");
+        foreach (var binding in data.Bindings)
+        {
+            var backingFieldName = $"__{ToCamelCase(binding.Name)}";
+
+            // If the binding targets a named control (e.g. "bind": "_card1"), initialize a fresh
+            // concrete data instance for the target type. 
+            if (IsNamedControl(binding.Bind, namedControls))
+            {
+                AppendIndentedLine(sb, 2, $"{backingFieldName} = new {binding.Type}Data();");
+            }
+            else
+            {
+                AppendIndentedLine(sb, 2, $"{backingFieldName} = new {binding.Type}();");
+            }
+        }
+        AppendIndentedLine(sb, 1, "}");
+        sb.Append("\r\n");
+
+        // Constructor that accepts each binding value
+        var ctorParams = string.Join(", ", data.Bindings.Select(b => $"{GetBindingDataType(b, namedControls)} {ToCamelCase(b.Name)}"));
+        AppendIndentedLine(sb, 1, $"public {className}({ctorParams})");
+        AppendIndentedLine(sb, 1, "{");
+        foreach (var binding in data.Bindings)
+        {
+            var paramName = ToCamelCase(binding.Name);
+            var backingFieldName = $"__{paramName}";
+            AppendIndentedLine(sb, 2, $"{backingFieldName} = {paramName};");
+        }
+        AppendIndentedLine(sb, 1, "}");
         sb.Append("\r\n");
 
         // Generate INotifyPropertyChanged implementation
@@ -111,14 +148,15 @@ internal static class ZuiEmit
         // Generate properties with INotifyPropertyChanged implementation
         foreach (var p in data.Bindings)
         {
+            var propertyType = GetBindingDataType(p, namedControls);
             var backingField = $"__{ToCamelCase(p.Name)}";
             var eventArgsField = $"s_{ToCamelCase(p.Name)}EventArgs";
-            AppendIndentedLine(sb, 1, $"public required {p.Type} {p.Name}");
+            AppendIndentedLine(sb, 1, $"public {propertyType} {p.Name}");
             AppendIndentedLine(sb, 1, "{");
             AppendIndentedLine(sb, 2, $"get => {backingField};");
             AppendIndentedLine(sb, 2, "set");
             AppendIndentedLine(sb, 2, "{");
-            AppendIndentedLine(sb, 3, $"if (!EqualityComparer<{p.Type}>.Default.Equals({backingField}, value))");
+            AppendIndentedLine(sb, 3, $"if (!EqualityComparer<{propertyType}>.Default.Equals({backingField}, value))");
             AppendIndentedLine(sb, 3, "{");
             AppendIndentedLine(sb, 4, $"{backingField} = value;");
             AppendIndentedLine(sb, 4, $"OnPropertyChanged({eventArgsField});");
@@ -139,6 +177,25 @@ internal static class ZuiEmit
             return name;
         return char.ToLowerInvariant(name[0]) + name.Substring(1);
     }
+
+    /// <summary>
+    /// Use either the type name, or I{type}Data if it is a control
+    /// </summary>
+    static string GetBindingDataType(ZuiTypes.DataBinding binding, Dictionary<string, string> namedControls)
+    {
+        // If the binding targets a named control itself (e.g. "bind": "_card1"), the data-binding
+        // type should be that control's data contract (I<ControlName>Data).
+        if (IsNamedControl(binding.Bind, namedControls))
+        {
+            var controlTypeName = namedControls[binding.Bind];
+            return $"I{controlTypeName}Data";
+        }
+
+        return binding.Type;
+    }
+
+    static bool IsNamedControl(string bind, Dictionary<string, string> namedControls)
+        => namedControls.ContainsKey(bind);
 
     internal static string GenerateControllerClassSource(ZuiTypes.FileInfo data)
     {
@@ -216,25 +273,30 @@ internal static class ZuiEmit
             sb.Append("\r\n");
             AppendIndentedLine(sb, 1, $"I{data.ControllerName}Data CreateDefaultDataContext()");
             AppendIndentedLine(sb, 1, "{");
-            AppendIndentedLine(sb, 2, $"return new {data.ControllerName}Data");
-            AppendIndentedLine(sb, 2, "{");
+            AppendIndentedLine(sb, 2, $"return new {data.ControllerName}Data(");
 
-            var initLines = new List<string>();
+            var args = new List<string>();
             foreach (var binding in data.Bindings)
             {
-                var initCode = GenerateDataInitializationCode(binding, namedControlsDict);
-                if (!string.IsNullOrEmpty(initCode))
-                    initLines.Add(initCode);
+                if (IsNamedControl(binding.Bind, namedControlsDict))
+                {
+                    // If this binds directly to a named control, use the data context
+                    args.Add($"{ToCamelCase(binding.Name)}: {binding.Bind}.DataContext");
+                }
+                else
+                {
+                    // For all other types, initialize with new instance
+                    args.Add($"{ToCamelCase(binding.Name)}: new {binding.Type}()");
+                }
             }
 
-            for (int i = 0; i < initLines.Count; i++)
+            for (int i = 0; i < args.Count; i++)
             {
-                var line = initLines[i];
-                var suffix = i < initLines.Count - 1 ? "," : "";
-                AppendIndentedLine(sb, 3, line + suffix);
+                var suffix = i < args.Count - 1 ? "," : "";
+                AppendIndentedLine(sb, 3, args[i] + suffix);
             }
 
-            AppendIndentedLine(sb, 2, "};");
+            AppendIndentedLine(sb, 2, ");");
             AppendIndentedLine(sb, 1, "}");
         }
 
@@ -243,18 +305,6 @@ internal static class ZuiEmit
         AppendIndentedLine(sb, 1, $"static string _zuiJsonContent => @\"{zuiJsonContent}\";");
         sb.Append("}");
         return sb.ToString();
-    }
-
-    static string GenerateDataInitializationCode(ZuiTypes.DataBinding binding, Dictionary<string, string> namedControls)
-    {        
-        // If this binds directly to a named control, use the data context
-        if (namedControls.ContainsKey(binding.Bind))
-        {
-            return $"{binding.Name} = {binding.Bind}.DataContext";
-        }
-
-        // For all other types, initialize with new instance
-        return $"{binding.Name} = new {binding.Type}()";
     }
 
     internal static string GenerateZurfurMainSource(string zurfurMainNamespace,

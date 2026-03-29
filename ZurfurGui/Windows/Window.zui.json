@@ -1,7 +1,7 @@
 {
     ".controller": "Window",
     ".namespace": "ZurfurGui.Windows",
-    ".classes": [ "Window" ],
+    ".classes": [ "Window" ], // TBD: Remove, as this is the element type (not class)
     ".content": [
         {
             ".layout": "Dock",

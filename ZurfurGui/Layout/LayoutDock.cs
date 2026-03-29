@@ -14,7 +14,7 @@ public enum DockEnum
 
 public class LayoutDock : Layoutable
 {
-    public static readonly PropertyKeyMerge<EnumProp<DockEnum>> Dock = new("dock.align", typeof(Panel), new(), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<DockEnum> Dock = new("dock.align", typeof(Panel), new(), ViewFlags.ReMeasure);
 
 
     int _lastVisibleIndex;
@@ -41,7 +41,7 @@ public class LayoutDock : Layoutable
             _lastVisibleIndex = i;
             childView.Measure(constraint, measure);
             var childSize = childView.DesiredTotalSize;
-            var dock = childView.GetStyle(Dock).Or(DockEnum.Left);
+            var dock = childView.GetStyle(Dock);
             switch (dock)
             {
                 case DockEnum.Left:
@@ -81,7 +81,7 @@ public class LayoutDock : Layoutable
 
             // Update based on dock (last visible index always takes remaining space)
             var childSize = childView.DesiredTotalSize;
-            var dock = childView.GetStyle(Dock).Or(DockEnum.Left);
+            var dock = childView.GetStyle(Dock);
             if (i < _lastVisibleIndex)
             {
                 switch (dock)

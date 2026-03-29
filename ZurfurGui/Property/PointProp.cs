@@ -9,7 +9,7 @@ namespace ZurfurGui.Property;
 public readonly record struct PointProp(
     [property: JsonPropertyName("x")] DoubleProp X, 
     [property: JsonPropertyName("y")] DoubleProp Y
-) : IProperty<PointProp>
+) : IMergable<PointProp>
 {
     public override string ToString() => $"X: {X}, Y: {Y}";
     public string ToString(string format) => $"X: {X.ToString(format)}, Y: {Y.ToString(format)}";

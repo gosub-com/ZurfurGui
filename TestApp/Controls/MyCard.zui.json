@@ -8,7 +8,7 @@
             "bind": "_bigTitle.text"
         },
         "card1": {
-            "type": "IControlCardData",
+            "type": "ControlCard",
             "bind": "_card1"
         },
         "description": {

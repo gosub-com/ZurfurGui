@@ -8,7 +8,7 @@ namespace ZurfurGui.Property;
 public readonly record struct FontProp(
     [property: JsonPropertyName("name")] string? Name,
     [property: JsonPropertyName("size")] DoubleProp Size
-) : IProperty<FontProp>
+) : IMergable<FontProp>
 {
     /// <summary>
     /// Indicates whether both fields are non-null.

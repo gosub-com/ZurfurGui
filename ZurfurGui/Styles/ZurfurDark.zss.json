@@ -11,7 +11,7 @@
         },
         // Text dark
         {
-            ".selectors": "Text:IsDarkMode",
+            ".selectors": "TextView:IsDarkMode",
             "color": "#DDDDDD"
         },
         // Button dark

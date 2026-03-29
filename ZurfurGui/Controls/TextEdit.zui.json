@@ -1,7 +1,7 @@
 {
     ".controller": "TextEdit",
     ".namespace": "ZurfurGui.Controls",
-    ".classes": [ "TextEdit" ],
+    ".classes": [ "TextEdit" ], // TBD: Remove, as this is the element type (not class)
     ".data": {
         "text": {
             "type": "TextLines",

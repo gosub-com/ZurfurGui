@@ -4,17 +4,13 @@ using ZurfurGui.Layout;
 using ZurfurGui.Property;
 using ZurfurGui.Render;
 using ZurfurGui.Windows;
+using ZurfurGui.Styles;
 
 namespace ZurfurGui.Base;
 
 
 public sealed class View
 {
-
-    // TBD: Should we be caching style lookups in the properties?
-    const int PROPERTY_STYLE_CACHE_BEGIN = 10000;
-    const int PROPERTY_STYLE_CACHE_END = 20000;
-
     /// <summary>
     /// All child views. 
     /// </summary>
@@ -23,7 +19,7 @@ public sealed class View
     /// <summary>
     /// View properties
     /// </summary>
-    readonly Properties _properties = new();
+    internal readonly Properties _properties = new();
 
     /// <summary>
     /// Iterate and find child views.  Use AddChild (and friends) to modify the children
@@ -133,6 +129,8 @@ public sealed class View
         return $"{Controller.TypeName}: {(name == "" ? "(no name)" : name)}";
     }
 
+    public string Name => GetProperty(Panel.Name) ?? "";
+
     /// <summary>
     /// Call when a view's measurement becomes invalid and needs to be re-measured.
     /// NOTE: This is called automatically when properties that affect measurement are changed.
@@ -184,208 +182,26 @@ public sealed class View
             return;
         SetFlags(key.Flags);
         _properties.Set(key, value);
+        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + Style.PROPERTY_STYLE_CACHE_BEGIN));
     }
 
     /// <summary>
-    /// Set a property, don't invalidate
+    /// Set a property, don't invalidate to re-draw or re-measure
     /// </summary>
     internal void SetPropertyNoFlags<T>(PropertyKey<T> key, T value)
     {
         _properties.Set(key, value);
+        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + Style.PROPERTY_STYLE_CACHE_BEGIN));
     }
+
 
     /// <summary>
-    /// Retrieve a style property from the view's property collection,
-    /// or if it's not found walk up the tree to find a style property
-    /// based on the classes property.
+    /// Return the property or style (property overrides style)
     /// </summary>
-    public T GetStyle<T>(PropertyKeyMerge<T> key) where T : IProperty<T>
-    {
-        // Properties set by code take precedence
-        T property;
-        if (_properties.TryGet(key, out var value) && value is T)
-        {
-            if (value.IsComplete)
-                return value;
-            property = value;
-        }
-        else
-        {
-            property = key.StyleDefault;
-        }
-
-        // Properties cached from style lookup below
-        if (_properties.TryGetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN),
-                out var styledValue) && styledValue is T typedStyledValue)
-        {
-            return property.Or(typedStyledValue);
-        }
-
-        // Lookup styledProperty (matches first, then defaults)
-        var styledProperty = FindStyledProperty(key, key.StyleDefault);
-
-        // Cache the styled property for quick lookup above
-        _properties.SetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN), styledProperty);
-
-        return property.Or(styledProperty);
-    }
-
     public T GetStyle<T>(PropertyKey<T> key)
     {
-        // Properties set by code take precedence
-        if (_properties.TryGet(key, out var value) && value is T typedValue)
-            return typedValue;
-
-        // Properties cached from style lookup below
-        if (_properties.TryGetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN),
-                out var styledValue) && styledValue is T typedStyledValue)
-        {
-            return typedStyledValue;
-        }
-
-        // Lookup styled value (matches first, then defaults)
-        var styledProperty = FindStyledValue(key);
-
-        // Cache the styled property for quick lookup above
-        _properties.SetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN), styledProperty!);
-
-        return styledProperty;
+        return Style.GetStyle(this, key);
     }
-
-    internal void ClearStyleCache()
-    {
-        var keysToRemove = _properties
-            .Select(k => k.key)
-            .Where( k => k.IdAsInt >= PROPERTY_STYLE_CACHE_BEGIN && k.IdAsInt < PROPERTY_STYLE_CACHE_END)
-            .ToList();
-        foreach (var key in keysToRemove)
-            _properties.RemoveById(key);
-    }
-
-
-    /// <summary>
-    /// Walk up the view tree to find a style property based on the classes property.
-    /// </summary>
-    T FindStyledProperty<T>(PropertyKeyMerge<T> key, T property) where T : IProperty<T>
-    {
-        var classes = _properties.Get(Panel.Classes);
-        if (classes == null || classes.Count == 0)
-            return key.StyleDefault;
-
-        // Walk up the view tree
-        for (var view = this; view != null; view = view.Parent)
-        {
-            if (!view._properties.TryGet(Panel.UseStyles, out var useStyles) || useStyles == null)
-                continue;
-
-            foreach (var useStyle in useStyles.Reverse())
-            {
-                if (Loader.GetStyleSheet(useStyle) is not StyleSheet styleSheet)
-                    continue;
-
-                foreach (var style in styleSheet.Styles.Reverse())
-                {
-                    if (style.TryGet(Panel.Selectors, out var selectors) && selectors != null
-                        && style.TryGet(key, out var p) && p != null
-                        && StyleMatches(selectors, classes))
-                    {
-                        property = property.Or(p);
-                        if (property.IsComplete)
-                            return property;
-                    }
-                }
-            }
-        }
-
-        return property;
-    }
-
-    /// <summary>
-    /// Walk up the view tree to find a non-mergeable style property based on the classes property.
-    /// </summary>
-    T FindStyledValue<T>(PropertyKey<T> key)
-    {
-        var classes = _properties.Get(Panel.Classes);
-        if (classes == null || classes.Count == 0)
-            return key.StyleDefault;
-
-        // Walk up the view tree
-        for (var view = this; view != null; view = view.Parent)
-        {
-            if (!view._properties.TryGet(Panel.UseStyles, out var useStyles) || useStyles == null)
-                continue;
-
-            foreach (var useStyle in useStyles.Reverse())
-            {
-                if (Loader.GetStyleSheet(useStyle) is not StyleSheet styleSheet)
-                    continue;
-
-                foreach (var style in styleSheet.Styles.Reverse())
-                {
-                    if (style.TryGet(Panel.Selectors, out var selectors) && selectors != null
-                        && style.TryGet(key, out var p) && p != null
-                        && StyleMatches(selectors, classes))
-                    {
-                        return p;
-                    }
-                }
-            }
-        }
-
-        return key.StyleDefault;
-    }
-
-    bool StyleMatches(TextLines selectors, TextLines classes)
-    {
-        foreach (var selector in selectors)
-        {
-            var s = selector.Split(':');
-            foreach (var c in classes)
-            {
-                if (c == s[0])
-                {
-                    // Check pseudo classes
-                    var match = true;
-                    for (int i = 1; i < s.Length; i++)
-                    {
-                        switch (s[i])
-                        {
-                            case "IsPointerOver":
-                                if (!GetProperty(Panel.IsPointerOver).Or(false))
-                                    match = false;
-                                break;
-                            case "!IsPointerOver":
-                                if (GetProperty(Panel.IsPointerOver).Or(false))
-                                    match = false;
-                                break;
-                            case "IsPressed":
-                                if (!GetProperty(Panel.IsPressed).Or(false))
-                                    match = false;
-                                break;
-                            case "!IsPressed":
-                                if (GetProperty(Panel.IsPressed).Or(false))
-                                    match = false;
-                                break;
-                            case "IsDarkMode":
-                                if (!AppWindow?.IsDarkMode ?? false)
-                                    match = false;
-                                break;
-                            case "!IsDarkMode":
-                                if (AppWindow?.IsDarkMode ?? false)
-                                    match = false;
-                                break;
-                            default:
-                                match = false;
-                                break;
-                        }
-                    }
-                    return match;
-                }
-            }
-        }
-        return false;
-    }
-
 
 
     /// <summary>
@@ -431,11 +247,11 @@ public sealed class View
         _cache.SizeMax = GetStyle(Panel.SizeMax);
         _cache.Padding = GetStyle(Panel.Padding).Or(0);
         _cache.Margin = GetStyle(Panel.Margin).Or(0);
-        _cache.BackgroundColor = GetStyle(Panel.BackgroundColor).Or(new());
-        _cache.BorderColor = GetStyle(Panel.BorderColor).Or(new());
-        _cache.BorderWidth = GetStyle(Panel.BorderWidth).Or(0);
-        _cache.BorderRadius = GetStyle(Panel.BorderRadius).Or(0);
-        _cache.Clip = GetStyle(Panel.Clip).Or(false);
+        _cache.BackgroundColor = GetStyle(Panel.BackgroundColor);
+        _cache.BorderColor = GetStyle(Panel.BorderColor);
+        _cache.BorderWidth = GetStyle(Panel.BorderWidth);
+        _cache.BorderRadius = GetStyle(Panel.BorderRadius);
+        _cache.Clip = GetStyle(Panel.Clip);
 
         // Include padding and border in the measurement
         var margin = _cache.Margin;
@@ -519,7 +335,7 @@ public sealed class View
         }
 
         Position = new Vector(x, y) + GetStyle(Panel.Offset).Or(0);
-        var scale = (Parent?.Scale??1) * GetStyle(Panel.Magnification).Or(1);
+        var scale = (Parent?.Scale??1) * GetStyle(Panel.Magnification);
         var origin = (Parent?.Origin??new()).ToVector + scale * Position;
 
         // No need to re-arrange children if nothing changed

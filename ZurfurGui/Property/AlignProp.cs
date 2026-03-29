@@ -9,7 +9,7 @@ namespace ZurfurGui.Property;
 public readonly record struct AlignProp(
     [property: JsonPropertyName("horizontal")] AlignHorizontal? Horizontal,
     [property: JsonPropertyName("vertical")] AlignVertical? Vertical
-) : IProperty<AlignProp>
+) : IMergable<AlignProp>
 {
     /// <summary>
     /// Indicates whether both fields are non-null.

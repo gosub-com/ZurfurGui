@@ -22,7 +22,7 @@ public class DrawText : Drawable
         if (context.DeviceClip.Intersect(view.toDevice(view.ContentRect)).Width == 0)
             return;
 
-        var color = view.GetStyle(TextView.Color).Or(Colors.Black);
+        var color = view.GetStyle(TextView.Color);
         if (color.A == 0)
             return; // Exit if clear
 

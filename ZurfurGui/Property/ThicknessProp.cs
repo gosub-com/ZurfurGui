@@ -11,7 +11,7 @@ public readonly record struct ThicknessProp(
     [property: JsonPropertyName("top")] DoubleProp Top, 
     [property: JsonPropertyName("right")] DoubleProp Right, 
     [property: JsonPropertyName("bottom")] DoubleProp Bottom
-) : IProperty<ThicknessProp>
+) : IMergable<ThicknessProp>
 {
     public ThicknessProp() : this(new (), new (), new(), new()) { }
     public override string ToString() => $"Left: {Left}, Top: {Top}, Right: {Right}, Bottom: {Bottom}";

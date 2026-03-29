@@ -5,6 +5,7 @@ using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 using ZurfurGui.Property;
 using ZurfurGui.Windows;
+using ZurfurGui.Styles;
 
 namespace ZurfurGui.Render;
 
@@ -126,7 +127,7 @@ public class Renderer
 
         if (needsClearCache)
         {
-            view.ClearStyleCache();
+            view.ClearStyleCacheInternal();
             view.InvalidateMeasure();
             view.InvalidateDraw();
         }

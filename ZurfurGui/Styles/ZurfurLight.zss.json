@@ -9,9 +9,9 @@
             ".selectors": "AppWindow",
             ".backgroundColor": "LightSkyBlue"
         },
-        // Text
+        // TextView
         {
-            ".selectors": "Text",
+            ".selectors": "TextView",
             "color": "Black"
         },
         // Button

@@ -9,7 +9,7 @@ namespace ZurfurGui.Property;
 public readonly record struct SizeProp(
     [property: JsonPropertyName("width")] DoubleProp Width,
     [property: JsonPropertyName("height")] DoubleProp Height
-) : IProperty<SizeProp>
+) : IMergable<SizeProp>
 {
     public override string ToString() => $"Width: {Width}, Height: {Height}";
     public string ToString(string format) => $"Width: {Width.ToString(format)}, Height: {Height.ToString(format)}";

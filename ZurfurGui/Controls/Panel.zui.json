@@ -1,5 +1,5 @@
 {
     ".controller": "Panel",
     ".namespace": "ZurfurGui.Controls",
-    ".classes": [ "Panel" ]
+    ".classes": [ "Panel" ] // TBD: Remove, as this is the element type (not class)
 }

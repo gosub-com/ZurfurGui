@@ -1,0 +1,50 @@
+{
+    ".controller": "StyleTestCard",
+    ".namespace": "TestApp.Controls",
+    ".layout": "Column",
+    ".useStyles": [ "StyleTest" ],
+    ".content": [
+        {
+            // Show theme name using the StyleTestSkinThemeText style
+            ".controller": "TextView",
+            ".classes": [ "TextView", "StyleTestSkinThemeText" ]
+        },
+        {
+            // Show theme name using the StyleTestSkinHoverTextStyleTestSkinHoverText style
+            ".controller": "TextView",
+            ".classes": [ "TextView", "StyleTestSkinHoverText" ],
+            ".borderWidth": 2,
+            ".borderColor": "Gray"
+        },
+        {
+            ".controller": "TextView",
+            ".borderWidth": 2,
+            ".borderColor": "Gray",
+            "text": "StyleNone"
+        },
+        {
+            ".controller": "TextView",
+            // TBD: Remove "TextView", as that is the element type (not class)
+            ".classes": [ "TextView", "StyleC1" ],
+            ".borderWidth": 2,
+            ".borderColor": "Gray",
+            "text": "Style C1"
+        },
+        {
+            // TBD: Remove "TextView", as that is the element type (not class)
+            ".controller": "TextView",
+            ".classes": [ "TextView", "StyleC2" ],
+            ".borderWidth": 2,
+            ".borderColor": "Gray",
+            "text": "Style C2"
+        },
+        {
+            // TBD: Remove "TextView", as that is the element type (not class)
+            ".controller": "TextView",
+            ".classes": [ "TextView", "StyleC1", "StyleC2" ],
+            ".borderWidth": 2,
+            ".borderColor": "Gray",
+            "text": "Style C1 & C2"
+        }
+    ]
+}
