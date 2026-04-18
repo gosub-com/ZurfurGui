@@ -4,11 +4,20 @@
     ".layout": "Row",
     ".data": {
         "isChecked": {
-            "type": "Bool"
+            "type": "Bool",
+            "bind": "new"
         },
         "text": {
             "type": "TextLines",
             "bind": "_checkText.text"
+        },
+        "isCheckedNullTest": {
+            "type": "?Bool",
+            "bind": "new"
+        },
+        "textNullTest": {
+            "type": "?TextLines",
+            "bind": "new"
         }
     },
     ".content": [

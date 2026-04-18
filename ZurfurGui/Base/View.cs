@@ -185,6 +185,20 @@ public sealed class View
         _properties.RemoveById(new PropertyKeyId(key.IdAsInt + Style.PROPERTY_STYLE_CACHE_BEGIN));
     }
 
+    public bool ContainsProperty<T>(PropertyKey<T> key)
+    {
+        return _properties.ContainsKey(key);
+    }
+
+    public void RemoveProperty<T>(PropertyKey<T> key)
+    {
+        if (!_properties.ContainsKey(key))
+            return;
+        SetFlags(key.Flags);
+        _properties.Remove(key);
+        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + Style.PROPERTY_STYLE_CACHE_BEGIN));
+    }
+
     /// <summary>
     /// Set a property, don't invalidate to re-draw or re-measure
     /// </summary>

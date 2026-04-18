@@ -89,10 +89,10 @@ public class GenerateZui : IIncrementalGenerator
                 if (source != "")
                     spc.AddSource($"{data.FileName}.Control.g.cs", SourceText.From(source, Encoding.UTF8));
 
-                // Generate the source code for the data contract (interface)
-                var dataContractSource = ZuiEmit.GenerateDataContractInterfaceSource(data);
-                if (dataContractSource != "")
-                    spc.AddSource($"{data.FileName}.DataContract.g.cs", SourceText.From(dataContractSource, Encoding.UTF8));
+                // Generate the source code for the contract (interface)
+                var contractSource = ZuiEmit.GenerateContractInterfaceSource(data);
+                if (contractSource != "")
+                    spc.AddSource($"{data.FileName}.Contract.g.cs", SourceText.From(contractSource, Encoding.UTF8));
 
                 // Generate the source code for the data implementation (partial if *Data.cs exists)
                 var dataImplSource = ZuiEmit.GenerateDataImplementationSource(data);

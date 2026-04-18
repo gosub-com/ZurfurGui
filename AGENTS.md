@@ -9,7 +9,7 @@ Goal: replace MVVM-style runtime bindings with **generated, compile-time contrac
 - **View (V)** declares the data it needs (currently in ZUI JSON `data`; other hosts may use an equivalent XAML `data` section).
 - Code generation produces:
   - Code-behind partial controller class (`*.zui.json` → `<ViewName>.Control.g.cs`)
-  - a strongly typed **data interface** (`*.zui.json` → `<ViewName>.DataContract.g.cs`)
+  - a strongly typed **data interface** (`*.zui.json` → `<ViewName>.Contract.g.cs`)
   - a concrete **data class** that implements it (`*.zui.json` → `<ViewName>.Data.g.cs`)
   - optionally, a **data-command** surface (MDCV) for typed interactions/commands
 - You can:
@@ -42,7 +42,7 @@ Naming notes:
 - The generated controller type name is exactly `<ViewName>` (it is not suffixed).
 - For view code-behind, use a partial class in `<ViewName>.Control.cs`.
 - If `.data` is present, the generator emits:
-  - a data contract interface `I<ViewName>Data` in `<ViewName>.DataContract.g.cs`
+  - a data contract interface `I<ViewName>Data` in `<ViewName>.Contract.g.cs`
   - a data implementation class `<ViewName>Data` in `<ViewName>.Data.g.cs` (generated as `partial` if you provide `<ViewName>.Data.cs`)
 - For data code-behind/extensibility, use a partial class in `<ViewName>.Data.cs`.
 - All generated and user-authored partials for a view are in the same namespace (the namespace comes from the JSON `.namespace`).
@@ -69,10 +69,10 @@ It generates these outputs:
   code-behind without editing generated code.
 
 
-### 2) Per-view data contract (`*.zui.json` → `<ViewName>.DataContract.g.cs` + `<ViewName>.Data.g.cs`)
+### 2) Per-view data contract (`*.zui.json` → `<ViewName>.Contract.g.cs` + `<ViewName>.Data.g.cs`)
 
 - If a view declares a `.data` section, the generator emits:
-  - `I<ViewName>Data` in `<ViewName>.DataContract.g.cs`
+  - `I<ViewName>Data` in `<ViewName>.Contract.g.cs`
   - `<ViewName>Data : I<ViewName>Data` in `<ViewName>.Data.g.cs`
 - If you provide a matching hand-written `<ViewName>.Data.cs`, the generated data class is emitted as `partial` so you can
   extend it.

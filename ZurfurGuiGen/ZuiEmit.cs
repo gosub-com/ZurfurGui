@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.SqlTypes;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -26,6 +27,7 @@ internal static class ZuiEmit
         var sb = new StringBuilder();
         sb.Append("using System.ComponentModel;\r\n");
         sb.Append("using ZurfurGui.Base;\r\n");
+        sb.Append("using ZurfurGui.Property;\r\n");
         sb.Append("using ZurfurGui.Controls;\r\n\r\n");
 
         if (data.Use != null && data.Use.Count != 0)
@@ -37,7 +39,7 @@ internal static class ZuiEmit
         return sb.ToString();
     }
 
-    internal static string GenerateDataContractInterfaceSource(ZuiTypes.FileInfo data)
+    internal static string GenerateContractInterfaceSource(ZuiTypes.FileInfo data)
     {
         if (data.Bindings.Count == 0)
             return "";
@@ -52,8 +54,11 @@ internal static class ZuiEmit
         sb.Append($"namespace {data.Namespace};\r\n\r\n");
 
         sb.Append($"public interface {interfaceName} : INotifyPropertyChanged\r\n{{\r\n");
-        foreach (var p in data.Bindings)
-            AppendIndentedLine(sb, 1, $"{GetBindingDataType(p, namedControls)} {p.Name} {{ get; set; }}");
+        foreach (var binding in data.Bindings)
+        {
+            var csName = ToPascalCase(binding.Name);
+            AppendIndentedLine(sb, 1, $"{GetBindingDataType(binding, namedControls)} {csName} {{ get; set; }}");
+        }
         sb.Append("}");
         return sb.ToString();
     }
@@ -68,7 +73,15 @@ internal static class ZuiEmit
         foreach (var binding in data.Bindings)
         {
             if (binding.Bind == "")
+            {
+                throw new Exception($"The binding for '{binding.Name}' must not be empty. "
+                    + "It can be 'new' or a valid control name.");
+            }
+
+            // Reserved word to create a new data instance instead of binding to a control
+            if (binding.Bind == "new")
                 continue;
+
             var bindingPath = binding.Bind.Split('.');
             var bindingName = bindingPath[0];
 
@@ -93,12 +106,15 @@ internal static class ZuiEmit
 
         // Generate static PropertyChangedEventArgs for each property
         foreach (var p in data.Bindings)
-            AppendIndentedLine(sb, 1, $"static readonly PropertyChangedEventArgs s_{ToCamelCase(p.Name)}EventArgs = new(nameof({p.Name}));");
+        {
+            var csName = ToPascalCase(p.Name);
+            AppendIndentedLine(sb, 1, $"static readonly PropertyChangedEventArgs s_{p.Name}EventArgs = new(nameof({csName}));");
+        }
         sb.Append("\r\n");
 
         // Generate backing fields
         foreach (var p in data.Bindings)
-            AppendIndentedLine(sb, 1, $"{GetBindingDataType(p, namedControls)} __{ToCamelCase(p.Name)};");
+            AppendIndentedLine(sb, 1, $"{GetBindingDataType(p, namedControls)} __{p.Name};");
         sb.Append("\r\n");
 
         // Parameterless constructor initializing default values
@@ -107,29 +123,32 @@ internal static class ZuiEmit
         AppendIndentedLine(sb, 1, "{");
         foreach (var binding in data.Bindings)
         {
-            var backingFieldName = $"__{ToCamelCase(binding.Name)}";
-
-            // If the binding targets a named control (e.g. "bind": "_card1"), initialize a fresh
-            // concrete data instance for the target type. 
+            // Generate backing field for the data
+            var backingFieldName = $"__{binding.Name}";
             if (IsNamedControl(binding.Bind, namedControls))
             {
-                AppendIndentedLine(sb, 2, $"{backingFieldName} = new {binding.Type}Data();");
+                // Target named control (e.g. "bind": "_card1")
+                AppendIndentedLine(sb, 2, $"{backingFieldName} = new {binding.BaseType}Data();");
             }
             else
             {
-                AppendIndentedLine(sb, 2, $"{backingFieldName} = new {binding.Type}();");
+                // Target non-control type
+                if (binding.IsNullable)
+                    AppendIndentedLine(sb, 2, $"{backingFieldName} = null;");
+                else
+                    AppendIndentedLine(sb, 2, $"{backingFieldName} = new {binding.BaseType}();");
             }
         }
         AppendIndentedLine(sb, 1, "}");
         sb.Append("\r\n");
 
         // Constructor that accepts each binding value
-        var ctorParams = string.Join(", ", data.Bindings.Select(b => $"{GetBindingDataType(b, namedControls)} {ToCamelCase(b.Name)}"));
+        var ctorParams = string.Join(", ", data.Bindings.Select(b => $"{GetBindingDataType(b, namedControls)} {b.Name}"));
         AppendIndentedLine(sb, 1, $"public {className}({ctorParams})");
         AppendIndentedLine(sb, 1, "{");
         foreach (var binding in data.Bindings)
         {
-            var paramName = ToCamelCase(binding.Name);
+            var paramName = binding.Name;
             var backingFieldName = $"__{paramName}";
             AppendIndentedLine(sb, 2, $"{backingFieldName} = {paramName};");
         }
@@ -149,9 +168,9 @@ internal static class ZuiEmit
         foreach (var p in data.Bindings)
         {
             var propertyType = GetBindingDataType(p, namedControls);
-            var backingField = $"__{ToCamelCase(p.Name)}";
-            var eventArgsField = $"s_{ToCamelCase(p.Name)}EventArgs";
-            AppendIndentedLine(sb, 1, $"public {propertyType} {p.Name}");
+            var backingField = $"__{p.Name}";
+            var eventArgsField = $"s_{p.Name}EventArgs";
+            AppendIndentedLine(sb, 1, $"public {propertyType} {ToPascalCase(p.Name)}");
             AppendIndentedLine(sb, 1, "{");
             AppendIndentedLine(sb, 2, $"get => {backingField};");
             AppendIndentedLine(sb, 2, "set");
@@ -171,11 +190,11 @@ internal static class ZuiEmit
         return sb.ToString();
     }
 
-    static string ToCamelCase(string name)
+    static string ToPascalCase(string name)
     {
-        if (string.IsNullOrEmpty(name) || char.IsLower(name[0]))
+        if (string.IsNullOrEmpty(name) || char.IsUpper(name[0]))
             return name;
-        return char.ToLowerInvariant(name[0]) + name.Substring(1);
+        return char.ToUpperInvariant(name[0]) + name.Substring(1);
     }
 
     /// <summary>
@@ -191,11 +210,12 @@ internal static class ZuiEmit
             return $"I{controlTypeName}Data";
         }
 
-        return binding.Type;
+        return binding.NullableType;
     }
 
     static bool IsNamedControl(string bind, Dictionary<string, string> namedControls)
         => namedControls.ContainsKey(bind);
+
 
     internal static string GenerateControllerClassSource(ZuiTypes.FileInfo data)
     {
@@ -216,12 +236,25 @@ internal static class ZuiEmit
         AppendIndentedLine(sb, 1, "public global::ZurfurGui.Base.View View { get; private set; }");
         AppendIndentedLine(sb, 1, $"public string TypeName => \"{data.ControllerName}\";");
         AppendIndentedLine(sb, 1, $"public string TypeNamespace => \"{data.Namespace}\";");
-        AppendIndentedLine(sb, 1, $"public TextLines TypeUses => new TextLines([{string.Join(",", 
+        AppendIndentedLine(sb, 1, $"public TextLines TypeUses => new TextLines([{string.Join(",",
             data.Use.Select(s => "\"" + s + "\""))}]);");
 
-        // Data bindings
-        if (data.Bindings.Count != 0)
-            AppendIndentedLine(sb, 1, $"public I{data.ControllerName}Data DataContext {{ get; set; }} = null!;");
+        // Generated PropertyKey fields for ".data" entries that bind to "new"
+        foreach (var binding in data.Bindings)
+        {
+            if (binding.Bind == "new")
+            {
+                var propertyName = ToPascalCase(binding.Name);
+                AppendIndentedLine(sb, 1,
+                    $"public static readonly PropertyKey<{binding.BaseType}> {propertyName}"
+                        + $" = new(\"{binding.Name}\", typeof({data.ControllerName}), new(), ViewFlags.ReMeasure);");
+            }
+        }
+
+        // Data bindings - generate full property with event hookup if there are "new" bindings
+        var newBindings = data.Bindings.Where(b => b.Bind == "new").ToList();
+
+        GenerateDataContextProperty(data, sb, newBindings);
         sb.Append("\r\n");
 
         // Create named control variables
@@ -281,12 +314,15 @@ internal static class ZuiEmit
                 if (IsNamedControl(binding.Bind, namedControlsDict))
                 {
                     // If this binds directly to a named control, use the data context
-                    args.Add($"{ToCamelCase(binding.Name)}: {binding.Bind}.DataContext");
+                    args.Add($"{binding.Name}: {binding.Bind}.DataContext");
                 }
                 else
                 {
                     // For all other types, initialize with new instance
-                    args.Add($"{ToCamelCase(binding.Name)}: new {binding.Type}()");
+                    if (binding.IsNullable)
+                        args.Add($"{binding.Name}: null");
+                    else
+                        args.Add($"{binding.Name}: new {binding.BaseType}()");
                 }
             }
 
@@ -298,6 +334,9 @@ internal static class ZuiEmit
 
             AppendIndentedLine(sb, 2, ");");
             AppendIndentedLine(sb, 1, "}");
+
+            // Generate event handler for DataContext property changes (only if there are "new" bindings)
+            GenerateOnDataContextPropertyChanged(sb, newBindings);
         }
 
         // Access to JSON content
@@ -305,6 +344,115 @@ internal static class ZuiEmit
         AppendIndentedLine(sb, 1, $"static string _zuiJsonContent => @\"{zuiJsonContent}\";");
         sb.Append("}");
         return sb.ToString();
+    }
+
+    private static void GenerateDataContextProperty(ZuiTypes.FileInfo data, StringBuilder sb, List<ZuiTypes.DataBinding> newBindings)
+    {
+        if (data.Bindings.Count == 0)
+            return;
+
+        if (newBindings.Count > 0)
+        {
+            // Generate backing field and full property with event hookup
+            AppendIndentedLine(sb, 1, $"I{data.ControllerName}Data _dataContext;");
+            sb.Append("\r\n");
+            AppendIndentedLine(sb, 1, $"public I{data.ControllerName}Data DataContext");
+            AppendIndentedLine(sb, 1, "{");
+            AppendIndentedLine(sb, 2, "get => _dataContext;");
+            AppendIndentedLine(sb, 2, "set");
+            AppendIndentedLine(sb, 2, "{");
+            AppendIndentedLine(sb, 3, "if (_dataContext == value) return;");
+            AppendIndentedLine(sb, 3, "if (_dataContext != null)");
+            AppendIndentedLine(sb, 4, "_dataContext.PropertyChanged -= OnDataContextPropertyChanged;");
+            AppendIndentedLine(sb, 3, "_dataContext = value;");
+            AppendIndentedLine(sb, 3, "if (_dataContext != null)");
+            AppendIndentedLine(sb, 3, "{");
+            AppendIndentedLine(sb, 4, "_dataContext.PropertyChanged += OnDataContextPropertyChanged;");
+            AppendIndentedLine(sb, 4, "SyncAllPropertiesToView();");
+            AppendIndentedLine(sb, 3, "}");
+            AppendIndentedLine(sb, 2, "}");
+            AppendIndentedLine(sb, 1, "}");
+        }
+        else
+        {
+            // No "new" bindings, use simple auto-property
+            AppendIndentedLine(sb, 1, $"public I{data.ControllerName}Data DataContext {{ get; set; }}");
+        }
+    }
+
+    private static void GenerateOnDataContextPropertyChanged(StringBuilder sb, List<ZuiTypes.DataBinding> newBindings)
+    {
+        if (newBindings.Count == 0)
+            return;
+
+        sb.Append("\r\n");
+        AppendIndentedLine(sb, 1, "void OnDataContextPropertyChanged(object sender, PropertyChangedEventArgs e)");
+        AppendIndentedLine(sb, 1, "{");
+        AppendIndentedLine(sb, 2, "switch (e.PropertyName)");
+        AppendIndentedLine(sb, 2, "{");
+
+        // Generate a case for each "new" binding
+        foreach (var binding in newBindings)
+        {
+            var pascalName = ToPascalCase(binding.Name);
+            AppendIndentedLine(sb, 3, $"case \"{pascalName}\":");
+
+            if (binding.IsNullable)
+            {
+                // Generate code for nullable types: SetProperty or RemoveProperty
+                AppendIndentedLine(sb, 4, $"if (DataContext.{pascalName} is {binding.BaseType} nonNull{pascalName})");
+                AppendIndentedLine(sb, 5, $"View.SetProperty({pascalName}, nonNull{pascalName});");
+                AppendIndentedLine(sb, 4, "else");
+                AppendIndentedLine(sb, 5, $"View.RemoveProperty({pascalName});");
+            }
+            else
+            {
+                // Generate code for non-nullable types: SetProperty
+                AppendIndentedLine(sb, 4, $"View.SetProperty({pascalName}, DataContext.{pascalName});");
+            }
+
+            AppendIndentedLine(sb, 4, "break;");
+        }
+
+        // Handle null or empty PropertyName (means all properties changed)
+        AppendIndentedLine(sb, 3, "case null:");
+        AppendIndentedLine(sb, 3, "case \"\":");
+        AppendIndentedLine(sb, 4, "SyncAllPropertiesToView();");
+        AppendIndentedLine(sb, 4, "break;");
+
+        AppendIndentedLine(sb, 2, "}");
+        AppendIndentedLine(sb, 1, "}");
+
+        // Generate helper method to sync all properties
+        GenerateSyncAllPropertiesToView(sb, newBindings);
+    }
+
+    private static void GenerateSyncAllPropertiesToView(StringBuilder sb, List<ZuiTypes.DataBinding> newBindings)
+    {
+        sb.Append("\r\n");
+        AppendIndentedLine(sb, 1, "void SyncAllPropertiesToView()");
+        AppendIndentedLine(sb, 1, "{");
+
+        foreach (var binding in newBindings)
+        {
+            var pascalName = ToPascalCase(binding.Name);
+
+            if (binding.IsNullable)
+            {
+                // Generate code for nullable types: SetProperty or RemoveProperty
+                AppendIndentedLine(sb, 2, $"if (DataContext.{pascalName} is {binding.BaseType} nonNull{pascalName})");
+                AppendIndentedLine(sb, 3, $"View.SetProperty({pascalName}, nonNull{pascalName});");
+                AppendIndentedLine(sb, 2, "else");
+                AppendIndentedLine(sb, 3, $"View.RemoveProperty({pascalName});");
+            }
+            else
+            {
+                // Generate code for non-nullable types: SetProperty
+                AppendIndentedLine(sb, 2, $"View.SetProperty({pascalName}, DataContext.{pascalName});");
+            }
+        }
+
+        AppendIndentedLine(sb, 1, "}");
     }
 
     internal static string GenerateZurfurMainSource(string zurfurMainNamespace,

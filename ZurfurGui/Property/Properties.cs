@@ -173,6 +173,11 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
         return false;
     }
 
+    public bool ContainsKey<T>(PropertyKey<T> property)
+    {
+        return _properties.ContainsKey(property.Id);
+    }
+
     public bool TryGetById(PropertyKeyId property, [MaybeNullWhen(false)] out object value)
     {
         if (_properties.TryGetValue(property, out var obj))

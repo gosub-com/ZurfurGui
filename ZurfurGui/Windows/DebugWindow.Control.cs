@@ -26,7 +26,13 @@ public partial class DebugWindow : Controllable
         if (appWindow != null)
         {
             appWindow.IsDarkMode = !appWindow.IsDarkMode;
-            _buttonDark.View.SetProperty(TextView.Text, new(appWindow.IsDarkMode ? "Light Mode" : "Dark Mode"));
+
+            // TBD: These should work
+            _buttonDark.View.SetProperty(TextView.Text, new(appWindow.IsDarkMode ? "Dark Mode" : "Light Mode"));
+            _buttonDark.DataContext.Text = appWindow.IsDarkMode ? ["Dark Mode"] : ["Light Mode"];
+
+            //_textMode.View.SetProperty(TextView.Text, new(appWindow.IsDarkMode ? "Dark Mode" : "Light Mode"));
+            _textMode.DataContext.Text = appWindow.IsDarkMode ? ["Dark Mode"] : ["Light Mode"];
         }
     }
 
