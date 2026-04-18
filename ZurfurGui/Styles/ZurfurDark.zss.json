@@ -4,7 +4,7 @@
 {
     "name": "ZurfurDark",
     "styles": [
-        // AppWindow dark
+        // AppWindow
         {
             ".selectors": "AppWindow:IsDarkMode",
             ".backgroundColor": "#1F1F1F"
@@ -14,26 +14,30 @@
             ".selectors": "TextView:IsDarkMode",
             "color": "#DDDDDD"
         },
-        // Button dark
+        // Button
         {
             ".selectors": "Button:IsDarkMode",
             ".borderColor": "Gray",
-            ".backgroundColor": "#505050",
+            ".backgroundColor": "#505050"
+        },
+        // Button Text
+        {
+            ".selectors": "Button.Text:IsDarkMode",
             "color": "#F0F0F0"
         },
-        // Button dark hover
+        // Button hover
         {
             ".selectors": "Button:IsDarkMode:IsPointerOver",
             ".borderColor": "#3C7FB1",
-            ".backgroundColor": "#606060"
+            ".backgroundColor": "#505080"
         },
-        // Button dark pressed
+        // Button pressed
         {
             ".selectors": "Button:IsDarkMode:IsPressed",
             ".borderColor": "#3C7FB1",
             ".backgroundColor": "#707070"
         },
-        // Window dark
+        // Window
         {
             ".selectors": "Window:IsDarkMode",
             ".backgroundColor": "#383838",

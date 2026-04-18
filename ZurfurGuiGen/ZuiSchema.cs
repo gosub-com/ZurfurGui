@@ -26,7 +26,17 @@ internal static class ZuiSchema
 
             var binding = entry.TryGetValue("bind", out var bindingObj) && bindingObj is string bindingStr ? bindingStr : "";
 
-            result.Add(new ZuiTypes.DataBinding { Name = ToPascalIdentifier(kvp.Key), Type = NormalizeTypeName(typeName), Bind = binding });
+            var isNullable = typeName.StartsWith("?");
+            if (isNullable)
+                typeName = typeName.Substring(1);
+
+            result.Add(new ZuiTypes.DataBinding 
+            { 
+                Name = kvp.Key, 
+                BaseType = NormalizeTypeName(typeName), 
+                Bind = binding,
+                IsNullable = isNullable
+            });
         }
 
         return result;
@@ -55,36 +65,6 @@ internal static class ZuiSchema
             default:
                 return typeName;
         }
-    }
-
-    internal static string ToPascalIdentifier(string name)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-            return "_";
-
-        // Convert common schema keys like "text" or "isChecked" into PascalCase property names.
-        // Keep underscores as word separators.
-        var sb = new StringBuilder(name.Length);
-        var makeUpper = true;
-        foreach (var ch in name)
-        {
-            if (ch == '_' || ch == '-' || ch == ' ')
-            {
-                makeUpper = true;
-                continue;
-            }
-
-            if (sb.Length == 0)
-            {
-                sb.Append(char.IsLetter(ch) ? char.ToUpperInvariant(ch) : '_');
-                makeUpper = false;
-                continue;
-            }
-
-            sb.Append(makeUpper ? char.ToUpperInvariant(ch) : ch);
-            makeUpper = false;
-        }
-        return sb.ToString();
     }
 
     /// <summary>

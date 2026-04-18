@@ -13,6 +13,11 @@
             ".controller": "Button",
             "text": [ "Dark Mode" ],
             ".align": { "horizontal": "left" }
+        },
+        {
+            ".name": "_textMode",
+            ".controller": "TextView",
+            "text": [ "(not set)" ]
         }
     ]
 }

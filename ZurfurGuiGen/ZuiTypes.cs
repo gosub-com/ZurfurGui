@@ -8,8 +8,10 @@ internal static class ZuiTypes
     internal class DataBinding
     {
         public string Name { get; set; } = "";
-        public string Type { get; set; } = "";
+        public string BaseType { get; set; } = "";
+        public string NullableType => IsNullable ? $"{BaseType}?" : BaseType;
         public string Bind { get; set; } = "";
+        public bool IsNullable;
     }
 
     // NOTE: We can't use record class here because code generators must target netstandard2.0
