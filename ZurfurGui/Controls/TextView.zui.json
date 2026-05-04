@@ -1,5 +1,0 @@
-{
-    ".controller": "TextView",
-    ".namespace": "ZurfurGui.Controls",
-    ".classes": [ "TextView" ] /// TBD: Remove, as this is the element type (not class)
-}

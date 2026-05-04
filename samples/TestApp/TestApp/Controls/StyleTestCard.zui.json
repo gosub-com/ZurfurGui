@@ -1,0 +1,47 @@
+{
+    ".controller": "StyleTestCard",
+    ".namespace": "TestApp.Controls",
+    ".layout": "Column",
+    ".useStyles": [ "StyleTest" ],
+    ".content": [
+        {
+            // Show theme name using the StyleTestSkinThemeText style
+            ".controller": "TextView",
+            ".classes": [ "TextView", "StyleTestSkinThemeText" ]
+        },
+        {
+            // Show theme name using the StyleTestSkinHoverTextStyleTestSkinHoverText style
+            ".controller": "TextView",
+            ".classes": [ "TextView", "StyleTestSkinHoverText" ],
+            ".borderWidth": 2,
+            ".borderColor": "Gray"
+        },
+        {
+            ".controller": "TextView",
+            ".borderWidth": 2,
+            ".borderColor": "Gray",
+            "text": "StyleNone"
+        },
+        {
+            ".controller": "TextView",
+            ".classes": [ "TextView", "StyleC1" ],
+            ".borderWidth": 2,
+            ".borderColor": "Gray",
+            "text": "Style C1"
+        },
+        {
+            ".controller": "TextView",
+            ".classes": [ "TextView", "StyleC2" ],
+            ".borderWidth": 2,
+            ".borderColor": "Gray",
+            "text": "Style C2"
+        },
+        {
+            ".controller": "TextView",
+            ".classes": [ "TextView", "StyleC1", "StyleC2" ],
+            ".borderWidth": 2,
+            ".borderColor": "Gray",
+            "text": "Style C1 & C2"
+        }
+    ]
+}

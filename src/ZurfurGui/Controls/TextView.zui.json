@@ -1,0 +1,19 @@
+{
+    ".controller": "TextView",
+    ".namespace": "ZurfurGui.Controls",
+    ".classes": [ "TextView" ],
+    ".data": {
+        "text": {
+            "type": "?TextLines",
+            "bind": "new"
+        },
+        "font": {
+            "type": "?FontProp",
+            "bind": "new"
+        },
+        "color": {
+            "type": "?Color",
+            "bind": "new"
+        }
+    }
+}

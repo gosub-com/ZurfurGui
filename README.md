@@ -9,13 +9,13 @@ a minimal C# WebAssembly GUI would be.  So far, the full download is only about
 You can see the result here: https://gosub.com/zurfurgui
 
 This project is exploring **MDV/MDCV** as an alternative to MVVM. 
-For an overview of how it works, see the [AGENTS.md](AGENTS.md) notes.
+For an overview of how it works, see the [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) notes.
 The main idea is to replace runtime bindings with generated, compile-time contracts.
 
 ## For contributors and AI agents
 
 For an overview of the MDV architecture, code generation, and system internals,
-see [AGENTS.md](AGENTS.md).
+see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Design Goals
 

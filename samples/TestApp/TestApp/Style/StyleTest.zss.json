@@ -1,0 +1,62 @@
+//
+// Zurfur styles for dark mode
+//
+{
+    "name": "StyleTest",
+    "styles": [
+        {
+            // StyleTestSkinThemeText: Light theme text styling
+            ".selectors": "StyleTestSkinThemeText",
+            "TextView.text": "Light Theme",
+            ".borderWidth": 2,
+            ".borderColor": "Blue",
+            ".padding": {
+                "left": 4,
+                "top": 2,
+                "right": 4,
+                "bottom": 2
+            },
+            "TextView.font": {
+                "name": "Arial",
+                "size": 20.0
+            }
+        },
+        {
+            // StyleTestSkinThemeText: Dark theme text styling
+            ".selectors": "StyleTestSkinThemeText:IsDarkMode",
+            "TextView.text": "Dark Theme",
+            ".borderColor": "LightBlue"
+        },
+        {
+            // StyleTestSkinThemeText: Light theme text styling
+            ".selectors": "StyleTestSkinHoverText",
+            "TextView.text": "Not hovering"
+        },
+        {
+            // StyleTestSkinThemeText: Dark theme text styling
+            ".selectors": "StyleTestSkinHoverText:IsPointerOver",
+            "TextView.text": "Hovering"
+        },
+        {
+            // StyleC1
+            ".selectors": "StyleC1",
+            ".sizeRequest": {
+                "width": 120
+            },
+            "TextView.font": {
+                "size": 28.0
+            }
+        },
+        {
+            // StyleC2
+            ".selectors": "StyleC2",
+            ".sizeRequest": {
+                "height": 50
+            },
+            "TextView.font": {
+                "name": "Times New Roman"
+            }
+
+        }
+    ]
+}

@@ -1,28 +1,41 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.3.11505.172 d18.3
+VisualStudioVersion = 18.3.11505.172
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZurfurGui", "ZurfurGui\ZurfurGui.csproj", "{4184A748-0F6A-412E-9002-4A63BC4C3CF3}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A1111111-1111-1111-1111-111111111111}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZurfurGui.Browser", "ZurfurGui.Browser\ZurfurGui.Browser.csproj", "{F2CF48B0-DDD1-4E10-BCA4-2CB60000A5D8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZurfurGui", "src\ZurfurGui\ZurfurGui.csproj", "{4184A748-0F6A-412E-9002-4A63BC4C3CF3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZurfurGui.WinForms", "ZurfurGui.WinForms\ZurfurGui.WinForms.csproj", "{86C45276-1C60-4F98-B78E-3F8574418457}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZurfurGui.Browser", "src\ZurfurGui.Browser\ZurfurGui.Browser.csproj", "{F2CF48B0-DDD1-4E10-BCA4-2CB60000A5D8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZurfurGui.WinForms", "src\ZurfurGui.WinForms\ZurfurGui.WinForms.csproj", "{86C45276-1C60-4F98-B78E-3F8574418457}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZurfurGuiGen", "src\ZurfurGuiGen\ZurfurGuiGen.csproj", "{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{B2222222-2222-2222-2222-222222222222}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestApp", "TestApp", "{C3333333-3333-3333-3333-333333333333}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.Windows", "samples\TestApp\TestApp.Windows\TestApp.Windows.csproj", "{4EA975F4-9B30-41D8-8870-9A8F70B18D26}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.Browser", "samples\TestApp\TestApp.Browser\TestApp.Browser.csproj", "{DDAFF2A4-6107-42BE-9F5A-A422B84B6855}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B195B1AF-8986-487C-B650-231C144A247E}"
 	ProjectSection(SolutionItems) = preProject
-		AGENTS.md = AGENTS.md
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
 		LICENSE.md = LICENSE.md
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp", "TestApp\TestApp.csproj", "{3027AD56-8E8A-4C15-ABDF-417A2558F8CA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "samples\TestApp\TestApp\TestApp.csproj", "{99A89CF5-A3CE-4306-5EBD-EDA2FD70743A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.Windows", "TestApp.Windows\TestApp.Windows.csproj", "{4EA975F4-9B30-41D8-8870-9A8F70B18D26}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestApp.Browser", "TestApp.Browser\TestApp.Browser.csproj", "{DDAFF2A4-6107-42BE-9F5A-A422B84B6855}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZurfurGuiGen", "ZurfurGuiGen\ZurfurGuiGen.csproj", "{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{364462A5-2DD0-4477-BB03-D6466DBAC47F}"
+	ProjectSection(SolutionItems) = preProject
+		docs\ARCHITECTURE.md = docs\ARCHITECTURE.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -42,10 +55,10 @@ Global
 		{86C45276-1C60-4F98-B78E-3F8574418457}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86C45276-1C60-4F98-B78E-3F8574418457}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86C45276-1C60-4F98-B78E-3F8574418457}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3027AD56-8E8A-4C15-ABDF-417A2558F8CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3027AD56-8E8A-4C15-ABDF-417A2558F8CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3027AD56-8E8A-4C15-ABDF-417A2558F8CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3027AD56-8E8A-4C15-ABDF-417A2558F8CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4EA975F4-9B30-41D8-8870-9A8F70B18D26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4EA975F4-9B30-41D8-8870-9A8F70B18D26}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4EA975F4-9B30-41D8-8870-9A8F70B18D26}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -54,15 +67,25 @@ Global
 		{DDAFF2A4-6107-42BE-9F5A-A422B84B6855}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDAFF2A4-6107-42BE-9F5A-A422B84B6855}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDAFF2A4-6107-42BE-9F5A-A422B84B6855}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99A89CF5-A3CE-4306-5EBD-EDA2FD70743A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99A89CF5-A3CE-4306-5EBD-EDA2FD70743A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99A89CF5-A3CE-4306-5EBD-EDA2FD70743A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99A89CF5-A3CE-4306-5EBD-EDA2FD70743A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{4184A748-0F6A-412E-9002-4A63BC4C3CF3} = {A1111111-1111-1111-1111-111111111111}
+		{F2CF48B0-DDD1-4E10-BCA4-2CB60000A5D8} = {A1111111-1111-1111-1111-111111111111}
+		{86C45276-1C60-4F98-B78E-3F8574418457} = {A1111111-1111-1111-1111-111111111111}
+		{8F68D5E0-26FD-4213-89F8-9EB4BA7D1B23} = {A1111111-1111-1111-1111-111111111111}
+		{C3333333-3333-3333-3333-333333333333} = {B2222222-2222-2222-2222-222222222222}
+		{4EA975F4-9B30-41D8-8870-9A8F70B18D26} = {C3333333-3333-3333-3333-333333333333}
+		{DDAFF2A4-6107-42BE-9F5A-A422B84B6855} = {C3333333-3333-3333-3333-333333333333}
+		{99A89CF5-A3CE-4306-5EBD-EDA2FD70743A} = {C3333333-3333-3333-3333-333333333333}
+	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {3E2254C8-BA07-411E-9616-96968F6323E6}
+		SolutionGuid = {EE03DE1F-DD7E-42B7-A2AC-32975A8A15D2}
 	EndGlobalSection
 EndGlobal

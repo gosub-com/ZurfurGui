@@ -1,0 +1,18 @@
+{
+    ".controller": "Button",
+    ".namespace": "ZurfurGui.Controls",
+    ".classes": [ "Button" ],
+    ".data": {
+        "text": {
+            "type": "TextLines",
+            "bind": "_buttonText.text"
+        }
+    },
+    ".content": [
+        {
+            ".name": "_buttonText",
+            ".controller": "TextView",
+            ".classes": [ "Button.Text" ]
+        }
+    ]
+}

@@ -1,0 +1,120 @@
+{
+    //
+    // Zurfur default styles for light mode
+    //
+    "name": "ZurfurLight",
+    "styles": [
+        // AppWindow
+        {
+            ".selectors": "AppWindow",
+            ".backgroundColor": "LightSkyBlue"
+        },
+        // TextView
+        {
+            ".selectors": "TextView",
+            "TextView.color": "Black"
+        },
+        // Button
+        {
+            ".selectors": "Button",
+            ".borderWidth": 2,
+            ".borderColor": "#606060",
+            ".backgroundColor": "#DDDDDD",
+            ".padding": {
+                "left": 2,
+                "top": 2,
+                "right": 2,
+                "bottom": 2
+            }
+        },
+        // Button Text
+        {
+            ".selectors": "Button.Text",
+            "TextView.color": "Black"
+        },
+        // Button hover
+        {
+            ".selectors": "Button:IsPointerOver",
+            ".borderColor": "#3C7FB1",
+            ".backgroundColor": "#BEE6FD"
+        },
+        // Button pressed
+        {
+            ".selectors": "Button:IsPressed",
+            ".backgroundColor": "#8EB6FD"
+        },
+        // Window
+        {
+            ".selectors": "Window",
+            ".backgroundColor": "White",
+            ".borderRadius": 10.0,
+            ".borderWidth": 2,
+            ".borderColor": "Navy",
+            ".sizeMin": {
+                "width": 160,
+                "height": 80
+            }
+        },
+        // Window Title
+        {
+            ".selectors": "Window.Title",
+            ".padding": {
+                "left": 10,
+                "top": 4,
+                "right": 10,
+                "bottom": 0
+            },
+            ".backgroundColor": "SlateBlue",
+            ".borderRadius": 9,
+            "dock.align": "top",
+            ".align": { "vertical": "top" }
+        },
+        // Window Title Text
+        {
+            ".selectors": "Window.Title.Text",
+            ".align": {
+                "horizontal": "center",
+                "vertical": "center"
+            },
+            "TextView.font": { "size": 24.0 }
+        },
+        // Window Title Text Color
+        {
+            ".selectors": "Window.Title.TextColor",
+            "TextView.color": "White"
+        },
+        // Window.Title.Close:IsPointerOver
+        {
+            ".selectors": "Window.Title.Close:IsPointerOver",
+            "TextView.color": "LightSkyBlue"
+        },
+        {
+            ".selectors": "Window.Content",
+            ".margin": {
+                "left": 10,
+                "top": 10,
+                "right": 10,
+                "bottom": 10
+            }
+        },
+        {
+            ".selectors": "TextEdit",
+            ".backgroundColor": "LightBlue",
+            ".borderWidth": 2,
+            ".borderColor": "Navy",
+            ".sizeMin": {
+                "width": 100
+            },
+            ".padding": {
+                "left": 2,
+                "top": 2,
+                "right": 0,
+                "bottom": 0
+            }
+        },
+        {
+            ".selectors": "TextEdit.Text",
+            "TextView.color": "Black"
+        }
+    ]
+}
