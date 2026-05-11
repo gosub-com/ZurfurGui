@@ -8,9 +8,14 @@ namespace ZurfurGuiGen;
 
 internal static class ZuiEmitData
 {
-    internal static string GenerateDataImplementationSource(ZuiTypes.FileInfo data)
+    internal static string GenerateDataImplementationSource(ZuiTypes.FileInfo data, List<ZuiTypes.DataBinding>? inheritedBindings)
     {
-        if (data.Bindings.Count == 0)
+        // All bindings: inherited ones first, then the control's own bindings.
+        var allBindings = inheritedBindings != null
+            ? inheritedBindings.Concat(data.Bindings).ToList()
+            : data.Bindings;
+
+        if (allBindings.Count == 0)
             return "";
 
         // Verify bindings are valid
@@ -39,6 +44,14 @@ internal static class ZuiEmitData
 
         var interfaceName = $"I{data.ControllerName}Data";
         var className = $"{data.ControllerName}Data";
+        // No need to explicitly implement I{Implements}Data here — IControllerNameData
+        // already extends it via the generated data contract interface chain.
+
+        // Generic data classes mirror the controller's type parameter and constraint.
+        var genericSuffix = data.TypeParam != "" ? $"<{data.TypeParam}>" : "";
+        var genericConstraint = data.TypeParam != ""
+            ? $"\r\n    where {data.TypeParam} : I{data.TypeParamConstraint}Data"
+            : "";
 
         var partialKeyword = data.UserSuppliedDataClass ? "partial " : "";
 
@@ -48,10 +61,11 @@ internal static class ZuiEmitData
         sb.Append("#nullable enable\r\n\r\n");
         sb.Append($"namespace {data.Namespace};\r\n\r\n");
 
-        sb.Append($"public sealed {partialKeyword}class {className} : {interfaceName}\r\n{{\r\n");
+        sb.Append($"public sealed {partialKeyword}class {className}{genericSuffix}"
+            + $" : {interfaceName}{genericSuffix}{genericConstraint}\r\n{{\r\n");
 
         // Generate static PropertyChangedEventArgs for each property
-        foreach (var p in data.Bindings)
+        foreach (var p in allBindings)
         {
             var csName = ZuiEmit.ToPascalCase(p.Name);
             sb.AppendIndentedLine(1, $"static readonly PropertyChangedEventArgs s_{p.Name}EventArgs = new(nameof({csName}));");
@@ -59,7 +73,7 @@ internal static class ZuiEmitData
         sb.Append("\r\n");
 
         // Generate backing fields
-        foreach (var p in data.Bindings)
+        foreach (var p in allBindings)
             sb.AppendIndentedLine(1, $"{ZuiEmit.GetBindingDataType(p, namedControls)} __{p.Name};");
         sb.Append("\r\n");
 
@@ -67,7 +81,7 @@ internal static class ZuiEmitData
         // (mirrors the controller's CreateDefaultDataContext initialization)
         sb.AppendIndentedLine(1, $"public {className}()");
         sb.AppendIndentedLine(1, "{");
-        foreach (var binding in data.Bindings)
+        foreach (var binding in allBindings)
         {
             // Generate backing field for the data
             var backingFieldName = $"__{binding.Name}";
@@ -75,6 +89,11 @@ internal static class ZuiEmitData
             {
                 // Target named control (e.g. "bind": "_card1")
                 sb.AppendIndentedLine(2, $"{backingFieldName} = new {binding.BaseType}Data();");
+            }
+            else if (binding.IsCollection)
+            {
+                // Collection type: initialize with empty ObservableCollection
+                sb.AppendIndentedLine(2, $"{backingFieldName} = new {ZuiEmit.GetBindingDataType(binding, namedControls)}();");
             }
             else
             {
@@ -89,10 +108,10 @@ internal static class ZuiEmitData
         sb.Append("\r\n");
 
         // Constructor that accepts each binding value
-        var ctorParams = string.Join(", ", data.Bindings.Select(b => $"{ZuiEmit.GetBindingDataType(b, namedControls)} {b.Name}"));
+        var ctorParams = string.Join(", ", allBindings.Select(b => $"{ZuiEmit.GetBindingDataType(b, namedControls)} {b.Name}"));
         sb.AppendIndentedLine(1, $"public {className}({ctorParams})");
         sb.AppendIndentedLine(1, "{");
-        foreach (var binding in data.Bindings)
+        foreach (var binding in allBindings)
         {
             var paramName = binding.Name;
             var backingFieldName = $"__{paramName}";
@@ -111,7 +130,7 @@ internal static class ZuiEmitData
         sb.Append("\r\n");
 
         // Generate properties with INotifyPropertyChanged implementation
-        foreach (var p in data.Bindings)
+        foreach (var p in allBindings)
         {
             var propertyType = ZuiEmit.GetBindingDataType(p, namedControls);
             var backingField = $"__{p.Name}";

@@ -35,6 +35,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{364462A5-2DD0-4477-BB03-D6466DBAC47F}"
 	ProjectSection(SolutionItems) = preProject
 		docs\ARCHITECTURE.md = docs\ARCHITECTURE.md
+		docs\ComboBox.md = docs\ComboBox.md
+		docs\Style.md = docs\Style.md
 	EndProjectSection
 EndProject
 Global

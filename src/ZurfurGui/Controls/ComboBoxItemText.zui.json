@@ -1,0 +1,20 @@
+// This is a combo box item that shows simple text.  It implements ComboBoxItem.
+{
+    ".controller": "ComboBoxItemText",
+    ".namespace": "ZurfurGui.Controls",
+    ".implements": "ComboBoxItem",
+    ".classes": [ "ComboBoxItemText" ],
+    ".data": {
+        "text": {
+            "type": "TextLines",
+            "bind": "_itemText.text"
+        }
+    },
+    ".content": [
+        {
+            ".name": "_itemText",
+            ".controller": "TextView",
+            ".classes": [ "ComboBoxItemText.Text" ]
+        }
+    ]
+}

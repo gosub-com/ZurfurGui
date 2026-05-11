@@ -22,28 +22,36 @@ public static class Json
     ///     true
     ///     false
     ///     null
+    /// NOTE: Collects comments in the json and injects them into the dictionary as "$comment".
+    ///       The serializer throws away metadata (anything starting with a "$")
     /// </summary>
     public static Dictionary<string, object?> Parse(string json)
     {
         int index = 0;
-        SkipWhitespace(json, ref index);
+        var topComment = SkipWhitespaceAndCollectComment(json, ref index);
         if (index >= json.Length || json[index] != '{')
             throw new LocationException("JSON must start with '{'", 0, 0);
 
-        return ParseObject(json, ref index);
+        var result = ParseObject(json, ref index);
+        if (topComment != "")
+            result["$comment"] = topComment;
+        return result;
     }
 
     private static Dictionary<string, object?> ParseObject(string json, ref int index)
     {
         var dict = new Dictionary<string, object?>();
         index++; // skip '{'
-        SkipWhitespace(json, ref index);
 
         while (index < json.Length && json[index] != '}')
         {
-            SkipWhitespace(json, ref index);
+            // Collect any // comment lines immediately before the next key
+            var pendingComment = SkipWhitespaceAndCollectComment(json, ref index);
+            if (index >= json.Length || json[index] == '}')
+                break;
+
             var key = ParseString(json, ref index);
-            SkipWhitespace(json, ref index);
+            SkipWhitespaceAndCollectComment(json, ref index); // discard any comment between key and ':'
 
             if (json[index] != ':')
                 throw GetLocationException($"Expected ':' after key '{key}' at location {index}", json, index);
@@ -51,6 +59,11 @@ public static class Json
 
             SkipWhitespace(json, ref index);
             var value = ParseValue(json, ref index);
+
+            // If the value is a dictionary and there was a comment before the key, inject it
+            if (pendingComment != "" && value is Dictionary<string, object?> childDict)
+                childDict["$comment"] = pendingComment;
+
             dict[key] = value;
 
             SkipWhitespace(json, ref index);
@@ -58,6 +71,7 @@ public static class Json
             {
                 index++; // skip ','
                 SkipWhitespace(json, ref index);
+                continue; // trailing comma allowed: re-check for '}'
             }
             else if (json[index] != '}')
             {
@@ -85,6 +99,7 @@ public static class Json
             {
                 index++; // skip ','
                 SkipWhitespace(json, ref index);
+                continue; // trailing comma allowed: re-check for ']'
             }
             else if (json[index] != ']')
             {
@@ -212,24 +227,43 @@ public static class Json
 
     private static void SkipWhitespace(string json, ref int index)
     {
-        index = SkipComments(json, index);
-        while (index < json.Length && char.IsWhiteSpace(json[index]))
-        {
-            index++;
-            index = SkipComments(json, index);
-        }
+        SkipWhitespaceAndCollectComment(json, ref index);
     }
 
-    private static int SkipComments(string json, int index)
+    /// <summary>
+    /// Skips whitespace and any number of // comment lines.
+    /// Returns the concatenated text of all comment lines (trimmed, joined with a single space),
+    /// or "" if there were no comments.
+    /// </summary>
+    private static string SkipWhitespaceAndCollectComment(string json, ref int index)
     {
-        if (index < json.Length && json[index] == '/' && index+1 < json.Length && json[index+1] == '/')
+        var comment = new StringBuilder();
+        while (index < json.Length)
         {
-            // Skip comment
-            index += 2;
-            while (index < json.Length && json[index] != '\n' && json[index] != '\r')
+            // Skip plain whitespace
+            while (index < json.Length && char.IsWhiteSpace(json[index]))
                 index++;
+
+            // Capture a // comment line
+            if (index + 1 < json.Length && json[index] == '/' && json[index + 1] == '/')
+            {
+                index += 2;
+                var line = new StringBuilder();
+                while (index < json.Length && json[index] != '\n' && json[index] != '\r')
+                    line.Append(json[index++]);
+                var trimmed = line.ToString().Trim();
+                if (trimmed.Length > 0)
+                {
+                    if (comment.Length > 0)
+                        comment.Append(' ');
+                    comment.Append(trimmed);
+                }
+                continue;
+            }
+
+            break;
         }
-        return index;
+        return comment.ToString();
     }
 
 
@@ -287,6 +321,8 @@ public static class Json
             var entries = new List<string>();
             foreach (var kvp in dict)
             {
+                if (kvp.Key.StartsWith("$"))
+                    continue; // generator-only metadata, not for runtime JSON
                 entries.Add($"\"{EscapeString(kvp.Key)}\": {Serialize(kvp.Value)}");
             }
             return $"{{{string.Join(", ", entries)}}}";

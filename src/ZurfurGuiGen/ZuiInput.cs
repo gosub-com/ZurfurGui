@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace ZurfurGuiGen;
@@ -31,6 +32,9 @@ internal static class ZuiInput
         var userSuppliedDataClass = false;
         var use = new List<string>();
         var dataBindings = new List<ZuiTypes.DataBinding>();
+        var implements = "";
+        var typeParam = "";
+        var typeParamConstraint = "";
         try
         {
             // Parse the JSON content, find the controller or style name
@@ -75,11 +79,13 @@ internal static class ZuiInput
                     throw new Exception($"The JSON '.namespace' must match the namespace in {fileNameOnly}.Data.cs, "
                         + $"but is '{nameSpace}' instead of '{csDataFileNamespace}'");
 
-                controllerName = GetControllerName(fileNameOnly, jsonDocument);
+                controllerName = GetControllerName(fileNameOnly, jsonDocument, out typeParam, out typeParamConstraint);
 
-                dataBindings = ZuiSchema.GetDataBindings(jsonDocument)
+                dataBindings = ZuiSchema.GetDataBindings(jsonDocument, typeParam, typeParamConstraint)
                     .OrderBy(p => p.Name)
                     .ToList();
+
+                implements = ZuiSchema.GetImplements(jsonDocument);
             }
         }
         catch (LocationException lex)
@@ -106,12 +112,16 @@ internal static class ZuiInput
             FileName = fileNameOnly,
             Diagnostic = diagnostic,
             JsonDocument = jsonDocument,
+            Comment = jsonDocument.TryGetValue("$comment", out var topComment) && topComment is string topCommentStr ? topCommentStr : "",
             ControllerName = controllerName,
             Namespace = nameSpace,
             Use = use,
             Bindings = dataBindings,
             UserSuppliedControllerClass = userSuppliedControllerClass,
-            UserSuppliedDataClass = userSuppliedDataClass
+            UserSuppliedDataClass = userSuppliedDataClass,
+            Implements = implements,
+            TypeParam = typeParam,
+            TypeParamConstraint = typeParamConstraint
         };
     }
 
@@ -140,19 +150,43 @@ internal static class ZuiInput
         throw new Exception("The JSON '.use' key must be an array of strings");
     }
 
+    // Matches "ClassName<TypeParam> where TypeParam : Constraint"
+    static readonly Regex s_genericControllerRegex =
+        new Regex(@"^(\w+)<(\w+)>\s+where\s+\w+\s*:\s*(\w+)$", RegexOptions.Compiled);
+
     /// <summary>
     /// Find and validate the controller name from the json.
+    /// Parses optional generic syntax: "ComboBox&lt;Item&gt; where Item : ComboBoxItem".
     /// Throws an exception if invalid.
     /// </summary>
-    static string GetControllerName(string fileName, Dictionary<string, object?> jsonDocument)
+    static string GetControllerName(string fileName, Dictionary<string, object?> jsonDocument,
+        out string typeParam, out string typeParamConstraint)
     {
-        // Verify controller key is present
-        string controllerName = GetJsonValue(jsonDocument, ".controller");
+        typeParam = "";
+        typeParamConstraint = "";
 
-        if (controllerName != fileName)
-            throw new Exception($"The JSON '.controller' key must match the class and file name '{fileName}', but is '{controllerName}' instead");
+        string controllerValue = GetJsonValue(jsonDocument, ".controller");
 
-        return controllerName;
+        var match = s_genericControllerRegex.Match(controllerValue);
+        if (match.Success)
+        {
+            var className = match.Groups[1].Value;
+            typeParam = match.Groups[2].Value;
+            typeParamConstraint = match.Groups[3].Value;
+
+            if (className != fileName)
+                throw new Exception($"The JSON '.controller' key must match the class and file name "
+                    + $"'{fileName}', but is '{className}' instead");
+
+            return className;
+        }
+
+        // Non-generic: controller value must match file name exactly
+        if (controllerValue != fileName)
+            throw new Exception($"The JSON '.controller' key must match the class and file name "
+                + $"'{fileName}', but is '{controllerValue}' instead");
+
+        return controllerValue;
     }
 
     /// <summary>

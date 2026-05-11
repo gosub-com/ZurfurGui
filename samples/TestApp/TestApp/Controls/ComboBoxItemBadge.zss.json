@@ -1,0 +1,49 @@
+{
+    "name": "ComboBoxItemBadge",
+    "styles": [
+        {
+            // Outer row: padding around the whole item
+            ".selectors": "ComboBoxItemBadge",
+            ".padding": { "left": 6, "top": 3, "right": 6, "bottom": 3 }
+        },
+        {
+            ".selectors": "ComboBoxItemBadge:IsPointerOver",
+            ".backgroundColor": "#CCE8F8"
+        },
+        {
+            ".selectors": "ComboBoxItemBadge:IsDarkMode:IsPointerOver",
+            ".backgroundColor": "#2E4F6A"
+        },
+        {
+            // Badge pill outline: 2px red border, small padding inside
+            ".selectors": "ComboBoxItemBadge.BadgeBox",
+            ".borderWidth": 2,
+            ".borderColor": "#CC0000",
+            ".borderRadius": 3,
+            ".padding": { "left": 4, "top": 1, "right": 4, "bottom": 1 }
+        },
+        {
+            ".selectors": "ComboBoxItemBadge.BadgeBox:IsDarkMode",
+            ".borderColor": "#FF4444"
+        },
+        {
+            // Badge text inside the pill
+            ".selectors": "ComboBoxItemBadge.BadgeText",
+            "TextView.color": "#CC0000"
+        },
+        {
+            ".selectors": "ComboBoxItemBadge.BadgeText:IsDarkMode",
+            "TextView.color": "#FF8888"
+        },
+        {
+            // Main descriptive text, with a small left gap from the badge
+            ".selectors": "ComboBoxItemBadge.Text",
+            "TextView.color": "Black",
+            ".padding": { "left": 6, "top": 0, "right": 0, "bottom": 0 }
+        },
+        {
+            ".selectors": "ComboBoxItemBadge.Text:IsDarkMode",
+            "TextView.color": "#F0F0F0"
+        }
+    ]
+}

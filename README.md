@@ -8,24 +8,24 @@ a minimal C# WebAssembly GUI would be.  So far, the full download is only about
 
 You can see the result here: https://gosub.com/zurfurgui
 
-This project is exploring **MDV/MDCV** as an alternative to MVVM. 
-For an overview of how it works, see the [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) notes.
-The main idea is to replace runtime bindings with generated, compile-time contracts.
+This project is exploring **MDV/MDCV** as an alternative to MVVM.  
 
 ## For contributors and AI agents
 
-For an overview of the MDV architecture, code generation, and system internals,
-see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+The following docs cover the internals of this project:
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — MDV architecture, code generation, and system internals
+- [docs/Style.md](docs/Style.md) — ZSS style system (style sheets, selectors, pseudo-classes, and property resolution)
+- [docs/ComboBox.md](docs/ComboBox.md) — ComboBox control: usage, generic item types, styling, and internals
 
 ## Design Goals
 
-Zurfur Gui is an experiment to see what a minimal C# WebAssembly `Canvas` GUI
-might look like.
+Zurfur Gui is an experiment to see what a minimal C# WebAssembly `Canvas` GUI might look like:
 
 * Runs in browsers and natively on Windows
 * Quick and easy to whip up small GUI applications (tools, etc.)
-* Uses JSON instead of XML.  This is called ZUI JSON.
-* Small download - uses built-in platform drawing API (i.e. `Canvas`)
+* Uses JSON instead of XML — this is called ZUI JSON
+* Small download — uses the built-in platform drawing API (i.e. `Canvas`)
 
 ## Model Data View (MDV)	
 

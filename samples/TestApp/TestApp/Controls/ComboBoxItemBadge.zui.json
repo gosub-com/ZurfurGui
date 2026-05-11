@@ -1,0 +1,36 @@
+// Combo box item that shows a badge label and a text label side by side.
+// The badge is outlined in red; the text is vertically centred to the right of it.
+// Use ".implements": "ComboBoxItem" and reference via ComboBox<ComboBoxItemBadge>.
+{
+    ".controller": "ComboBoxItemBadge",
+    ".namespace": "TestApp.Test.Controls",
+    ".implements": "ComboBoxItem",
+    ".classes": [ "ComboBoxItemBadge" ],
+    ".data": {
+        // Short label shown inside the red-outlined badge pill.
+        "badge": { "type": "TextLines", "bind": "_badge.text" },
+        // Main descriptive text shown to the right of the badge.
+        "text":  { "type": "TextLines", "bind": "_text.text" }
+    },
+    ".layout": "Row",
+    ".content": [
+        {
+            // Badge pill: red outline box around the badge text.
+            ".classes": [ "ComboBoxItemBadge.BadgeBox" ],
+            ".align": { "vertical": "center" },
+            ".content": [
+                {
+                    ".name": "_badge",
+                    ".controller": "TextView",
+                    ".classes": [ "ComboBoxItemBadge.BadgeText" ]
+                }
+            ]
+        },
+        {
+            ".name": "_text",
+            ".controller": "TextView",
+            ".classes": [ "ComboBoxItemBadge.Text" ],
+            ".align": { "vertical": "center" }
+        }
+    ]
+}

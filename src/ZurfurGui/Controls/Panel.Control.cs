@@ -12,9 +12,12 @@ public partial class Panel : Controllable
     public static readonly PropertyKey<string> Namespace = new(".namespace", typeof(Panel), "");
     public static readonly PropertyKey<TextLines> Use = new(".use", typeof(Panel), new());
     public static readonly PropertyKey<string> Layout = new(".layout", typeof(Panel), "");
+    public static readonly PropertyKey<string> Implements = new(".implements", typeof(Panel), "");
     public static readonly PropertyKey<Properties[]> Content = new(".content", typeof(Panel), Array.Empty<Properties>(), ViewFlags.ReMeasure);
-    public static readonly PropertyKey<Dictionary<string, DataBinding>> Data = new(".data", typeof(Panel), new(), ViewFlags.ReMeasure);
     public static readonly PropertyKey<Dictionary<string, System.Text.Json.JsonElement>> DataProperties = new(".dataProperties", typeof(Panel), new(), ViewFlags.None);
+
+    // NOTE: Data properties are used only by the loader, so don't exist at runtime.  This is just a placeholder.
+    public static readonly PropertyKey<Dictionary<string, string>> Data = new(".data", typeof(Panel), new(), ViewFlags.ReMeasure);
 
     public static readonly PropertyKey<bool> IsVisible = new(".isVisible", typeof(Panel), true, ViewFlags.ReMeasure);
     public static readonly PropertyKey<AlignProp> Align = new(".align", typeof(Panel), new(), ViewFlags.ReMeasure);

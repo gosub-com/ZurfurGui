@@ -1,0 +1,235 @@
+{
+    "name": "ZurfurDefault",
+    "styles": [
+        {
+            ".selectors": "AppWindow",
+            ".backgroundColor": "#D4E5F0"
+        },
+        {
+            ".selectors": "AppWindow:IsDarkMode",
+            ".backgroundColor": "#1E1E1E"
+        },
+        {
+            ".selectors": "TextView",
+            "TextView.color": "Black"
+        },
+        {
+            ".selectors": "TextView:IsDarkMode",
+            "TextView.color": "#D4D4D4"
+        },
+        {
+            ".selectors": "Button",
+            ".borderWidth": 1,
+            ".borderRadius": 5,
+            ".borderColor": "#909090",
+            ".backgroundColor": "#E8E8E8",
+            ".padding": {
+                "left": 9,
+                "top": 4,
+                "right": 9,
+                "bottom": 3
+            }
+        },
+        {
+            ".selectors": "Button:IsDarkMode",
+            ".borderColor": "#6A6A6A",
+            ".backgroundColor": "#3D3D3D"
+        },
+        {
+            ".selectors": "Button:IsPointerOver",
+            ".borderColor": "#0078D4",
+            ".backgroundColor": "#CCE8F8"
+        },
+        {
+            ".selectors": "Button:IsDarkMode:IsPointerOver",
+            ".borderColor": "#4CA0D0",
+            ".backgroundColor": "#2E4F6A"
+        },
+        {
+            ".selectors": "Button:IsPressed",
+            ".borderColor": "#005A9E",
+            ".backgroundColor": "#99C8F0"
+        },
+        {
+            ".selectors": "Button:IsDarkMode:IsPressed",
+            ".borderColor": "#3A80B0",
+            ".backgroundColor": "#1E3A50"
+        },
+        {
+            ".selectors": "Button.Text",
+            "TextView.color": "Black"
+        },
+        {
+            ".selectors": "Button.Text:IsDarkMode",
+            "TextView.color": "#F0F0F0"
+        },
+        {
+            ".selectors": "Window",
+            ".backgroundColor": "White",
+            ".borderRadius": 10.0,
+            ".borderWidth": 2,
+            ".borderColor": "#7070B0",
+            ".sizeMin": {
+                "width": 160,
+                "height": 80
+            }
+        },
+        {
+            ".selectors": "Window:IsDarkMode",
+            ".backgroundColor": "#252526",
+            ".borderColor": "#4A7090"
+        },
+        {
+            ".selectors": "Window.Title",
+            ".padding": {
+                "left": 10,
+                "top": 4,
+                "right": 10,
+                "bottom": 0
+            },
+            ".backgroundColor": "#4A7BB5",
+            ".borderRadius": 9,
+            "dock.align": "top",
+            ".align": { "vertical": "top" }
+        },
+        {
+            ".selectors": "Window.Title:IsDarkMode",
+            ".backgroundColor": "#1E3A5A"
+        },
+        {
+            ".selectors": "Window.Title.Text",
+            ".align": {
+                "horizontal": "center",
+                "vertical": "center"
+            },
+            "TextView.font": { "size": 24.0 }
+        },
+        {
+            ".selectors": "Window.Title.TextColor",
+            "TextView.color": "White"
+        },
+        {
+            ".selectors": "Window.Title.TextColor:IsDarkMode",
+            "TextView.color": "#E8EEFF"
+        },
+        {
+            ".selectors": "Window.Title.Close:IsPointerOver",
+            "TextView.color": "#FF4040"
+        },
+        {
+            ".selectors": "Window.Title.Close:IsDarkMode:IsPointerOver",
+            "TextView.color": "#FF6060"
+        },
+        {
+            ".selectors": "Window.Content",
+            ".margin": {
+                "left": 10,
+                "top": 10,
+                "right": 10,
+                "bottom": 10
+            }
+        },
+        {
+            ".selectors": "TextEdit",
+            ".backgroundColor": "White",
+            ".borderWidth": 2,
+            ".borderColor": "#7070B0",
+            ".sizeMin": {
+                "width": 100
+            },
+            ".padding": {
+                "left": 8,
+                "top": 3,
+                "right": 8,
+                "bottom": 2
+            }
+        },
+        {
+            ".selectors": "TextEdit:IsDarkMode",
+            ".backgroundColor": "#1E2D3D",
+            ".borderColor": "#4A7090"
+        },
+        {
+            ".selectors": "TextEdit.Text",
+            "TextView.color": "Black"
+        },
+        {
+            ".selectors": "TextEdit.Text:IsDarkMode",
+            "TextView.color": "#E0E0E0"
+        },
+        {
+            ".selectors": "ComboBox",
+            ".borderWidth": 1,
+            ".borderRadius": 5,
+            ".borderColor": "#909090",
+            ".backgroundColor": "#E8E8E8",
+            ".padding": { "left": 8, "top": 3, "right": 6, "bottom": 2 },
+            "ComboBox.scrimColor": "#00000014"
+        },
+        {
+            ".selectors": "ComboBox:IsDarkMode",
+            ".borderColor": "#6A6A6A",
+            ".backgroundColor": "#3D3D3D",
+            "ComboBox.scrimColor": "#FFFFFF30"
+        },
+        {
+            ".selectors": "ComboBox:IsPointerOver",
+            ".borderColor": "#0078D4",
+            ".backgroundColor": "#CCE8F8"
+        },
+        {
+            ".selectors": "ComboBox:IsDarkMode:IsPointerOver",
+            ".borderColor": "#4CA0D0",
+            ".backgroundColor": "#2E4F6A"
+        },
+        {
+            ".selectors": "ComboBox.Text",
+            "TextView.color": "Black"
+        },
+        {
+            ".selectors": "ComboBox.Text:IsDarkMode",
+            "TextView.color": "#F0F0F0"
+        },
+        {
+            ".selectors": "ComboBox.Arrow",
+            "TextView.color": "Black",
+            ".padding": { "left": 4, "top": 0, "right": 0, "bottom": 0 }
+        },
+        {
+            ".selectors": "ComboBox.Arrow:IsDarkMode",
+            "TextView.color": "#F0F0F0"
+        },
+        {
+            ".selectors": "ComboBox.Dropdown",
+            ".backgroundColor": "White",
+            ".borderWidth": 1,
+            ".borderColor": "#7070B0",
+            ".borderRadius": 5
+        },
+        {
+            ".selectors": "ComboBox.Dropdown:IsDarkMode",
+            ".backgroundColor": "#252526",
+            ".borderColor": "#4A7090"
+        },
+        {
+            ".selectors": "ComboBoxItemText",
+            ".padding": { "left": 8, "top": 4, "right": 8, "bottom": 4 }
+        },
+        {
+            ".selectors": "ComboBoxItemText:IsPointerOver",
+            ".backgroundColor": "#CCE8F8"
+        },
+        {
+            ".selectors": "ComboBoxItemText:IsDarkMode:IsPointerOver",
+            ".backgroundColor": "#2E4F6A"
+        },
+        {
+            ".selectors": "ComboBoxItemText.Text",
+            "TextView.color": "Black"
+        },
+        {
+            ".selectors": "ComboBoxItemText.Text:IsDarkMode",
+            "TextView.color": "#F0F0F0"
+        }
+    ]
+}

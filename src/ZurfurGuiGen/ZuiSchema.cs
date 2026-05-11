@@ -7,7 +7,18 @@ namespace ZurfurGuiGen;
 
 internal static class ZuiSchema
 {
-    internal static List<ZuiTypes.DataBinding> GetDataBindings(Dictionary<string, object?> jsonDocument)
+    /// <summary>
+    /// Read the ".implements" key from a ZUI JSON document.
+    /// Returns "" if not present.
+    /// </summary>
+    internal static string GetImplements(Dictionary<string, object?> jsonDocument)
+    {
+        if (jsonDocument.TryGetValue(".implements", out var v) && v is string s && !string.IsNullOrWhiteSpace(s))
+            return s.Trim();
+        return "";
+    }
+
+    internal static List<ZuiTypes.DataBinding> GetDataBindings(Dictionary<string, object?> jsonDocument, string typeParam = "", string typeParamConstraint = "")
     {
         if (!jsonDocument.TryGetValue(".data", out var dataSectionObj) || dataSectionObj == null)
             return new List<ZuiTypes.DataBinding>();
@@ -18,6 +29,9 @@ internal static class ZuiSchema
         var result = new List<ZuiTypes.DataBinding>();
         foreach (var kvp in dataSection)
         {
+            if (kvp.Key.StartsWith("$"))
+                continue; // generator-only metadata (e.g. $comment), not a binding entry
+
             if (kvp.Value is not Dictionary<string, object?> entry)
                 throw new Exception($"The JSON '.data.{kvp.Key}' value must be an object");
 
@@ -30,14 +44,43 @@ internal static class ZuiSchema
             if (isNullable)
                 typeName = typeName.Substring(1);
 
-            result.Add(new ZuiTypes.DataBinding 
-            { 
-                Name = kvp.Key, 
-                BaseType = NormalizeTypeName(typeName), 
+            var isCollection = typeName.StartsWith("[]");
+            var isTypeParam = false;
+            if (isCollection)
+            {
+                if (isNullable)
+                    throw new Exception($"The JSON '.data.{kvp.Key}.type' must not be nullable (\"?[]\") for collection types. Use \"[]Type\" instead.");
+                typeName = typeName.Substring(2);
+                if (binding == "")
+                    binding = "new"; // collections default to "new"
+
+                // Detect when the element type is the file's declared generic type parameter
+                // (e.g. "[]Item" in "ComboBox<Item> where Item : ComboBoxItem").
+                // When true, BaseType is set to the constraint name so GetBindingDataType emits
+                // ObservableCollection<IComboBoxItemData> rather than ObservableCollection<IItemData>.
+                if (typeParam != "" && typeName == typeParam)
+                {
+                    isTypeParam = true;
+                    typeName = typeParamConstraint; // resolve to constraint name
+                }
+            }
+
+            var comment = entry.TryGetValue("$comment", out var commentObj) && commentObj is string commentStr ? commentStr : "";
+
+            result.Add(new ZuiTypes.DataBinding
+            {
+                Name = kvp.Key,
+                Comment = comment,
+                BaseType = NormalizeTypeName(typeName),
                 Bind = binding,
-                IsNullable = isNullable
+                IsNullable = isNullable,
+                IsCollection = isCollection,
+                IsTypeParam = isTypeParam,
             });
         }
+
+        // The .data section of the JSON is not used at runtime because we collected everything we wanted out of it.
+        jsonDocument.Remove(".data");
 
         return result;
     }
@@ -67,9 +110,28 @@ internal static class ZuiSchema
         }
     }
 
+    // Matches "BaseName<TypeArg>" — a closed generic controller reference in JSON
+    static readonly System.Text.RegularExpressions.Regex s_closedGenericControllerRegex =
+        new System.Text.RegularExpressions.Regex(@"^(\w+)<(\w+)>$",
+            System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>
+    /// Translate a JSON controller string to the C# type name used in generated code.
+    /// Plain names (e.g. "Panel") pass through unchanged.
+    /// Closed generics with a control-name type arg (e.g. "ComboBox&lt;ComboBoxItemText&gt;")
+    /// become "ComboBox&lt;IComboBoxItemTextData&gt;" — using the data interface convention.
+    /// </summary>
+    internal static string ControllerNameToCsType(string controllerName)
+    {
+        var m = s_closedGenericControllerRegex.Match(controllerName);
+        if (m.Success)
+            return $"{m.Groups[1].Value}<I{m.Groups[2].Value}Data>";
+        return controllerName;
+    }
+
     /// <summary>
     /// Recursively scan JSON control, looking for named controls.
-    /// Returns a dictionary of ControlName -> ControlType.
+    /// Returns a dictionary of ControlName -> C# ControlType.
     /// Throws if duplicate ControlName is detected.
     /// </summary>
     internal static Dictionary<string, string> FindNamedControlsDictionary(Dictionary<string, object?> json)
@@ -87,7 +149,7 @@ internal static class ZuiSchema
                 var controller = "Panel";
                 if (currentJson.TryGetValue(".controller", out var controllerObj) && controllerObj is string controllerStr)
                 {
-                    controller = controllerStr;
+                    controller = ControllerNameToCsType(controllerStr);
                 }
 
                 if (result.ContainsKey(controlName))

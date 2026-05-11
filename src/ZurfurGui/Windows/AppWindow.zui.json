@@ -9,7 +9,7 @@
     ".controller": "AppWindow",
     ".namespace": "ZurfurGui.Windows",
     ".classes": [ "AppWindow" ], // TBD: Remove, as this is the element type (not class)
-    ".useStyles": [ "ZurfurLight", "ZurfurDark" ],
+    ".useStyles": [ "ZurfurDefault" ],
     ".content": [
         {
             //

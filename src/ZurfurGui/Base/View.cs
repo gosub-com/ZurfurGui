@@ -439,6 +439,17 @@ public sealed class View
             SendAttachMessages(child);
     }
 
+    /// <summary>
+    /// Remove this view from the parent (thereby removing it from the view tree).  
+    /// </summary>
+    public void RemoveFromParent()
+    {
+        Parent?.RemoveChild(this);
+    }
+
+    /// <summary>
+    /// Remove a child view from this view (thereby removing it from the view tree).  
+    /// </summary>
     public void RemoveChild(View view)
     {
         var index = _children.IndexOf(view);
@@ -446,6 +457,9 @@ public sealed class View
             RemoveChild(index);
     }
 
+    /// <summary>
+    /// Remove a child view from this view (thereby removing it from the view tree).  
+    /// </summary>
     public void RemoveChild(int index)
     {
         var child = _children[index];
@@ -457,6 +471,9 @@ public sealed class View
         SetFlags(ViewFlags.ReDraw | ViewFlags.ReMeasure);
     }
 
+    /// <summary>
+    /// Remove all children views from this view (thereby removing them from the view tree).  
+    /// </summary>
     public void ClearChildren()
     {
         while (_children.Count > 0)

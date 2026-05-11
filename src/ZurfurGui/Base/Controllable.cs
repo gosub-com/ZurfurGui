@@ -28,6 +28,13 @@ public interface Controllable
     IReadOnlyDictionary<string, DataPropertyInfo> DataPropertyInfo { get; }
 
     /// <summary>
+    /// The data interface types this control implements via ".implements" in its ZUI JSON.
+    /// Used by the loader at registration time to automatically wire up data-controller factories.
+    /// Returns an empty array for controls that do not implement any constraint.
+    /// </summary>
+    Type[] ImplementsDataInterfaces { get; }
+
+    /// <summary>
     /// Sets a data property by name.  Returns true if the property was set successfully, false otherwise.
     /// </summary>
     bool SetDataProperty(string name, object? value) { return false; }

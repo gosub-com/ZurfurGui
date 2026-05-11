@@ -34,7 +34,7 @@ public partial class Window : Controllable
         _resizeHandle.View.AddEvent(Panel.PreviewPointerMove, _resizeHandle_PreviewPointerMove);
         _resizeHandle.View.AddEvent(Panel.PointerCaptureLost, (s, e) => _mouseDown = false);
 
-        _closeButton.View.AddEvent(Panel.PointerUp, (s, e) => View.Parent?.RemoveChild(View));
+        _closeButton.View.AddEvent(Panel.PointerUp, (s, e) => View.RemoveFromParent());
     }
 
     public void LoadContent(Controllable[] contents)

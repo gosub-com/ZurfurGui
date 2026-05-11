@@ -1,0 +1,16 @@
+// All combo box items must implement this interface.  
+// Use ".implements": "ComboBoxItem" in the consuming control (see ComboBoxItemText for an example)
+{
+    ".controller": "ComboBoxItem",
+    ".namespace": "ZurfurGui.Controls",
+    ".data": {
+        "isEnabled": {
+            "type": "bool",
+            "bind": "new"
+        },
+        "tag": {
+            "type": "?object",
+            "bind": "new"
+        }
+    }
+}

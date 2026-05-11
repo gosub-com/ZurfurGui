@@ -23,8 +23,6 @@ namespace ZurfurGui;
 [JsonSerializable(typeof(PointProp))]
 [JsonSerializable(typeof(DoubleProp))]
 [JsonSerializable(typeof(StyleSheet))]
-[JsonSerializable(typeof(DataBinding))]
-[JsonSerializable(typeof(Dictionary<string,DataBinding>))]
 [JsonSerializable(typeof(Dictionary<string,JsonElement>))]
 [JsonSerializable(typeof(JsonElement))]
 [JsonSerializable(typeof(string[]))]
@@ -48,9 +46,14 @@ public static class Loader
             => new(control.TypeName, control.TypeNamespace, control.TypeUses);
     }
 
-    static Dictionary<string, Type> s_controllers = new();
+    record struct ControlEntry(Type Type, Func<Controllable> Factory);
+
+    static Dictionary<string, ControlEntry> s_controllers = new();
     static Dictionary<string, Func<Layoutable?>> s_layouts = new();
     static Dictionary<string, StyleSheet> s_styleSheets = new();
+    // Maps item data interface type → factory; built automatically in RegisterControl
+    // from each control's ImplementsDataInterfaces property.
+    static Dictionary<Type, Func<Controllable>> s_dataControllers = new();
 
     // Combine source-generated context with custom converters
     public static readonly JsonSerializerOptions s_jsonSerializerOptions = new JsonSerializerOptions
@@ -73,6 +76,7 @@ public static class Loader
     /// </summary>
     public static AppWindow Init(Action<AppWindow> mainAppEntry)
     {
+        RuntimeHelpers.RunClassConstructor(typeof(Panel).TypeHandle);
         RuntimeHelpers.RunClassConstructor(typeof(LayoutRow).TypeHandle);
         RuntimeHelpers.RunClassConstructor(typeof(LayoutDock).TypeHandle);
 
@@ -99,6 +103,8 @@ public static class Loader
         try
         {
             var properties = LoadJsonProperties(json);
+
+            // All of the following checks are enforced by the code generator
             if (target.View.Children.Count != 0)
                 throw new ArgumentException($"The target control '{target.TypeName}' already has views");
             if (target.View.PropertiesCount != 0)
@@ -106,7 +112,8 @@ public static class Loader
             if (properties.Get(Panel.Name) != null)
                 throw new ArgumentException($"Top level component properties of '{target.TypeName}' may not be named");
             var controller = properties.Get(Panel.Controller) ?? "";
-            if (controller != target.TypeName)
+            var controllerBaseName = controller.Contains('<') ? controller.Substring(0, controller.IndexOf('<')) : controller;
+            if (controllerBaseName != target.TypeName)
                 throw new ArgumentException($"Top level controller property '{controller}' must match target '{target.TypeName}");
 
             BuildContent(target, properties, ControlCreationContext.From(target));
@@ -226,23 +233,71 @@ public static class Loader
         return null;
     }
 
-    public static void RegisterControl(string name, Type type)
+    /// <summary>
+    /// <summary>
+    /// Register a control by name with its type and factory.
+    /// The factory is used by CreateControl.
+    /// </summary>
+    public static void RegisterControl(string name, Type type, Func<Controllable> factory)
     {
-        // Check if the name is already registered
-        if (s_controllers.TryGetValue(name, out var existingType))
+        if (s_controllers.TryGetValue(name, out var existing))
         {
-            if (existingType == type)
+            if (existing.Type == type)
                 return; // Already registered
-            throw new ArgumentException($"Control '{name}' is already registered for type '{existingType.Name}'");
+            throw new ArgumentException($"Control '{name}' is already registered for type '{existing.Type.Name}'");
         }
-
-        // Verify that the type implements the Controllable interface
         if (!typeof(Controllable).IsAssignableFrom(type))
-        {
             throw new ArgumentException($"Type '{type.Name}' does not implement the Controllable interface.");
-        }
 
-        s_controllers[name] = type;
+        s_controllers[name] = new ControlEntry(type, factory);
+    }
+
+    /// <summary>
+    /// Register a control and wire up its data-controller mappings from its static
+    /// ImplementsDataInterfaces array. Eliminates the need for a separate RegisterDataController call.
+    /// </summary>
+    public static void RegisterControl(string name, Type type, Func<Controllable> factory,
+        Type[] implementsDataInterfaces)
+    {
+        RegisterControl(name, type, factory);
+        foreach (var iface in implementsDataInterfaces)
+        {
+            if (!s_dataControllers.ContainsKey(iface))
+                s_dataControllers[iface] = factory;
+        }
+    }
+
+    /// <summary>
+    /// Get the factory for the item controller that handles the given item data interface type.
+    /// Accepts either the registered interface type or a concrete class that implements it.
+    /// </summary>
+    public static Func<Controllable> GetDataControllerFactory(Type dataType)
+    {
+        // Direct match (called with the interface type itself)
+        if (s_dataControllers.TryGetValue(dataType, out var factory))
+            return factory;
+
+        // Walk the type's interfaces to find a registered one (called with a concrete class type)
+        foreach (var iface in dataType.GetInterfaces())
+            if (s_dataControllers.TryGetValue(iface, out factory))
+                return factory!;
+
+        throw new ArgumentException($"No data controller registered for '{dataType.Name}'");
+    }
+
+    /// <summary>
+    /// Create an item controller for the given item data, cast to the specified constraint interface.
+    /// Throws if no controller is registered for the data type or if the controller does not
+    /// implement <typeparamref name="TConstraint"/>.
+    /// </summary>
+    public static TConstraint CreateDataController<TConstraint>(object itemData)
+        where TConstraint : class
+    {
+        var controller = GetDataControllerFactory(itemData.GetType())();
+        if (controller is not TConstraint result)
+            throw new InvalidOperationException(
+                $"Data controller '{controller.GetType().Name}' does not implement '{typeof(TConstraint).Name}'");
+        return result;
     }
 
     public static void RegisterLayout(string name, Func<Layoutable?> layoutFactory)
@@ -266,18 +321,15 @@ public static class Loader
     {
         // Create the control
         var controller = properties.Get(Panel.Controller) ?? "";
-        var type = FindControllerType(controller, context);
+        var entry = FindControllerEntry(controller, context);
         Controllable control;
         try
         {
-            control = (Controllable?)Activator.CreateInstance(type)
-                ?? throw new ArgumentException($"Could not create instance of '{controller}'");
+            control = entry.Factory();
         }
-        catch (TargetInvocationException tex)
+        catch (Exception ex)
         {
-            if (tex.InnerException != null)
-                throw tex.InnerException;
-            throw;
+            throw new ArgumentException($"Could not create instance of '{controller}': {ex.Message}", ex);
         }
 
         BuildContent(control, properties, context);
@@ -285,28 +337,28 @@ public static class Loader
         return control;
     }
 
-    static Type FindControllerType(string controller, ControlCreationContext context)
+    static ControlEntry FindControllerEntry(string controller, ControlCreationContext context)
     {
         // Use Panel if controller is not specified
         if (controller == "")
-            return typeof(Panel); // Default to panel when no controller specified
+            return s_controllers["ZurfurGui.Controls.Panel"];
 
         // Check fully qualified name
-        if (s_controllers.TryGetValue(controller, out var type))
-            return type;
+        if (s_controllers.TryGetValue(controller, out var entry))
+            return entry;
 
         // Use namespace
-        if (s_controllers.TryGetValue($"{context.TypeNamespace}.{controller}", out type))
-            return type;
+        if (s_controllers.TryGetValue($"{context.TypeNamespace}.{controller}", out entry))
+            return entry;
 
         // Check uses
         foreach (var use in context.TypeUses)
-            if (s_controllers.TryGetValue($"{use}.{controller}", out type))
-                return type;
+            if (s_controllers.TryGetValue($"{use}.{controller}", out entry))
+                return entry;
 
         // Check base library
-        if (s_controllers.TryGetValue($"ZurfurGui.Controls.{controller}", out type))
-            return type;
+        if (s_controllers.TryGetValue($"ZurfurGui.Controls.{controller}", out entry))
+            return entry;
 
         throw new ArgumentException($"'{controller}' is not a registered control: "
             + $"{string.Join(",\r\n", s_controllers.Keys)}");

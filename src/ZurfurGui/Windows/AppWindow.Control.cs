@@ -57,6 +57,7 @@ public partial class AppWindow : Controllable, Drawable
 
     /// <summary>
     /// Show a control inside a window container.
+    /// Call RemoveFromParent on the returned view to close the floating panel.  
     /// TBD: Some of these properties should represent initial location settings, then they dissapear.
     /// </summary>
     public Window ShowWindow(
@@ -83,6 +84,18 @@ public partial class AppWindow : Controllable, Drawable
         return window;
     }
 
+    /// <summary>
+    /// Show a plain panel (no window chrome) at the given screen-space offset. 
+    /// Used for dropdowns and tooltips. Remove the view when done.
+    /// Call RemoveFromParent on the returned view to close the floating panel.  
+    /// </summary>
+    public View ShowFloatingPanel(Controllable control, PointProp location)
+    {
+        control.View.SetProperty(Panel.Align, new(AlignHorizontal.Left, AlignVertical.Top));
+        control.View.SetProperty(Panel.Offset, location);
+        _floatingWindows.View.AddChild(control.View);
+        return control.View;
+    }
 
     public bool IsDarkMode
     {
