@@ -23,6 +23,7 @@ namespace ZurfurGui;
 [JsonSerializable(typeof(PointProp))]
 [JsonSerializable(typeof(DoubleProp))]
 [JsonSerializable(typeof(StyleSheet))]
+[JsonSerializable(typeof(ThemeSheet))]
 [JsonSerializable(typeof(Dictionary<string,JsonElement>))]
 [JsonSerializable(typeof(JsonElement))]
 [JsonSerializable(typeof(string[]))]
@@ -50,13 +51,13 @@ public static class Loader
 
     static Dictionary<string, ControlEntry> s_controllers = new();
     static Dictionary<string, Func<Layoutable?>> s_layouts = new();
-    static Dictionary<string, StyleSheet> s_styleSheets = new();
+
     // Maps item data interface type → factory; built automatically in RegisterControl
     // from each control's ImplementsDataInterfaces property.
     static Dictionary<Type, Func<Controllable>> s_dataControllers = new();
 
     // Combine source-generated context with custom converters
-    public static readonly JsonSerializerOptions s_jsonSerializerOptions = new JsonSerializerOptions
+    static readonly JsonSerializerOptions s_jsonSerializerOptions = new JsonSerializerOptions
     {
         TypeInfoResolver = ZurfurJsonContext.Default,
         Converters = {
@@ -65,18 +66,24 @@ public static class Loader
             new DoublePropJsonConverter(),
             new TextLinesJsonConverter(),
             new ColorJsonConverter(),
+            new ThicknessPropJsonConverter(),
+            new FontPropJsonConverter(),
+            new PointPropJsonConverter(),
+            new SizePropJsonConverter(),
+            new AlignPropJsonConverter(),
             new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
         },
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
         NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
     };
 
+    public static JsonSerializerOptions JsonSerializerOptions => s_jsonSerializerOptions;
+
     /// <summary>
     /// Initialize the library with the built in controls, etc.
     /// </summary>
     public static AppWindow Init(Action<AppWindow> mainAppEntry)
     {
-        RuntimeHelpers.RunClassConstructor(typeof(Panel).TypeHandle);
         RuntimeHelpers.RunClassConstructor(typeof(LayoutRow).TypeHandle);
         RuntimeHelpers.RunClassConstructor(typeof(LayoutDock).TypeHandle);
 
@@ -216,22 +223,6 @@ public static class Loader
         return char.ToUpper(camelCase[0]) + camelCase.Substring(1);
     }
 
-    public static void RegisterStyleSheet(string json) 
-    {
-        var styleSheet = JsonSerializer.Deserialize<StyleSheet>(json, s_jsonSerializerOptions);
-        if (styleSheet == null || styleSheet.Name ==  null || styleSheet.Name == "")
-            throw new ArgumentException("Invalid style sheet, missing name");
-        if (s_styleSheets.ContainsKey(styleSheet.Name))
-            throw new ArgumentException($"Style sheet '{styleSheet.Name}' is already registered");
-        s_styleSheets[styleSheet.Name] = styleSheet;
-    }
-
-    public static StyleSheet? GetStyleSheet(string name)
-    {
-        if (s_styleSheets.TryGetValue(name, out var styleSheet))
-            return styleSheet;
-        return null;
-    }
 
     /// <summary>
     /// <summary>

@@ -17,7 +17,7 @@
         {
             // Badge pill: red outline box around the badge text.
             ".classes": [ "ComboBoxItemBadge.BadgeBox" ],
-            ".align": { "vertical": "center" },
+            ".align": "vertical:center",
             ".content": [
                 {
                     ".name": "_badge",
@@ -30,7 +30,7 @@
             ".name": "_text",
             ".controller": "TextView",
             ".classes": [ "ComboBoxItemBadge.Text" ],
-            ".align": { "vertical": "center" }
+            ".align": "vertical:center"
         }
     ]
 }

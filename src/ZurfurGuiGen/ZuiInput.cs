@@ -20,14 +20,14 @@ internal static class ZuiInput
     {
         var zuiPath = text.Path;
         var jsonNameWithoutJsonExt = Path.GetFileNameWithoutExtension(zuiPath); // removes .json
-        var jsonNameWithoutAnyExt = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui or .zss
+        var jsonNameWithoutAnyExt = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui, .zss, zth
 
         // Parse the json file (errors are collected into diagnostic)
         Diagnostic? diagnostic = null;
         Dictionary<string, object?> jsonDocument = new();
         var controllerName = "";
         var nameSpace = "";
-        var fileNameOnly = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui or .zss
+        var fileNameOnly = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui, .zss, .zth
         var userSuppliedControllerClass = false;
         var userSuppliedDataClass = false;
         var use = new List<string>();
@@ -39,12 +39,12 @@ internal static class ZuiInput
         {
             // Parse the JSON content, find the controller or style name
             jsonDocument = Json.Parse(text.GetText(cancellationToken)?.ToString() ?? "");
-
-            if (Path.GetExtension(jsonNameWithoutJsonExt).ToLower() == ".zss")
+            var extension = Path.GetExtension(jsonNameWithoutJsonExt).ToLower();
+            if (extension == ".zss" || extension == ".zth")
             {
-                controllerName = GetStyleName(fileNameOnly, jsonDocument);
+                controllerName = GetMatchingJsonFileName(fileNameOnly, jsonDocument);
             }
-            else
+            else if (extension == ".zui")
             {
                 nameSpace = GetJsonValue(jsonDocument, ".namespace");
 
@@ -86,6 +86,10 @@ internal static class ZuiInput
                     .ToList();
 
                 implements = ZuiSchema.GetImplements(jsonDocument);
+            }
+            else
+            {
+                throw new Exception($"Unexpected file extension '{extension}' in file '{zuiPath}'. Expected '.zui', '.zss', or '.zth'.");
             }
         }
         catch (LocationException lex)
@@ -202,7 +206,7 @@ internal static class ZuiInput
         return controllerName;
     }
 
-    static string GetStyleName(string fileName, Dictionary<string, object?> jsonDocument)
+    static string GetMatchingJsonFileName(string fileName, Dictionary<string, object?> jsonDocument)
     {
         // Retrieve and validate the style name
         if (!jsonDocument.TryGetValue("name", out var styleJsonObject))

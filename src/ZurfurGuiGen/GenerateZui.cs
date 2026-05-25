@@ -43,19 +43,31 @@ public class GenerateZui : IIncrementalGenerator
                 return ZuiInput.CollectJsonFiles(text, syntax, cancellationToken);
             });
 
+        // Collect zthData for all ZTH.JSON files (theme tokens)
+        var zthData = context.AdditionalTextsProvider
+            .Where(file => file.Path.EndsWith(".zth.json", StringComparison.OrdinalIgnoreCase))
+            .Combine(syntaxTrees)
+            .Select((combined, cancellationToken) =>
+            {
+                var text = combined.Left;
+                var syntax = combined.Right;
+                return ZuiInput.CollectJsonFiles(text, syntax, cancellationToken);
+            });
+
         // Generate controller classes (combined with CompilationProvider so inherited bindings
         // can be resolved from referenced assemblies when .implements targets a DLL control)
         context.RegisterSourceOutput(zuiData.Collect().Combine(context.CompilationProvider),
             (spc, pair) => GenerateControllerClasses(spc, pair.Left, pair.Right));
 
         // Generate the ZurfurMain partial class in each project
-        context.RegisterSourceOutput(zuiData.Collect().Combine(zssData.Collect())
-            .Combine(context.CompilationProvider), (sourceProductionContext, triple) =>
+        context.RegisterSourceOutput(zuiData.Collect().Combine(zssData.Collect()).Combine(zthData.Collect())
+            .Combine(context.CompilationProvider), (sourceProductionContext, quad) =>
         {
-            var collectedZuiData = triple.Left.Left;
-            var collectedZssData = triple.Left.Right;
-            var compilation = triple.Right;
-            ZuiEmitMain.GenerateZurfurMain(sourceProductionContext, compilation, collectedZuiData, collectedZssData);
+            var collectedZuiData = quad.Left.Left.Left;
+            var collectedZssData = quad.Left.Left.Right;
+            var collectedZthData = quad.Left.Right;
+            var compilation = quad.Right;
+            ZuiEmitMain.GenerateZurfurMain(sourceProductionContext, compilation, collectedZuiData, collectedZssData, collectedZthData);
         });
     }
 

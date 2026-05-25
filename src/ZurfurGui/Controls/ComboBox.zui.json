@@ -4,17 +4,18 @@
     ".namespace": "ZurfurGui.Controls",
     ".classes": [ "ComboBox" ],
     ".layout": "Row",
-    ".sizeMin": { "width": 80 },
+    ".sizeMin": "width:80",
     ".data": {
         // The list of data items in the combo box. 
         // For ComboBox<ComboBoxTextItem> the data type is `IComboBoxTextItemData`
         "items": {
-            "type": "[]Item"
+            "type": "[]Item",
+            "bind": "data"
         },
         // The currently selected index, or NULL if nothing is selected.
         "selectedIndex": {
             "type": "?int",
-            "bind": "new"
+            "bind": "data"
         }
     },
     ".content": [
@@ -22,13 +23,13 @@
             ".name": "_selectedItem",
             ".controller": "Panel",
             ".classes": [ "ComboBox.Text" ],
-            ".align": { "horizontal": "stretch", "vertical": "center" }
+            ".align": "horizontal:stretch;vertical:center"
         },
         {
             ".name": "_arrow",
             ".controller": "TextView",
             ".classes": [ "ComboBox.Arrow" ],
-            ".align": { "horizontal": "right", "vertical": "center" },
+            ".align": "horizontal:right;vertical:center",
             "text": [ "▾" ]
         }
     ]

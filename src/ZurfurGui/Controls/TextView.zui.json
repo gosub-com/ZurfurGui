@@ -5,15 +5,15 @@
     ".data": {
         "text": {
             "type": "?TextLines",
-            "bind": "new"
+            "bind": "styled"
         },
         "font": {
             "type": "?FontProp",
-            "bind": "new"
+            "bind": "styled"
         },
         "color": {
             "type": "?Color",
-            "bind": "new"
+            "bind": "styled"
         }
     }
 }

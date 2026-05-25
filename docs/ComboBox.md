@@ -201,13 +201,6 @@ Key points:
 }
 ```
 
-Reference the style sheet from the form that uses the item by adding it to `.useStyles` in the form's
-`.zui.json`:
-
-```jsonc
-{ ".useStyles": [ "ComboBoxItemBadge" ] }
-```
-
 **3. Use the new item in a view** (`FormTestComboBox.zui.json`):
 
 ```jsonc

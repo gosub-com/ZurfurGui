@@ -97,24 +97,6 @@ public sealed partial class ComboBox<Item> : Controllable
         popup.View.SetProperty(Panel.Classes, ["ComboBox.Dropdown"]);
         popup.View.SetProperty(Panel.Align, new(AlignHorizontal.Left, AlignVertical.Top));
 
-        // The popup is parented to _floatingWindows under AppWindow, so it is outside the
-        // originating form's view subtree.  Style lookup walks ancestors looking for UseStyles,
-        // and would only find AppWindow's built-in sheets (e.g. "ZurfurDefault").  Any custom
-        // item stylesheet declared on the form (e.g. "ComboBoxItemBadge") would be invisible to
-        // the popup items.  Collect every UseStyles name from the ComboBox's own ancestor chain
-        // and stamp them onto the popup so its items can resolve their styles correctly.
-        var collectedStyles = new List<string>();
-        for (var v = View; v != null; v = v.Parent)
-        {
-            var ancestorStyles = v.GetProperty(Panel.UseStyles);
-            if (ancestorStyles != null)
-                foreach (var name in ancestorStyles)
-                    if (!collectedStyles.Contains(name))
-                        collectedStyles.Add(name);
-        }
-        if (collectedStyles.Count > 0)
-            popup.View.SetProperty(Panel.UseStyles, new TextLines([.. collectedStyles]));
-
         var items = DataContext.Items;
         for (int i = 0; i < items.Count; i++)
         {

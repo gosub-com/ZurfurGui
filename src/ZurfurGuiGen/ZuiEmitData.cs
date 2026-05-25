@@ -18,6 +18,11 @@ internal static class ZuiEmitData
         if (allBindings.Count == 0)
             return "";
 
+        // When .implements is set, inherited bindings are delegated to an instance of the base
+        // data class rather than re-implemented here.  Own bindings are still fully generated.
+        bool hasImplements = data.Implements != "" && inheritedBindings != null && inheritedBindings.Count > 0;
+        var ownBindings = data.Bindings;
+
         // Verify bindings are valid
         var namedControls = ZuiSchema.FindNamedControlsDictionary(data.JsonDocument);
         foreach (var binding in data.Bindings)
@@ -25,11 +30,11 @@ internal static class ZuiEmitData
             if (binding.Bind == "")
             {
                 throw new Exception($"The binding for '{binding.Name}' must not be empty. "
-                    + "It can be 'new' or a valid control name.");
+                    + "It can be 'styled', 'data', or a valid control name.");
             }
 
-            // Reserved word to create a new data instance instead of binding to a control
-            if (binding.Bind == "new")
+            // Reserved words: 'styled' creates a property+data item, 'data' stores only in the data object
+            if (binding.Bind == "styled" || binding.Bind == "data")
                 continue;
 
             var bindingPath = binding.Bind.Split('.');
@@ -44,8 +49,10 @@ internal static class ZuiEmitData
 
         var interfaceName = $"I{data.ControllerName}Data";
         var className = $"{data.ControllerName}Data";
-        // No need to explicitly implement I{Implements}Data here — IControllerNameData
-        // already extends it via the generated data contract interface chain.
+        var implementsClassName = hasImplements ? $"{data.Implements}Data" : "";
+        // Named __implement{Implements} rather than __base to avoid implying C# inheritance
+        // and to leave room for multiple implements in the future.
+        var implementsFieldName = hasImplements ? $"__implement{data.Implements}" : "";
 
         // Generic data classes mirror the controller's type parameter and constraint.
         var genericSuffix = data.TypeParam != "" ? $"<{data.TypeParam}>" : "";
@@ -64,63 +71,77 @@ internal static class ZuiEmitData
         sb.Append($"public sealed {partialKeyword}class {className}{genericSuffix}"
             + $" : {interfaceName}{genericSuffix}{genericConstraint}\r\n{{\r\n");
 
-        // Generate static PropertyChangedEventArgs for each property
-        foreach (var p in allBindings)
+        if (hasImplements)
+        {
+            // Delegate inherited properties to a dedicated instance of the implemented data class.
+            // This avoids duplicating backing fields and PropertyChangedEventArgs for properties
+            // that are already fully implemented there.  PropertyChanged events are forwarded
+            // onto this instance so subscribers see a unified event stream.
+            // Named __implement{Implements} rather than __base to avoid implying C# inheritance
+            // and to leave room for multiple implements in the future.
+            sb.AppendIndentedLine(1, $"// Inherited properties are delegated to a dedicated instance of {implementsClassName}.");
+            sb.AppendIndentedLine(1, $"readonly {implementsClassName} {implementsFieldName} = new();");
+            sb.Append("\r\n");
+        }
+
+        // Generate static PropertyChangedEventArgs only for own bindings when delegating,
+        // or for all bindings when not.
+        var eventArgsBindings = hasImplements ? ownBindings : allBindings;
+        foreach (var p in eventArgsBindings)
         {
             var csName = ZuiEmit.ToPascalCase(p.Name);
             sb.AppendIndentedLine(1, $"static readonly PropertyChangedEventArgs s_{p.Name}EventArgs = new(nameof({csName}));");
         }
         sb.Append("\r\n");
 
-        // Generate backing fields
-        foreach (var p in allBindings)
+        // Generate backing fields only for own bindings when delegating.
+        var backingFieldBindings = hasImplements ? ownBindings : allBindings;
+        foreach (var p in backingFieldBindings)
             sb.AppendIndentedLine(1, $"{ZuiEmit.GetBindingDataType(p, namedControls)} __{p.Name};");
         sb.Append("\r\n");
 
-        // Parameterless constructor initializing default values
-        // (mirrors the controller's CreateDefaultDataContext initialization)
+        // Parameterless constructor
         sb.AppendIndentedLine(1, $"public {className}()");
         sb.AppendIndentedLine(1, "{");
-        foreach (var binding in allBindings)
+        if (hasImplements)
         {
-            // Generate backing field for the data
+            // Forward PropertyChanged from the implement instance so subscribers on this object
+            // receive notifications for inherited properties without any extra per-property code.
+            sb.AppendIndentedLine(2, $"{implementsFieldName}.PropertyChanged += (s, e) => PropertyChanged?.Invoke(this, e);");
+        }
+        foreach (var binding in backingFieldBindings)
+        {
             var backingFieldName = $"__{binding.Name}";
             if (ZuiEmit.IsNamedControl(binding.Bind, namedControls))
-            {
-                // Target named control (e.g. "bind": "_card1")
                 sb.AppendIndentedLine(2, $"{backingFieldName} = new {binding.BaseType}Data();");
-            }
             else if (binding.IsCollection)
-            {
-                // Collection type: initialize with empty ObservableCollection
                 sb.AppendIndentedLine(2, $"{backingFieldName} = new {ZuiEmit.GetBindingDataType(binding, namedControls)}();");
-            }
+            else if (binding.IsNullable)
+                sb.AppendIndentedLine(2, $"{backingFieldName} = null;");
             else
-            {
-                // Target non-control type
-                if (binding.IsNullable)
-                    sb.AppendIndentedLine(2, $"{backingFieldName} = null;");
-                else
-                    sb.AppendIndentedLine(2, $"{backingFieldName} = new {binding.BaseType}();");
-            }
+                sb.AppendIndentedLine(2, $"{backingFieldName} = new {binding.BaseType}();");
         }
         sb.AppendIndentedLine(1, "}");
         sb.Append("\r\n");
 
-        // Constructor that accepts each binding value
+        // Constructor that accepts each binding value (all bindings — inherited + own)
         var ctorParams = string.Join(", ", allBindings.Select(b => $"{ZuiEmit.GetBindingDataType(b, namedControls)} {b.Name}"));
         sb.AppendIndentedLine(1, $"public {className}({ctorParams})");
         sb.AppendIndentedLine(1, "{");
-        foreach (var binding in allBindings)
+        if (hasImplements)
         {
-            var paramName = binding.Name;
-            var backingFieldName = $"__{paramName}";
-            sb.AppendIndentedLine(2, $"{backingFieldName} = {paramName};");
+            // Forward PropertyChanged from the implement instance.
+            sb.AppendIndentedLine(2, $"{implementsFieldName}.PropertyChanged += (s, e) => PropertyChanged?.Invoke(this, e);");
+            // Assign inherited params via the delegating properties (which route through __implement*).
+            foreach (var binding in inheritedBindings!)
+                sb.AppendIndentedLine(2, $"{ZuiEmit.ToPascalCase(binding.Name)} = {binding.Name};");
         }
+        foreach (var binding in backingFieldBindings)
+            sb.AppendIndentedLine(2, $"__{binding.Name} = {binding.Name};");
         sb.AppendIndentedLine(1, "}");
         sb.Append("\r\n");
 
-        // Generate INotifyPropertyChanged implementation
+        // INotifyPropertyChanged
         sb.AppendIndentedLine(1, "public event PropertyChangedEventHandler? PropertyChanged;");
         sb.Append("\r\n");
         sb.AppendIndentedLine(1, "void OnPropertyChanged(PropertyChangedEventArgs args)");
@@ -129,8 +150,24 @@ internal static class ZuiEmitData
         sb.AppendIndentedLine(1, "}");
         sb.Append("\r\n");
 
-        // Generate properties with INotifyPropertyChanged implementation
-        foreach (var p in allBindings)
+        // Delegating properties for inherited bindings
+        if (hasImplements)
+        {
+            foreach (var p in inheritedBindings!)
+            {
+                var propertyType = ZuiEmit.GetBindingDataType(p, namedControls);
+                var csName = ZuiEmit.ToPascalCase(p.Name);
+                sb.AppendIndentedLine(1, $"public {propertyType} {csName}");
+                sb.AppendIndentedLine(1, "{");
+                sb.AppendIndentedLine(2, $"get => {implementsFieldName}.{csName};");
+                sb.AppendIndentedLine(2, $"set => {implementsFieldName}.{csName} = value;");
+                sb.AppendIndentedLine(1, "}");
+                sb.Append("\r\n");
+            }
+        }
+
+        // Full properties for own bindings (or all bindings when not delegating)
+        foreach (var p in backingFieldBindings)
         {
             var propertyType = ZuiEmit.GetBindingDataType(p, namedControls);
             var backingField = $"__{p.Name}";
@@ -149,7 +186,6 @@ internal static class ZuiEmitData
             sb.AppendIndentedLine(1, "}");
             sb.Append("\r\n");
         }
-
 
         sb.Append("}");
         return sb.ToString();

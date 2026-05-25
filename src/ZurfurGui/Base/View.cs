@@ -11,6 +11,11 @@ namespace ZurfurGui.Base;
 
 public sealed class View
 {
+    // TBD: Should we be caching style lookups in the properties?
+    internal const int PROPERTY_STYLE_CACHE_BEGIN = 10000;
+    internal const int PROPERTY_STYLE_CACHE_END = 20000;
+
+
     /// <summary>
     /// All child views. 
     /// </summary>
@@ -149,6 +154,27 @@ public sealed class View
         SetFlags(ViewFlags.ReDraw);
     }
 
+    internal void InvalidateStyleCacheInternal()
+    {
+        var view = this;
+        var keysToRemove = view._properties
+            .Select(k => k.key)
+            .Where(k => k.IdAsInt >= PROPERTY_STYLE_CACHE_BEGIN && k.IdAsInt < PROPERTY_STYLE_CACHE_END)
+            .ToList();
+        foreach (var key in keysToRemove)
+            view._properties.RemoveById(key);
+    }
+
+
+    /// <summary>
+    /// Invalidate the style cache for this view and all descendants, forcing a full re-style on the next frame.
+    /// Call this when the global theme or active style sheets change.
+    /// </summary>
+    internal void InvalidateStyleTree()
+    {
+        SetFlags(ViewFlags.ReStyleDown);
+    }
+
     void SetFlags(ViewFlags flags)
     {
         if ((Flags & flags) == flags)
@@ -182,7 +208,7 @@ public sealed class View
             return;
         SetFlags(key.Flags);
         _properties.Set(key, value);
-        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + Style.PROPERTY_STYLE_CACHE_BEGIN));
+        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN));
     }
 
     public bool ContainsProperty<T>(PropertyKey<T> key)
@@ -196,7 +222,7 @@ public sealed class View
             return;
         SetFlags(key.Flags);
         _properties.Remove(key);
-        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + Style.PROPERTY_STYLE_CACHE_BEGIN));
+        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN));
     }
 
     /// <summary>
@@ -205,7 +231,7 @@ public sealed class View
     internal void SetPropertyNoFlags<T>(PropertyKey<T> key, T value)
     {
         _properties.Set(key, value);
-        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + Style.PROPERTY_STYLE_CACHE_BEGIN));
+        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN));
     }
 
 
@@ -214,7 +240,19 @@ public sealed class View
     /// </summary>
     public T GetStyle<T>(PropertyKey<T> key)
     {
-        return Style.GetStyle(this, key);
+        // Properties cached from style lookup below
+        if (_properties.TryGetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN),
+                out var styledValue) && styledValue is T typedStyledValue)
+        {
+            return typedStyledValue;
+        }
+
+        var styledProperty = StyleManager.FindStyle(this, key);
+
+        // Cache the styled property for quick lookup above
+        _properties.SetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN), styledProperty!);
+
+        return styledProperty;
     }
 
 

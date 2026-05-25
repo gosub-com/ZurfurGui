@@ -1,0 +1,145 @@
+// Fluent 2 starter token palette for ZurfurGui
+{
+    "name": "ZurfurCherryDark",
+
+    "variables": {
+        // Button (Primary) - Button background (default)
+        "color.brand.background": "#222448",
+
+        // Button (Primary) - Button background on hover
+        "color.brand.background.hover": "#2A2E60",
+
+        // Button (Primary) - Button background on press
+        "color.brand.background.pressed": "#181C40",
+
+        // Button (Primary/Secondary) - Button background when disabled
+        "color.neutral.background.disabled": "#241018",
+
+        // Button (Primary) - Button text color (default)
+        "color.neutral.foreground.onBrand": "#D8EEFF",
+
+        // Button (Primary/Secondary) - Button text color when disabled
+        // Text - Disabled text
+        "color.neutral.foreground.disabled": "#A19F9D",
+
+        // Button (Primary) - Button border color (focus)
+        // Borders/Strokes - Border color for focused controls
+        "color.stroke.focus": "#5868C0",
+
+        // Button (Primary/Secondary) - Button border color when disabled
+        // Borders/Strokes - Border color for disabled controls
+        "color.stroke.disabled": "#5058A0",
+
+        // Button (Secondary) - Secondary button background (default)
+        // Surface/Background - App/page background
+        "color.neutral.background1": "#481018",
+
+        // Button (Secondary) - Secondary button background on hover
+        "color.neutral.background1.hover": "#241018",
+
+        // Button (Secondary) - Secondary button background on press
+        "color.neutral.background1.pressed": "#1E1218",
+
+        // Text - Main body text color
+        // Button (Secondary) - Secondary button text color (default)
+        // Text - Header text color (often same as body)
+        "color.neutral.foreground1": "#F0D8E0",
+
+        // Button (Secondary) - Secondary button border color
+        // Borders/Strokes - Standard border color for controls
+        "color.stroke.default": "#5058A0",
+
+        // Text - Less prominent text
+        "color.neutral.foreground2": "#D8EEFF",
+
+        // Text - Hyperlink text color
+        "color.brand.foreground.link": "#5868C0",
+
+        // Text - Hyperlink text color on hover
+        "color.brand.foreground.link.hover": "#3840A0",
+
+        // Surface/Background - Card or panel background
+        "color.neutral.background2": "#1E1218",
+
+        // Surface/Background - Popups, flyouts, etc.
+        "color.neutral.background3": "#2A1520",
+
+        // Status/Feedback - Success background (e.g., alerts)
+        "color.status.success.background": "#27472A",
+
+        // Status/Feedback - Warning background
+        "color.status.warning.background": "#4F442B",
+
+        // Status/Feedback - Error background
+        "color.status.danger.background": "#4B2323",
+
+        // Status/Feedback - Success text
+        "color.status.success.foreground": "#92D050",
+
+        // Status/Feedback - Warning text
+        "color.status.warning.foreground": "#FFD700",
+
+        // Status/Feedback - Error text
+        "color.status.danger.foreground": "#FF5F56",
+
+        // Default border for controls, dividers
+        "color.neutral.stroke1": "#7A3050",
+
+        // Secondary border, inner border
+        "color.neutral.stroke2": "#7A3050",
+
+        // Quaternary surfaces, overlays
+        "color.neutral.background4": "#241018",
+
+        // Overlay scrim (combo box, dialog boxes, etc.)
+        "color.overlay.scrim": "#FFC0C030",
+
+        // Tertiary overlays, subtle backgrounds
+        "color.neutral.background5": "#2A1520",
+
+        // Tertiary text, placeholder text
+        "color.neutral.foreground3": "#F0D8E0",
+
+        // Disabled/ghost text
+        "color.neutral.foreground4": "#7A3050",
+
+        // Selected state for brand controls
+        "color.brand.background.selected": "#2A2E60",
+
+        // Checked state for toggles, checkboxes
+        "color.brand.background.checked": "#222448",
+
+        // Disabled state for brand controls
+        "color.brand.background.disabled": "#241018",
+
+        // Brand accent border
+        "color.brand.stroke1": "#5868C0",
+
+        // Brand secondary border
+        "color.brand.stroke2": "#383E90",
+
+        // Info state backgrounds
+        "color.status.info.background": "#2A2E60",
+
+        // Info state text
+        "color.status.info.foreground": "#D8EEFF",
+
+        // Error border (inputs, alerts)
+        "color.status.danger.stroke": "#FF5F56",
+
+        // Success border
+        "color.status.success.stroke": "#92D050",
+
+        // Warning border
+        "color.status.warning.stroke": "#FFD700",
+
+        // Window title background
+        "color.window.title.background": "#6B1530",
+
+        // Window title text color
+        "color.window.title.foreground": "#FFE8EE",
+
+        // Window title text color on hover
+        "color.window.title.foreground.hover": "#FF5070"
+    }
+}

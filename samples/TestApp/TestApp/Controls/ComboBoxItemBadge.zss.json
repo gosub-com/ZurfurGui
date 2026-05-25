@@ -4,46 +4,31 @@
         {
             // Outer row: padding around the whole item
             ".selectors": "ComboBoxItemBadge",
-            ".padding": { "left": 6, "top": 3, "right": 6, "bottom": 3 }
+            ".padding": "left:6;top:3;right:6;bottom:3"
         },
         {
+            // Use Fluent token: color.brand.background.hover
             ".selectors": "ComboBoxItemBadge:IsPointerOver",
-            ".backgroundColor": "#CCE8F8"
-        },
-        {
-            ".selectors": "ComboBoxItemBadge:IsDarkMode:IsPointerOver",
-            ".backgroundColor": "#2E4F6A"
+            ".backgroundColor": "@color.brand.background.hover"
         },
         {
             // Badge pill outline: 2px red border, small padding inside
             ".selectors": "ComboBoxItemBadge.BadgeBox",
-            ".borderWidth": 2,
-            ".borderColor": "#CC0000",
-            ".borderRadius": 3,
-            ".padding": { "left": 4, "top": 1, "right": 4, "bottom": 1 }
-        },
-        {
-            ".selectors": "ComboBoxItemBadge.BadgeBox:IsDarkMode",
-            ".borderColor": "#FF4444"
+            ".borderWidth": "@stroke.width.medium",
+            ".borderColor": "@color.status.danger.stroke",
+            ".borderRadius": "@radius.corner.small",
+            ".padding": "left:4;top:1;right:4;bottom:1"
         },
         {
             // Badge text inside the pill
             ".selectors": "ComboBoxItemBadge.BadgeText",
-            "TextView.color": "#CC0000"
-        },
-        {
-            ".selectors": "ComboBoxItemBadge.BadgeText:IsDarkMode",
-            "TextView.color": "#FF8888"
+            "TextView.color": "@color.status.danger.stroke"
         },
         {
             // Main descriptive text, with a small left gap from the badge
             ".selectors": "ComboBoxItemBadge.Text",
-            "TextView.color": "Black",
-            ".padding": { "left": 6, "top": 0, "right": 0, "bottom": 0 }
-        },
-        {
-            ".selectors": "ComboBoxItemBadge.Text:IsDarkMode",
-            "TextView.color": "#F0F0F0"
+            "TextView.color": "@color.neutral.foreground1",
+            ".padding": "left:6;top:0;right:0;bottom:0"
         }
     ]
 }

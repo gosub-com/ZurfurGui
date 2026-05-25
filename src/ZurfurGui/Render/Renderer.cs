@@ -127,7 +127,7 @@ public class Renderer
 
         if (needsClearCache)
         {
-            view.ClearStyleCacheInternal();
+            view.InvalidateStyleCacheInternal();
             view.InvalidateMeasure();
             view.InvalidateDraw();
         }

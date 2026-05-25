@@ -6,146 +6,83 @@
             ".name": "bigButton",
             ".controller": "Button",
             "text": "Big Button Test",
-            ".align": {
-                "vertical": "top",
-                "horizontal": "left"
-            },
-            ".sizeRequest": {
-                "width": 100,
-                "height": 100
-            },
-            ".margin": {
-                "left": 100,
-                "top": 100,
-                "right": 0,
-                "bottom": 0
-            }
+            ".align": "vertical:top;horizontal:left",
+            ".sizeRequest": "width:100;height:100",
+            ".margin": "left:100;top:100;right:0;bottom:0"
         },
         {
             ".name": "button2",
             ".controller": "Button",
             "text": "Test 2",
-            ".align": {
-                "vertical": "top",
-                "horizontal": "left"
-            },
-            ".margin": {
-                "left": 10,
-                "top": 20,
-                "right": 0,
-                "bottom": 0
-            }
+            ".align": "vertical:top;horizontal:left",
+            ".margin": "left:10;top:20;right:0;bottom:0"
         },
         {
             ".name": "button3",
             ".controller": "Button",
             "text": "Test 3",
-            ".align": {
-                "vertical": "top",
-                "horizontal": "left"
-            },
-            ".margin": {
-                "left": 10,
-                "top": 50,
-                "right": 0,
-                "bottom": 0
-            }
+            ".align": "vertical:top;horizontal:left",
+            ".margin": "left:10;top:50;right:0;bottom:0"
         },
         {
             ".controller": "TextView",
             "text": "TC",
-            ".align": {
-                "vertical": "top",
-                "horizontal": "center"
-            }
+            ".align": "vertical:top;horizontal:center"
         },
         {
             ".controller": "TextView",
             "text": "TS",
-            ".align": {
-                "vertical": "top",
-                "horizontal": "stretch"
-            }
+            ".align": "vertical:top;horizontal:stretch"
         },
         {
             ".controller": "TextView",
             "text": "TR",
-            ".align": {
-                "vertical": "top",
-                "horizontal": "right"
-            }
+            ".align": "vertical:top;horizontal:right"
         },
         {
             ".controller": "TextView",
             "text": "TL",
-            ".align": {
-                "vertical": "top",
-                "horizontal": "left"
-            }
+            ".align": "vertical:top;horizontal:left"
         },
         {
             ".controller": "TextView",
             "text": "Middle",
-            ".align": {
-                "vertical": "center",
-                "horizontal": "center"
-            }
+            ".align": "vertical:center;horizontal:center"
         },
         {
             ".controller": "TextView",
             "text": "CS",
-            ".align": {
-                "vertical": "center",
-                "horizontal": "stretch"
-            }
+            ".align": "vertical:center;horizontal:stretch"
         },
         {
             ".controller": "TextView",
             "text": "CR",
-            ".align": {
-                "vertical": "center",
-                "horizontal": "right"
-            }
+            ".align": "vertical:center;horizontal:right"
         },
         {
             ".controller": "TextView",
             "text": "CL",
-            ".align": {
-                "vertical": "center",
-                "horizontal": "left"
-            }
+            ".align": "vertical:center;horizontal:left"
         },
         {
             ".controller": "TextView",
             "text": "BC",
-            ".align": {
-                "vertical": "bottom",
-                "horizontal": "center"
-            }
+            ".align": "vertical:bottom;horizontal:center"
         },
         {
             ".controller": "TextView",
             "text": "BS",
-            ".align": {
-                "vertical": "bottom",
-                "horizontal": "stretch"
-            }
+            ".align": "vertical:bottom;horizontal:stretch"
         },
         {
             ".controller": "TextView",
             "text": "BR",
-            ".align": {
-                "vertical": "bottom",
-                "horizontal": "right"
-            }
+            ".align": "vertical:bottom;horizontal:right"
         },
         {
             ".controller": "TextView",
             "text": "BL",
-            ".align": {
-                "vertical": "bottom",
-                "horizontal": "left"
-            }
+            ".align": "vertical:bottom;horizontal:left"
         }
     ]
 }

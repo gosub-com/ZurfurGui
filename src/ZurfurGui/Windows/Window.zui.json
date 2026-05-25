@@ -16,7 +16,7 @@
                             ".classes": [ "Window.Title.TextColor", "Window.Title.Menu" ],
                             "dock.align": "left",
                             "text": "≡",
-                            "font": { "size": 24.0 }
+                            "font": "size:24"
                         },
                         {
                             ".name": "_closeButton",
@@ -24,7 +24,7 @@
                             ".classes": [ "Window.Title.TextColor", "Window.Title.Close" ],
                             "dock.align": "right",
                             "text": "X",
-                            "font": { "size": 24.0 }
+                            "font": "size:24"
                         },
                         {
                             ".controller": "TextView",
@@ -44,25 +44,14 @@
         },
         {
             ".name": "_resizeHandle",
-            ".align": {
-                "horizontal": "right",
-                "vertical": "bottom"
-            },
-            ".margin": {
-                "left": 0,
-                "top": 0,
-                "right": -5,
-                "bottom": -13
-            },
+            ".align": "horizontal:right;vertical:bottom",
+            ".margin": "left:0;top:0;right:-5;bottom:-13",
             ".content": [
                 {
                     ".controller": "TextView",
                     "text": "◢",
-                    ".offset": {
-                        "x": -0.5,
-                        "y": -1
-                    },
-                    "font": { "size": 32.0 }
+                    ".offset": "x:-0.5;y:-1",
+                    "font": "size:32"
                 }
             ]
         }

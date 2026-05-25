@@ -44,10 +44,14 @@ public partial class FormTestComboBox
             return;
         switch (_themeComboBox.DataContext.SelectedIndex)
         {
-            case 0: appWindow.View.SetProperty(Panel.UseStyles, new TextLines("ZurfurDefault")); appWindow.IsDarkMode = false; break;
-            case 1: appWindow.View.SetProperty(Panel.UseStyles, new TextLines("ZurfurDefault")); appWindow.IsDarkMode = true;  break;
-            case 2: appWindow.View.SetProperty(Panel.UseStyles, new TextLines("ZurfurCherry"));  appWindow.IsDarkMode = false; break;
-            case 3: appWindow.View.SetProperty(Panel.UseStyles, new TextLines("ZurfurCherry"));  appWindow.IsDarkMode = true;  break;
+            case 0: appWindow.Theme = "ZurfurDefault"; break;
+            case 1: appWindow.Theme = "ZurfurDefaultDark"; break;
+            case 2: appWindow.Theme = "ZurfurCherry"; break;
+            case 3: appWindow.Theme = "ZurfurCherryDark"; break;
         }
+
+        // This is a hack to force dark mode because we are still in the middle of themes
+        // TBD: Remove this when themes are fully implemented
+        //appWindow.IsDarkMode = appWindow.Theme.Contains("Dark");
     }
 }

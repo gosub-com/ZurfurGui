@@ -5,7 +5,7 @@
     ".data": {
         "isChecked": {
             "type": "Bool",
-            "bind": "new"
+            "bind": "data"
         },
         "text": {
             "type": "TextLines",
@@ -13,11 +13,11 @@
         },
         "isCheckedNullTest": {
             "type": "?Bool",
-            "bind": "new"
+            "bind": "styled"
         },
         "textNullTest": {
             "type": "?TextLines",
-            "bind": "new"
+            "bind": "styled"
         }
     },
     ".content": [

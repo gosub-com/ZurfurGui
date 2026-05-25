@@ -37,7 +37,7 @@ A style sheet is a single JSON object with:
             ".backgroundColor": "#DDDDDD",
             ".borderColor": "#606060",
             ".borderWidth": 2,
-            ".padding": { "left": 4, "top": 2, "right": 4, "bottom": 2 }
+            ".padding": "left: 4; top: 2; right: 4; bottom: 2"
         },
         {
             ".selectors": "Button:IsPointerOver",
@@ -51,17 +51,62 @@ A style sheet is a single JSON object with:
 }
 ```
 
+## Property String Formats for Common Types
+
+Several style properties use a concise string format for values. Below are the supported formats for each property type, with examples.
+
+### Color
+- **Format:** CSS hex, rgb, or named.
+- **Examples:**
+  - `.backgroundColor: "#FF0000"` (red)
+  - `.backgroundColor: "#FF000080"` (red with 50% opacity)
+  - `.borderColor: "255,0,0"`
+  - `.borderColor: "255,0,0,128"` (red with 50% opacity)
+  - `.color: "red"`
+
+### Point
+- **Format:** `"x: value; y: value"` or a single number for both.
+- **Examples:**
+  - `.offset: "x: 10; y: 20"`
+  - `.offset: "8"` (sets both x and y to 8)
+
+### Size
+- **Format:** `"width: value; height: value"` or a single number for both.
+- **Examples:**
+  - `.sizeMin: "width: 160; height: 80"`
+  - `.sizeRequest: "24"` (sets both width and height to 24)
+
+### Thickness
+- **Format:** `"left: value; top: value; right: value; bottom: value"`, or use `"vertical"`/`"horizontal"` for convenience. 
+- **Examples:**
+  - `.padding: "left: 3; top: 10; right: 3; bottom: 10"`
+  - `.margin: "vertical: 8; horizontal: 4"`
+  - `.margin: "8"`
+
+### Align
+- **Format:** `"horizontal: value; vertical: value"`
+- **Examples:**
+  - `.align: "horizontal: center; vertical: top"`
+  - `.align: "vertical: bottom"`
+
+### Font
+- **Format:** `"name: FontName; size: value"` (additional fields may be supported in the future)
+- **Examples:**
+  - `TextView.font: "name: Arial; size: 14"`
+  - `TextView.font: "size: 20"`
+
+**Notes:**
+- Key-value pairs are separated by semicolons (`;`).
+- Keys and values are case-insensitive; whitespace is ignored around them.
+- Unset fields are omitted and treated as `null`.
+- Malformed strings or unknown keys will result in a parse error.
+
+
 ## Applying Styles
 
-Style sheets are activated on a subtree by setting `.useStyles` on any ancestor view:
-
-```json
-{
-    ".controller": "MyCard",
-    ".useStyles": [ "ZurfurDefault" ],
-    ".content": [ ... ]
-}
-```
+Style sheets are automatically registered at startup by the source generator — no explicit activation is
+required. Every `.zss.json` file in a project is detected and an `Style.RegisterStyleSheet(...)` call is emitted
+into `ZurfurMain.g.cs`. At runtime, `Style.EnumerateStyledValues` consults all registered sheets globally.
 
 Individual views opt into style rules by declaring `.classes`:
 
@@ -109,15 +154,16 @@ When the runtime needs the value of a styled property for a view it follows this
 1. **Directly set property** on the view (set via `View.SetProperty` or in the `.zui.json` file). If the property
    type implements `IMergable<T>` and is not `IsComplete`, continue to merge from styles. Otherwise, return
    immediately.
-2. **Style lookup**: walk up the view tree from the view to the root. For each ancestor that has `.useStyles`,
-   iterate through the referenced style sheets and their rules (in **reverse declaration order** — last rule wins for
-   equal specificity). Collect matching values.
+2. **Style lookup**: iterate through all globally registered style sheets, giving active theme sheets
+   the highest priority (they are consulted last so their values win for non-mergable types). Rules are
+   evaluated in **reverse declaration order** within each sheet — the last rule wins for equal specificity.
+   Collect matching values.
 3. **Merge** (for `IMergable<T>` types): combine partial values field-by-field using `Or()` — the first non-null
    field value encountered wins.
 4. **StyleDefault**: the hard-coded default declared in the `PropertyKey<T>` constructor.
 
 Style lookup results are **cached** on the view using an offset key range (`PROPERTY_STYLE_CACHE_BEGIN`). The cache
-is invalidated whenever a pseudo-class state changes (via `ViewFlags.ReStyleThis`) or a `UseStyles`/`Classes`
+is invalidated whenever a pseudo-class state changes (via `ViewFlags.ReStyleThis`) or a `Classes`
 property changes (via `ViewFlags.ReStyleDown`).
 
 ## Styleable Properties
@@ -193,23 +239,39 @@ until `IsComplete` returns `true`.
 Example — a view has two classes `["TextView", "StyleC1", "StyleC2"]` and two rules:
 
 ```json
-{ ".selectors": "StyleC1", "TextView.font": { "size": 28.0 } }
-{ ".selectors": "StyleC2", "TextView.font": { "name": "Times New Roman" } }
+{ ".selectors": "StyleC1", "TextView.font": "size: 28" }
+{ ".selectors": "StyleC2", "TextView.font": "name: Times New Roman" }
 ```
 
 The resolved font is `{ name: "Times New Roman", size: 28.0 }` — both fields contributed by different rules.
 
 ## Built-in Style Sheets
 
-The `ZurfurGui` library ships one built-in style sheet that is always registered:
+The `ZurfurGui` library ships built-in style sheets that are always registered:
 
 | Name            | Description                                                  |
 |-----------------|--------------------------------------------------------------|
 | `ZurfurDefault` | Default theme: light-mode rules plus `:IsDarkMode` overrides |
+| `ZurfurCherry`  | Cherry theme: light-mode rules plus `:IsDarkMode` overrides  |
 
-Both light and dark variants live in a single file (`ZurfurDefault.zss.json`). Light-mode rules use plain selectors;
+Both light and dark variants live in a single file per theme. Light-mode rules use plain selectors;
 dark-mode overrides use `:IsDarkMode` pseudo-classes. This is the recommended pattern for any theme that needs to
 support both modes.
+
+## Theme Switching
+
+Theme switching is exposed on `AppWindow`:
+
+```csharp
+appWindow.Theme = "ZurfurCherry";   // set active theme sheet by name
+appWindow.IsDarkMode = true;         // toggle dark mode
+```
+
+Setting either property calls `View.InvalidateStyleTree()` to flush the style cache for the entire tree.
+
+When a theme is active, `Style.EnumerateStyledValues` gives that theme sheet the highest priority: component
+sheets (e.g. `ComboBoxItemBadge`) are iterated first (lowest priority) and the active theme sheet is iterated last
+(highest priority). When no theme is active all sheets are iterated with equal priority.
 
 ## Defining a Custom Style Sheet
 
@@ -217,89 +279,25 @@ support both modes.
 2. Add it to the `.csproj` as an `AdditionalFile`.
 3. Set `"name"` to a unique identifier (e.g. `"MyTheme"`).
 4. Add rules under `"styles"`.
-5. Reference it from a `.zui.json` via `.useStyles: ["MyTheme"]`.
 
-The source generator will automatically emit the `RegisterStyleSheet` call; no further C# code is needed.
+The source generator automatically emits the `Style.RegisterStyleSheet` call; no further C# code is needed.
 
 ## Architecture Notes
 
-- **Style resolution lives in `Style.cs`** (`ZurfurGui.Styles`). `GetStyle<T>` is the main entry point called from
-  `View.GetStyle<T>`.
+- **Style resolution and registry live in `Style.cs`** (`ZurfurGui.Styles`). `GetStyle<T>` is the main entry point
+  called from `View.GetStyle<T>`. `Style.RegisterStyleSheet(json)` deserializes and stores sheets; `Style.GetStyleSheet(name)` retrieves them.
 - **`StyleSheet`** (`ZurfurGui.Property`) is the deserialized form of a `.zss.json` file: it holds a `Name` and a
-  `Properties[]` (array of rule objects).
-- **`Loader.RegisterStyleSheet(json)`** deserializes the JSON string and stores the `StyleSheet` by name.
-  `Loader.GetStyleSheet(name)` retrieves it.
-- **`Panel.Classes`**, **`Panel.UseStyles`**, and **`Panel.Selectors`** are the three properties that drive style
-  matching.
+  `Properties[]` (array of rule objects). Deserialization uses the source-generated JSON context on `Loader`.
+- **`Panel.Classes`** and **`Panel.Selectors`** are the two properties that drive style matching. `Panel.UseStyles`
+  no longer exists; all registered sheets are globally visible.
 - Style cache invalidation is triggered by `ViewFlags.ReStyleThis` (only the view itself) and
   `ViewFlags.ReStyleDown` (the view and all descendants).
 - When adding a new styleable property, declare a `PropertyKey<T>` with the appropriate `ViewFlags` (`ReDraw` for
   appearance-only, `ReMeasure` for layout impact, `ReStyleDown` for style-tree properties).
-
-## Known Issues
-
-### 1. `UseStyles` is not inherited by floating panels
-
-`Style.EnumerateStyledValues` finds active style sheets by walking **up the view tree** looking for ancestors that
-have `Panel.UseStyles` set. Floating panels (dropdowns, tooltips) are parented to `_floatingWindows` under
-`AppWindow`, so they are outside the originating form's subtree. Only `AppWindow`'s own `UseStyles` (e.g.
-`"ZurfurDefault"`) is visible to them; any custom stylesheet declared on the form (e.g. `"ComboBoxItemBadge"`) is
-not found, so item styles silently resolve to defaults.
-
-**Current workaround** (in `ComboBox.Control.cs`): `OpenDropdown` collects all `UseStyles` names from the
-`ComboBox`'s ancestor chain and stamps them onto the popup panel before adding item views.
-
-**Proper fix**: `Style.EnumerateStyledValues` should search all globally-registered style sheets directly from
-`Loader`'s dictionary instead of requiring `UseStyles` to be set in the ancestor chain. Every `*.zss.json` in the
-project is already registered globally at startup, so the ancestor-walk requirement is redundant and the `UseStyles`
-property (and `.useStyles` in `.zui.json`) could be removed entirely.
-
-### 2. `ComboBox.DropdownItem` class clobbered item's own classes
-
-`OpenDropdown` originally called `item.View.SetProperty(Panel.Classes, ["ComboBox.DropdownItem"])`, which replaced
-whatever classes `InitializeControl` had already set on the item's root view (e.g. `"ComboBoxItemBadge"`). This
-stripped the item's own selector, breaking its border, color, and padding styles in the popup while they continued
-to work correctly in the selected-item slot.
-
-**Fix applied** (in `ComboBox.Control.cs`): each popup item is now wrapped in a thin host `Panel` that owns the
-`"ComboBox.DropdownItem"` class and click handler. The item's view is added as a child of the wrapper and is never
-modified, so its own classes and styles are fully preserved.
-
-### 3. Custom item types cannot inherit theme-specific hover colors
-
-The core theme stylesheets (`ZurfurDefault.zss.json`, `ZurfurCherry.zss.json`) live in `ZurfurGui` and cannot
-reference app-defined item types like `ComboBoxItemBadge`. As a result, switching to the Cherry theme correctly
-changes window chrome and built-in controls to pink tones, but custom item types retain the hover color that was
-hardcoded in their own stylesheet (e.g. `ComboBoxItemBadge:IsPointerOver` stays blue on Cherry instead of turning
-pink like `ComboBoxItemText`).
-
-**Current workaround**: create a companion theme-override stylesheet for the custom item type (e.g.
-`ComboBoxItemBadgeCherry.zss.json`) containing only the selector overrides that differ from the default theme:
-
-```json
-{
-    "name": "ComboBoxItemBadgeCherry",
-    "styles": [
-        { ".selectors": "ComboBoxItemBadge:IsPointerOver",           ".backgroundColor": "#F8D8E0" },
-        { ".selectors": "ComboBoxItemBadge:IsDarkMode:IsPointerOver", ".backgroundColor": "#4A2535" }
-    ]
-}
-```
-
-Then, in the form's theme-change handler, include both the base stylesheet and the override when Cherry is active,
-and drop the override for the default theme. Because `EnumerateStyledValues` iterates `UseStyles` in reverse, the
-last-listed sheet wins, so Cherry overrides take precedence:
-
-```csharp
-// in ThemeComboBox_PropertyChanged (FormTestComboBox.Control.cs)
-case 0: /* default light */ View.SetProperty(Panel.UseStyles, new TextLines(["ComboBoxItemBadge"])); break;
-case 1: /* default dark  */ View.SetProperty(Panel.UseStyles, new TextLines(["ComboBoxItemBadge"])); break;
-case 2: /* cherry light  */ View.SetProperty(Panel.UseStyles, new TextLines(["ComboBoxItemBadge", "ComboBoxItemBadgeCherry"])); break;
-case 3: /* cherry dark   */ View.SetProperty(Panel.UseStyles, new TextLines(["ComboBoxItemBadge", "ComboBoxItemBadgeCherry"])); break;
-```
 
 **Proper fix (future)**: introduce **style variables** similar to WinUI 3 / Fluent Design tokens (e.g.
 `--item-hover-background`). Theme stylesheets would define the variable values; item stylesheets would reference
 them by name instead of hardcoding a color. Custom item types then automatically pick up the correct hover color for
 whichever theme is active, with no per-type companion stylesheets or handler code required. The style variable
 mechanism would be resolved during `GetStyle<T>` after selector matching, before merging with the property default.
+

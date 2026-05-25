@@ -37,7 +37,6 @@ public partial class Panel : Controllable
     // Style
     public static readonly PropertyKey<TextLines> Selectors = new(".selectors", typeof(Panel), new(), ViewFlags.ReStyleDown);
     public static readonly PropertyKey<TextLines> Classes = new(".classes", typeof(Panel), new(), ViewFlags.ReStyleDown);
-    public static readonly PropertyKey<TextLines> UseStyles = new(".useStyles", typeof(Panel), new(), ViewFlags.ReStyleDown);
     public static readonly PropertyKey<Properties[]> Styles = new(".styles", typeof(Panel), Array.Empty<Properties>(), ViewFlags.ReStyleDown);
 
     // Pseudo classes

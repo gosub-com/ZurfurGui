@@ -70,7 +70,7 @@ internal static class ZuiEmitController
         // For generic controls, keys must live in a non-generic companion static class to avoid
         // per-closed-type duplication (each closed type would try to register the same key name,
         // causing a duplicate-registration exception in PropertyKey's constructor).
-        var newBindings = allBindings.Where(b => b.Bind == "new" && !b.IsCollection).ToList();
+        var newBindings = allBindings.Where(b => b.Bind == "styled" && !b.IsCollection).ToList();
         if (data.TypeParam != "" && newBindings.Count > 0)
         {
             // Close the generic class temporarily, emit the companion static class, then reopen.
@@ -299,8 +299,13 @@ internal static class ZuiEmitController
             {
                 sb.AppendIndentedLine(4, "// Collection binding: control manages CollectionChanged internally");
             }
-            // Handle "new" bindings
-            else if (binding.Bind == "new")
+            // Data-only bindings: no PropertyKey, nothing to push to the view
+            else if (binding.Bind == "data")
+            {
+                sb.AppendIndentedLine(4, "// Data-only binding: stored in DataContext only, no view property to update");
+            }
+            // Handle "styled" bindings
+            else if (binding.Bind == "styled")
             {
                 if (binding.IsNullable)
                 {
@@ -359,8 +364,12 @@ internal static class ZuiEmitController
             if (binding.IsCollection)
                 continue;
 
-            // Handle "new" bindings
-            if (binding.Bind == "new")
+            // Data-only bindings: no PropertyKey, nothing to push to the view
+            if (binding.Bind == "data")
+                continue;
+
+            // Handle "styled" bindings
+            if (binding.Bind == "styled")
             {
                 if (binding.IsNullable)
                 {

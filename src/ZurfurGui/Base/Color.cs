@@ -1,4 +1,6 @@
-﻿using ZurfurGui.Base.Helpers;
+﻿using System.Text.Json.Serialization;
+using ZurfurGui.Base.Helpers;
+using ZurfurGui.Property.Serializers;
 
 namespace ZurfurGui.Base;
 

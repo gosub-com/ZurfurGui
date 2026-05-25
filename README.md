@@ -12,10 +12,12 @@ This project is exploring **MDV/MDCV** as an alternative to MVVM.
 
 ## For contributors and AI agents
 
+
 The following docs cover the internals of this project:
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — MDV architecture, code generation, and system internals
-- [docs/Style.md](docs/Style.md) — ZSS style system (style sheets, selectors, pseudo-classes, and property resolution)
+- [docs/Initialization.md](docs/Initialization.md) — Startup and initialization procedure for applications using ZurfurGui
+- [docs/Style.md](docs/Style.md) — Style and theme system (style sheets, selectors, pseudo-classes, and property resolution)
 - [docs/ComboBox.md](docs/ComboBox.md) — ComboBox control: usage, generic item types, styling, and internals
 
 ## Design Goals

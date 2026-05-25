@@ -2,7 +2,6 @@
     ".controller": "StyleTestCard",
     ".namespace": "TestApp.Controls",
     ".layout": "Column",
-    ".useStyles": [ "StyleTest" ],
     ".content": [
         {
             // Show theme name using the StyleTestSkinThemeText style

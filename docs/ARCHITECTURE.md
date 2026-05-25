@@ -94,20 +94,34 @@ It generates these outputs:
 - If you provide a matching hand-written `<ViewName>.Data.cs`, the generated data class is emitted as `partial` so you can
   extend it.
 
+#### `.data` bind keywords
+
+Every entry in a `.data` section must declare a `"bind"` field. The valid values are:
+
+| `bind` value | `PropertyKey` emitted | Data class field | Use when |
+|---|---|---|---|
+| `"styled"` | ✅ yes | ✅ yes | Value participates in style resolution (nullable → style fallback when `null`). Example: `text`, `foregroundColor`. |
+| `"data"` | ❌ no | ✅ yes | Pure data — never styled. Example: `selectedIndex`, `isChecked`, `isExpanded`. Collections must use this. |
+| `"_child.prop"` | ❌ no | ✅ yes (forwarded) | Binds the data property to a named child control's view property at runtime. |
+
+- **`"styled"`** emits a static `PropertyKey<T>` on the controller (or its non-generic companion class for generic controls). When `DataContext` changes, `OnDataContextPropertyChanged` calls `View.SetProperty` / `View.RemoveProperty`. Nullable `"styled"` properties remove the property when set to `null`, allowing a style sheet to supply a fallback value.
+- **`"data"`** stores the value only in the generated data class. No `PropertyKey` is emitted. `OnDataContextPropertyChanged` and `SyncAllPropertiesToView` skip these properties entirely — only code-behind observes them via `INotifyPropertyChanged`.
+- Collections (`[]Type`) **must** use `"bind": "data"`. Using any other value is a generator error.
+
 #### Collection bindings (`[]Type` syntax)
 
 A `.data` entry whose `type` starts with `[]` declares a collection of item data objects rather than a single value.
 
 ```jsonc
 ".data": {
-	"items": { "type": "[]ComboBoxItem" }
+	"items": { "type": "[]ComboBoxItem", "bind": "data" }
 }
 ```
 
 Rules and generated output:
 
 - `[]Type` is never nullable — `?[]Type` is a generator error. Use `[]Type` only.
-- The `bind` field defaults to `"new"` for collections (explicit `"bind"` is not supported).
+- Collections must use `"bind": "data"` — any other value is a generator error.
 - The generator derives the item interface name as `I<Type>Data` (same `I`-prefix convention as all data contracts).
 - The contract property type is `ObservableCollection<I<Type>Data>` (fully qualified as
   `global::System.Collections.ObjectModel.ObservableCollection<I<Type>Data>`).
@@ -119,6 +133,45 @@ Rules and generated output:
 Because the generator skips view-sync for collections, controls that use `[]Type` bindings must be implemented as
 hand-written partial classes (`<ViewName>.Control.cs`) that subscribe to `CollectionChanged` or react to data-context
 changes as needed. See `ComboBox.Control.cs` and `docs/ComboBox.md` for a worked example.
+
+#### Data binding runtime behavior
+
+- When `DataContext` is set, the controller subscribes to `INotifyPropertyChanged.PropertyChanged` events
+- `"styled"` bindings: `OnDataContextPropertyChanged` calls `View.SetProperty` (or `View.RemoveProperty` for
+  nullable properties set to `null`, allowing style fallback); `SyncAllPropertiesToView()` pushes all current values on assignment
+- `"data"` bindings: stored only in the data object — `OnDataContextPropertyChanged` and `SyncAllPropertiesToView` skip them entirely; code-behind observes changes via `INotifyPropertyChanged` directly
+- Data properties can also be set directly from `.zui.json` — unknown (non-`.`) property names without a dot are
+  treated as data properties and applied via `Loader.ApplyDataProperties` after the control tree is built
+
+### 3) Per-project registry (`*.zui.json` + `*.zss.json` → `ZurfurMain.g.cs`)
+
+- The generator collects all views (`*.zui.json`) and stylesheets (`*.zss.json`) in the project.
+- It emits a `static partial class ZurfurMain` with an `InitializeControls()` method that:
+  - runs static constructors so control properties get registered
+  - registers generated controls with `Loader.RegisterControl(...)`
+  - registers styles with `Loader.RegisterStyleSheet(...)`
+
+High-level runtime flow: your app's entry point calls the generated initialization, then creates a generated controller
+(or loads one by name) to build and render the UI.
+
+#### Note on file discovery: AdditionalFiles
+
+For the generator to automatically process your `.zui.json`, `.zss.json`, or `.zth.json` files, they should be
+included as **AdditionalFiles** in your project. This is controlled by the file's build action in Visual Studio
+or by an `<ItemGroup>` in your `.csproj`:
+
+```xml
+<ItemGroup>
+  <AdditionalFiles Include="**\*.zui.json" />
+  <AdditionalFiles Include="**\*.zss.json" />
+  <AdditionalFiles Include="**\*.zth.json" />
+</ItemGroup>
+```
+
+If you do not set the build action to "C# analyzer" (or "AdditionalFiles"), the generator will not see the file.
+Some project templates may add these rules automatically, but if your files are not being picked up, check the
+build action or add the above ItemGroup to your project file.
+
 
 ## Generic controls
 
@@ -157,13 +210,21 @@ The control named in the `where` clause (e.g. `ComboBoxItem`) acts purely as a *
 the minimum set of `.data` properties that every concrete item must provide. It should not contain layout or visual
 content — it exists only to establish the interface.
 
+The constraint name should be specific to the container (e.g. `ComboBoxItem`, `TreeNode`) rather than a
+generic root like `ControlItem`, even if the properties it declares today are universal (e.g. `isEnabled`,
+`tag`). The reason is that the constraint name is also the **factory scope key**: `Loader.CreateDataController<IComboBoxItem>(itemData)`
+uses `IComboBoxItem` to look up which registered concrete controller to instantiate for a given item. A
+shared generic root would collapse all item types into one factory bucket and lose the ability to
+discriminate between, say, combo box items and tree nodes. Each container therefore defines its own
+constraint, and universal properties are simply inherited by every implementing control via `.implements`.
+
 ```jsonc
 // ComboBoxItem.zui.json — defines the required data shape; no visual content
 {
 	".controller": "ComboBoxItem",
 	".data": {
-		"isEnabled": { "type": "bool",    "bind": "new" },
-		"tag":        { "type": "?object", "bind": "new" }
+		"isEnabled": { "type": "bool",    "bind": "styled" },
+		"tag":        { "type": "?object", "bind": "styled" }
 	}
 }
 ```
@@ -199,6 +260,36 @@ generated controller, data class, and data interface. This means:
 - The generated `IComboBoxItemTextData : IComboBoxItemData` interface already contains the inherited
   properties, so callers and style sheets never need to know whether a property is local or inherited.
 
+#### Generated data class for implementing controls
+
+When `.implements` is set, the generated concrete data class (e.g. `ComboBoxItemTextData`) uses **delegation**
+rather than re-implementing inherited properties from scratch:
+
+- A private `readonly` instance of the implemented data class is created and named
+  `__implement{Implements}` (e.g. `__implementComboBoxItem`). The `__implement*` prefix makes it clear
+  this is composition rather than C# inheritance, and the suffix names the specific contract — leaving
+  room for multiple `.implements` entries in the future.
+- In both constructors, `__implementComboBoxItem.PropertyChanged` is subscribed and forwarded onto the
+  outer instance, so subscribers holding a reference to `ComboBoxItemTextData` receive `PropertyChanged`
+  notifications for inherited properties (`IsEnabled`, `Tag`) as well as own properties (`Text`).
+- Inherited properties are thin delegating wrappers — getter and setter both route through the implement instance:
+
+```csharp
+public bool IsEnabled
+{
+	get => __implementComboBoxItem.IsEnabled;
+	set => __implementComboBoxItem.IsEnabled = value;
+}
+```
+
+- Own properties (those declared in the implementing control's own `.data` section) retain full
+  backing fields, `s_*EventArgs` statics, and equality-guarded setters as normal.
+- The `s_*EventArgs` statics and backing fields for inherited properties are **not** emitted in the
+  implementing class — they already exist inside `{Implements}Data` and are used there.
+
+This approach avoids duplicating logic, keeps the generated code size proportional to the number of own
+properties, and makes the `PropertyChanged` forwarding explicit and auditable.
+
 The generator resolves inherited bindings using one of two strategies:
 
 1. **Same project** — the constraint control's `DataBinding` list is looked up directly in the in-memory
@@ -222,45 +313,25 @@ The implementing control is also registered in a data-controller lookup table ke
 type. At runtime, `Loader.CreateDataController<IComboBoxItem>(itemData)` finds the right factory without
 requiring the generic container to know concrete types.
 
-### Limitations of cross-assembly `.implements` synthesis
+### Cross-assembly `.implements` synthesis
 
 When the constraint control lives in a referenced assembly, the generator synthesizes inherited bindings from
-Roslyn metadata rather than from the original JSON source. This approach covers the common case but has
-known limitations:
+Roslyn metadata rather than from the original JSON source. The following table documents what is and is not
+supported in that path — these are intentional design boundaries, not temporary bugs:
 
 | Property kind | Same-project | Cross-assembly |
 |---|---|---|
 | Scalar `bool`, `string`, value types | ✅ | ✅ |
 | Nullable reference types (`?object`) | ✅ | ✅ (via `NullableAnnotation`) |
-| `"bind": "new"` | ✅ | ✅ (hardcoded — all synthesized bindings use `"new"`) |
+| `"bind": "styled"` | ✅ | ✅ (hardcoded — all synthesized bindings use `"styled"`) |
 | `ObservableCollection<>` (collection) | ✅ | ❌ ZUI007 error — must be declared explicitly in `.data` |
-| Forwarding binds (e.g. `"bind": "_child.text"`) | ✅ | ❌ silently treated as `"new"` — constraint interfaces should not have forwarding binds |
-| Future bind kinds | ✅ | ❌ same caveat |
 | XML doc comments | ✅ | ❌ comments are not preserved in compiled metadata |
 
-**Guidance:** keep constraint controls (`.implements` targets) limited to simple scalar properties with
-`"bind": "new"`. Do not put collection bindings or forwarding binds on a constraint control that may be
-consumed cross-assembly.
-
-### Naming conventions for generic controls
-
-| JSON name | C# name | Notes |
-|---|---|---|
-| `ComboBox<Item>` | `ComboBox<Item>` | Controller class |
-| `ComboBox<Item>` | `IComboBoxData<Item>` | Data contract interface |
-| `ComboBox<Item>` | `ComboBoxData<Item>` | Data implementation class |
-| `ComboBoxItem` | `IComboBoxItemData` | Constraint data interface |
-| `ComboBoxItem` | `IComboBoxItem` | Constraint controller interface (used in `CreateDataController<IComboBoxItem>`) |
-| `ComboBoxItemText` | `IComboBoxItemTextData` | Implementing data interface (extends `IComboBoxItemData`) |
-| `ComboBoxItemText` | `ComboBoxItemText` | Controller for concrete item |
-
-Usage sites in JSON (e.g. a named child control) use the concrete form:
-
-```jsonc
-{ ".name": "_themeComboBox", ".controller": "ComboBox<ComboBoxItemText>" }
-```
-
-The generator translates this to the C# type `ComboBox<IComboBoxItemTextData>` in the generated code.
+The delegation approach in `ZuiEmitData.cs` means the generated **data class** for inherited properties never
+inspects the `Bind` value — it simply delegates to the already-generated `{Implements}Data` instance. However,
+the generated **controller class** still uses binding metadata (e.g. `Bind`, `IsCollection`) from `allBindings`
+when emitting `OnDataContextPropertyChanged` and `SyncAllPropertiesToView`. For this reason, constraint controls
+should only declare properties with `"bind": "styled"` and no `ObservableCollection` bindings.
 
 ### Property keys and generics
 
@@ -290,29 +361,6 @@ Static fields on generic classes are not initialized until the first time the cl
 RuntimeHelpers.RunClassConstructor(typeof(ComboBox<>).TypeHandle);
 RuntimeHelpers.RunClassConstructor(typeof(ComboBox<IComboBoxItemTextData>).TypeHandle);
 ```
-
-### MDV with generic controls
-
-Generic controls follow the same MDV pattern as non-generic ones. The container (`ComboBox<Item>`) owns a
-`DataContext` of type `IComboBoxData<Item>`, which exposes the item collection as
-`ObservableCollection<IComboBoxItemData>`. The concrete item type is only known when the closed form is
-instantiated (e.g. `ComboBox<IComboBoxItemTextData>`).
-
-The hand-written code-behind (`ComboBox.Control.cs`) observes the collection and calls
-`Loader.CreateDataController<IComboBoxItem>(itemData)` to instantiate the right item controller for each element —
-the generic container never references the concrete item type directly. This keeps the container reusable with any
-conforming item type, while the data model remains strongly typed end-to-end.
-
-### 3) Per-project registry (`*.zui.json` + `*.zss.json` → `ZurfurMain.g.cs`)
-
-- The generator collects all views (`*.zui.json`) and stylesheets (`*.zss.json`) in the project.
-- It emits a `static partial class ZurfurMain` with an `InitializeControls()` method that:
-  - runs static constructors so control properties get registered
-  - registers generated controls with `Loader.RegisterControl(...)`
-  - registers styles with `Loader.RegisterStyleSheet(...)`
-
-High-level runtime flow: your app's entry point calls the generated initialization, then creates a generated controller
-(or loads one by name) to build and render the UI.
 
 ## Two-tree architecture
 
@@ -355,21 +403,23 @@ Generated `InitializeControl()` runs in this order:
 **Critical:** Child controls are fully initialized (including their `DataContext`, if any) before the parent's
 `CreateDefaultDataContext()` runs, so parent data can safely reference child data when explicitly declared.
 
+### MDV with generic controls
+
+Generic controls follow the same MDV pattern as non-generic ones. The container (`ComboBox<Item>`) owns a
+`DataContext` of type `IComboBoxData<Item>`, which exposes the item collection as
+`ObservableCollection<IComboBoxItemData>`. The concrete item type is only known when the closed form is
+instantiated (e.g. `ComboBox<IComboBoxItemTextData>`).
+
+The hand-written code-behind (`ComboBox.Control.cs`) observes the collection and calls
+`Loader.CreateDataController<IComboBoxItem>(itemData)` to instantiate the right item controller for each element —
+the generic container never references the concrete item type directly. This keeps the container reusable with any
+conforming item type, while the data model remains strongly typed end-to-end.
+
 ### Relation to MVVM
 
 This is similar in spirit to MVVM having a visual/control tree plus a ViewModel object graph, but MDV does not assume
 a 1:1 tree shape. Like MVVM, the data side should not reach into controls; integration should happen through declared
 contracts/bindings.
-
-### Data binding
-
-- Bindings declared in `.data` section specify target control properties (e.g., `"bind": "_title.text"`)
-- When `DataContext` is set, the controller subscribes to `INotifyPropertyChanged.PropertyChanged` events
-- Notifications trigger generated `OnDataContextPropertyChanged` which calls `View.SetProperty` (or
-  `View.RemoveProperty` for nullable properties set to `null`, allowing style fallback)
-- `SyncAllPropertiesToView()` pushes all current data values to the view on initial `DataContext` assignment
-- Data properties can also be set directly from `.zui.json` — unknown (non-`.`) property names without a dot are
-  treated as data properties and applied via `Loader.ApplyDataProperties` after the control tree is built
 
 ## Where to look first (for AI agents)
 
@@ -389,5 +439,25 @@ contracts/bindings.
 - `ZurfurGui/Controls/Panel.Control.cs`: all Panel `PropertyKey` definitions (attached properties).
 - `ZurfurGui/Controls/*.zui.json`: view/control definitions and `.data` declarations.
 - `docs/ComboBox.md`: how the ComboBox control works, how to use it, and how to create custom item renderers.
+
+### Naming conventions for generic controls
+
+| JSON name | C# name | Notes |
+|---|---|---|
+| `ComboBox<Item>` | `ComboBox<Item>` | Controller class |
+| `ComboBox<Item>` | `IComboBoxData<Item>` | Data contract interface |
+| `ComboBox<Item>` | `ComboBoxData<Item>` | Data implementation class |
+| `ComboBoxItem` | `IComboBoxItemData` | Constraint data interface |
+| `ComboBoxItem` | `IComboBoxItem` | Constraint controller interface (used in `CreateDataController<IComboBoxItem>`) |
+| `ComboBoxItemText` | `IComboBoxItemTextData` | Implementing data interface (extends `IComboBoxItemData`) |
+| `ComboBoxItemText` | `ComboBoxItemText` | Controller for concrete item |
+
+Usage sites in JSON (e.g. a named child control) use the concrete form:
+
+```jsonc
+{ ".name": "_themeComboBox", ".controller": "ComboBox<ComboBoxItemText>" }
+```
+
+The generator translates this to the C# type `ComboBox<IComboBoxItemTextData>` in the generated code.
 
 

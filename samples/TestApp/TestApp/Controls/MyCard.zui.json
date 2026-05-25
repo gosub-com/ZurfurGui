@@ -26,7 +26,7 @@
             ".controller": "TextView",
             ".name": "_bigTitle",
             "text": "Default MyCard Title",
-            "font": { "size": 34.0 }
+            "font": "size:34"
         },
         {
             ".controller": "ControlCard",

@@ -3,6 +3,7 @@ using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Property;
 using ZurfurGui.Render;
+using ZurfurGui.Styles;
 
 namespace ZurfurGui.Windows;
 
@@ -20,6 +21,8 @@ namespace ZurfurGui.Windows;
 public partial class AppWindow : Controllable, Drawable
 {
     readonly bool DRAW_TEST_PATTERN = false;
+
+    string _theme = "";
 
     public string DrawType => "AppWindow";
     public Renderer? Renderer { get; private set; }
@@ -97,10 +100,33 @@ public partial class AppWindow : Controllable, Drawable
         return control.View;
     }
 
+    // TBD: REMOVE
     public bool IsDarkMode
     {
         get => View.GetProperty(Panel.IsDarkMode);
-        set => View.SetProperty(Panel.IsDarkMode, value);
+        set
+        {
+            View.SetProperty(Panel.IsDarkMode, value);
+            View.InvalidateStyleTree();
+        }
+    }
+
+    /// <summary>
+    /// Set the active theme by style sheet name (e.g. "ZurfurDefault", "ZurfurCherry").
+    /// An empty theme (Theme == "") uses the default theme.
+    /// </summary>
+    public string Theme
+    {
+        get => _theme;
+        set
+        {
+            if (value == _theme)
+                return;
+            if (value != "" && !ThemeManager.RegisteredThemes.ContainsKey(value))
+                throw new ArgumentException($"Theme '{value}' is not registered. ");
+            _theme = value;
+            View.InvalidateStyleTree();
+        }
     }
 
     /// <summary>

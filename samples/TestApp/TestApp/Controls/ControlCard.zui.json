@@ -21,7 +21,7 @@
             ".controller": "TextView",
             ".name": "_title",
             "text": "Default control card title",
-            "font": { "size": 18.0 }
+            "font": "size:18"
         },
         {
             ".controller": "TextView",

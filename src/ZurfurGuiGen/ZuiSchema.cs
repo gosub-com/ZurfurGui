@@ -52,7 +52,9 @@ internal static class ZuiSchema
                     throw new Exception($"The JSON '.data.{kvp.Key}.type' must not be nullable (\"?[]\") for collection types. Use \"[]Type\" instead.");
                 typeName = typeName.Substring(2);
                 if (binding == "")
-                    binding = "new"; // collections default to "new"
+                    throw new Exception($"The JSON '.data.{kvp.Key}' is a collection and must have an explicit \"bind\" value (use \"data\").");
+                if (binding != "data")
+                    throw new Exception($"The JSON '.data.{kvp.Key}' is a collection and must use \"bind\": \"data\" (got \"{binding}\").");
 
                 // Detect when the element type is the file's declared generic type parameter
                 // (e.g. "[]Item" in "ComboBox<Item> where Item : ComboBoxItem").
