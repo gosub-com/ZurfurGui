@@ -4,11 +4,6 @@
     ".layout": "Column",
     ".content": [
         {
-            // Show theme name using the StyleTestSkinThemeText style
-            ".controller": "TextView",
-            ".classes": [ "TextView", "StyleTestSkinThemeText" ]
-        },
-        {
             // Show theme name using the StyleTestSkinHoverTextStyleTestSkinHoverText style
             ".controller": "TextView",
             ".classes": [ "TextView", "StyleTestSkinHoverText" ],

@@ -3,140 +3,46 @@
     "name": "ZurfurDefaultDark",
 
     "variables": {
-        // Button (Primary) - Button background (default)
-        "color.brand.background": "#23406C",
 
-        // Button (Primary) - Button background on hover
-        "color.brand.background.hover": "#295A96",
+        // Windows, Panels, Cards, etc.
+        "color.surface.canvas": "#252526", // Main app window
+        "color.surface.card": "#252526", // Panels, cards, etc. on top of main app window
+        "color.surface.overlay": "#2C2C2C", // Windows and dialogs
+        "color.surface.overlay.stroke": "#4A7090",
+        "color.surface.overlay.scrim": "#FFFFFF50",
 
-        // Button (Primary) - Button background on press
-        "color.brand.background.pressed": "#18325A",
-
-        // Button (Primary/Secondary) - Button background when disabled
-        "color.neutral.background.disabled": "#252526",
-
-        // Button (Primary) - Button text color (default)
-        "color.neutral.foreground.onBrand": "#D4D4D4",
-
-        // Button (Primary/Secondary) - Button text color when disabled
-        // Text - Disabled text
-        "color.neutral.foreground.disabled": "#5A5A5A",
-
-        // Button (Primary) - Button border color (focus)
-        // Borders/Strokes - Border color for focused controls
-        "color.stroke.focus": "#3973B7",
-
-        // Button (Primary/Secondary) - Button border color when disabled
-        // Borders/Strokes - Border color for disabled controls
-        "color.stroke.disabled": "#2D2D2D",
-
-        // Button (Secondary) - Secondary button background (default)
-        // Surface/Background - App/page background
-        "color.neutral.background1": "#223A5E",
-
-        // Button (Secondary) - Secondary button background on hover
-        "color.neutral.background1.hover": "#295A96",
-
-        // Button (Secondary) - Secondary button background on press
-        "color.neutral.background1.pressed": "#18325A",
-
-        // Text - Main body text color
-        // Button (Secondary) - Secondary button text color (default)
-        // Text - Header text color (often same as body)
-        "color.neutral.foreground1": "#D4D4D4",
-
-        // Button (Secondary) - Secondary button border color
-        // Borders/Strokes - Standard border color for controls
-        "color.stroke.default": "#3973B7",
-
-        // Text - Less prominent text
-        "color.neutral.foreground2": "#C8C6C4",
-
-        // Text - Hyperlink text color
-        "color.brand.foreground.link": "#4F8FFF",
-
-        // Text - Hyperlink text color on hover
-        "color.brand.foreground.link.hover": "#82AFFF",
-
-        // Surface/Background - Card or panel background
-        "color.neutral.background2": "#252526",
-
-        // Surface/Background - Popups, flyouts, etc.
-        "color.neutral.background3": "#252526",
-
-        // Status/Feedback - Success background (e.g., alerts)
-        "color.status.success.background": "#27472A",
-
-        // Status/Feedback - Warning background
-        "color.status.warning.background": "#4F442B",
-
-        // Status/Feedback - Error background
-        "color.status.danger.background": "#4B2323",
-
-        // Status/Feedback - Success text
-        "color.status.success.foreground": "#92D050",
-
-        // Status/Feedback - Warning text
-        "color.status.warning.foreground": "#FFD700",
-
-        // Status/Feedback - Error text
-        "color.status.danger.foreground": "#FF5F56",
-
-        // Default border for controls, dividers
-        "color.neutral.stroke1": "#4A7090",
-
-        // Secondary border, inner border
-        "color.neutral.stroke2": "#3B3A39",
-
-        // Quaternary surfaces, overlays
-        "color.neutral.background4": "#232323",
-
-        // Overlay scrim (combo box, dialog boxes, etc.)
-        "color.overlay.scrim": "#000000B0",
-
-        // Tertiary overlays, subtle backgrounds
-        "color.neutral.background5": "#232323",
-
-        // Tertiary text, placeholder text
-        "color.neutral.foreground3": "#767676",
-
-        // Disabled/ghost text
-        "color.neutral.foreground4": "#3B3A39",
-
-        // Selected state for brand controls
-        "color.brand.background.selected": "#223A5E",
-
-        // Checked state for toggles, checkboxes
-        "color.brand.background.checked": "#2B5DCD",
-
-        // Disabled state for brand controls
-        "color.brand.background.disabled": "#252526",
-
-        // Brand accent border
-        "color.brand.stroke1": "#4CA0D0",
-
-        // Brand secondary border
-        "color.brand.stroke2": "#3A80B0",
-
-        // Info state backgrounds
-        "color.status.info.background": "#223A5E",
-
-        // Info state text
-        "color.status.info.foreground": "#82AFFF",
-
-        // Error border (inputs, alerts)
-        "color.status.danger.stroke": "#FF5F56",
-
-        // Success border
-        "color.status.success.stroke": "#92D050",
-
-        // Warning border
-        "color.status.warning.stroke": "#FFD700",
-
-        // Window title background
+        // Window decorations
         "color.window.title.background": "#1E3A5A",
+        "color.window.title.foreground": "#E8EEFF",
 
-        // Window title text color
-        "color.window.title.foreground": "#E8EEFF"
+        // Main body text
+        "color.text.foreground": "#D4D4D4",
+
+        // Buttons, checkboxes, radio buttons, toggles, etc.
+        "color.interactive.foreground.on-primary": "#D4D4D4",
+        "color.interactive.primary.background": "#23406C",
+        "color.interactive.primary.background.hover": "#295A96",
+        "color.interactive.primary.background.pressed": "#18325A",
+        "color.interactive.primary.background.selected": "#223A5E",
+        "color.interactive.primary.stroke": "#3973B7",
+        "color.interactive.primary.stroke.hover": "#4CA0D0",
+        "color.interactive.primary.stroke.pressed": "#3A80B0",
+
+        // Text box, etc.
+        "color.input.background": "#252526",
+        "color.input.stroke": "#4A7090",
+
+        "color.status.success.background": "#27472A",
+        "color.status.warning.background": "#4F442B",
+        "color.status.danger.background": "#4B2323",
+        "color.status.success.foreground": "#92D050",
+        "color.status.warning.foreground": "#FFD700",
+        "color.status.danger.foreground": "#FF5F56",
+        "color.status.info.background": "#223A5E",
+        "color.status.info.foreground": "#82AFFF",
+        "color.status.danger.stroke": "#FF5F56",
+        "color.status.success.stroke": "#92D050",
+        "color.status.warning.stroke": "#FFD700"
+
     }
 }

@@ -3,219 +3,122 @@
     "name": "ZurfurDefault",
 
     "variables": {
-        // Button (Primary) - Button background (default)
-        "color.brand.background": "#C6E0F7",
 
-        // Button (Primary) - Button background on hover
-        "color.brand.background.hover": "#D2E8FA",
+        // App, Dialogs, Panels, Cards, etc.
+        "color.surface.canvas": "#EAF4FB", // Main app window
+        "color.surface.card": "#F0F8FC", // Panels, cards, etc. on top of main app window
+        "color.surface.overlay": "#F5FAFD", // Modless windows and dialogs
+        "color.surface.overlay.stroke": "#7070B0",
+        "color.surface.overlay.scrim": "#00000050",
 
-        // Button (Primary) - Button background on press
-        "color.brand.background.pressed": "#A6D2F2",
-
-        // Button (Primary/Secondary) - Button background when disabled
-        "color.neutral.background.disabled": "#F3F2F1",
-
-        // Button (Primary) - Button text color (default)
-        "color.neutral.foreground.onBrand": "#1F1F1F",
-
-        // Button (Primary/Secondary) - Button text color when disabled
-        // Text - Disabled text
-        "color.neutral.foreground.disabled": "#A19F9D",
-
-        // Button (Primary) - Button border color (focus)
-        // Borders/Strokes - Border color for focused controls
-        "color.stroke.focus": "#605E5C",
-
-        // Button (Primary/Secondary) - Button border color when disabled
-        // Borders/Strokes - Border color for disabled controls
-        "color.stroke.disabled": "#E1DFDD",
-
-        // Button (Secondary) - Secondary button background (default)
-        // Surface/Background - App/page background
-        "color.neutral.background1": "#EAF4FB",
-
-        // Button (Secondary) - Secondary button background on hover
-        "color.neutral.background1.hover": "#F3F2F1",
-
-        // Button (Secondary) - Secondary button background on press
-        "color.neutral.background1.pressed": "#E1DFDD",
-
-        // Text - Main body text color
-        // Button (Secondary) - Secondary button text color (default)
-        // Text - Header text color (often same as body)
-        "color.neutral.foreground1": "#1F1F1F",
-
-        // Button (Secondary) - Secondary button border color
-        // Borders/Strokes - Standard border color for controls
-        "color.stroke.default": "#909090",
-
-        // Text - Less prominent text
-        "color.neutral.foreground2": "#605E5C",
-
-        // Text - Hyperlink text color
-        "color.brand.foreground.link": "#0A6ED1",
-
-        // Text - Hyperlink text color on hover
-        "color.brand.foreground.link.hover": "#004578",
-
-        // Surface/Background - Card or panel background
-        // Dialog window
-        "color.neutral.background2": "#F5FAFD",
-
-        // Surface/Background - Popups, flyouts, etc.
-        "color.neutral.background3": "#E0F0FA",
-
-        // Status/Feedback - Success background (e.g., alerts)
-        "color.status.success.background": "#DFF6DD",
-
-        // Status/Feedback - Warning background
-        "color.status.warning.background": "#FFF4CE",
-
-        // Status/Feedback - Error background
-        "color.status.danger.background": "#FDE7E9",
-
-        // Status/Feedback - Success text
-        "color.status.success.foreground": "#107C10",
-
-        // Status/Feedback - Warning text
-        "color.status.warning.foreground": "#797775",
-
-        // Status/Feedback - Error text
-        "color.status.danger.foreground": "#A80000",
-
-        // Default border for controls, dividers
-        "color.neutral.stroke1": "#7070B0",
-
-        // Secondary border, inner border
-        "color.neutral.stroke2": "#C8C6C4",
-
-        // Quaternary surfaces, overlays
-        "color.neutral.background4": "#F8F8F8",
-
-        // Overlay scrim (combo box, dialog boxes, etc.)
-        "color.overlay.scrim": "#00000080",
-
-        // Tertiary overlays, subtle backgrounds
-        "color.neutral.background5": "#F4F4F4",
-
-        // Tertiary text, placeholder text
-        "color.neutral.foreground3": "#A19F9D",
-
-        // Disabled/ghost text
-        "color.neutral.foreground4": "#C8C6C4",
-
-        // Selected state for brand controls
-        "color.brand.background.selected": "#E5F1FB",
-
-        // Checked state for toggles, checkboxes
-        "color.brand.background.checked": "#C7E0F4",
-
-        // Disabled state for brand controls
-        "color.brand.background.disabled": "#F3F2F1",
-
-        // Brand accent border
-        "color.brand.stroke1": "#0078D4",
-
-        // Brand secondary border
-        "color.brand.stroke2": "#005A9E",
-
-        // Info state backgrounds
-        "color.status.info.background": "#CFE2FF",
-
-        // Info state text
-        "color.status.info.foreground": "#004085",
-
-        // Error border (inputs, alerts)
-        "color.status.danger.stroke": "#A80000",
-
-        // Success border
-        "color.status.success.stroke": "#107C10",
-
-        // Warning border
-        "color.status.warning.stroke": "#797775",
-
-        // Window title background
+        // Window decorations
         "color.window.title.background": "#4A7BB5",
-
-        // Window title text color
         "color.window.title.foreground": "White",
-
-        // Window title text color on hover
         "color.window.title.foreground.hover": "#D8DEFF",
 
-        // Styles (Shape, Font, Spacing) - Standard control corner radius
-        // Button, TextEdit, Dropdowns, etc.
-        "radius.corner.medium": "4",
+        // Main body text
+        "color.text.foreground": "#1F1F1F",
 
-        // Styles (Shape, Font, Spacing) - Small corner radius
-        // CheckBox, Radio, etc.
-        "radius.corner.small": "2",
+        // Buttons, checkboxes, radio buttons, toggles, etc.
+        "color.interactive.foreground.on-primary": "#1F1F1F",
+        "color.interactive.primary.background": "#C6E0F7",
+        "color.interactive.primary.background.hover": "#D2E8FA",
+        "color.interactive.primary.background.pressed": "#A6D2F2",
+        "color.interactive.primary.background.selected": "#E5F1FB",
+        "color.interactive.primary.stroke": "#909090",
+        "color.interactive.primary.stroke.hover": "#0078D4",
+        "color.interactive.primary.stroke.pressed": "#005A9E",
 
-        // Styles (Shape, Font, Spacing) - Large corner radius
-        // Dialogs, Modals, etc.
-        "radius.corner.large": "8",
+        // Text box, etc.
+        "color.input.background": "#E0F0FA",
+        "color.input.stroke": "#7070B0",
 
-        // Styles (Shape, Font, Spacing) - Standard horizontal padding
-        "spacing.horizontal.m": "8",
 
-        // Styles (Shape, Font, Spacing) - Small horizontal padding
-        "spacing.horizontal.s": "4",
+        "color.status.success.background": "#DFF6DD",
+        "color.status.warning.background": "#FFF4CE",
+        "color.status.danger.background": "#FDE7E9",
+        "color.status.success.foreground": "#107C10",
+        "color.status.warning.foreground": "#797775",
+        "color.status.danger.foreground": "#A80000",
+        "color.status.info.background": "#CFE2FF",
+        "color.status.info.foreground": "#004085",
+        "color.status.danger.stroke": "#A80000",
+        "color.status.success.stroke": "#107C10",
+        "color.status.warning.stroke": "#797775",
 
-        // Styles (Shape, Font, Spacing) - Large horizontal padding
-        "spacing.horizontal.l": "16",
-        "spacing.l": "16",
-
-        // Styles (Shape, Font, Spacing) - Standard vertical padding
-        "spacing.vertical.m": "8",
-
-        // Styles (Shape, Font, Spacing) - Opacity for disabled elements
+        // Opacity for disabled elements
         "opacity.disabled": "0.38",
 
-        // Extra small horizontal padding
-        "spacing.horizontal.xs": "2",
+        "radius.corner.small": "2", // CheckBox, Radio, etc.
+        "radius.corner.medium": "4", // Button, TextEdit, Dropdowns, etc.
+        "radius.corner.large": "8", // Windows, Dialogs, etc. (inside)
+        "radius.corner.extra-large": "10", // Windows, Dialogs, etc. (outside)
 
-        // Extra small vertical padding
-        "spacing.vertical.xs": "2",
 
-        // Styles (Shape, Font, Spacing) - Default font family
-        "font.family.base": "Segoe UI, Arial, sans-serif",
+        "spacing.left.extra-small": "left:2",
+        "spacing.left.small": "left:4",
+        "spacing.left.medium": "left:8",
+        "spacing.left.large": "left:16",
 
-        // Styles (Shape, Font, Spacing) - Standard body text size
-        "font.size.base.300": "14",
+        "spacing.right.extra-small": "right:2",
+        "spacing.right.small": "right:4",
+        "spacing.right.medium": "right:8",
+        "spacing.right.large": "right:16",
 
-        // Styles (Shape, Font, Spacing) - Large header text size
-        "font.size.hero.700": "32",
+        "spacing.top.extra-small": "top:2",
+        "spacing.top.small": "top:4",
+        "spacing.top.medium": "top:8",
+        "spacing.top.large": "top:16",
 
-        // Styles (Shape, Font, Spacing) - Normal text weight
-        "font.weight.regular": "400",
+        "spacing.bottom.extra-small": "bottom:2",
+        "spacing.bottom.small": "bottom:4",
+        "spacing.bottom.medium": "bottom:8",
+        "spacing.bottom.large": "bottom:16",
 
-        // Styles (Shape, Font, Spacing) - Bold text weight
-        "font.weight.bold": "700",
+        "spacing.horizontal.extra-small": "left:2;right:2",
+        "spacing.horizontal.small": "left:4;right:4",
+        "spacing.horizontal.medium": "left:8;right:8",
+        "spacing.horizontal.large": "left:16;right:16",
 
-        // Small text size
-        "font.size.base.200": "12",
+        "spacing.vertical.extra-small": "top:2;bottom:2",
+        "spacing.vertical.small": "top:4;bottom:4",
+        "spacing.vertical.medium": "top:8;bottom:8",
+        "spacing.vertical.large": "top:16;bottom:16",
 
-        // Large body text
-        "font.size.base.400": "16",
+        "spacing.zero": "0",
+        "spacing.extra-small": "2",
+        "spacing.small": "4",
+        "spacing.medium": "8",
+        "spacing.large": "16",
 
-        // Subtitle text
-        "font.size.base.500": "18",
 
-        // Section header text
-        "font.size.base.600": "20",
 
-        // Extra large header
-        "font.size.hero.800": "40",
+        // TBD: Not used yet
+        "font.family.base": "name:Segoe UI, Arial, sans-serif",
 
+        "font.size.base.300": "size:14", //  Standard body text size
+        "font.size.hero.700": "size:32", // Large header text size
+        "font.size.base.200": "size:12", // Small text size
+        "font.size.base.400": "size:16", // Large body text
+        "font.size.base.500": "size:18", // Subtitle text
+        "font.size.base.600": "size:20", // Section header text
+        "font.size.hero.800": "size:40", // Extra large header
         "font.size.window.title": "size:24",
+
+        "font.weight.regular": "weight:400", // Normal text weight
+        "font.weight.bold": "weight:700", // Bold text weight
+
 
         "stroke.width.default": "1",
         "stroke.width.medium": "2",
-        "radius.corner.largeplus": "10",
+
+        "size.window.min": "width:160;height:80",
+        "size.textedit.min": "width:80",
+
         "padding.button": "left:9;top:4;right:9;bottom:3",
-
-        "size.window.min": "width:160;height:80"
-
+        "padding.textedit": "left:8;top:4;right:8;bottom:0",
+        "padding.combobox": "left:8;top:3;right:6;bottom:2",
+        "padding.combobox.arrow": "left:4;top:0;right:0;bottom:0"
 
     }
 }

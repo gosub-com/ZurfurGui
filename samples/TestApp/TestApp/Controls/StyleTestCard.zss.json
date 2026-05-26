@@ -2,23 +2,8 @@
 // Zurfur styles for dark mode
 //
 {
-    "name": "StyleTest",
+    "name": "StyleTestCard",
     "styles": [
-        {
-            // StyleTestSkinThemeText: Light theme text styling
-            ".selectors": "StyleTestSkinThemeText",
-            "TextView.text": "Light Theme",
-            ".borderWidth": "2",
-            ".borderColor": "Blue",
-            ".padding": "left:4;top:2;right:4;bottom:2",
-            "TextView.font": "name:Arial;size:20"
-        },
-        {
-            // StyleTestSkinThemeText: Dark theme text styling
-            ".selectors": "StyleTestSkinThemeText:IsDarkMode",
-            "TextView.text": "Dark Theme",
-            ".borderColor": "LightBlue"
-        },
         {
             // StyleTestSkinThemeText: Light theme text styling
             ".selectors": "StyleTestSkinHoverText",

@@ -3,53 +3,50 @@
     "styles": [
         {
             ".selectors": "AppWindow",
-            ".backgroundColor": "@color.neutral.background1"
+            ".backgroundColor": "@color.surface.canvas"
         },
         {
             ".selectors": "TextView",
-            "TextView.color": "@color.neutral.foreground1"
+            "TextView.color": "@color.text.foreground"
         },
         {
             ".selectors": "Button",
             ".borderWidth": "@stroke.width.default",
             ".borderRadius": "@radius.corner.medium",
-            ".borderColor": "@color.stroke.default",
-            ".backgroundColor": "@color.brand.background",
+            ".borderColor": "@color.interactive.primary.stroke",
+            ".backgroundColor": "@color.interactive.primary.background",
             ".padding": "@padding.button"
         },
         {
             ".selectors": "Button:IsPointerOver",
-            ".borderColor": "@color.brand.stroke1",
-            ".backgroundColor": "@color.brand.background.hover"
+            ".borderColor": "@color.interactive.primary.stroke.hover",
+            ".backgroundColor": "@color.interactive.primary.background.hover"
         },
         {
             ".selectors": "Button:IsPressed",
-            ".borderColor": "@color.brand.stroke2",
-            ".backgroundColor": "@color.brand.background.pressed"
+            ".borderColor": "@color.interactive.primary.stroke.pressed",
+            ".backgroundColor": "@color.interactive.primary.background.pressed"
         },
         {
             ".selectors": "Button.Text",
-            "TextView.color": "@color.neutral.foreground.onBrand"
+            "TextView.color": "@color.interactive.foreground.on-primary"
         },
         {
             ".selectors": "Window",
-            ".backgroundColor": "@color.neutral.background2",
-            ".borderColor": "@color.neutral.stroke1",
-            ".borderRadius": "@radius.corner.largeplus",
+            ".backgroundColor": "@color.surface.overlay",
+            ".borderColor": "@color.surface.overlay.stroke",
+            ".borderRadius": "@radius.corner.extra-large",
             ".borderWidth": "@stroke.width.medium",
             ".sizeMin": "@size.window.min"
         },
         {
             ".selectors": "Window.Title",
-            ".padding": "left:10;top:4;right:10;bottom:0",
+            ".padding": "@spacing.vertical.small | spacing.horizontal.medium",
             ".backgroundColor": "@color.window.title.background",
             ".borderRadius": "@radius.corner.large",
-            "dock.align": "top",
-            ".align": "vertical:top"
         },
         {
             ".selectors": "Window.Title.Text",
-            ".align": "horizontal:center;vertical:center",
             "TextView.font": "@font.size.window.title"
         },
         {
@@ -62,53 +59,53 @@
         },
         {
             ".selectors": "Window.Content",
-            ".margin": "@spacing.l"
+            ".margin": "@spacing.large"
         },
         {
             ".selectors": "TextEdit",
-            ".backgroundColor": "@color.neutral.background3",
+            ".backgroundColor": "@color.input.background",
             ".borderWidth": "@stroke.width.default",
-            ".borderColor": "@color.neutral.stroke1",
-            ".sizeMin": "width:100",
-            ".padding": "left:8;top:3;right:8;bottom:2"
+            ".borderColor": "@color.input.stroke",
+            ".sizeMin": "@size.textedit.min",
+            ".padding": "@padding.textedit"
         },
         {
             ".selectors": "TextEdit.Text",
-            "TextView.color": "@color.neutral.foreground1"
+            "TextView.color": "@color.text.foreground"
         },
         {
             ".selectors": "ComboBox",
             ".borderWidth": "@stroke.width.default",
             ".borderRadius": "@radius.corner.medium",
-            ".borderColor": "@color.stroke.default",
-            ".backgroundColor": "@color.brand.background",
-            ".padding": "left:8;top:3;right:6;bottom:2",
-            "ComboBox.scrimColor": "@color.overlay.scrim"
+            ".borderColor": "@color.interactive.primary.stroke",
+            ".backgroundColor": "@color.interactive.primary.background",
+            ".padding": "@padding.combobox",
+            "ComboBox.scrimColor": "@color.surface.overlay.scrim"
         },
         {
             ".selectors": "ComboBox:IsPointerOver",
-            ".borderColor": "@color.brand.stroke1",
-            ".backgroundColor": "@color.brand.background.hover"
+            ".borderColor": "@color.interactive.primary.stroke.hover",
+            ".backgroundColor": "@color.interactive.primary.background.hover"
         },
         {
             ".selectors": "ComboBox:IsPressed",
-            ".borderColor": "@color.brand.stroke2",
-            ".backgroundColor": "@color.brand.background.pressed"
+            ".borderColor": "@color.interactive.primary.stroke.pressed",
+            ".backgroundColor": "@color.interactive.primary.background.pressed"
         },
         {
             ".selectors": "ComboBox.Text",
-            "TextView.color": "@color.neutral.foreground1"
+            "TextView.color": "@color.text.foreground"
         },
         {
             ".selectors": "ComboBox.Arrow",
-            "TextView.color": "@color.neutral.foreground1",
-            ".padding": "left:4;top:0;right:0;bottom:0"
+            "TextView.color": "@color.text.foreground",
+            ".padding": "@padding.combobox.arrow"
         },
         {
             ".selectors": "ComboBox.Dropdown",
-            ".backgroundColor": "@color.neutral.background2",
+            ".backgroundColor": "@color.surface.card",
             ".borderWidth": "@stroke.width.default",
-            ".borderColor": "@color.neutral.stroke1",
+            ".borderColor": "@color.input.stroke",
             ".borderRadius": "@radius.corner.medium"
         },
         {
@@ -117,11 +114,11 @@
         },
         {
             ".selectors": "ComboBoxItemText:IsPointerOver",
-            ".backgroundColor": "@color.brand.background.hover"
+            ".backgroundColor": "@color.interactive.primary.background.hover"
         },
         {
             ".selectors": "ComboBoxItemText.Text",
-            "TextView.color": "@color.neutral.foreground1"
+            "TextView.color": "@color.text.foreground"
         }
     ]
 }

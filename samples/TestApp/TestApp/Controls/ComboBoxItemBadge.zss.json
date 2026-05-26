@@ -4,12 +4,12 @@
         {
             // Outer row: padding around the whole item
             ".selectors": "ComboBoxItemBadge",
-            ".padding": "left:6;top:3;right:6;bottom:3"
+            ".padding": "@spacing.horizontal.small | spacing.vertical.extra-small"
         },
         {
-            // Use Fluent token: color.brand.background.hover
+            // Use Fluent token: color.interactive.primary.background.hover
             ".selectors": "ComboBoxItemBadge:IsPointerOver",
-            ".backgroundColor": "@color.brand.background.hover"
+            ".backgroundColor": "@color.interactive.primary.background.hover"
         },
         {
             // Badge pill outline: 2px red border, small padding inside
@@ -17,7 +17,7 @@
             ".borderWidth": "@stroke.width.medium",
             ".borderColor": "@color.status.danger.stroke",
             ".borderRadius": "@radius.corner.small",
-            ".padding": "left:4;top:1;right:4;bottom:1"
+            ".padding": "@spacing.vertical.extra-small | spacing.horizontal.small"
         },
         {
             // Badge text inside the pill
@@ -27,8 +27,8 @@
         {
             // Main descriptive text, with a small left gap from the badge
             ".selectors": "ComboBoxItemBadge.Text",
-            "TextView.color": "@color.neutral.foreground1",
-            ".padding": "left:6;top:0;right:0;bottom:0"
+            "TextView.color": "@color.text.foreground",
+            ".padding": "@spacing.left.small | spacing.zero"
         }
     ]
 }

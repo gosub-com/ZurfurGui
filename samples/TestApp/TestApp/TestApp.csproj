@@ -15,4 +15,8 @@
 	  <AdditionalFiles Include="**\*.zth.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Style\" />
+  </ItemGroup>
+
 </Project>

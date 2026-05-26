@@ -202,7 +202,7 @@ public static class StyleManager
         // Check for variable name
         if (propValue.StartsWith("@"))
         {
-            return LookupThemeVariable(view, propertyInfo, propValue.Substring(1));
+            return ResolveThemeVariable(view, propertyInfo, propValue.Substring(1));
         }
 
         // Validate deserialization of the value using Loader's JSON deserializer
@@ -229,28 +229,99 @@ public static class StyleManager
         }
     }
 
-    static object LookupThemeVariable(View view, PropertyKeyInfo propInfo, string variableName)
+    static object ResolveThemeVariable(View view, PropertyKeyInfo propInfo, string variableExpression)
     {
-        var theme = view.AppWindow?.Theme ?? "";
-        if (theme == "")
-            theme = "ZurfurDefault";
+        object? value = null;
 
-        if (!ThemeManager.RegisteredThemes.TryGetValue(theme, out var themeSheet))
-            throw new ArgumentException($"Theme '{theme}' not found when looking up variable reference '{variableName}' in property '{propInfo.Name}'");
+        if (variableExpression.Contains("|"))
+        {
+            foreach (var variableName in variableExpression.Split('|'))
+            {
+                value = ResolveThemeVariablePartialWalk(view, propInfo, variableName.Trim(), value);
+                if (value != null && IsComplete(value))
+                    return value;
+            }
+        }
+        else
+        {
+            // variableExpression == variableName
+            value = ResolveThemeVariablePartialWalk(view, propInfo, variableExpression.Trim(), value);
+        }
 
-        // If it's in the requested theme, return it
-        if (themeSheet.Variables.TryGetValue(variableName, out var propertyValue))
-            return DeserializeProperty(propInfo.Name, propertyValue, propInfo.Type, $"theme '{theme}'");
+        if (value == null)
+            throw new ArgumentException($"Variable '{variableExpression}' not found "
+                +$"when looking up variable reference in property '{propInfo.Name}'");
 
-        // Fall back to ZurfurDefault (for override)
-        theme = "ZurfurDefault";
-        if (!ThemeManager.RegisteredThemes.TryGetValue(theme, out themeSheet))
-            throw new ArgumentException($"Theme '{theme}' not found when looking up variable reference '{variableName}' in property '{propInfo.Name}'");
-        if (themeSheet.Variables.TryGetValue(variableName, out propertyValue))
-            return DeserializeProperty(propInfo.Name, propertyValue, propInfo.Type, $"theme '{theme}'");
-
-
-        throw new ArgumentException($"Variable '{variableName}' not found in theme '{theme}' when looking up variable reference in property '{propInfo.Name}'");
+        return value;
     }
+
+    static bool IsComplete(object ?value)
+    {
+        if (value == null)
+            return false;
+        if (value is IMergable mergable)
+            return mergable.IsComplete;
+        return true;
+    }
+
+    // TBD: This will walk the theme chain
+    static object? ResolveThemeVariablePartialWalk(
+        View view, 
+        PropertyKeyInfo propInfo, 
+        string variableName,
+        object? partialValue)
+    {
+        // Look up in current theme first
+        var theme = view.AppWindow?.Theme ?? "";
+        if (theme != "")
+            partialValue = ResolveThemeVariablePartial(view, propInfo, variableName, theme, partialValue); ;
+
+        if (IsComplete(partialValue))
+            return partialValue;
+
+        // Always resolve against the base
+        partialValue = ResolveThemeVariablePartial(view, propInfo, variableName, "ZurfurDefault", partialValue);
+
+        return partialValue;
+    }
+
+    /// <summary>
+    /// Resolve a partial theme variable.
+    /// Returns the partialValue with additional info (or null if none supplied and none found)
+    /// Throws if the theme name is invalid.
+    /// </summary>
+    static object? ResolveThemeVariablePartial(
+        View view,
+        PropertyKeyInfo propInfo,
+        string variableName,
+        string theme,
+        object? partialValue)
+    {
+        // If we already have a value and it's not mergable (or is complete), we are done
+        if (IsComplete(partialValue))
+            return partialValue;
+
+        // Retrieve variable from theme
+        if (!ThemeManager.RegisteredThemes.TryGetValue(theme, out var themeSheet))
+            throw new ArgumentException($"Theme '{theme}' not found when looking up variable reference "
+                + $"'{variableName}' in property '{propInfo.Name}'");
+        if (!themeSheet.Variables.TryGetValue(variableName, out var propertyValue))
+            return partialValue; // Not found
+
+        // Deserialize
+        var newValue = DeserializeProperty(propInfo.Name, propertyValue, propInfo.Type, $"theme '{theme}'");
+        if (newValue == null)
+            return partialValue; // No update, keep what we have
+        if (partialValue == null)
+            return newValue; // First found, no need to merge
+
+        // Merge - we know it's mergable because if partialValue were not, it would exit above
+        if (partialValue.GetType() != newValue.GetType())
+            throw new ArgumentException($"Type mismatch when merging theme variable reference "
+                +$"for property '{propInfo.Name}' in theme '{theme}'");
+
+        return ((dynamic)partialValue).Or((dynamic)newValue);
+    }
+
 
 }
