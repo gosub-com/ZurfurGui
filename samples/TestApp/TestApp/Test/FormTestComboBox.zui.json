@@ -35,6 +35,16 @@
                     ".align": "horizontal:left"
                 }
             ]
+        },
+        {
+            ".controller": "TextView",
+            "text": [ "ScrollBar Test:" ]
+        },
+        {
+            ".name": "_testScrollBar",
+            ".controller": "ScrollBar",
+            ".sizeRequest": "width:400;height:16",
+            "orientation": "Horizontal"
         }
     ]
 }

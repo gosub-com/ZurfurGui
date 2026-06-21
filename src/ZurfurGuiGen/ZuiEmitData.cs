@@ -89,8 +89,7 @@ internal static class ZuiEmitData
         var eventArgsBindings = hasImplements ? ownBindings : allBindings;
         foreach (var p in eventArgsBindings)
         {
-            var csName = ZuiEmit.ToPascalCase(p.Name);
-            sb.AppendIndentedLine(1, $"static readonly PropertyChangedEventArgs s_{p.Name}EventArgs = new(nameof({csName}));");
+            sb.AppendIndentedLine(1, $"static readonly PropertyChangedEventArgs s_{p.Name}EventArgs = new(nameof({p.PascalName}));");
         }
         sb.Append("\r\n");
 
@@ -112,7 +111,9 @@ internal static class ZuiEmitData
         foreach (var binding in backingFieldBindings)
         {
             var backingFieldName = $"__{binding.Name}";
-            if (ZuiEmit.IsNamedControl(binding.Bind, namedControls))
+            if (!string.IsNullOrWhiteSpace(binding.Default))
+                sb.AppendIndentedLine(2, $"{backingFieldName} = {ZuiEmit.NormalizeDefaultValue(binding.Default)};");
+            else if (ZuiEmit.IsNamedControl(binding.Bind, namedControls))
                 sb.AppendIndentedLine(2, $"{backingFieldName} = new {binding.BaseType}Data();");
             else if (binding.IsCollection)
                 sb.AppendIndentedLine(2, $"{backingFieldName} = new {ZuiEmit.GetBindingDataType(binding, namedControls)}();");
@@ -134,7 +135,7 @@ internal static class ZuiEmitData
             sb.AppendIndentedLine(2, $"{implementsFieldName}.PropertyChanged += (s, e) => PropertyChanged?.Invoke(this, e);");
             // Assign inherited params via the delegating properties (which route through __implement*).
             foreach (var binding in inheritedBindings!)
-                sb.AppendIndentedLine(2, $"{ZuiEmit.ToPascalCase(binding.Name)} = {binding.Name};");
+                sb.AppendIndentedLine(2, $"{binding.PascalName} = {binding.Name};");
         }
         foreach (var binding in backingFieldBindings)
             sb.AppendIndentedLine(2, $"__{binding.Name} = {binding.Name};");
@@ -156,11 +157,10 @@ internal static class ZuiEmitData
             foreach (var p in inheritedBindings!)
             {
                 var propertyType = ZuiEmit.GetBindingDataType(p, namedControls);
-                var csName = ZuiEmit.ToPascalCase(p.Name);
-                sb.AppendIndentedLine(1, $"public {propertyType} {csName}");
+                sb.AppendIndentedLine(1, $"public {propertyType} {p.PascalName}");
                 sb.AppendIndentedLine(1, "{");
-                sb.AppendIndentedLine(2, $"get => {implementsFieldName}.{csName};");
-                sb.AppendIndentedLine(2, $"set => {implementsFieldName}.{csName} = value;");
+                sb.AppendIndentedLine(2, $"get => {implementsFieldName}.{p.PascalName};");
+                sb.AppendIndentedLine(2, $"set => {implementsFieldName}.{p.PascalName} = value;");
                 sb.AppendIndentedLine(1, "}");
                 sb.Append("\r\n");
             }
@@ -172,7 +172,7 @@ internal static class ZuiEmitData
             var propertyType = ZuiEmit.GetBindingDataType(p, namedControls);
             var backingField = $"__{p.Name}";
             var eventArgsField = $"s_{p.Name}EventArgs";
-            sb.AppendIndentedLine(1, $"public {propertyType} {ZuiEmit.ToPascalCase(p.Name)}");
+            sb.AppendIndentedLine(1, $"public {propertyType} {p.PascalName}");
             sb.AppendIndentedLine(1, "{");
             sb.AppendIndentedLine(2, $"get => {backingField};");
             sb.AppendIndentedLine(2, "set");

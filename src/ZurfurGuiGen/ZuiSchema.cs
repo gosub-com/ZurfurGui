@@ -68,6 +68,10 @@ internal static class ZuiSchema
             }
 
             var comment = entry.TryGetValue("$comment", out var commentObj) && commentObj is string commentStr ? commentStr : "";
+            var defaultValue = entry.TryGetValue("default", out var defaultObj) && defaultObj is string defaultStr ? defaultStr : "";
+
+            var pascalName = ZuiEmit.ToPascalCase(kvp.Key);
+            var propertyKeyName = pascalName + "Property";
 
             result.Add(new ZuiTypes.DataBinding
             {
@@ -78,6 +82,9 @@ internal static class ZuiSchema
                 IsNullable = isNullable,
                 IsCollection = isCollection,
                 IsTypeParam = isTypeParam,
+                Default = defaultValue,
+                PascalName = pascalName,
+                PropertyKeyName = propertyKeyName,
             });
         }
 

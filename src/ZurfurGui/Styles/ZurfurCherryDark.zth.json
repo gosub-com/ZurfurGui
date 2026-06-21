@@ -16,11 +16,11 @@
         "color.window.title.foreground": "#FFE8EE",
         "color.window.title.foreground.hover": "#FF5070",
 
-        // Main body text
-        "color.text.foreground": "#F0D8E0",
+        // Text
+        "color.text.primary": "#F0D8E0",
+        "color.text.on-primary": "#D8EEFF",
 
         // Buttons, checkboxes, radio buttons, toggles, etc.
-        "color.interactive.foreground.on-primary": "#D8EEFF",
         "color.interactive.primary.background": "#222448",
         "color.interactive.primary.background.hover": "#2A2E60",
         "color.interactive.primary.background.pressed": "#181C40",

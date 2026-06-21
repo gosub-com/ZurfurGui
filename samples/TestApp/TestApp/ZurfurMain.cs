@@ -33,7 +33,7 @@ public static partial class ZurfurMain
         app.ShowWindow(swt1, "Small Win Test",
             sizeRequst: new SizeProp(200, 200), 
             margin: new ThicknessProp(600, 175, 0, 0));
-        swt1.bigButton.View.SetProperty(TextView.Text, new (["*BUTTON*"]));
+        swt1.bigButton.View.SetProperty(TextView.TextProperty, new (["*BUTTON*"]));
 
         app.ShowWindow(new FormSmallWinTest(), "Small Win Test",
             sizeRequst: new SizeProp(200, 200), 

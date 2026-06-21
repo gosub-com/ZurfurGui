@@ -22,6 +22,17 @@ internal static class ZuiTypes
         /// concrete data type, keeping the data layer non-generic.
         /// </summary>
         public bool IsTypeParam;
+        /// <summary>
+        /// Optional default value expression from JSON "default" field.
+        /// Empty string means no default (use new() for initialization).
+        /// </summary>
+        public string Default { get; set; } = "";
+
+        // Computed names (set once during schema parsing)
+        /// <summary>PascalCase version of Name, used for C# data property names (e.g., "Text", "Orientation").</summary>
+        public string PascalName { get; set; } = "";
+        /// <summary>PropertyKey field name with "Property" suffix (e.g., "TextProperty", "OrientationProperty").</summary>
+        public string PropertyKeyName { get; set; } = "";
     }
 
     // NOTE: We can't use record class here because code generators must target netstandard2.0

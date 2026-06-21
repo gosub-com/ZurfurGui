@@ -73,6 +73,29 @@ internal static class ZuiEmit
     }
 
     /// <summary>
+    /// Normalizes a default value string from JSON to C# code.
+    /// Converts dot-separated identifiers to PascalCase (e.g., "Orientation.horizontal" -> "global::ZurfurGui.Base.Orientation.Horizontal").
+    /// Fully qualifies type names to avoid name conflicts with property names.
+    /// Returns empty string if the input is empty or whitespace.
+    /// </summary>
+    internal static string NormalizeDefaultValue(string defaultValue)
+    {
+        if (string.IsNullOrWhiteSpace(defaultValue))
+            return "";
+
+        // Handle dot-separated identifiers (e.g., "Orientation.horizontal" -> "Orientation.Horizontal")
+        var parts = defaultValue.Split('.');
+        for (int i = 0; i < parts.Length; i++)
+        {
+            parts[i] = ToPascalCase(parts[i]);
+        }
+
+        var result = string.Join(".", parts);
+
+        return result;
+    }
+
+    /// <summary>
     /// Returns the C# data type for a binding.
     /// For type-param collections (IsTypeParam), returns ObservableCollection&lt;I{Constraint}Data&gt;
     /// where Constraint is the control named in the "where" clause — keeping the data layer non-generic.

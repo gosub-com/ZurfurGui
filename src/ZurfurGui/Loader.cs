@@ -30,6 +30,7 @@ namespace ZurfurGui;
 [JsonSerializable(typeof(bool))]
 [JsonSerializable(typeof(DockEnum))]
 [JsonSerializable(typeof(Color))]
+[JsonSerializable(typeof(Orientation))]
 public partial class ZurfurJsonContext : JsonSerializerContext { }
 
 

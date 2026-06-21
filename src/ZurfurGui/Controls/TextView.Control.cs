@@ -19,9 +19,9 @@ public partial class TextView : Controllable
 
     static TextView()
     {
-        Text.Flags = ViewFlags.ReMeasure;
-        Font.Flags = ViewFlags.ReMeasure;
-        Color.Flags = ViewFlags.ReDraw;
+        TextProperty.Flags = ViewFlags.ReMeasure;
+        FontProperty.Flags = ViewFlags.ReMeasure;
+        ColorProperty.Flags = ViewFlags.ReDraw;
     }
 
 }

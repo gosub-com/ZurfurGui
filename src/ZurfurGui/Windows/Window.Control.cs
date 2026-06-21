@@ -112,7 +112,7 @@ public partial class Window : Controllable
 
     public void SetTitle(string title)
     {
-        _title.View.SetProperty(TextView.Text, new (title));
+        _title.View.SetProperty(TextView.TextProperty, new (title));
     }
 
 }

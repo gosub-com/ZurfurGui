@@ -1,0 +1,28 @@
+{
+    ".controller": "ScrollBar",
+    ".namespace": "ZurfurGui.Controls",
+    ".classes": ["ScrollBar"],
+    ".data": {
+        // Current scroll position (ranges from Minimum to Maximum)
+        "value": { "type": "double", "bind": "data" },
+
+        // Minimum allowed value (typically 0)
+        "minimum": { "type": "double", "bind": "data" },
+
+        // Maximum allowed value (typically contentSize - viewportSize)
+        "maximum": { "type": "double", "bind": "data", "default": "100" },
+
+        // Size of the visible viewport (used to calculate thumb size)
+        "viewportSize": { "type": "double", "bind": "data" },
+
+        // Amount to scroll on wheel or arrow click
+        "smallChange": { "type": "double", "bind": "data" },
+
+        // Amount to scroll on track click (page up/down)
+        "largeChange": { "type": "double", "bind": "data" },
+
+        // Horizontal or Vertical orientation
+        "orientation": { "type": "Orientation", "bind": "styled", "default": "Orientation.horizontal" }
+    },
+    ".content": []
+}

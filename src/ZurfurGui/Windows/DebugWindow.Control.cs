@@ -54,7 +54,7 @@ public partial class DebugWindow : Controllable
         ];
 
         // Don't Invalidate measure
-        _statsView.View.SetPropertyNoFlags(TextView.Text, text);
+        _statsView.View.SetPropertyNoFlags(TextView.TextProperty, text);
         _statsView.View.InvalidateDraw();
         // _statsView.View.InvalidateMeasure();
 

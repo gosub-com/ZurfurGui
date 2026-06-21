@@ -80,11 +80,13 @@ internal static class ZuiEmitController
             sb.AppendIndentedLine(1, "// Property Keys");
             foreach (var binding in newBindings)
             {
-                var propertyName = ZuiEmit.ToPascalCase(binding.Name);
                 ZuiEmit.AppendXmlDocComment(sb, 1, binding.Comment);
+                var defaultValue = string.IsNullOrWhiteSpace(binding.Default)
+                    ? "new()"
+                    : ZuiEmit.NormalizeDefaultValue(binding.Default);
                 sb.AppendIndentedLine(1,
-                    $"public static readonly PropertyKey<{binding.BaseType}> {propertyName}"
-                        + $" = new(\"{data.ControllerName}.{binding.Name}\", typeof({data.ControllerName}<>), new());");
+                    $"public static readonly PropertyKey<{binding.BaseType}> {binding.PropertyKeyName}"
+                        + $" = new(\"{data.ControllerName}.{binding.Name}\", typeof({data.ControllerName}<>), {defaultValue});");
             }
             sb.Append("}\r\n\r\n");
             // Reopen the generic class
@@ -99,7 +101,7 @@ internal static class ZuiEmitController
             // constructor to run whenever any closed form's static constructor runs.
             // ZurfurMain.g.cs calls RunClassConstructor for both ComboBox<> and each closed form,
             // so all keys are registered before style sheets are loaded.
-            var firstKey = ZuiEmit.ToPascalCase(newBindings[0].Name);
+            var firstKey = newBindings[0].PropertyKeyName;
             sb.AppendIndentedLine(1, $"// Touching {data.ControllerName}.{firstKey} ensures the companion static class");
             sb.AppendIndentedLine(1, $"// initializes (registering all PropertyKeys) when any closed form runs.");
             sb.AppendIndentedLine(1, $"static {data.FileName}() {{ _ = {data.ControllerName}.{firstKey}; }}");
@@ -111,12 +113,14 @@ internal static class ZuiEmitController
             sb.AppendIndentedLine(1, "// Property Keys");
             foreach (var binding in newBindings)
             {
-                var propertyName = ZuiEmit.ToPascalCase(binding.Name);
                 var openType = data.ControllerName;
                 ZuiEmit.AppendXmlDocComment(sb, 1, binding.Comment);
+                var defaultValue = string.IsNullOrWhiteSpace(binding.Default)
+                    ? "new()"
+                    : ZuiEmit.NormalizeDefaultValue(binding.Default);
                 sb.AppendIndentedLine(1,
-                    $"public static readonly PropertyKey<{binding.BaseType}> {propertyName}"
-                        + $" = new(\"{data.ControllerName}.{binding.Name}\", typeof({openType}), new());");
+                    $"public static readonly PropertyKey<{binding.BaseType}> {binding.PropertyKeyName}"
+                        + $" = new(\"{data.ControllerName}.{binding.Name}\", typeof({openType}), {defaultValue});");
             }
         }
 
@@ -199,8 +203,10 @@ internal static class ZuiEmitController
                 }
                 else
                 {
-                    // For all other types, initialize with new instance
-                    if (binding.IsNullable)
+                    // For all other types, initialize with default value or new instance
+                    if (!string.IsNullOrWhiteSpace(binding.Default))
+                        args.Add($"{binding.Name}: {ZuiEmit.NormalizeDefaultValue(binding.Default)}");
+                    else if (binding.IsNullable)
                         args.Add($"{binding.Name}: null");
                     else
                         args.Add($"{binding.Name}: new {binding.BaseType}()");
@@ -291,8 +297,7 @@ internal static class ZuiEmitController
         // Generate a case for each binding 
         foreach (var binding in bindings)
         {
-            var pascalName = ZuiEmit.ToPascalCase(binding.Name);
-            sb.AppendIndentedLine(3, $"case \"{pascalName}\":");
+            sb.AppendIndentedLine(3, $"case \"{binding.PascalName}\":");
 
             // Collection bindings: the control subscribes to CollectionChanged itself
             if (binding.IsCollection)
@@ -310,15 +315,15 @@ internal static class ZuiEmitController
                 if (binding.IsNullable)
                 {
                     // Handle nullable types: SetProperty or RemoveProperty
-                    sb.AppendIndentedLine(4, $"if (DataContext.{pascalName} is {binding.BaseType} nonNull{pascalName})");
-                    sb.AppendIndentedLine(5, $"View.SetProperty({keyPrefix}{pascalName}, nonNull{pascalName});");
+                    sb.AppendIndentedLine(4, $"if (DataContext.{binding.PascalName} is {binding.BaseType} nonNull{binding.PascalName})");
+                    sb.AppendIndentedLine(5, $"View.SetProperty({keyPrefix}{binding.PropertyKeyName}, nonNull{binding.PascalName});");
                     sb.AppendIndentedLine(4, "else");
-                    sb.AppendIndentedLine(5, $"View.RemoveProperty({keyPrefix}{pascalName});");
+                    sb.AppendIndentedLine(5, $"View.RemoveProperty({keyPrefix}{binding.PropertyKeyName});");
                 }
                 else
                 {
                     // Handle non-nullable types: SetProperty
-                    sb.AppendIndentedLine(4, $"View.SetProperty({keyPrefix}{pascalName}, DataContext.{pascalName});");
+                    sb.AppendIndentedLine(4, $"View.SetProperty({keyPrefix}{binding.PropertyKeyName}, DataContext.{binding.PascalName});");
                 }
             }
             else
@@ -332,7 +337,7 @@ internal static class ZuiEmitController
                 else
                 {
                     var targetPath = TransformBindingPath(binding.Bind);
-                    sb.AppendIndentedLine(4, $"{targetPath} = DataContext.{pascalName};");
+                    sb.AppendIndentedLine(4, $"{targetPath} = DataContext.{binding.PascalName};");
                 }
             }
 
@@ -358,8 +363,6 @@ internal static class ZuiEmitController
 
         foreach (var binding in bindings)
         {
-            var pascalName = ZuiEmit.ToPascalCase(binding.Name);
-
             // Collection bindings: the control manages CollectionChanged internally
             if (binding.IsCollection)
                 continue;
@@ -374,15 +377,15 @@ internal static class ZuiEmitController
                 if (binding.IsNullable)
                 {
                     // Handle nullable types: SetProperty or RemoveProperty
-                    sb.AppendIndentedLine(2, $"if (DataContext.{pascalName} is {binding.BaseType} nonNull{pascalName})");
-                    sb.AppendIndentedLine(3, $"View.SetProperty({keyPrefix}{pascalName}, nonNull{pascalName});");
+                    sb.AppendIndentedLine(2, $"if (DataContext.{binding.PascalName} is {binding.BaseType} nonNull{binding.PascalName})");
+                    sb.AppendIndentedLine(3, $"View.SetProperty({keyPrefix}{binding.PropertyKeyName}, nonNull{binding.PascalName});");
                     sb.AppendIndentedLine(2, "else");
-                    sb.AppendIndentedLine(3, $"View.RemoveProperty({keyPrefix}{pascalName});");
+                    sb.AppendIndentedLine(3, $"View.RemoveProperty({keyPrefix}{binding.PropertyKeyName});");
                 }
                 else
                 {
                     // Handle non-nullable types: SetProperty
-                    sb.AppendIndentedLine(2, $"View.SetProperty({keyPrefix}{pascalName}, DataContext.{pascalName});");
+                    sb.AppendIndentedLine(2, $"View.SetProperty({keyPrefix}{binding.PropertyKeyName}, DataContext.{binding.PascalName});");
                 }
             }
             else
@@ -396,7 +399,7 @@ internal static class ZuiEmitController
                 else
                 {
                     var targetPath = TransformBindingPath(binding.Bind);
-                    sb.AppendIndentedLine(2, $"{targetPath} = DataContext.{pascalName};");
+                    sb.AppendIndentedLine(2, $"{targetPath} = DataContext.{binding.PascalName};");
                 }
             }
         }
@@ -415,17 +418,16 @@ internal static class ZuiEmitController
         foreach (var binding in bindings)
         {
             var jsonName = binding.Name; // Keep for error messages
-            var pascalName = ZuiEmit.ToPascalCase(binding.Name);
             var dataType = ZuiEmit.GetBindingDataType(binding, namedControls);
             var baseType = binding.BaseType;
 
-            sb.AppendIndentedLine(3, $"case \"{pascalName}\":");
+            sb.AppendIndentedLine(3, $"case \"{binding.PascalName}\":");
 
             if (binding.IsCollection)
             {
                 // Collection binding: accept the ObservableCollection type
-                sb.AppendIndentedLine(4, $"if (value is {dataType} typedValue{pascalName})");
-                sb.AppendIndentedLine(5, $"DataContext.{pascalName} = typedValue{pascalName};");
+                sb.AppendIndentedLine(4, $"if (value is {dataType} typedValue{binding.PascalName})");
+                sb.AppendIndentedLine(5, $"DataContext.{binding.PascalName} = typedValue{binding.PascalName};");
                 sb.AppendIndentedLine(4, "else");
                 sb.AppendIndentedLine(5, $"throw new ArgumentException($\"Cannot assign {{{{value?.GetType().Name ?? \\\"null\\\"}}}} to '{jsonName}' (expected type: {dataType})\");");
                 sb.AppendIndentedLine(4, "return true;");
@@ -441,18 +443,18 @@ internal static class ZuiEmitController
             if (binding.IsNullable)
             {
                 // Target is nullable - accept null or the base type
-                sb.AppendIndentedLine(4, $"if (value is {matchType} typedValue{pascalName})");
-                sb.AppendIndentedLine(5, $"DataContext.{pascalName} = typedValue{pascalName};");
+                sb.AppendIndentedLine(4, $"if (value is {matchType} typedValue{binding.PascalName})");
+                sb.AppendIndentedLine(5, $"DataContext.{binding.PascalName} = typedValue{binding.PascalName};");
                 sb.AppendIndentedLine(4, $"else if (value is null)");
-                sb.AppendIndentedLine(5, $"DataContext.{pascalName} = null;");
+                sb.AppendIndentedLine(5, $"DataContext.{binding.PascalName} = null;");
                 sb.AppendIndentedLine(4, "else");
                 sb.AppendIndentedLine(5, $"throw new ArgumentException($\"Cannot assign {{{{value?.GetType().Name ?? \\\"null\\\"}}}} to '{jsonName}' (expected type: {dataType})\");");
             }
             else
             {
                 // Target is non-nullable - must be the correct type
-                sb.AppendIndentedLine(4, $"if (value is {matchType} typedValue{pascalName})");
-                sb.AppendIndentedLine(5, $"DataContext.{pascalName} = typedValue{pascalName};");
+                sb.AppendIndentedLine(4, $"if (value is {matchType} typedValue{binding.PascalName})");
+                sb.AppendIndentedLine(5, $"DataContext.{binding.PascalName} = typedValue{binding.PascalName};");
                 sb.AppendIndentedLine(4, "else");
                 sb.AppendIndentedLine(5, $"throw new ArgumentException($\"Cannot assign {{{{value?.GetType().Name ?? \\\"null\\\"}}}} to '{jsonName}' (expected type: {dataType})\");");
             }
@@ -502,13 +504,12 @@ internal static class ZuiEmitController
             for (int i = 0; i < bindingList.Count; i++)
             {
                 var binding = bindingList[i];
-                var pascalName = ZuiEmit.ToPascalCase(binding.Name);
                 var comma = i < bindingList.Count - 1 ? "," : "";
                 var nullableStr = binding.IsNullable ? "true" : "false";
                 var typeofStr = binding.IsCollection
                     ? $"typeof(global::System.Collections.ObjectModel.ObservableCollection<I{binding.BaseType}Data>)"
                     : $"typeof({binding.BaseType})";
-                sb.AppendIndentedLine(2, $"[\"{pascalName}\"] = new(\"{pascalName}\", {typeofStr}, {nullableStr}){comma}");
+                sb.AppendIndentedLine(2, $"[\"{binding.PascalName}\"] = new(\"{binding.PascalName}\", {typeofStr}, {nullableStr}){comma}");
             }
 
             sb.AppendIndentedLine(1, "};");

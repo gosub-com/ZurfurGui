@@ -50,9 +50,8 @@ internal static class ZuiEmitContract
             // Skip properties already declared in the base constraint interface
             if (inherited != null && inherited.Contains(binding.Name))
                 continue;
-            var csName = ZuiEmit.ToPascalCase(binding.Name);
             ZuiEmit.AppendXmlDocComment(sb, 1, binding.Comment);
-            sb.AppendIndentedLine(1, $"{ZuiEmit.GetBindingDataType(binding, namedControls)} {csName} {{ get; set; }}");
+            sb.AppendIndentedLine(1, $"{ZuiEmit.GetBindingDataType(binding, namedControls)} {binding.PascalName} {{ get; set; }}");
         }
         sb.Append("}");
 

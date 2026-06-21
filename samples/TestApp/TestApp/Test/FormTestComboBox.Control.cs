@@ -33,6 +33,14 @@ public partial class FormTestComboBox
             _badgeCombo.DataContext.Items.Add(new ComboBoxItemBadgeData { Badge = new(badge), Text = new(text) });
 
         _badgeCombo.DataContext.SelectedIndex = 0;
+
+        // Setup scrollbar test
+        _testScrollBar.DataContext.Minimum = 0;
+        _testScrollBar.DataContext.Maximum = 300;  // Simulate 400px content in 100px viewport
+        _testScrollBar.DataContext.ViewportSize = 100;
+        _testScrollBar.DataContext.Value = 0;
+        _testScrollBar.DataContext.SmallChange = 16;
+        _testScrollBar.DataContext.LargeChange = 100;
     }
 
     void ThemeComboBox_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

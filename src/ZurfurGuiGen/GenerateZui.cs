@@ -147,13 +147,17 @@ public class GenerateZui : IIncrementalGenerator
                                 }
                                 else
                                 {
+                                    var name = ZuiEmit.ToCamelCase(p.Name);
+                                    var pascalName = ZuiEmit.ToPascalCase(name);
                                     synthesized.Add(new ZuiTypes.DataBinding
                                     {
-                                        Name = ZuiEmit.ToCamelCase(p.Name),
+                                        Name = name,
                                         BaseType = p.Type.WithNullableAnnotation(Microsoft.CodeAnalysis.NullableAnnotation.NotAnnotated).ToDisplayString(),
                                         IsNullable = p.NullableAnnotation == Microsoft.CodeAnalysis.NullableAnnotation.Annotated,
                                         Bind = "new",
-                                        Comment = ""
+                                        Comment = "",
+                                        PascalName = pascalName,
+                                        PropertyKeyName = pascalName + "Property",
                                     });
                                 }
                             }

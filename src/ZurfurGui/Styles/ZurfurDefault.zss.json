@@ -7,7 +7,7 @@
         },
         {
             ".selectors": "TextView",
-            "TextView.color": "@color.text.foreground"
+            "TextView.color": "@color.text.primary"
         },
         {
             ".selectors": "Button",
@@ -29,7 +29,7 @@
         },
         {
             ".selectors": "Button.Text",
-            "TextView.color": "@color.interactive.foreground.on-primary"
+            "TextView.color": "@color.text.on-primary"
         },
         {
             ".selectors": "Window",
@@ -71,7 +71,7 @@
         },
         {
             ".selectors": "TextEdit.Text",
-            "TextView.color": "@color.text.foreground"
+            "TextView.color": "@color.text.primary"
         },
         {
             ".selectors": "ComboBox",
@@ -94,11 +94,11 @@
         },
         {
             ".selectors": "ComboBox.Text",
-            "TextView.color": "@color.text.foreground"
+            "TextView.color": "@color.text.primary"
         },
         {
             ".selectors": "ComboBox.Arrow",
-            "TextView.color": "@color.text.foreground",
+            "TextView.color": "@color.text.primary",
             ".padding": "@padding.combobox.arrow"
         },
         {
@@ -118,7 +118,7 @@
         },
         {
             ".selectors": "ComboBoxItemText.Text",
-            "TextView.color": "@color.text.foreground"
+            "TextView.color": "@color.text.primary"
         }
     ]
 }
