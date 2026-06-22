@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using ZurfurGuiGen.ZuiTypes;
 
 namespace ZurfurGuiGen;
 
@@ -16,7 +17,7 @@ internal static class ZuiInput
     /// Collect FileInfo from a .json file.
     /// If a corresponding .cs file exists, collect the namespace from it.
     /// </summary>
-    internal static ZuiTypes.FileInfo CollectJsonFiles(AdditionalText text, SyntaxTree[] syntax, CancellationToken cancellationToken)
+    internal static ZuiFileInfo CollectJsonFiles(AdditionalText text, SyntaxTree[] syntax, CancellationToken cancellationToken)
     {
         var zuiPath = text.Path;
         var jsonNameWithoutJsonExt = Path.GetFileNameWithoutExtension(zuiPath); // removes .json
@@ -31,7 +32,7 @@ internal static class ZuiInput
         var userSuppliedControllerClass = false;
         var userSuppliedDataClass = false;
         var use = new List<string>();
-        var dataBindings = new List<ZuiTypes.DataBinding>();
+        var dataBindings = new List<DataBinding>();
         var implements = "";
         var typeParam = "";
         var typeParamConstraint = "";
@@ -110,7 +111,7 @@ internal static class ZuiInput
                 $"Error while generating code from '{Path.GetFileName(zuiPath)}': {ex.Message}");
         }
 
-        return new ZuiTypes.FileInfo
+        return new ZuiFileInfo
         {
             Path = zuiPath,
             FileName = fileNameOnly,

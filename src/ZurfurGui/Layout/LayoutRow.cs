@@ -13,8 +13,8 @@ namespace ZurfurGui.Layout;
 public class LayoutRow : Layoutable
 {
 
-    public static readonly PropertyKey<bool> Wrap = new("cell.wrap", typeof(LayoutRow), new(), ViewFlags.ReMeasure);
-    public static readonly PropertyKey<SizeProp> Spacing = new("cell.spacing", typeof(LayoutRow), new(), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<bool> Wrap = new("cell.wrap", typeof(LayoutRow), new(), ViewFlags.Measure);
+    public static readonly PropertyKey<SizeProp> Spacing = new("cell.spacing", typeof(LayoutRow), new(), ViewFlags.Measure);
 
     readonly Size DEFAULT_SIZE = new Size(5, 5);
 

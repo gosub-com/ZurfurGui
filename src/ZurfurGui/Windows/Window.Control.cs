@@ -47,7 +47,7 @@ public partial class Window : Controllable
     void _windowTitle_PreviewPointerDown(object? s, PointerEvent e)
     {
         _mouseDown = true;
-        _mousePosition = View.Parent?.toClient(e.Position) ?? new();
+        _mousePosition = View.Parent?.toClient(e.DevicePosition) ?? new();
         _windowTitle.View.CapturePointer = true;
     }
 
@@ -56,7 +56,7 @@ public partial class Window : Controllable
         if (!_mouseDown)
             return;
 
-        var position = View.Parent?.toClient(e.Position) ?? new();
+        var position = View.Parent?.toClient(e.DevicePosition) ?? new();
         var diff = position - _mousePosition;
         _mousePosition = position;
 
@@ -67,7 +67,7 @@ public partial class Window : Controllable
     void _resizeHandle_PreviewPointerDown(object? s, PointerEvent e)
     {
         _mouseDown = true;
-        _mousePosition = View.Parent?.toClient(e.Position) ?? new();
+        _mousePosition = View.Parent?.toClient(e.DevicePosition) ?? new();
         _resizeHandle.View.CapturePointer = true;
     }
 
@@ -76,7 +76,7 @@ public partial class Window : Controllable
         if (!_mouseDown)
             return;
 
-        var position = View.Parent?.toClient(e.Position) ?? new();
+        var position = View.Parent?.toClient(e.DevicePosition) ?? new();
         var diff = position - _mousePosition;
         _mousePosition = position;
 
@@ -112,7 +112,7 @@ public partial class Window : Controllable
 
     public void SetTitle(string title)
     {
-        _title.View.SetProperty(TextView.Text, new (title));
+        _title.View.SetProperty(TextView.TextProperty, new (title));
     }
 
 }

@@ -6,10 +6,10 @@ namespace ZurfurGui.Property;
 public enum ViewFlags : short
 {
     None = 0,
-    ReDraw = 1 << 1,
-    ReMeasure = 1 << 2,
-    ReStyleThis = 1 << 3,
-    ReStyleDown = 1 << 4,
+    Draw = 1 << 1,
+    Measure = 1 << 2,
+    StyleThis = 1 << 3,
+    StyleDown = 1 << 4,
 }
 
 /// <summary>

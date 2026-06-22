@@ -16,11 +16,11 @@
         "color.window.title.foreground": "White",
         "color.window.title.foreground.hover": "#FF1040",
 
-        // Main body text
-        "color.text.foreground": "Black",
+        // Text
+        "color.text.primary": "Black",
+        "color.text.on-primary": "#3D1020",
 
         // Buttons, checkboxes, radio buttons, toggles, etc.
-        "color.interactive.foreground.on-primary": "#3D1020",
         "color.interactive.primary.background": "#F5E8EC",
         "color.interactive.primary.background.hover": "#F8D8E0",
         "color.interactive.primary.background.pressed": "#FDEAF0",
@@ -32,6 +32,13 @@
         // Text box, etc.
         "color.input.background": "#FDEAF0",
         "color.input.stroke": "#8B3058",
+
+        // ScrollBar
+        "color.scroll.track.background": "#F5E8EC",
+        "color.scroll.thumb.background": "#D0B8C0",
+        "color.scroll.thumb.background.hover": "#C0A0B0",
+        "color.scroll.thumb.background.pressed": "#A08090",
+        "color.scroll.stroke": "#C090A0",
 
         "color.status.success.background": "#DFF6DD",
         "color.status.warning.background": "#FFF4CE",

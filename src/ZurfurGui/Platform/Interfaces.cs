@@ -8,7 +8,10 @@ using ZurfurGui.Base;
 
 namespace ZurfurGui.Platform;
 
-public record class PointerEvent(string Type, Point Position);
+/// <summary>
+/// Use View.ToClinet to convert DevicePosition to view position
+/// </summary>
+public record class PointerEvent(string Type, Point DevicePosition);
 
 public interface OsWindow
 {

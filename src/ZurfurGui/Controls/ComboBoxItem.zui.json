@@ -6,11 +6,11 @@
     ".data": {
         "isEnabled": {
             "type": "bool",
-            "bind": "styled"
+            "bind": "styledData"
         },
         "tag": {
             "type": "?object",
-            "bind": "styled"
+            "bind": "styledData"
         }
     }
 }

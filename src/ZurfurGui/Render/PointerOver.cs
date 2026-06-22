@@ -15,7 +15,7 @@ internal class PointerOver
 {
     readonly AppWindow _appWindow;
     View? _hoverView;
-    Point _pointerPosition;
+    Point _pointerDevicePosition;
     List<View> _pointerCaptureList = new();
 
     List<View> _hoverChain = new();
@@ -23,7 +23,7 @@ internal class PointerOver
     List<View> _currentPressChain = new();  // Intersect of _hoverchan and _presschain
 
 
-    public Point PointerPosition => _pointerPosition;
+    public Point PointerDevicePosition => _pointerDevicePosition;
 
     public PointerOver(AppWindow appWindow)
     {
@@ -35,7 +35,7 @@ internal class PointerOver
     /// </summary>
     public void PointerInput(PointerEvent ev)
     {
-        _pointerPosition = ev.Position;
+        _pointerDevicePosition = ev.DevicePosition;
 
         // Perform capture
         if (_pointerCaptureList.Count != 0)
@@ -52,7 +52,7 @@ internal class PointerOver
         if (ev.Type == "pointerleave")
             hit = null;
         else
-            hit = FindHitTarget(_appWindow.View, ev.Position);
+            hit = FindHitTarget(_appWindow.View, ev.DevicePosition);
 
         var chain = GetViewChain(hit);
 
@@ -114,11 +114,11 @@ internal class PointerOver
         return result;
     }
 
-    static View? FindHitTarget(View view, Point target)
+    static View? FindHitTarget(View view, Point targetOnDevice)
     {
         // Quick exit when not visible or not in clip region
         var clip = new Rect(view.Origin, view.toDevice(view.Size));
-        if (!clip.Contains(target))
+        if (!clip.Contains(targetOnDevice))
             return null;
 
         if (!view.GetStyle(Panel.IsVisible))
@@ -128,7 +128,7 @@ internal class PointerOver
         var views = view.Children;
         for (var i = views.Count - 1; i >= 0; i--)
         {
-            var hit = FindHitTarget(views[i], target);
+            var hit = FindHitTarget(views[i], targetOnDevice);
             if (hit != null)
                 return hit;
         }
@@ -137,11 +137,11 @@ internal class PointerOver
         {
             // User content hit test
             if (view.Draw is Drawable renderable)
-                if (renderable.IsHit(view, target))
+                if (renderable.IsHit(view, targetOnDevice))
                     return view;
 
             // Panel hit test
-            if (DrawHelper.IsHitPanel(view, target))
+            if (DrawHelper.IsHitPanel(view, targetOnDevice))
                 return view;
         }
 

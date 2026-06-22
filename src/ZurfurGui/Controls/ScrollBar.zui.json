@@ -1,0 +1,89 @@
+{
+    ".controller": "ScrollBar",
+    ".namespace": "ZurfurGui.Controls",
+    ".classes": [ "ScrollBar" ],
+    ".data": {
+        // Current scroll position (ranges from Minimum to Maximum)
+        "value": {
+            "type": "double",
+            "bind": "data"
+        },
+
+        // Minimum allowed value (typically 0)
+        "minimum": {
+            "type": "double",
+            "bind": "data"
+        },
+
+        // Maximum allowed value (typically contentSize - viewportSize)
+        "maximum": {
+            "type": "double",
+            "bind": "data",
+            "default": "100"
+        },
+
+        // Size of the visible viewport (used to calculate thumb size)
+        "viewportSize": {
+            "type": "double",
+            "bind": "data"
+        },
+
+        // Amount to scroll on wheel or arrow click
+        "smallChange": {
+            "type": "double",
+            "bind": "data"
+        },
+
+        // Amount to scroll on track click (page up/down)
+        "largeChange": {
+            "type": "double",
+            "bind": "data"
+        },
+
+        // Horizontal or Vertical orientation
+        "orientation": {
+            "type": "Orientation",
+            "bind": "styledData",
+            "default": "Orientation.horizontal"
+        },
+
+        // Appearance properties (styled)
+        "thumbColor": {
+            "type": "Color",
+            "bind": "styledOnly",
+            "default": "new Color(128, 128, 128)",
+            "flags": "draw"
+        },
+        "trackColor": {
+            "type": "Color",
+            "bind": "styledOnly",
+            "default": "new Color(220, 220, 220)",
+            "flags": "draw"
+        },
+        "thumbMinSize": {
+            "type": "double",
+            "bind": "styledOnly",
+            "default": "20.0",
+            "flags": "measure"
+        },
+        "borderColor": {
+            "type": "Color",
+            "bind": "styledOnly",
+            "default": "new Color(160, 160, 160)",
+            "flags": "draw"
+        },
+        "borderWidth": {
+            "type": "double",
+            "bind": "styledOnly",
+            "default": "1.0",
+            "flags": "draw"
+        },
+        "thumbRadius": {
+            "type": "double",
+            "bind": "styledOnly",
+            "flags": "draw"
+        }
+
+    },
+    ".content": []
+}

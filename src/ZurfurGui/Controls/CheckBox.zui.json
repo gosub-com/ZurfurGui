@@ -13,11 +13,11 @@
         },
         "isCheckedNullTest": {
             "type": "?Bool",
-            "bind": "styled"
+            "bind": "styledData"
         },
         "textNullTest": {
             "type": "?TextLines",
-            "bind": "styled"
+            "bind": "styledData"
         }
     },
     ".content": [

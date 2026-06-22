@@ -1,0 +1,21 @@
+{
+    "name": "ScrollBar",
+    "styles": [
+        {
+            ".selectors": "ScrollBar",
+            "ScrollBar.trackColor": "@color.scroll.track.background",
+            "ScrollBar.thumbColor": "@color.scroll.thumb.background",
+            "ScrollBar.borderColor": "@color.scroll.stroke",
+            "ScrollBar.borderWidth": "@stroke.width.default",
+            "ScrollBar.thumbRadius": "@radius.corner.medium"
+        },
+        {
+            ".selectors": "ScrollBar:IsPointerOver",
+            "ScrollBar.thumbColor": "@color.scroll.thumb.background.hover"
+        },
+        {
+            ".selectors": "ScrollBar:IsPressed",
+            "ScrollBar.thumbColor": "@color.scroll.thumb.background.pressed"
+        }
+    ]
+}

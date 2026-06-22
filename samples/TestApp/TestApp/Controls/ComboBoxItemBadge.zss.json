@@ -27,7 +27,7 @@
         {
             // Main descriptive text, with a small left gap from the badge
             ".selectors": "ComboBoxItemBadge.Text",
-            "TextView.color": "@color.text.foreground",
+            "TextView.color": "@color.text.primary",
             ".padding": "@spacing.left.small | spacing.zero"
         }
     ]

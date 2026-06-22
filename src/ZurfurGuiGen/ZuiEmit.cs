@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.IO;
-using System.Linq;
 using System.Text;
+using ZurfurGuiGen.ZuiTypes;
 
 namespace ZurfurGuiGen;
 
@@ -40,7 +38,7 @@ internal static class ZuiEmit
         sb.AppendIndentedLine(indentLevel, "/// </summary>");
     }
 
-    internal static string GenerateUsingCode(ZuiTypes.FileInfo data)
+    internal static string GenerateUsingCode(ZuiFileInfo data)
     {
         var sb = new StringBuilder();
         sb.Append("using System.Collections.ObjectModel;\r\n");
@@ -73,12 +71,37 @@ internal static class ZuiEmit
     }
 
     /// <summary>
+    /// Normalizes a default value string from JSON to C# code.
+    /// Converts dot-separated identifiers to PascalCase (e.g., "Orientation.horizontal" -> "global::ZurfurGui.Base.Orientation.Horizontal").
+    /// Fully qualifies type names to avoid name conflicts with property names.
+    /// Returns empty string if the input is empty or whitespace.
+    /// </summary>
+    internal static string NormalizeDefaultValue(string defaultValue)
+    {
+        if (string.IsNullOrWhiteSpace(defaultValue))
+            return "";
+        if (defaultValue.Contains(" "))
+            return defaultValue;
+
+        // Handle dot-separated identifiers (e.g., "Orientation.horizontal" -> "Orientation.Horizontal")
+        var parts = defaultValue.Split('.');
+        for (int i = 0; i < parts.Length; i++)
+        {
+            parts[i] = ToPascalCase(parts[i]);
+        }
+
+        var result = string.Join(".", parts);
+
+        return result;
+    }
+
+    /// <summary>
     /// Returns the C# data type for a binding.
     /// For type-param collections (IsTypeParam), returns ObservableCollection&lt;I{Constraint}Data&gt;
     /// where Constraint is the control named in the "where" clause — keeping the data layer non-generic.
     /// For regular collections (IsCollection), returns ObservableCollection&lt;I{type}Data&gt;.
     /// </summary>
-    internal static string GetBindingDataType(ZuiTypes.DataBinding binding, Dictionary<string, string> namedControls)
+    internal static string GetBindingDataType(DataBinding binding, Dictionary<string, string> namedControls)
     {
         if (binding.IsTypeParam)
             // Type param collection: element type is the constraint's data interface, not the type param itself.

@@ -1,11 +1,11 @@
-using System;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Text;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Text;
+using ZurfurGuiGen.ZuiTypes;
 
 namespace ZurfurGuiGen;
 
@@ -16,9 +16,9 @@ internal static class ZuiEmitMain
 internal static void GenerateZurfurMain(
     SourceProductionContext sourceProductionContext,
     Compilation compilation,
-    ImmutableArray<ZuiTypes.FileInfo> zuiData,
-    ImmutableArray<ZuiTypes.FileInfo> zssData,
-    ImmutableArray<ZuiTypes.FileInfo> zthData
+    ImmutableArray<ZuiFileInfo> zuiData,
+    ImmutableArray<ZuiFileInfo> zssData,
+    ImmutableArray<ZuiFileInfo> zthData
     )
     {
         // Build a list of generated controls (errors already reported in GenerateControllerClasses)
@@ -75,7 +75,7 @@ internal static void GenerateZurfurMain(
     }
 
 internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
-    IEnumerable<ZuiTypes.FileInfo> generatedControls, IEnumerable<ZuiTypes.FileInfo> generatedStyles, IEnumerable<ZuiTypes.FileInfo> generatedThemes)
+    IEnumerable<ZuiFileInfo> generatedControls, IEnumerable<ZuiFileInfo> generatedStyles, IEnumerable<ZuiFileInfo> generatedThemes)
     {
         var controlList = generatedControls.ToList();
 
@@ -197,7 +197,7 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
     /// The dictionary key is the JSON name (Loader lookup key) and the value is the C# type name.
     /// </summary>
     static void CollectClosedGenerics(Dictionary<string, object?> json,
-        ZuiTypes.FileInfo sourceFile, List<ZuiTypes.FileInfo> controlList,
+        ZuiFileInfo sourceFile, List<ZuiFileInfo> controlList,
         SortedDictionary<string, string> result)
     {
         foreach (var kvp in json)

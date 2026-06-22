@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using ZurfurGuiGen.ZuiTypes;
 
 namespace ZurfurGuiGen;
 
@@ -18,15 +18,15 @@ internal static class ZuiSchema
         return "";
     }
 
-    internal static List<ZuiTypes.DataBinding> GetDataBindings(Dictionary<string, object?> jsonDocument, string typeParam = "", string typeParamConstraint = "")
+    internal static List<DataBinding> GetDataBindings(Dictionary<string, object?> jsonDocument, string typeParam = "", string typeParamConstraint = "")
     {
         if (!jsonDocument.TryGetValue(".data", out var dataSectionObj) || dataSectionObj == null)
-            return new List<ZuiTypes.DataBinding>();
+            return new List<DataBinding>();
 
         if (dataSectionObj is not Dictionary<string, object?> dataSection)
             throw new Exception("The JSON '.data' key must be an object");
 
-        var result = new List<ZuiTypes.DataBinding>();
+        var result = new List<DataBinding>();
         foreach (var kvp in dataSection)
         {
             if (kvp.Key.StartsWith("$"))
@@ -39,21 +39,36 @@ internal static class ZuiSchema
                 throw new Exception($"The JSON '.data.{kvp.Key}.type' must be a non-empty string");
 
             var binding = entry.TryGetValue("bind", out var bindingObj) && bindingObj is string bindingStr ? bindingStr : "";
+            var bindingType = binding switch
+            {
+                "data" => BindType.Data,
+                "styledData" => BindType.StyledData,
+                "styledOnly" => BindType.StyledOnly,
+                "attached" => BindType.Attached,
+                "" => throw new Exception($"The JSON '.data.{kvp.Key}' must have an explicit 'bind' value (use 'data', etc.)."),
+                _ => BindType.Forwarded,
+            };
 
+            if (bindingType != BindType.Forwarded)
+                binding = "";
+
+            // Strip nullable from typename
             var isNullable = typeName.StartsWith("?");
             if (isNullable)
                 typeName = typeName.Substring(1);
 
+            // Strip collection from typename
             var isCollection = typeName.StartsWith("[]");
+            if (isCollection)
+                typeName = typeName.Substring(2);
+
             var isTypeParam = false;
+
             if (isCollection)
             {
                 if (isNullable)
                     throw new Exception($"The JSON '.data.{kvp.Key}.type' must not be nullable (\"?[]\") for collection types. Use \"[]Type\" instead.");
-                typeName = typeName.Substring(2);
-                if (binding == "")
-                    throw new Exception($"The JSON '.data.{kvp.Key}' is a collection and must have an explicit \"bind\" value (use \"data\").");
-                if (binding != "data")
+                if (bindingType != BindType.Data)
                     throw new Exception($"The JSON '.data.{kvp.Key}' is a collection and must use \"bind\": \"data\" (got \"{binding}\").");
 
                 // Detect when the element type is the file's declared generic type parameter
@@ -68,16 +83,26 @@ internal static class ZuiSchema
             }
 
             var comment = entry.TryGetValue("$comment", out var commentObj) && commentObj is string commentStr ? commentStr : "";
+            var defaultValue = entry.TryGetValue("default", out var defaultObj) && defaultObj is string defaultStr ? defaultStr : "";
+            var flags = entry.TryGetValue("flags", out var flagsObj) && flagsObj is string flagsStr ? flagsStr : "";
 
-            result.Add(new ZuiTypes.DataBinding
+            var pascalName = ZuiEmit.ToPascalCase(kvp.Key);
+            var propertyKeyName = pascalName + "Property";
+
+            result.Add(new DataBinding
             {
                 Name = kvp.Key,
+                BindType = bindingType,
+                Bind = binding,
                 Comment = comment,
                 BaseType = NormalizeTypeName(typeName),
-                Bind = binding,
                 IsNullable = isNullable,
                 IsCollection = isCollection,
                 IsTypeParam = isTypeParam,
+                Default = defaultValue,
+                Flags = ConvertFlagsToViewFlags(flags),
+                PascalName = pascalName,
+                PropertyKeyName = propertyKeyName,
             });
         }
 
@@ -180,5 +205,26 @@ internal static class ZuiSchema
             }
         }
 
+    }
+
+    /// <summary>
+    /// Convert a JSON "flags" field value to C# ViewFlags enum expression.
+    /// Empty string becomes "ViewFlags.None".
+    /// Comma-separated values are converted to PascalCase and joined with " | ".
+    /// Example: "reDraw" => "ViewFlags.ReDraw"
+    /// Example: "reDraw, reLayout" => "ViewFlags.ReDraw | ViewFlags.ReLayout"
+    /// </summary>
+    internal static string ConvertFlagsToViewFlags(string flagsStr)
+    {
+        if (string.IsNullOrWhiteSpace(flagsStr))
+            return "ViewFlags.None";
+
+        var flags = flagsStr.Split(',')
+            .Select(f => f.Trim())
+            .Where(f => !string.IsNullOrEmpty(f))
+            .Select(f => $"ViewFlags.{ZuiEmit.ToPascalCase(f)}")
+            .ToList();
+
+        return flags.Count == 0 ? "ViewFlags.None" : string.Join(" | ", flags);
     }
 }

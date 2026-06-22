@@ -1,13 +1,13 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using ZurfurGuiGen.ZuiTypes;
 
 namespace ZurfurGuiGen;
 
 internal static class ZuiEmitContract
 {
-    internal static string GenerateContractInterfaceSource(ZuiTypes.FileInfo data,
+    internal static string GenerateContractInterfaceSource(ZuiFileInfo data,
         IEnumerable<string>? inheritedBindingNames = null)
     {
         if (data.Bindings.Count == 0)
@@ -50,9 +50,11 @@ internal static class ZuiEmitContract
             // Skip properties already declared in the base constraint interface
             if (inherited != null && inherited.Contains(binding.Name))
                 continue;
-            var csName = ZuiEmit.ToPascalCase(binding.Name);
+            // Skip style-only properties: they have no DataContext field
+            if (binding.BindType == BindType.StyledOnly)
+                continue;
             ZuiEmit.AppendXmlDocComment(sb, 1, binding.Comment);
-            sb.AppendIndentedLine(1, $"{ZuiEmit.GetBindingDataType(binding, namedControls)} {csName} {{ get; set; }}");
+            sb.AppendIndentedLine(1, $"{ZuiEmit.GetBindingDataType(binding, namedControls)} {binding.PascalName} {{ get; set; }}");
         }
         sb.Append("}");
 

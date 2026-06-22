@@ -14,7 +14,7 @@ public enum DockEnum
 
 public class LayoutDock : Layoutable
 {
-    public static readonly PropertyKey<DockEnum> Dock = new("dock.align", typeof(Panel), new(), ViewFlags.ReMeasure);
+    public static readonly PropertyKey<DockEnum> Dock = new("dock.align", typeof(Panel), new(), ViewFlags.Measure);
 
 
     int _lastVisibleIndex;

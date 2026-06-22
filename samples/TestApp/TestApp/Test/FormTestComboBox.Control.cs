@@ -18,6 +18,9 @@ public partial class FormTestComboBox
         _themeComboBox.DataContext.SelectedIndex = 0;
         _themeComboBox.DataContext.PropertyChanged += ThemeComboBox_PropertyChanged;
 
+        _scrollTest.DataContext.PropertyChanged += ScrollTest_PropertyChanged;
+
+
         // Setup badge test
         var items = new (string Badge, string Text)[]
         {
@@ -35,6 +38,14 @@ public partial class FormTestComboBox
         _badgeCombo.DataContext.SelectedIndex = 0;
     }
 
+    private void ScrollTest_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == "Value")
+        {
+            _textViewScrollBar.DataContext.Text = new($"Value: {_scrollTest.DataContext.Value:F0}");
+        }
+    }
+
     void ThemeComboBox_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName != "SelectedIndex")
@@ -49,9 +60,5 @@ public partial class FormTestComboBox
             case 2: appWindow.Theme = "ZurfurCherry"; break;
             case 3: appWindow.Theme = "ZurfurCherryDark"; break;
         }
-
-        // This is a hack to force dark mode because we are still in the middle of themes
-        // TBD: Remove this when themes are fully implemented
-        //appWindow.IsDarkMode = appWindow.Theme.Contains("Dark");
     }
 }

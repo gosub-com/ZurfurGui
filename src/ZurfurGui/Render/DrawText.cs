@@ -22,7 +22,7 @@ public class DrawText : Drawable
         if (context.DeviceClip.Intersect(view.toDevice(view.ContentRect)).Width == 0)
             return;
 
-        var color = view.GetStyle(TextView.Color);
+        var color = view.GetStyle(TextView.ColorProperty);
         if (color.A == 0)
             return; // Exit if clear
 
@@ -34,8 +34,8 @@ public class DrawText : Drawable
             context.PushDeviceClip(view.toDevice(view.ContentRect));
         }
 
-        var text = view.GetStyle(TextView.Text);
-        var font = view.GetStyle(TextView.Font);
+        var text = view.GetStyle(TextView.TextProperty);
+        var font = view.GetStyle(TextView.FontProperty);
         var fontName = font.Name ?? "Arial";
         var fontSize = font.Size.Or(16.0);
         context.FontName = fontName;

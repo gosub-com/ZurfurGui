@@ -25,10 +25,10 @@ public class LayoutText : Layoutable
 
     static Size MeasureLabel(MeasureContext measure, View view)
     {
-        var font = view.GetStyle(TextView.Font);
+        var font = view.GetStyle(TextView.FontProperty);
         var fontName = font.Name ?? "Arial";
         var fontSize = font.Size.Or(16.0);
-        var text = view.GetStyle(TextView.Text);
+        var text = view.GetStyle(TextView.TextProperty);
         var maxWidth = text.Count == 0 ? 0 : text.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
         return new Size(maxWidth, text.Count * TextView.LINE_SPACING * fontSize);
     }

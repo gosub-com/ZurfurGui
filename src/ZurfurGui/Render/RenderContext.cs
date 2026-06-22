@@ -34,8 +34,11 @@ public class RenderContext
     /// </summary>
     public Rect DeviceClip => _clip;
 
-    // TBD: Turn into a class, PointerInfo
-    public Point PointerPosition { get; private set; }
+    
+    /// <summary>
+    /// Current pointer position in device pixels
+    /// </summary>
+    public Point PointerDevicePosition { get; private set; }
 
     public RenderContext(OsContext context)
     {
@@ -62,9 +65,9 @@ public class RenderContext
         }
     }
 
-    internal void SetPointerPosition(Point pos)
+    internal void SetPointerPosition(Point devicePosition)
     {
-        PointerPosition = pos;
+        PointerDevicePosition = devicePosition;
     }
 
     public Color FillColor { set { _context.FillColor = value; } }

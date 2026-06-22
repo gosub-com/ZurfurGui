@@ -72,14 +72,14 @@ public class Renderer
         _appWindow.CallPreRenderFrame();
 
 
-        if (((appView.Flags | appView.FlagsChild) & (ViewFlags.ReStyleThis | ViewFlags.ReStyleDown)) != ViewFlags.None)
+        if (((appView.Flags | appView.FlagsChild) & (ViewFlags.StyleThis | ViewFlags.StyleDown)) != ViewFlags.None)
         {
             StyleCount++;
             InvalidateStyle(appView, false);
         }
 
         // Re-measure if necessary
-        if ((appView.Flags | appView.FlagsChild).HasFlag(ViewFlags.ReMeasure))
+        if ((appView.Flags | appView.FlagsChild).HasFlag(ViewFlags.Measure))
         {
             MeasureCount++;
             var measureConext = new Layout.MeasureContext(_canvas.Context);
@@ -90,7 +90,7 @@ public class Renderer
         // Re-draw if any flags changed
         if ((appView.Flags | appView.FlagsChild) != ViewFlags.None)
         {
-            _renderContext.SetPointerPosition(_pointerHover.PointerPosition);
+            _renderContext.SetPointerPosition(_pointerHover.PointerDevicePosition);
             _renderContext.SetCurrentViewInternal(appView);
             _renderContext.PushDeviceClip(new Rect(new(), appView.toDevice(_mainWindowSize)));
             DrawCount++;
@@ -118,12 +118,12 @@ public class Renderer
 
     void InvalidateStyle(View view, bool nukem)
     {
-        if (view.Flags.HasFlag(ViewFlags.ReStyleDown))
+        if (view.Flags.HasFlag(ViewFlags.StyleDown))
             nukem = true;
-        var needsClearCache = nukem || view.Flags.HasFlag(ViewFlags.ReStyleThis);
-        var needsChildTraverse = nukem || (view.FlagsChild & (ViewFlags.ReStyleThis | ViewFlags.ReStyleDown)) != ViewFlags.None;
-        view.Flags &= ~ViewFlags.ReStyleThis;
-        view.FlagsChild &= ~ViewFlags.ReStyleThis;
+        var needsClearCache = nukem || view.Flags.HasFlag(ViewFlags.StyleThis);
+        var needsChildTraverse = nukem || (view.FlagsChild & (ViewFlags.StyleThis | ViewFlags.StyleDown)) != ViewFlags.None;
+        view.Flags &= ~ViewFlags.StyleThis;
+        view.FlagsChild &= ~ViewFlags.StyleThis;
 
         if (needsClearCache)
         {

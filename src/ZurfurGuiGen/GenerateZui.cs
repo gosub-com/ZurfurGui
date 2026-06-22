@@ -6,10 +6,10 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Text;
+using ZurfurGuiGen.ZuiTypes;
 
 namespace ZurfurGuiGen;
 
-using FileInfo = ZurfurGuiGen.ZuiTypes.FileInfo;
 
 [Generator]
 public class GenerateZui : IIncrementalGenerator
@@ -75,7 +75,7 @@ public class GenerateZui : IIncrementalGenerator
     /// Collect FileInfo from a .json file.
     /// If a corresponding .cs file exists, collect the namespace from it.
     /// </summary>
-    static void GenerateControllerClasses(SourceProductionContext spc, ImmutableArray<FileInfo> zuiData, Compilation compilation)
+    static void GenerateControllerClasses(SourceProductionContext spc, ImmutableArray<ZuiFileInfo> zuiData, Compilation compilation)
     {
         // Build a lookup from controller name → full FileInfo for same-project controls.
         var infoByController = zuiData
@@ -104,7 +104,7 @@ public class GenerateZui : IIncrementalGenerator
             try
             {
                 // Resolve inherited bindings when .implements is set.
-                List<ZuiTypes.DataBinding>? inheritedBindings = null;
+                List<DataBinding>? inheritedBindings = null;
                 string? implementsNamespace = null;
                 if (data.Implements != "")
                 {
@@ -131,7 +131,7 @@ public class GenerateZui : IIncrementalGenerator
                             // from metadata alone. Forwarding binds and future bind kinds are also
                             // unsupported — constraint interfaces should only contain scalar properties.
                             var props = ifaceSymbol.GetMembers().OfType<IPropertySymbol>().Where(p => !p.IsStatic).ToList();
-                            var synthesized = new List<ZuiTypes.DataBinding>();
+                            var synthesized = new List<DataBinding>();
                             var hasError = false;
                             foreach (var p in props)
                             {
@@ -147,13 +147,33 @@ public class GenerateZui : IIncrementalGenerator
                                 }
                                 else
                                 {
-                                    synthesized.Add(new ZuiTypes.DataBinding
-                                    {
-                                        Name = ZuiEmit.ToCamelCase(p.Name),
+                                    var name = ZuiEmit.ToCamelCase(p.Name);
+                                    var pascalName = ZuiEmit.ToPascalCase(name);
+
+                                    // NOTE: Semantically different from DataBinding in ZuiSchema.cs
+                                    // - ZuiSchema: Full property declaration with metadata from .zui JSON source
+                                    //              (has Comment, Default, PropertyKeyName, actual Bind mode)
+                                    // - Here: Minimal type signature synthesized from compiled Roslyn symbols
+                                    //         (missing original metadata, used only for type signatures and delegation)
+                                    synthesized.Add(new DataBinding
+                                    {   
+                                        Name = name,
                                         BaseType = p.Type.WithNullableAnnotation(Microsoft.CodeAnalysis.NullableAnnotation.NotAnnotated).ToDisplayString(),
                                         IsNullable = p.NullableAnnotation == Microsoft.CodeAnalysis.NullableAnnotation.Annotated,
-                                        Bind = "new",
-                                        Comment = ""
+                                        PascalName = pascalName,
+
+
+                                        // Bind mode unknown for cross-assembly inherited properties.
+                                        // Validation only checks data.Bindings (not inheritedBindings).
+                                        // OnDataContextPropertyChanged generates "TBD" comment for empty Bind.
+                                        // Same-project inheritance preserves original Bind value from base FileInfo.
+                                        BindType = BindType.Unused,
+                                        Bind = "",
+
+                                        // Fields unused after this point (inherited properties are delegated to base implementation):
+                                        Comment = "",          // Comment unused - base class property already documented
+                                        Default = "",          // Default unused - base class handles initialization
+                                        PropertyKeyName = "",  // PropertyKeyName unused - filtered out by Bind != "styled"
                                     });
                                 }
                             }

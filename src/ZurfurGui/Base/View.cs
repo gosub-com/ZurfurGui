@@ -105,14 +105,8 @@ public sealed class View
         public Point OriginAtArrange;
         public double ScaleAtArrange;
 
-        // NOTE: Caching these might not be worth it since we bypass most measuring when nothing changes.
-        // TBD: Profile
+        // NOTE: Caching things needed by Drawing.
         public bool IsVisible;
-        public SizeProp SizeRequest;
-        public SizeProp SizeMin;
-        public SizeProp SizeMax;
-        public Thickness Padding;
-        public Thickness Margin;
         public Color BackgroundColor;
         public Color BorderColor;
         public double BorderWidth;
@@ -142,7 +136,7 @@ public sealed class View
     /// </summary>
     public void InvalidateMeasure()
     {
-        SetFlags(ViewFlags.ReMeasure);
+        SetFlags(ViewFlags.Measure);
     }
 
     /// <summary>
@@ -151,7 +145,7 @@ public sealed class View
     /// </summary>
     public void InvalidateDraw()
     {
-        SetFlags(ViewFlags.ReDraw);
+        SetFlags(ViewFlags.Draw);
     }
 
     internal void InvalidateStyleCacheInternal()
@@ -172,7 +166,7 @@ public sealed class View
     /// </summary>
     internal void InvalidateStyleTree()
     {
-        SetFlags(ViewFlags.ReStyleDown);
+        SetFlags(ViewFlags.StyleDown);
     }
 
     void SetFlags(ViewFlags flags)
@@ -287,18 +281,13 @@ public sealed class View
             return;
 
         // No need to re-measure if the last measurement is still valid
-        if ( ((Flags | FlagsChild) & ViewFlags.ReMeasure) == ViewFlags.None
+        if ( ((Flags | FlagsChild) & ViewFlags.Measure) == ViewFlags.None
             && available == _cache.AvaliableAtMeasure)
         {
             return;
         }
 
         _cache.AvaliableAtMeasure = available;
-        _cache.SizeRequest = GetStyle(Panel.SizeRequest);
-        _cache.SizeMin = GetStyle(Panel.SizeMin);
-        _cache.SizeMax = GetStyle(Panel.SizeMax);
-        _cache.Padding = GetStyle(Panel.Padding).Or(0);
-        _cache.Margin = GetStyle(Panel.Margin).Or(0);
         _cache.BackgroundColor = GetStyle(Panel.BackgroundColor);
         _cache.BorderColor = GetStyle(Panel.BorderColor);
         _cache.BorderWidth = GetStyle(Panel.BorderWidth);
@@ -306,10 +295,14 @@ public sealed class View
         _cache.Clip = GetStyle(Panel.Clip);
 
         // Include padding and border in the measurement
-        var margin = _cache.Margin;
-        var padding = _cache.Padding + new Thickness(_cache.BorderWidth);
+        var margin = GetStyle(Panel.Margin).Or(0);
+        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(_cache.BorderWidth);
 
-        var constrained = ClampViewSize(available.Deflate(margin)).Deflate(padding);
+        // Clamp to view size constraints, then deflate by padding
+        var sizeRequest = GetStyle(Panel.SizeRequest);
+        var sizeMin = GetStyle(Panel.SizeMin).Or(0).MaxZero;
+        var sizeMax = GetStyle(Panel.SizeMax).Or(double.PositiveInfinity);
+        var constrained = sizeRequest.Or(available.Deflate(margin)).Min(sizeMax).Max(sizeMin).Deflate(padding);
 
         // Measure control content (default is a panel)
         if (Layout is Layoutable layout)
@@ -320,7 +313,8 @@ public sealed class View
         // Desired total view size includes padding and border
         var measured = DesiredContentSize.Inflate(padding);
 
-        measured = ClampViewSize(measured).Min(available);
+        // Clamp to view size constaints, then min(available)
+        measured = sizeRequest.Or(measured).Min(sizeMax).Max(sizeMin).Min(available);
 
         if (double.IsNaN(measured.Width) || double.IsNaN(measured.Height))
             throw new InvalidOperationException("Received NAN in Measure");
@@ -340,7 +334,7 @@ public sealed class View
         if (!_cache.IsVisible)
             return;
 
-        var margin = _cache.Margin;
+        var margin = GetStyle(Panel.Margin).Or(0);
         var availableSize = final.Size.Deflate(margin);
 
         var x = final.X + margin.Left;
@@ -357,9 +351,13 @@ public sealed class View
         if (alignVert != AlignVertical.Stretch)
             size.Height = Math.Min(size.Height, DesiredTotalSize.Height - margin.Top - margin.Bottom);
 
-        size = ClampViewSize(size);
+        // Clamp to view size constraints
+        var sizeRequest = GetStyle(Panel.SizeRequest);
+        var sizeMin = GetStyle(Panel.SizeMin).Or(0).MaxZero;
+        var sizeMax = GetStyle(Panel.SizeMax).Or(double.PositiveInfinity);
+        size = sizeRequest.Or(size).Min(sizeMax).Max(sizeMin);
 
-        var padding = _cache.Padding + new Thickness(_cache.BorderWidth);
+        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(_cache.BorderWidth);
 
         ContentRect = new Rect(new Point(0, 0), size).Deflate(padding);
         Size = size;
@@ -391,7 +389,7 @@ public sealed class View
         var origin = (Parent?.Origin??new()).ToVector + scale * Position;
 
         // No need to re-arrange children if nothing changed
-        if (((Flags | FlagsChild) & ViewFlags.ReMeasure) == ViewFlags.None
+        if (((Flags | FlagsChild) & ViewFlags.Measure) == ViewFlags.None
             && final == _cache.FinalAtArrange && scale == _cache.ScaleAtArrange && origin == _cache.OriginAtArrange)
         {
             return;
@@ -409,20 +407,6 @@ public sealed class View
         else
             LayoutPanel.ArrangePanel(Controller.View, measure);
     }
-
-    /// <summary>
-    /// Clamp the requestedSize to be within the view's SizeMin..SizeMax property constraints.
-    /// Uses the view's SizeRequest property if it's avaliable and ignoreSizeRequest is false.
-    /// NOTE: Always >= 0 and SizeMin (even if Size < SizeMin)
-    /// </summary>
-    Size ClampViewSize(Size requestedSize)
-    {
-        var size = _cache.SizeRequest.Or(requestedSize);
-        var sizeMax = _cache.SizeMax.Or(double.PositiveInfinity);
-        var sizeMin = _cache.SizeMin.Or(0).MaxZero;
-        return size.Min(sizeMax).Max(sizeMin);
-    }
-
 
     /// <summary>
     /// Find exactly one view by name.  Throws an exception if none (or multiples) are found
@@ -464,8 +448,8 @@ public sealed class View
             throw new InvalidOperationException("AddChild: AppWindow cannot be added to the view tree");
         child.Parent = this;
         _children.Add(child);
-        SetFlags(ViewFlags.ReDraw | ViewFlags.ReMeasure);
-        child.SetFlags(ViewFlags.ReDraw | ViewFlags.ReMeasure);
+        SetFlags(ViewFlags.Draw | ViewFlags.Measure);
+        child.SetFlags(ViewFlags.Draw | ViewFlags.Measure);
         if (AppWindow != null)
             SendAttachMessages(child);
     }
@@ -506,7 +490,7 @@ public sealed class View
             SendDetachMessages(child);
         _children.RemoveAt(index);
         child.Parent = null;
-        SetFlags(ViewFlags.ReDraw | ViewFlags.ReMeasure);
+        SetFlags(ViewFlags.Draw | ViewFlags.Measure);
     }
 
     /// <summary>

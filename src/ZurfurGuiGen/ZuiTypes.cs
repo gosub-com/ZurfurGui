@@ -1,105 +1,142 @@
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 
-namespace ZurfurGuiGen;
+namespace ZurfurGuiGen.ZuiTypes;
 
-internal static class ZuiTypes
+internal enum BindType
 {
-    internal class DataBinding
-    {
-        public string Name { get; set; } = "";
-        public string Comment { get; set; } = "";
-        public string BaseType { get; set; } = "";
-        public string NullableType => IsNullable ? $"{BaseType}?" : BaseType;
-        public string Bind { get; set; } = "";
-        public bool IsNullable;
-        /// <summary>True when the type was declared as []Type (an observable collection of items).</summary>
-        public bool IsCollection;
-        /// <summary>
-        /// True when this collection's element type is the file's declared generic type parameter
-        /// (e.g. "[]Item" in a file whose .controller is "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
-        /// When true, the element type resolves to the constraint's data interface rather than a
-        /// concrete data type, keeping the data layer non-generic.
-        /// </summary>
-        public bool IsTypeParam;
-    }
+    Unused,
+    Data,
+    StyledData,
+    StyledOnly,
+    Attached,
+    Forwarded
+}
 
-    // NOTE: We can't use record class here because code generators must target netstandard2.0
-    internal class FileInfo
-    {
-        public string Path { get; set; } = "";
-        public string FileName { get; set; } = "";
+/// <summary>
+/// NOTE: This class should be immutable.  We can't make it a record (or use "init")
+///       until the Roslyn compiler supports these constructs.  
+///       But do keep this class immutable.
+/// </summary>
+internal class DataBinding
+{
+    public string Name { get; set; } = "";
+    public string Comment { get; set; } = "";
+    public string BaseType { get; set; } = "";
+    public string NullableType => IsNullable ? $"{BaseType}?" : BaseType;
+    public BindType BindType { get; set; }
+    public string Bind { get; set; } = "";
+    public bool IsNullable;
+        
+    /// <summary>True when the type was declared as []Type (an observable collection of items).</summary>
+    public bool IsCollection;
+        
+    /// <summary>
+    /// True when this collection's element type is the file's declared generic type parameter
+    /// (e.g. "[]Item" in a file whose .controller is "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
+    /// When true, the element type resolves to the constraint's data interface rather than a
+    /// concrete data type, keeping the data layer non-generic.
+    /// </summary>
+    public bool IsTypeParam;
+        
+    /// <summary>
+    /// Optional default value expression from JSON "default" field.
+    /// Empty string means no default (use new() for initialization).
+    /// </summary>
+    public string Default { get; set; } = "";
 
-        /// <summary>
-        /// If present, any of the data below may be missing or invalid.
-        /// </summary>
-        public Diagnostic? Diagnostic { get; set; }
+    /// <summary>
+    /// Optional ViewFlags from JSON "flags" field (e.g., "reDraw" becomes "ViewFlags.ReDraw").
+    /// Empty string means ViewFlags.None.
+    /// </summary>
+    public string Flags { get; set; } = "";
 
-        /// <summary>
-        /// The parsed JSON document (or empty if parsing failed)
-        /// </summary>
-        public Dictionary<string, object?> JsonDocument { get; set; } = new();
+    /// <summary>
+    /// PascalCase version of Name, used for C# data property names (e.g., "Text", "Orientation").
+    /// </summary>
+    public string PascalName { get; set; } = "";
+        
+    /// <summary>
+    /// PropertyKey field name with "Property" suffix (e.g., "TextProperty", "OrientationProperty").
+    /// </summary>
+    public string PropertyKeyName { get; set; } = "";
+}
 
-        /// <summary>
-        /// Top-level // comment from the JSON file, or "" if none.
-        /// </summary>
-        public string Comment { get; set; } = "";
+// NOTE: We can't use record class here because code generators must target netstandard2.0
+internal class ZuiFileInfo
+{
+    public string Path { get; set; } = "";
+    public string FileName { get; set; } = "";
 
-        /// <summary>
-        /// The controller or style name value from the JSON document (of "" if missing)
-        /// </summary>
-        public string ControllerName = "";
+    /// <summary>
+    /// If present, any of the data below may be missing or invalid.
+    /// </summary>
+    public Diagnostic? Diagnostic { get; set; }
 
-        /// <summary>
-        /// Namespace (or "" for styles)
-        /// </summary>
-        public string Namespace { get; set; } = "";
+    /// <summary>
+    /// The parsed JSON document (or empty if parsing failed)
+    /// </summary>
+    public Dictionary<string, object?> JsonDocument { get; set; } = new();
 
-        /// <summary>
-        /// Optional extra C# using directives (one per line) to include in generated output.
-        /// </summary>
-        public List<string> Use { get; set; } = new();
+    /// <summary>
+    /// Top-level // comment from the JSON file, or "" if none.
+    /// </summary>
+    public string Comment { get; set; } = "";
 
-        /// <summary>
-        /// Data bindings extracted from the JSON `.data` section.
-        /// </summary>
-        public List<DataBinding> Bindings { get; set; } = new();
+    /// <summary>
+    /// The controller or style name value from the JSON document (of "" if missing)
+    /// </summary>
+    public string ControllerName = "";
 
-        /// <summary>
-        /// Set to true if there is a user supplied controller class
-        /// </summary>
-        public bool UserSuppliedControllerClass { get; set; }
+    /// <summary>
+    /// Namespace (or "" for styles)
+    /// </summary>
+    public string Namespace { get; set; } = "";
 
-        /// <summary>
-        /// Set to true if there is a user supplied data class (<ViewName>.Data.cs)
-        /// </summary>
-        public bool UserSuppliedDataClass { get; set; }
+    /// <summary>
+    /// Optional extra C# using directives (one per line) to include in generated output.
+    /// </summary>
+    public List<string> Use { get; set; } = new();
 
-        /// <summary>
-        /// When set, the generated data class additionally implements I{Implements}Data,
-        /// and the generated controller class additionally implements I{Implements}.
-        /// Populated from the JSON ".implements" key (e.g. ".implements": "ComboBoxItem").
-        /// </summary>
-        public string Implements { get; set; } = "";
+    /// <summary>
+    /// Data bindings extracted from the JSON `.data` section.
+    /// </summary>
+    public List<DataBinding> Bindings { get; set; } = new();
 
-        /// <summary>
-        /// Generic type parameter name parsed from the .controller value
-        /// (e.g. "Item" from "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
-        /// Empty string when the control is not generic.
-        /// </summary>
-        public string TypeParam { get; set; } = "";
+    /// <summary>
+    /// Set to true if there is a user supplied controller class
+    /// </summary>
+    public bool UserSuppliedControllerClass { get; set; }
 
-        /// <summary>
-        /// Constraint control name parsed from the .controller where clause
-        /// (e.g. "ComboBoxItem" from "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
-        /// The generated C# constraint becomes "where Item : IComboBoxItemData".
-        /// Empty string when the control is not generic.
-        /// </summary>
-        public string TypeParamConstraint { get; set; } = "";
+    /// <summary>
+    /// Set to true if there is a user supplied data class (<ViewName>.Data.cs)
+    /// </summary>
+    public bool UserSuppliedDataClass { get; set; }
 
-        /// <summary>
-        /// Full namespace + controller class name
-        /// </summary>
-        public string NamespaceFileName => $"{Namespace}.{ControllerName}";
-    }
+    /// <summary>
+    /// When set, the generated data class additionally implements I{Implements}Data,
+    /// and the generated controller class additionally implements I{Implements}.
+    /// Populated from the JSON ".implements" key (e.g. ".implements": "ComboBoxItem").
+    /// </summary>
+    public string Implements { get; set; } = "";
+
+    /// <summary>
+    /// Generic type parameter name parsed from the .controller value
+    /// (e.g. "Item" from "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
+    /// Empty string when the control is not generic.
+    /// </summary>
+    public string TypeParam { get; set; } = "";
+
+    /// <summary>
+    /// Constraint control name parsed from the .controller where clause
+    /// (e.g. "ComboBoxItem" from "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
+    /// The generated C# constraint becomes "where Item : IComboBoxItemData".
+    /// Empty string when the control is not generic.
+    /// </summary>
+    public string TypeParamConstraint { get; set; } = "";
+
+    /// <summary>
+    /// Full namespace + controller class name
+    /// </summary>
+    public string NamespaceFileName => $"{Namespace}.{ControllerName}";
 }
