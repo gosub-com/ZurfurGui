@@ -34,10 +34,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "samples\TestApp\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{364462A5-2DD0-4477-BB03-D6466DBAC47F}"
 	ProjectSection(SolutionItems) = preProject
-		docs\ARCHITECTURE.md = docs\ARCHITECTURE.md
+		docs\Architecture.md = docs\Architecture.md
 		docs\ComboBox.md = docs\ComboBox.md
 		docs\Initialization.md = docs\Initialization.md
-		docs\Property-Binding.md = docs\Property-Binding.md
+		docs\PropertyBinding.md = docs\PropertyBinding.md
 		docs\Style.md = docs\Style.md
 	EndProjectSection
 EndProject
