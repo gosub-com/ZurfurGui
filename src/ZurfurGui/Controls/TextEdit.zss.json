@@ -1,0 +1,17 @@
+{
+    "name": "TextEdit",
+    "styles": [
+        {
+            ".selectors": "TextEdit",
+            ".backgroundColor": "@color.input.background",
+            ".borderWidth": "@stroke.width.default",
+            ".borderColor": "@color.input.stroke",
+            ".sizeMin": "@size.textedit.min",
+            ".padding": "@padding.textedit"
+        },
+        {
+            ".selectors": "TextEdit.Text",
+            "TextView.color": "@color.text.primary"
+        }
+    ]
+}

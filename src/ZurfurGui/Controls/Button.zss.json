@@ -1,0 +1,27 @@
+{
+    "name": "Button",
+    "styles": [
+        {
+            ".selectors": "Button",
+            ".borderWidth": "@stroke.width.default",
+            ".borderRadius": "@radius.corner.medium",
+            ".borderColor": "@color.interactive.primary.stroke",
+            ".backgroundColor": "@color.interactive.primary.background",
+            ".padding": "@padding.button"
+        },
+        {
+            ".selectors": "Button:IsPointerOver",
+            ".borderColor": "@color.interactive.primary.stroke.hover",
+            ".backgroundColor": "@color.interactive.primary.background.hover"
+        },
+        {
+            ".selectors": "Button:IsPressed",
+            ".borderColor": "@color.interactive.primary.stroke.pressed",
+            ".backgroundColor": "@color.interactive.primary.background.pressed"
+        },
+        {
+            ".selectors": "Button.Text",
+            "TextView.color": "@color.text.on-primary"
+        }
+    ]
+}

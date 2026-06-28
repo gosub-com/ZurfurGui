@@ -30,7 +30,7 @@
         "color.interactive.primary.stroke.pressed": "#005A9E",
 
         // Text box, etc.
-        "color.input.background": "#E0F0FA",
+        "color.input.background": "#FFFFFF",
         "color.input.stroke": "#7070B0",
 
         // ScrollBar

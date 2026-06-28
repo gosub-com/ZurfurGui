@@ -1,0 +1,9 @@
+{
+    "name": "TextView",
+    "styles": [
+        {
+            ".selectors": "TextView",
+            "TextView.color": "@color.text.primary"
+        }
+    ]
+}

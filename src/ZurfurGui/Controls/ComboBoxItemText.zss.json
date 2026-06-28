@@ -1,0 +1,17 @@
+{
+    "name": "ComboBoxItemText",
+    "styles": [
+        {
+            ".selectors": "ComboBoxItemText",
+            ".padding": "left:8;top:4;right:8;bottom:4"
+        },
+        {
+            ".selectors": "ComboBoxItemText:IsPointerOver",
+            ".backgroundColor": "@color.interactive.primary.background.hover"
+        },
+        {
+            ".selectors": "ComboBoxItemText.Text",
+            "TextView.color": "@color.text.primary"
+        }
+    ]
+}

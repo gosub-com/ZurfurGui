@@ -1,0 +1,35 @@
+{
+    "name": "Window",
+    "styles": [
+        {
+            ".selectors": "Window",
+            ".backgroundColor": "@color.surface.overlay",
+            ".borderColor": "@color.surface.overlay.stroke",
+            ".borderRadius": "@radius.corner.extra-large",
+            ".borderWidth": "@stroke.width.medium",
+            ".sizeMin": "@size.window.min"
+        },
+        {
+            ".selectors": "Window.Title",
+            ".padding": "@spacing.vertical.small | spacing.horizontal.medium",
+            ".backgroundColor": "@color.window.title.background",
+            ".borderRadius": "@radius.corner.large"
+        },
+        {
+            ".selectors": "Window.Title.Text",
+            "TextView.font": "@font.size.window.title"
+        },
+        {
+            ".selectors": "Window.Title.TextColor",
+            "TextView.color": "@color.window.title.foreground"
+        },
+        {
+            ".selectors": "Window.Title.Close:IsPointerOver",
+            "TextView.color": "@color.window.title.foreground.hover"
+        },
+        {
+            ".selectors": "Window.Content",
+            ".margin": "@spacing.large"
+        }
+    ]
+}

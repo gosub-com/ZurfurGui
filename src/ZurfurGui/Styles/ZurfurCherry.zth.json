@@ -6,8 +6,8 @@
 
         // Windows, Panels, Cards, etc.
         "color.surface.canvas": "#FAF2F5", // Main app window
-        "color.surface.card": "#FDEAF0", // Panels, cards, etc. on top of main app window
-        "color.surface.overlay": "#FFFFFF", // Windows and dialogs
+        "color.surface.card": "#FCF8FA", // Panels, cards, etc. on top of main app window
+        "color.surface.overlay": "#FEF9FB", // Windows and dialogs
         "color.surface.overlay.stroke": "#8B3058",
         "color.surface.overlay.scrim": "#00000050",
 
@@ -21,8 +21,8 @@
         "color.text.on-primary": "#3D1020",
 
         // Buttons, checkboxes, radio buttons, toggles, etc.
-        "color.interactive.primary.background": "#F5E8EC",
-        "color.interactive.primary.background.hover": "#F8D8E0",
+        "color.interactive.primary.background": "#F8D8E0",
+        "color.interactive.primary.background.hover": "#F5E8EC",
         "color.interactive.primary.background.pressed": "#FDEAF0",
         "color.interactive.primary.background.selected": "#F8D8E0",
         "color.interactive.primary.stroke": "#C090A0",
@@ -30,7 +30,7 @@
         "color.interactive.primary.stroke.pressed": "#202880",
 
         // Text box, etc.
-        "color.input.background": "#FDEAF0",
+        "color.input.background": "#FFFFFF",
         "color.input.stroke": "#8B3058",
 
         // ScrollBar
