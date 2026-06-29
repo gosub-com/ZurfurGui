@@ -14,6 +14,8 @@ public class RenderContext
         public long FillText;
         public long FillRect;
         public long StrokeRect;
+        public long StrokePolyLine;
+        public long FillPolygon;
         public long PushClips;
     }
 
@@ -24,6 +26,7 @@ public class RenderContext
     double _scale = 1.0;
     Rect _clip = EMPTY_DEVICE_CLIP;
     List<Rect> _clipStack = new List<Rect>();
+    double[] _pointsBuffer = Array.Empty<double>();
 
     public Stats RenderStats => _renderStats;
 
@@ -70,17 +73,16 @@ public class RenderContext
         PointerDevicePosition = devicePosition;
     }
 
-    public Color FillColor { set { _context.FillColor = value; } }
-    public Color StrokeColor { set { _context.StrokeColor = value; } }
-    public double LineWidth { set { _context.LineWidth = _scale * value; } }
-    public string FontName { set { _context.FontName = value; } }
-    public double FontSize { set { _context.FontSize = _scale * value; } }
+    public void FillRect(Brush brush, Rect r, double radius = 0)
+        => FillRect(brush, r.X, r.Y, r.Width, r.Height, radius);
 
-    public void FillRect(Rect r, double radius = 0)
-        => FillRect(r.X, r.Y, r.Width, r.Height, radius);
-
-    public void FillRect(double x, double y, double width, double height, double radius = 0)
+    public void FillRect(in Brush brush, double x, double y, double width, double height, double radius = 0)
     {
+        if (brush.Type != BrushType.Solid)
+            throw new NotImplementedException("Only BrushType.Solid brushes are supported");
+
+        _context.FillColor = brush.Color;
+
         // NOTE: Winforms throws an exception if width or height are 0 or negative. 
         // TBD: Fix winforms driver to match Javascript and then remove this test.
         if (width > 0 && height > 0)
@@ -90,11 +92,16 @@ public class RenderContext
         }
     }
 
-    public void StrokeRect(Rect r, double radius = 0)
-        => StrokeRect(r.X, r.Y, r.Width, r.Height, radius);
+    public void StrokeRect(in Pen pen, Rect r, double radius = 0)
+        => StrokeRect(pen, r.X, r.Y, r.Width, r.Height, radius);
 
-    public void StrokeRect(double x, double y, double width, double height, double radius = 0)
+    public void StrokeRect(in Pen pen, double x, double y, double width, double height, double radius = 0)
     {
+        if (pen.Brush.Type != BrushType.Solid)
+            throw new NotImplementedException("Only BrushType.Solid brushes are supported");
+        _context.StrokeColor = pen.Brush.Color;
+        _context.LineWidth = _scale * pen.Thickness;
+
         // NOTE: Winforms throws an exception if width or height are 0 or negative.
         // TBD: Fix winforms driver to match Javascript and then remove this test.
         if (width > 0 && height > 0)
@@ -104,17 +111,67 @@ public class RenderContext
         }
     }
 
-    public void FillText(string text, double x, double y)
+    public void FillText(in Font font, in Brush brush, string text, Point p)
+        => FillText(font, brush, text, p.X, p.Y);
+
+    public void FillText(in Font font, in Brush brush, string text, double x, double y)
     {
+        if (brush.Type != BrushType.Solid)
+            throw new NotImplementedException("Only BrushType.Solid brushes are supported");
+        _context.FillColor = brush.Color;
+        _context.FontName = font.Name;
+        _context.FontSize = _scale * font.Size;
         _context.FillText(text, _scale * x + _origin.X, _scale * y + _origin.Y);
         _renderStats.FillText++;
     }
 
-    public void FillText(string text, Point p)
-    { 
-        _context.FillText(text, p.X, p.Y);
-        _renderStats.FillText++;
+    double[] TransformPoints(ReadOnlySpan<double> points)
+    {
+        // Expand buffer if needed (amortized allocation)
+        if (_pointsBuffer.Length < points.Length)
+            _pointsBuffer = new double[Math.Max(points.Length, _pointsBuffer.Length * 2)];
+
+        // Transform points into buffer
+        for (int i = 0; i < points.Length; i += 2)
+        {
+            _pointsBuffer[i] = _scale * points[i] + _origin.X;
+            _pointsBuffer[i + 1] = _scale * points[i + 1] + _origin.Y;
+        }
+
+        return _pointsBuffer;
     }
+
+    public void StrokePolyLine(Pen pen, ReadOnlySpan<double> points)
+    {
+        if (points.Length < 4 || points.Length % 2 != 0)
+            throw new ArgumentException("Points must contain at least 2 coordinate pairs (4 values) and have even length", nameof(points));
+
+        if (pen.Brush.Type != BrushType.Solid)
+            throw new NotImplementedException("Only BrushType.Solid brushes are supported");
+
+        _context.StrokeColor = pen.Brush.Color;
+        _context.LineWidth = _scale * pen.Thickness;
+
+        var transformed = TransformPoints(points);
+        _context.StrokePolyLine(transformed, points.Length);
+        _renderStats.StrokePolyLine++;
+    }
+
+    public void FillPolygon(Brush brush, ReadOnlySpan<double> points)
+    {
+        if (points.Length < 6 || points.Length % 2 != 0)
+            throw new ArgumentException("Points must contain at least 3 coordinate pairs (6 values) and have even length", nameof(points));
+
+        if (brush.Type != BrushType.Solid)
+            throw new NotImplementedException("Only BrushType.Solid brushes are supported");
+
+        _context.FillColor = brush.Color;
+
+        var transformed = TransformPoints(points);
+        _context.FillPolygon(transformed, points.Length);
+        _renderStats.FillPolygon++;
+    }
+
 
     /// <summary>
     /// Clip to the specified rectangle in device pixels.

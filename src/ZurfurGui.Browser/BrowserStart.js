@@ -91,5 +91,24 @@ globalThis.ZurfurGui.unClip = function (context) {
     context.restore();
 }
 
+globalThis.ZurfurGui.strokePolyLine = function (context, points, length) {
+    if (length < 4) return;
+    context.beginPath();
+    context.moveTo(points[0], points[1]);
+    for (let i = 2; i < length; i += 2) {
+        context.lineTo(points[i], points[i + 1]);
+    }
+    context.stroke();
+}
 
+globalThis.ZurfurGui.fillPolygon = function (context, points, length) {
+    if (length < 6) return;
+    context.beginPath();
+    context.moveTo(points[0], points[1]);
+    for (let i = 2; i < length; i += 2) {
+        context.lineTo(points[i], points[i + 1]);
+    }
+    context.closePath();
+    context.fill();
+}
 

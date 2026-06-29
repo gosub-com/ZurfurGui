@@ -1,10 +1,19 @@
 using ZurfurGui.Base;
+using ZurfurGui.Input;
 using ZurfurGui.Layout;
-using ZurfurGui.Platform;
 using ZurfurGui.Property;
 using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
+
+public enum ScrollBarHitRegion
+{
+    None,
+    StartArrow,
+    EndArrow,
+    Track,
+    Thumb
+}
 
 public partial class ScrollBar : Controllable
 {
@@ -32,6 +41,42 @@ public partial class ScrollBar : Controllable
     }
 
     /// <summary>
+    /// Get the size of one arrow button (square: equals scrollbar width/height).
+    /// </summary>
+    private double GetArrowSize(Orientation orientation)
+    {
+        return orientation == Orientation.Vertical ? View.Size.Width : View.Size.Height;
+    }
+
+    /// <summary>
+    /// Get the rectangle for the start arrow (top for vertical, left for horizontal).
+    /// </summary>
+    public Rect GetStartArrowRect()
+    {
+        var orientationValue = View.GetStyle(OrientationProperty);
+        var arrowSize = GetArrowSize(orientationValue);
+
+        if (orientationValue == Orientation.Vertical)
+            return new Rect(0, 0, View.Size.Width, arrowSize);
+        else
+            return new Rect(0, 0, arrowSize, View.Size.Height);
+    }
+
+    /// <summary>
+    /// Get the rectangle for the end arrow (bottom for vertical, right for horizontal).
+    /// </summary>
+    public Rect GetEndArrowRect()
+    {
+        var orientationValue = View.GetStyle(OrientationProperty);
+        var arrowSize = GetArrowSize(orientationValue);
+
+        if (orientationValue == Orientation.Vertical)
+            return new Rect(0, View.Size.Height - arrowSize, View.Size.Width, arrowSize);
+        else
+            return new Rect(View.Size.Width - arrowSize, 0, arrowSize, View.Size.Height);
+    }
+
+    /// <summary>
     /// Convert a value to screen position along the track (in local coordinates).
     /// </summary>
     public double ValueToScreen(double value)
@@ -41,12 +86,14 @@ public partial class ScrollBar : Controllable
             return 0;
 
         var orientationValue = View.GetStyle(OrientationProperty);
-        var trackSize = orientationValue == Orientation.Vertical ? View.Size.Height : View.Size.Width;
+        var arrowSize = GetArrowSize(orientationValue);
+        var fullSize = orientationValue == Orientation.Vertical ? View.Size.Height : View.Size.Width;
+        var trackSize = fullSize - (2 * arrowSize);  // Subtract both arrows
         var thumbSize = CalculateThumbSize();
         var availableTrack = trackSize - thumbSize;
 
         var ratio = (value - data.Minimum) / (data.Maximum - data.Minimum);
-        return ratio * availableTrack;
+        return arrowSize + (ratio * availableTrack);  // Offset by start arrow
     }
 
     /// <summary>
@@ -59,14 +106,17 @@ public partial class ScrollBar : Controllable
             return data.Minimum;
 
         var orientationValue = View.GetStyle(OrientationProperty);
-        var trackSize = orientationValue == Orientation.Vertical ? View.Size.Height : View.Size.Width;
+        var arrowSize = GetArrowSize(orientationValue);
+        var fullSize = orientationValue == Orientation.Vertical ? View.Size.Height : View.Size.Width;
+        var trackSize = fullSize - (2 * arrowSize);  // Subtract both arrows
         var thumbSize = CalculateThumbSize();
         var availableTrack = trackSize - thumbSize;
 
         if (availableTrack <= 0)
             return data.Minimum;
 
-        var ratio = screenPos / availableTrack;
+        var adjustedPos = screenPos - arrowSize;  // Adjust for start arrow
+        var ratio = adjustedPos / availableTrack;
         return data.Minimum + ratio * (data.Maximum - data.Minimum);
     }
 
@@ -102,50 +152,75 @@ public partial class ScrollBar : Controllable
 
         var thumbMinSize = View.GetStyle(ThumbMinSizeProperty);
         var orientationValue = View.GetStyle(OrientationProperty);
-        var trackSize = orientationValue == Orientation.Vertical ? View.Size.Height : View.Size.Width;
+        var arrowSize = GetArrowSize(orientationValue);
+        var fullSize = orientationValue == Orientation.Vertical ? View.Size.Height : View.Size.Width;
+        var trackSize = fullSize - (2 * arrowSize);  // Subtract both arrows
 
         var thumbRatio = data.ViewportSize / range;
         var thumbSize = Math.Max(thumbMinSize, thumbRatio * trackSize);
         return Math.Min(thumbSize, trackSize);
     }
 
+    /// <summary>
+    /// Determine which region of the scrollbar contains the given point.
+    /// </summary>
+    private ScrollBarHitRegion HitTest(Point localPoint)
+    {
+        if (GetStartArrowRect().Contains(localPoint))
+            return ScrollBarHitRegion.StartArrow;
+
+        if (GetEndArrowRect().Contains(localPoint))
+            return ScrollBarHitRegion.EndArrow;
+
+        if (CalculateThumbRect().Contains(localPoint))
+            return ScrollBarHitRegion.Thumb;
+
+        return ScrollBarHitRegion.Track;
+    }
+
     void OnPointerDown(object? sender, PointerEvent e)
     {
         // Convert from device coordinates to local control coordinates
         var viewPos = View.toClient(e.DevicePosition);
-        var thumbRect = CalculateThumbRect();
+        var region = HitTest(viewPos);
+        var data = DataContext;
 
-        if (thumbRect.Contains(viewPos))
+        switch (region)
         {
-            // Start thumb drag
-            _isDragging = true;
-            _dragStartValue = DataContext.Value;
-            _dragStartPoint = viewPos;
-            View.SetProperty(Panel.IsPressed, true);
-            View.CapturePointer = true;
-        }
-        else
-        {
-            // Clicked on track - move thumb to click position
-            var data = DataContext;
-            var orientationValue = View.GetStyle(OrientationProperty);
+            case ScrollBarHitRegion.StartArrow:
+                // Decrease value by SmallChange
+                data.Value = Math.Max(data.Minimum, data.Value - data.SmallChange);
+                break;
 
-            // Get the click position along the track axis
-            var clickPos = orientationValue == Orientation.Vertical
-                ? viewPos.Y
-                : viewPos.X;
+            case ScrollBarHitRegion.EndArrow:
+                // Increase value by SmallChange
+                data.Value = Math.Min(data.Maximum, data.Value + data.SmallChange);
+                break;
 
-            // Move up or down
-            if (ScreenToValue(clickPos) < data.Value)
-                data.Value = Math.Max(data.Minimum, data.Value - data.LargeChange);
-            else
-                data.Value = Math.Min(data.Maximum, data.Value + data.LargeChange);
+            case ScrollBarHitRegion.Thumb:
+                // Start thumb drag
+                _isDragging = true;
+                _dragStartValue = data.Value;
+                _dragStartPoint = viewPos;
+                View.CapturePointer = true;
+                break;
 
+            case ScrollBarHitRegion.Track:
+                // Jump by LargeChange in the direction of click
+                var orientationValue = View.GetStyle(OrientationProperty);
+                var clickPos = orientationValue == Orientation.Vertical ? viewPos.Y : viewPos.X;
+
+                if (ScreenToValue(clickPos) < data.Value)
+                    data.Value = Math.Max(data.Minimum, data.Value - data.LargeChange);
+                else
+                    data.Value = Math.Min(data.Maximum, data.Value + data.LargeChange);
+                break;
         }
     }
 
     void OnPointerMove(object? sender, PointerEvent e)
     {
+        // Handle dragging
         if (!_isDragging)
             return;
 
@@ -159,7 +234,9 @@ public partial class ScrollBar : Controllable
             : viewPos.X - _dragStartPoint.X;
 
         var thumbSize = CalculateThumbSize();
-        var trackSize = orientationValue == Orientation.Vertical ? View.Size.Height : View.Size.Width;
+        var arrowSize = GetArrowSize(orientationValue);
+        var fullSize = orientationValue == Orientation.Vertical ? View.Size.Height : View.Size.Width;
+        var trackSize = fullSize - (2 * arrowSize);
         var availableTrack = trackSize - thumbSize;
 
         if (availableTrack > 0)
@@ -178,7 +255,6 @@ public partial class ScrollBar : Controllable
         if (_isDragging)
         {
             _isDragging = false;
-            View.SetProperty(Panel.IsPressed, false);
             View.CapturePointer = false;
         }
     }
@@ -186,7 +262,6 @@ public partial class ScrollBar : Controllable
     void OnPointerCaptureLost(object? sender, EventArgs e)
     {
         _isDragging = false;
-        View.SetProperty(Panel.IsPressed, false);
     }
 }
 

@@ -5,6 +5,7 @@ using System.Runtime.InteropServices.JavaScript;
 using System.Text;
 using System.Threading.Tasks;
 using ZurfurGui.Base;
+using ZurfurGui.Input;
 using ZurfurGui.Platform;
 
 namespace ZurfurGui.Browser.Interop;

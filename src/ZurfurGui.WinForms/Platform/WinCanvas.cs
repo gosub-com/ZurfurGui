@@ -8,6 +8,7 @@ using ZurfurGui.Platform;
 
 using Size = ZurfurGui.Base.Size;
 using Point = ZurfurGui.Base.Point;
+using ZurfurGui.Input;
 
 namespace ZurfurGui.WinForms.Interop;
 

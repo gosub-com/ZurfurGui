@@ -214,6 +214,32 @@ internal class WinContext : OsContext
         return textWidth + _fontSize * TEXT_OFFSET_SCALE_X;
     }
 
+    static PointF[] ConvertPoints(double[] points, int length)
+    {
+        var result = new PointF[length / 2];
+        for (int i = 0; i < length; i += 2)
+        {
+            result[i / 2] = new PointF((float)points[i], (float)points[i + 1]);
+        }
+        return result;
+    }
+
+    public void StrokePolyLine(double[] points, int length)
+    {
+        if (length < 4)
+            return;
+        var winPoints = ConvertPoints(points, length);
+        _graphics.DrawLines(GetPen(), winPoints);
+    }
+
+    public void FillPolygon(double[] points, int length)
+    {
+        if (length < 6)
+            return;
+        var winPoints = ConvertPoints(points, length);
+        _graphics.FillPolygon(GetBrush(), winPoints);
+    }
+
     /// <summary>
     /// Clip to the specified rectangle in device pixels
     /// </summary>

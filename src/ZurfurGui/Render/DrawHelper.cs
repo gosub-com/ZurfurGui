@@ -21,17 +21,14 @@ public static class DrawHelper
         var borderWidth = Math.Min(view._cache.BorderWidth, Math.Min(view.Size.Width, view.Size.Height)/2);
         if (background.A != 0)
         {
-            context.FillColor = background;
-            context.FillRect(new Rect(new(), view.Size).Deflate(borderWidth/2), borderRadius);
+            context.FillRect(background, new Rect(new(), view.Size).Deflate(borderWidth/2), borderRadius);
         }
 
         // Draw border
         var borderColor = view._cache.BorderColor;
         if (borderWidth > 0 && borderColor.A != 0)
         {
-            context.LineWidth = borderWidth;
-            context.StrokeColor = borderColor;
-            context.StrokeRect(new Rect(new(), view.Size).Deflate(borderWidth/2), borderRadius);
+            context.StrokeRect(new Pen(borderColor, borderWidth), new Rect(new(), view.Size).Deflate(borderWidth/2), borderRadius);
         }
     }
 

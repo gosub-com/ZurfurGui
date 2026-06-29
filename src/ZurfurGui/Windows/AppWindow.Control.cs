@@ -153,45 +153,28 @@ public partial class AppWindow : Controllable, Drawable
         var ls = 26;
 
         // Draw background numbers to check sizing
-        context.FillColor = new Color(0x80, 0x80, 0xF0);
-        context.FontName = "sans-serif";
-        context.FontSize = 16;
+        var fillColor = new Color(0x80, 0x80, 0xF0);
+        var font = new Font("sans-serif", 16);
         for (var i = 0; i < 30; i++)
         {
             for (var j = 0; j < 30; j++)
             {
                 var x = i * 50;
                 var y = j * 20;
-                context.FillText($"{x / 10},{y / 10}", x, y);
+                context.FillText(font, fillColor, $"{x / 10},{y / 10}", x, y);
             }
         }
 
         // Big "M.M."
-        context.FontName = "sans-serif";
-        context.FontSize = 500;
-        context.FillText($"M.M.", left, top + 17 * ls);
+        context.FillText(new Font("sans-serif", 500), fillColor, $"M.M.", left, top + 17 * ls);
 
         // Squares to compare with Big "M.M."
         var sx = 500;
-        context.LineWidth = 1;
-        context.StrokeColor = Colors.Red;
-        context.StrokeRect(10 + sx, 10, 50, 50);
-
-        context.LineWidth = 2;
-        context.StrokeColor = Colors.Green;
-        context.StrokeRect(60 + sx, 60, 50, 50);
-
-        context.LineWidth = 3;
-        context.StrokeColor = Colors.Blue;
-        context.StrokeRect(110 + sx, 110, 50, 50);
-
-        context.LineWidth = 8;
-        context.StrokeColor = new Color(255, 255, 0);
-        context.StrokeRect(160 + sx, 60, 50, 50);
-
-        context.LineWidth = 16;
-        context.StrokeColor = new Color(255, 0, 255);
-        context.StrokeRect(210 + sx, 10, 50, 50);
+        context.StrokeRect(new Pen(Colors.Red, 1), 10 + sx, 10, 50, 50);
+        context.StrokeRect(new Pen(Colors.Green, 2), 60 + sx, 60, 50, 50);
+        context.StrokeRect(new Pen(Colors.Blue, 3), 110 + sx, 110, 50, 50);
+        context.StrokeRect(new Pen(new Color(255, 255, 0), 8), 160 + sx, 60, 50, 50);
+        context.StrokeRect(new Pen(new Color(255, 0, 255), 16), 210 + sx, 10, 50, 50);
     }
 
 }

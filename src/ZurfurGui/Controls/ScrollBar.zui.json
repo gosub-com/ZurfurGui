@@ -5,38 +5,38 @@
     ".data": {
         // Current scroll position (ranges from Minimum to Maximum)
         "value": {
-            "type": "double",
+            "type": "Double",
             "bind": "data"
         },
 
         // Minimum allowed value (typically 0)
         "minimum": {
-            "type": "double",
+            "type": "Double",
             "bind": "data"
         },
 
         // Maximum allowed value (typically contentSize - viewportSize)
         "maximum": {
-            "type": "double",
+            "type": "Double",
             "bind": "data",
             "default": "100"
         },
 
         // Size of the visible viewport (used to calculate thumb size)
         "viewportSize": {
-            "type": "double",
+            "type": "Double",
             "bind": "data"
         },
 
         // Amount to scroll on wheel or arrow click
         "smallChange": {
-            "type": "double",
+            "type": "Double",
             "bind": "data"
         },
 
         // Amount to scroll on track click (page up/down)
         "largeChange": {
-            "type": "double",
+            "type": "Double",
             "bind": "data"
         },
 
@@ -61,7 +61,7 @@
             "flags": "draw"
         },
         "thumbMinSize": {
-            "type": "double",
+            "type": "Double",
             "bind": "styledOnly",
             "default": "20.0",
             "flags": "measure"
@@ -73,13 +73,13 @@
             "flags": "draw"
         },
         "borderWidth": {
-            "type": "double",
+            "type": "Double",
             "bind": "styledOnly",
             "default": "1.0",
             "flags": "draw"
         },
         "thumbRadius": {
-            "type": "double",
+            "type": "Double",
             "bind": "styledOnly",
             "flags": "draw"
         }

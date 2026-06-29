@@ -7,15 +7,11 @@
             "ScrollBar.thumbColor": "@color.scroll.thumb.background",
             "ScrollBar.borderColor": "@color.scroll.stroke",
             "ScrollBar.borderWidth": "@stroke.width.default",
-            "ScrollBar.thumbRadius": "@radius.corner.medium"
+            "ScrollBar.thumbRadius": "@radius.scroll.thumb"
         },
         {
             ".selectors": "ScrollBar:IsPointerOver",
             "ScrollBar.thumbColor": "@color.scroll.thumb.background.hover"
-        },
-        {
-            ".selectors": "ScrollBar:IsPressed",
-            "ScrollBar.thumbColor": "@color.scroll.thumb.background.pressed"
         }
     ]
 }

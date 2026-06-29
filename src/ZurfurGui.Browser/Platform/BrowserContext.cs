@@ -31,6 +31,12 @@ internal partial class BrowserContext : OsContext
     [JSImport("globalThis.ZurfurGui.unClip")]
     private static partial void UnClip(JSObject context);
 
+    [JSImport("globalThis.ZurfurGui.strokePolyLine")]
+    private static partial void StrokePolyLine(JSObject context, double[] points, int length);
+
+    [JSImport("globalThis.ZurfurGui.fillPolygon")]
+    private static partial void FillPolygon(JSObject context, double[] points, int length);
+
     JSObject _context;
 
 
@@ -180,6 +186,19 @@ internal partial class BrowserContext : OsContext
     public void Clip(double x, double y, double width, double height)
     {
         Clip(_context, x, y, width, height);
+    }
+
+    public void StrokePolyLine(double[] points, int length)
+    {
+        ReconstructStrokeStyleString();
+        ReconstructLineWidth();
+        StrokePolyLine(_context, points, length);
+    }
+
+    public void FillPolygon(double[] points, int length)
+    {
+        ReconstructFillStyleString();
+        FillPolygon(_context, points, length);
     }
 
     public void UnClip()

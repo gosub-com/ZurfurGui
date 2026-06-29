@@ -35,15 +35,14 @@ public class DrawText : Drawable
         }
 
         var text = view.GetStyle(TextView.TextProperty);
-        var font = view.GetStyle(TextView.FontProperty);
-        var fontName = font.Name ?? "Arial";
-        var fontSize = font.Size.Or(16.0);
-        context.FontName = fontName;
-        context.FontSize = fontSize;
-        context.FillColor = color;
+        var fontProp = view.GetStyle(TextView.FontProperty);
+        var fontName = fontProp.Name ?? "Arial";
+        var fontSize = fontProp.Size.Or(16.0);
+        var font = new Font(fontName, fontSize);
+        var brush = new Brush(color);
 
         for (int i = 0; i < text.Count; i++)
-            context.FillText(text[i], 0 + view.ContentRect.X,
+            context.FillText(font, brush, text[i], 0 + view.ContentRect.X,
                 fontSize * TEXT_BASELINE + i * fontSize * LINE_SPACING + (LINE_SPACING - 1) * fontSize * 0.5 + view.ContentRect.Y);
     }
 

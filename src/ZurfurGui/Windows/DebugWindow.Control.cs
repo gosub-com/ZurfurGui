@@ -1,8 +1,6 @@
 ﻿using ZurfurGui.Base;
-using ZurfurGui.Platform;
-using ZurfurGui.Property;
-using ZurfurGui.Render;
 using ZurfurGui.Controls;
+using ZurfurGui.Render;
 
 namespace ZurfurGui.Windows;
 

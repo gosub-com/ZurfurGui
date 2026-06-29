@@ -37,7 +37,6 @@
         "color.scroll.track.background": "#381520",
         "color.scroll.thumb.background": "#604050",
         "color.scroll.thumb.background.hover": "#705060",
-        "color.scroll.thumb.background.pressed": "#806070",
         "color.scroll.stroke": "#7A3050",
 
         "color.status.success.background": "#27472A",
