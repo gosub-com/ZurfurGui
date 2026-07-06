@@ -4,8 +4,9 @@ using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Platform;
 using ZurfurGui.Property;
-using ZurfurGui.Windows;
 using ZurfurGui.Styles;
+using ZurfurGui.Windows;
+using static ZurfurGui.Render.RenderContext;
 
 namespace ZurfurGui.Render;
 
@@ -16,25 +17,48 @@ public class Renderer
     AppWindow _appWindow;
     RenderContext _renderContext;
     PointerOver _pointerHover;
+    OsDrawBuffer _drawBuffer;
+    ObjectCache<string> _stringCache;
 
-    long _frameLastCountSecond;
+    public struct RendererStats
+    {
+        public long FrameCount;
+        public long MeasureFrameCount;
+        public long StyleFrameCount;
+        public double TotalMs;
+        public double DrawMs;
+        public int DrawBufferLength;
+        public double RenderMs => TotalMs - DrawMs;
+
+        public static RendererStats operator -(RendererStats a, RendererStats b)
+        {
+            return new RendererStats
+            {
+                FrameCount = a.FrameCount - b.FrameCount,
+                MeasureFrameCount = a.MeasureFrameCount - b.MeasureFrameCount,
+                StyleFrameCount = a.StyleFrameCount - b.StyleFrameCount,
+                TotalMs = a.TotalMs - b.TotalMs,
+                DrawMs = a.DrawMs - b.DrawMs,
+            };
+
+        }
+    }
+
+    RendererStats _stats;
+
     int _second;
-    long _totalMs;
 
     double _devicePixelRatio = 0;
     Size _mainWindowSize = new();
 
 
-    public long Fps { get; private set; }
     public bool FpsUpdatedOnceASecond { get; private set; }
-    public double AvgMs { get; private set; }
-    public long FrameCount { get; private set; }
-    public long DrawCount { get; private set; }
-    public long MeasureCount { get; private set; }
-    public long StyleCount { get; private set; }
     public OsCanvas Canvas => _canvas;
     public OsWindow Window => _window;
-    public RenderContext RenderContext => _renderContext;
+
+    public RenderContext.RenderContextStats RenderContextStats => _renderContext.RenderStats;
+    
+    public RendererStats Stats => _stats;
 
 
     public Renderer(OsWindow window, OsCanvas canvas, AppWindow appWindow)
@@ -42,10 +66,13 @@ public class Renderer
         _window = window;
         _canvas = canvas;
         _appWindow = appWindow;
+        _stringCache = new ObjectCache<string>(_canvas.Context.MarshalString);
+        _drawBuffer = new OsDrawBuffer(_stringCache);
 
-        _renderContext = new RenderContext(_canvas.Context);
+        _renderContext = new RenderContext(_canvas.Context, _drawBuffer);
         _pointerHover = new PointerOver(_appWindow);
         _appWindow.SetAppWindowGlobals(this, _pointerHover);
+
 
         if (_canvas.PointerInput != null)
             throw new ArgumentException("Pointer input already taken", nameof(_canvas));
@@ -55,11 +82,44 @@ public class Renderer
     public void RenderFrame()
     {
         var timer = Stopwatch.StartNew();
+        _drawBuffer.Reset();
+        var stringTotal = _stringCache.TotalAccesses;
 
-        // Resize if the window size changed
+        var appView = _appWindow.View;
+        ResizeAppWindow(appView);
+
+        _appWindow.CallPreRenderFrame();
+
+        InvalidateStyleFrame(appView);
+        MeasureFrame(appView);
+        RenderFrame(appView);
+
+        var drawTimeStart = timer.Elapsed.TotalMilliseconds;
+        _canvas.Context.DrawBuffer(_drawBuffer);
+        var totalTimer = timer.Elapsed.TotalMilliseconds;
+
+        // Stats
+        _stats.FrameCount++;
+        _stats.TotalMs += totalTimer;
+        _stats.DrawMs += totalTimer - drawTimeStart;
+        _stats.DrawBufferLength = _drawBuffer.Length;
+        var now = DateTime.UtcNow;
+        FpsUpdatedOnceASecond = now.Second != _second;
+        if (FpsUpdatedOnceASecond)
+            _second = now.Second;
+
+        // Purge the string cache if it has grown too large.
+        // Needs to be big enough to hold all strings in the frame
+        var frameStringCount = _stringCache.TotalAccesses - stringTotal;
+        _stringCache.PurgeLru(Math.Max(1000, (int)frameStringCount * 2));
+    }
+
+
+    // Resize the app window, only if it has changed
+    private void ResizeAppWindow(View appView)
+    {
         var devicePixelRatio = _window.DevicePixelRatio;
         var deviceSize = _canvas.DeviceSize;
-        var appView = _appWindow.View;
         if (_mainWindowSize != deviceSize / devicePixelRatio
             || _devicePixelRatio != devicePixelRatio)
         {
@@ -68,51 +128,14 @@ public class Renderer
             appView.SetProperty(Panel.Magnification, devicePixelRatio);
             appView.InvalidateMeasure();
         }
+    }
 
-        _appWindow.CallPreRenderFrame();
-
-
+    private void InvalidateStyleFrame(View appView)
+    {
         if (((appView.Flags | appView.FlagsChild) & (ViewFlags.StyleThis | ViewFlags.StyleDown)) != ViewFlags.None)
         {
-            StyleCount++;
+            _stats.StyleFrameCount++;
             InvalidateStyle(appView, false);
-        }
-
-        // Re-measure if necessary
-        if ((appView.Flags | appView.FlagsChild).HasFlag(ViewFlags.Measure))
-        {
-            MeasureCount++;
-            var measureConext = new Layout.MeasureContext(_canvas.Context);
-            appView.Measure(_mainWindowSize, measureConext);
-            appView.Arrange(new Rect(new(0, 0), _mainWindowSize), measureConext);
-        }
-
-        // Re-draw if any flags changed
-        if ((appView.Flags | appView.FlagsChild) != ViewFlags.None)
-        {
-            _renderContext.SetPointerPosition(_pointerHover.PointerDevicePosition);
-            _renderContext.SetCurrentViewInternal(appView);
-            _renderContext.PushDeviceClip(new Rect(new(), appView.toDevice(_mainWindowSize)));
-            DrawCount++;
-            RenderView(appView);
-            _renderContext.PopDeviceClip(appView);
-            Debug.Assert(_renderContext.ClipLevel == 0);
-            _renderContext.SetCurrentViewInternal(null);
-        }
-
-        _totalMs += timer.ElapsedMilliseconds;
-
-        FrameCount++;
-        var now = DateTime.UtcNow;
-        FpsUpdatedOnceASecond = now.Second != _second;
-        if (FpsUpdatedOnceASecond)
-        {
-            _second = now.Second;
-            Fps = FrameCount - _frameLastCountSecond;
-            _frameLastCountSecond = FrameCount;
-            if (Fps != 0)
-                AvgMs = _totalMs / Fps;
-            _totalMs = 0;
         }
     }
 
@@ -137,44 +160,115 @@ public class Renderer
                 InvalidateStyle(child, nukem);
     }
 
+    private void MeasureFrame(View appView)
+    {
+        // Re-measure if necessary
+        if ((appView.Flags | appView.FlagsChild).HasFlag(ViewFlags.Measure))
+        {
+            _stats.MeasureFrameCount++;
+            var measureConext = new Layout.MeasureContext(_canvas.Context);
+            appView.Measure(_mainWindowSize, measureConext);
+            appView.Arrange(new Rect(new(0, 0), _mainWindowSize), measureConext);
+        }
+    }
 
-    void RenderView(View view)
+    private void RenderFrame(View appView)
+    {
+        // Re-draw if any flags changed
+        if ((appView.Flags | appView.FlagsChild) != ViewFlags.None)
+        {
+            try
+            {
+                _renderContext.SetPointerPosition(_pointerHover.PointerDevicePosition);
+                RenderView(appView, true);
+            }
+            finally
+            {
+                _renderContext.ClearClips();
+            }
+        }
+    }
+
+    void RenderView(View view, bool forceClip)
     {
         // Quick exit for invisible
-        if (!view._cache.IsVisible)
+        if (!view._measureCache.IsVisible)
             return;
 
         view.Flags = ViewFlags.None;
         view.FlagsChild = ViewFlags.None;
 
-        // Render panel background and border (without clipping since we know it's always in bounds)
-        _renderContext.SetCurrentViewInternal(view);
-        DrawHelper.DrawBackground(view, _renderContext);
-
-        // Clip the content rect if requested
-        if (view._cache.Clip)
-            _renderContext.PushDeviceClip(view.toDevice(view.ContentRect));
-
         try
         {
-            var draw = view.Draw;
-            if (draw is not null)
-                draw.Draw(view, _renderContext);
+            _renderContext.SetCurrentViewInternal(view);
+
+            // Clip the content rect if requested
+            var drawBufferIndex = _drawBuffer.Length;
+            if (forceClip || view._measureCache.Clip)
+                _renderContext.PushClip(view.ContentRect);
+
+            DrawBackground(view);
+
+            if (drawBufferIndex != _drawBuffer.Length)
+                OsDrawBuffer.TransformBuffer(_drawBuffer.AsSpan(drawBufferIndex), view.Origin, view.Scale);
 
             foreach (var child in view.Children)
-                RenderView(child);
+                RenderView(child, false);
 
-            if (draw is not null)
-            {
-                _renderContext.SetCurrentViewInternal(view);
-                draw.DrawOver(view, _renderContext);
-            }
+            DrawOver(view);
         }
         finally
         {
-            _renderContext.PopDeviceClip(view);
+            while (view._pushedClips != 0)
+                _renderContext.PopClip(view);
         }
-
     }
+
+
+    /// <summary>
+    /// Draw the background, then the control's own drawing under all the content
+    /// </summary>
+    private void DrawBackground(View view)
+    {
+        // Quick exit when drawing outside the clip region
+        var draw = view.Draw;
+        if (_renderContext.DeviceClip.Intersect(new Rect(view.Origin, view.toDevice(view.Size))).Width == 0)
+            if (draw == null || draw.PromiseToDrawInsideControl)
+                return;
+
+        DrawHelper.DrawBackground(view, _renderContext);
+        if (draw is not null)
+        {
+            var clipIndex = view._pushedClips;
+            draw.Draw(view, _renderContext);
+            while (view._pushedClips > clipIndex)
+                _renderContext.PopClip(view);
+        }
+    }
+
+    /// <summary>
+    /// Draw over all content controls
+    /// </summary>
+    private void DrawOver(View view)
+    {
+        var draw = view.Draw;
+        if (draw is null)
+            return;
+
+        // Quick exit when drawing outside the clip region
+        if (_renderContext.DeviceClip.Intersect(new Rect(view.Origin, view.toDevice(view.Size))).Width == 0)
+            if (draw.PromiseToDrawInsideControl)
+                return;
+
+        _renderContext.SetCurrentViewInternal(view);
+        var drawBufferIndex = _drawBuffer.Length;
+        var clipIndex = view._pushedClips;
+        draw.DrawOver(view, _renderContext);
+        while (view._pushedClips > clipIndex)
+            _renderContext.PopClip(view);
+
+        OsDrawBuffer.TransformBuffer(_drawBuffer.AsSpan(drawBufferIndex), view.Origin, view.Scale);
+    }
+
 
 }

@@ -83,46 +83,13 @@ public interface IComboBoxData<Item> : INotifyPropertyChanged
 Note that `Items` is typed as `ObservableCollection<IComboBoxItemData>` (the constraint interface), not the
 concrete item type. This keeps the collection compatible with any item type that satisfies the constraint.
 
-## Styling
-
-All style classes are applied via `.zss.json` style sheets.
-
-| Selector | What it styles |
-|----------|---------------|
-| `ComboBox` | The closed combo box panel |
-| `ComboBox:IsDarkMode` | Dark-mode variant |
-| `ComboBox:IsPointerOver` | Hover state |
-| `ComboBox.Text` | The selected-item panel (hosts a copy of the selected item controller) |
-| `ComboBox.Arrow` | The dropdown arrow glyph `TextView` |
-| `ComboBox.Dropdown` | The floating popup panel |
-| `ComboBox.Dropdown:IsDarkMode` | Dark-mode dropdown |
-| `ComboBox.DropdownItem` | Each item row inside the dropdown |
-| `ComboBoxItemText` | The `ComboBoxItemText` item control (inside or outside dropdown) |
-| `ComboBoxItemText:IsPointerOver` | Item hover |
-| `ComboBoxItemText.Text` | Item text label inside a `ComboBoxItemText` |
-
-### `ComboBox.scrimColor`
-
-A control-specific `PropertyKey<Color>` that controls the tint of the full-screen overlay placed behind the
-dropdown when it opens. The value is read from the active theme via `View.GetStyle(ScrimColor)`, so it can
-be styled per theme and dark-mode variant:
-
-```jsonc
-{ ".selectors": "ComboBox",            "ComboBox.scrimColor": "#00000014" },
-{ ".selectors": "ComboBox:IsDarkMode", "ComboBox.scrimColor": "#FFFFFF20" }
-```
-
-The default value (when no style matches) is `rgba(0, 0, 0, 20)`. The alpha must remain greater than 16
-(`DrawHelper.ALPHA_HIT_THRESHOLD`) — if the overlay is fully transparent the hit test fails and clicks
-outside the dropdown will not close it.
-
 ## How to add a new kind of combo box item
 
 The generic design means you can add a new item renderer without modifying `ComboBox` at all. Here is the
 full process, using `ComboBoxItemBadge` (a real item type in `samples/TestApp`) as the worked example. It
 shows a red-outlined badge label on the left and a descriptive text label vertically centred to its right.
 
-**1. Define the item view** (`ComboBoxItemBadge.zui.json`):
+**1. Define the item view** (see `ComboBoxItemBadge.zui.json`):
 
 ```jsonc
 // Combo box item that shows a badge label and a text label side by side.
@@ -170,36 +137,8 @@ Key points:
 - The badge outline is entirely a style concern — no border properties in the JSON; they live in the
   `.zss.json` style sheet.
 
-**2. Add a style sheet** (`ComboBoxItemBadge.zss.json`):
+**2. Add a style sheet** (see `ComboBoxItemBadge.zss.json`):
 
-```jsonc
-{
-    "name": "ComboBoxItemBadge",
-    "styles": [
-        { ".selectors": "ComboBoxItemBadge",
-          ".padding": { "left": 6, "top": 3, "right": 6, "bottom": 3 } },
-        { ".selectors": "ComboBoxItemBadge:IsPointerOver",
-          ".backgroundColor": "#CCE8F8" },
-        { ".selectors": "ComboBoxItemBadge:IsDarkMode:IsPointerOver",
-          ".backgroundColor": "#2E4F6A" },
-
-        // Badge pill: 2px red border
-        { ".selectors": "ComboBoxItemBadge.BadgeBox",
-          ".borderWidth": 2, ".borderColor": "#CC0000", ".borderRadius": 3,
-          ".padding": { "left": 4, "top": 1, "right": 4, "bottom": 1 } },
-        { ".selectors": "ComboBoxItemBadge.BadgeBox:IsDarkMode",
-          ".borderColor": "#FF4444" },
-
-        { ".selectors": "ComboBoxItemBadge.BadgeText", "TextView.color": "#CC0000" },
-        { ".selectors": "ComboBoxItemBadge.BadgeText:IsDarkMode", "TextView.color": "#FF8888" },
-
-        { ".selectors": "ComboBoxItemBadge.Text",
-          "TextView.color": "Black",
-          ".padding": { "left": 6, "top": 0, "right": 0, "bottom": 0 } },
-        { ".selectors": "ComboBoxItemBadge.Text:IsDarkMode", "TextView.color": "#F0F0F0" }
-    ]
-}
-```
 
 **3. Use the new item in a view** (`FormTestComboBox.zui.json`):
 

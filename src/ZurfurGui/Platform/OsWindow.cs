@@ -5,7 +5,9 @@ using ZurfurGui.Base;
 
 namespace ZurfurGui.Platform;
 
-
+/// <summary>
+/// Platform independent window.  All platofrms must implement this interface.
+/// </summary>
 public interface OsWindow
 {
     /// <summary>

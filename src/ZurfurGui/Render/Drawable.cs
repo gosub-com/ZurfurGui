@@ -21,6 +21,16 @@ public interface Drawable
     /// </summary>
     public void DrawOver(View view, RenderContext context) { }
 
+    /// <summary>
+    /// Override to determine if the point hits the drawable area of the view.
+    /// </summary>
     public bool IsHit(View view, Point point);
+
+
+    /// <summary>
+    /// We don't have any concept of visual bounds yet.
+    /// So, be sure to clip if you can't garauntee you're drawing inside the control.
+    /// </summary>
+    public bool PromiseToDrawInsideControl {  get; }
 
 }

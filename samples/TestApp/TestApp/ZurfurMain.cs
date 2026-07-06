@@ -55,7 +55,7 @@ public static partial class ZurfurMain
             sizeRequst: new SizeProp(250, 280));
 
         app.ShowWindow(new FormTestComboBox(), "ComboBox Test",
-            location: new PointProp(20, 120)
+            location: new PointProp(20, 150)
             );
 
     }

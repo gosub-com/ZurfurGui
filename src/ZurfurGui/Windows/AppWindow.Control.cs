@@ -25,6 +25,8 @@ public partial class AppWindow : Controllable, Drawable
     string _theme = "";
 
     public string DrawType => "AppWindow";
+    public bool PromiseToDrawInsideControl => true;
+
     public Renderer? Renderer { get; private set; }
     internal PointerOver? PointerHover { get; private set; }
 
@@ -98,17 +100,6 @@ public partial class AppWindow : Controllable, Drawable
         control.View.SetProperty(Panel.Offset, location);
         _floatingWindows.View.AddChild(control.View);
         return control.View;
-    }
-
-    // TBD: REMOVE
-    public bool IsDarkMode
-    {
-        get => View.GetProperty(Panel.IsDarkMode);
-        set
-        {
-            View.SetProperty(Panel.IsDarkMode, value);
-            View.InvalidateStyleTree();
-        }
     }
 
     /// <summary>

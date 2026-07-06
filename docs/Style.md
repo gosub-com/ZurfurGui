@@ -15,10 +15,18 @@ Key characteristics:
 - **Cascading**: multiple style rules can contribute to a single property; more-specific rules take precedence.
 - **Mergable**: struct-like properties (e.g. `FontProp`, `ThicknessProp`) can be *partially* filled in by successive
   rules before falling back to a hard-coded default.
-- **Dynamic**: pseudo-classes such as `:IsPointerOver`, `:IsPressed`, and `:IsDarkMode` are evaluated live at render
+- **Dynamic**: pseudo-classes such as `:IsPointerOver` and `:IsPressed` are evaluated live at render
   time, enabling hover/press/theme effects without any C# code.
 
-## File Format
+## Themes and Tokens
+
+Fluent style tokens were recently added.
+
+This document has not yet been updated to describe them.
+
+## Style Sheets (`.zss` files)
+
+Each control should ship with its own style sheet (.`zss` file) containing default styles for the control.
 
 A style sheet is a single JSON object with:
 - `"name"` — a unique identifier used to reference the sheet.
@@ -26,26 +34,33 @@ A style sheet is a single JSON object with:
 
 `// line comments` are supported (they are stripped before JSON parsing).
 
-### Example
+### Example (see `Button.cs`)
 
 ```json
 {
-    "name": "MyTheme",
+    "name": "Button",
     "styles": [
         {
             ".selectors": "Button",
-            ".backgroundColor": "#DDDDDD",
-            ".borderColor": "#606060",
-            ".borderWidth": 2,
-            ".padding": "left: 4; top: 2; right: 4; bottom: 2"
+            ".borderWidth": "@stroke.width.default",
+            ".borderRadius": "@radius.corner.medium",
+            ".borderColor": "@color.interactive.primary.stroke",
+            ".backgroundColor": "@color.interactive.primary.background",
+            ".padding": "@padding.button"
         },
         {
             ".selectors": "Button:IsPointerOver",
-            ".backgroundColor": "#BEE6FD"
+            ".borderColor": "@color.interactive.primary.stroke.hover",
+            ".backgroundColor": "@color.interactive.primary.background.hover"
         },
         {
-            ".selectors": "Button:IsDarkMode",
-            ".backgroundColor": "#505050"
+            ".selectors": "Button:IsPressed",
+            ".borderColor": "@color.interactive.primary.stroke.pressed",
+            ".backgroundColor": "@color.interactive.primary.background.pressed"
+        },
+        {
+            ".selectors": "Button.Text",
+            "TextView.color": "@color.text.on-primary"
         }
     ]
 }
@@ -135,8 +150,6 @@ ClassName[:PseudoClass1[:PseudoClass2...]]
 | `!IsPointerOver`  | Pointer is **not** over the view                 |
 | `IsPressed`       | View is in a pressed state                       |
 | `!IsPressed`      | View is **not** pressed                          |
-| `IsDarkMode`      | The `AppWindow` has dark mode enabled            |
-| `!IsDarkMode`     | The `AppWindow` has dark mode disabled           |
 
 A rule matches when the selector's base name matches one of the view's classes **and** all pseudo-class conditions
 are satisfied.
@@ -244,60 +257,4 @@ Example — a view has two classes `["TextView", "StyleC1", "StyleC2"]` and two 
 ```
 
 The resolved font is `{ name: "Times New Roman", size: 28.0 }` — both fields contributed by different rules.
-
-## Built-in Style Sheets
-
-The `ZurfurGui` library ships built-in style sheets that are always registered:
-
-| Name            | Description                                                  |
-|-----------------|--------------------------------------------------------------|
-| `ZurfurDefault` | Default theme: light-mode rules plus `:IsDarkMode` overrides |
-| `ZurfurCherry`  | Cherry theme: light-mode rules plus `:IsDarkMode` overrides  |
-
-Both light and dark variants live in a single file per theme. Light-mode rules use plain selectors;
-dark-mode overrides use `:IsDarkMode` pseudo-classes. This is the recommended pattern for any theme that needs to
-support both modes.
-
-## Theme Switching
-
-Theme switching is exposed on `AppWindow`:
-
-```csharp
-appWindow.Theme = "ZurfurCherry";   // set active theme sheet by name
-appWindow.IsDarkMode = true;         // toggle dark mode
-```
-
-Setting either property calls `View.InvalidateStyleTree()` to flush the style cache for the entire tree.
-
-When a theme is active, `Style.EnumerateStyledValues` gives that theme sheet the highest priority: component
-sheets (e.g. `ComboBoxItemBadge`) are iterated first (lowest priority) and the active theme sheet is iterated last
-(highest priority). When no theme is active all sheets are iterated with equal priority.
-
-## Defining a Custom Style Sheet
-
-1. Create a file named `MyTheme.zss.json` anywhere in your project.
-2. Add it to the `.csproj` as an `AdditionalFile`.
-3. Set `"name"` to a unique identifier (e.g. `"MyTheme"`).
-4. Add rules under `"styles"`.
-
-The source generator automatically emits the `Style.RegisterStyleSheet` call; no further C# code is needed.
-
-## Architecture Notes
-
-- **Style resolution and registry live in `Style.cs`** (`ZurfurGui.Styles`). `GetStyle<T>` is the main entry point
-  called from `View.GetStyle<T>`. `Style.RegisterStyleSheet(json)` deserializes and stores sheets; `Style.GetStyleSheet(name)` retrieves them.
-- **`StyleSheet`** (`ZurfurGui.Property`) is the deserialized form of a `.zss.json` file: it holds a `Name` and a
-  `Properties[]` (array of rule objects). Deserialization uses the source-generated JSON context on `Loader`.
-- **`Panel.Classes`** and **`Panel.Selectors`** are the two properties that drive style matching. `Panel.UseStyles`
-  no longer exists; all registered sheets are globally visible.
-- Style cache invalidation is triggered by `ViewFlags.ReStyleThis` (only the view itself) and
-  `ViewFlags.ReStyleDown` (the view and all descendants).
-- When adding a new styleable property, declare a `PropertyKey<T>` with the appropriate `ViewFlags` (`ReDraw` for
-  appearance-only, `ReMeasure` for layout impact, `ReStyleDown` for style-tree properties).
-
-**Proper fix (future)**: introduce **style variables** similar to WinUI 3 / Fluent Design tokens (e.g.
-`--item-hover-background`). Theme stylesheets would define the variable values; item stylesheets would reference
-them by name instead of hardcoding a color. Custom item types then automatically pick up the correct hover color for
-whichever theme is active, with no per-type companion stylesheets or handler code required. The style variable
-mechanism would be resolved during `GetStyle<T>` after selector matching, before merging with the property default.
 

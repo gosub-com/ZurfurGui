@@ -5,7 +5,7 @@
             ".selectors": "Window",
             ".backgroundColor": "@color.surface.overlay",
             ".borderColor": "@color.surface.overlay.stroke",
-            ".borderRadius": "@radius.corner.extra-large",
+            ".borderRadius": "@radius.corner.large",
             ".borderWidth": "@stroke.width.medium",
             ".sizeMin": "@size.window.min"
         },
@@ -13,7 +13,7 @@
             ".selectors": "Window.Title",
             ".padding": "@spacing.vertical.small | spacing.horizontal.medium",
             ".backgroundColor": "@color.window.title.background",
-            ".borderRadius": "@radius.corner.large"
+            ".borderRadius": "@radius.corner.large.inside"
         },
         {
             ".selectors": "Window.Title.Text",

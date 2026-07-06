@@ -8,13 +8,19 @@ public partial class DebugWindow : Controllable
 {
     readonly bool UPDATE_ONCE_PER_SECOND = false;
 
-    RenderContext.Stats _prevStats;
+    RenderContext.RenderContextStats _prevContextStatsFrame;
+    Renderer.RendererStats _prevRenderStatsOneSecond;
+
+    string _gc = "";
+    double _fps = 0;
+    double _totalMs = 0;
+    double _renderMs = 0;
+    double _drawMs = 0;
 
     public DebugWindow()
     {
         InitializeControl();
-
-        }
+    }
 
 
     public void OnAttach()
@@ -34,21 +40,46 @@ public partial class DebugWindow : Controllable
         if (UPDATE_ONCE_PER_SECOND && !renderer.FpsUpdatedOnceASecond)
             return;
 
-        var newStats = renderer.RenderContext.RenderStats;
+        // Update some stats once per second
+        if (renderer.FpsUpdatedOnceASecond)
+        {
+            _gc = $"GC: {GC.CollectionCount(2)}, {GC.CollectionCount(1)}, {GC.CollectionCount(0)}, "
+               + $"Mem={GC.GetTotalMemory(false) / 1024 / 1024} MB";
+
+            var s = renderer.Stats;
+            _fps = (int)(s.FrameCount - _prevRenderStatsOneSecond.FrameCount);
+            if (_fps > 0) 
+            {
+                _totalMs = (s.TotalMs - _prevRenderStatsOneSecond.TotalMs) / _fps;
+                _renderMs = (s.RenderMs - _prevRenderStatsOneSecond.RenderMs) / _fps;
+                _drawMs = (s.DrawMs - _prevRenderStatsOneSecond.DrawMs) / _fps;
+            }
+            else
+            {
+                _totalMs = 0;
+                _renderMs = 0;
+                _drawMs = 0;
+            }
+            _prevRenderStatsOneSecond = s;
+        }
+
+
+        // Fixup the render stats so we totals based on per frame
+        var stats = renderer.Stats;
+        var cStatsNew = renderer.RenderContextStats;
+        var cStatsDiff = cStatsNew - _prevContextStatsFrame;
         var _window = renderer.Window;
         var _canvas = renderer.Canvas;
         var canvasDeviceSize = _canvas.DeviceSize;
         var canvasStyleSize = _canvas.StyleSize;
-        var textCount = newStats.FillText - _prevStats.FillText;
-        var rectCount = newStats.FillRect - _prevStats.FillRect + newStats.StrokeRect - _prevStats.StrokeRect;
-        var clipCount = newStats.PushClips - _prevStats.PushClips;
         TextLines text = [
-            $"fps={renderer.Fps}, ms={renderer.AvgMs}, frames={renderer.FrameCount}",
-            $"draws={renderer.DrawCount}, measures={renderer.MeasureCount}, styles={renderer.StyleCount}",
-            $"DPR={_window.DevicePixelRatio:F2}, CDS={canvasDeviceSize:F2}, CSS={canvasStyleSize:F2}",
-            $"WIS={_window.InnerSize}, DPS={_canvas.DevicePixelSize?.ToString() ?? "?"}",
-            $"Screen size: ({_window.ScreenSize}), focus={_canvas.HasFocus}",
-            $"Text: {textCount}, Rects: {rectCount}, Clips: {clipCount}"
+            $"FPS={_fps}, ms={_totalMs:F1} ({_renderMs:F1}, {_drawMs:F1}), Frames={stats.FrameCount}",
+            $"Measures={stats.MeasureFrameCount}, Styles={stats.StyleFrameCount}, Buffer={stats.DrawBufferLength}",
+            //$"DPR={_window.DevicePixelRatio:F2}, CDS={canvasDeviceSize:F2}, CSS={canvasStyleSize:F2}",
+            //$"WIS={_window.InnerSize}, DPS={_canvas.DevicePixelSize?.ToString() ?? "?"}",
+            //$"Screen size: ({_window.ScreenSize}), focus={_canvas.HasFocus}",
+            $"Text: {cStatsDiff.FillText}, Rects: {cStatsDiff.FillRect + cStatsDiff.StrokeRect}, Clips: {cStatsDiff.PushClips}",
+            _gc,
         ];
 
         // Don't Invalidate measure
@@ -56,6 +87,6 @@ public partial class DebugWindow : Controllable
         _statsView.View.InvalidateDraw();
         // _statsView.View.InvalidateMeasure();
 
-        _prevStats = newStats;
+        _prevContextStatsFrame = cStatsNew;
     }
 }

@@ -6,6 +6,10 @@ using ZurfurGui.Input;
 
 namespace ZurfurGui.Platform;
 
+
+/// <summary>
+/// Platform independent canvas.  All platforms must implement this interface.
+/// </summary>
 public interface OsCanvas
 {
     public OsContext Context { get; }

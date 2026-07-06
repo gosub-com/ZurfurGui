@@ -14,11 +14,13 @@ public class DrawScrollBar : Drawable
 
     public string DrawType => "ScrollBar";
 
+    public bool PromiseToDrawInsideControl => true;
+
     public void Draw(View view, RenderContext context)
     {
         // Quick exit when drawing outside the clip region
-        if (context.DeviceClip.Intersect(view.toDevice(view.ContentRect)).Width == 0)
-            return;
+        //if (context.DeviceClip.Intersect(view.toDevice(view.ContentRect)).Width == 0)
+        //    return;
 
         var data = _control.DataContext;
         var trackRect = new Rect(new(), view.Size);

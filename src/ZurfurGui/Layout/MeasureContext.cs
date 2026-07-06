@@ -27,9 +27,7 @@ public class MeasureContext
         // return _context.MeasureTextWidth(text) * 0.001 * fontSize;
 
 
-        _context.FontName = fontName;
-        _context.FontSize = fontSize;
-        return _context.MeasureTextWidth(text);
+        return _context.MeasureTextWidth(fontName, fontSize, text);
     }
 
 }

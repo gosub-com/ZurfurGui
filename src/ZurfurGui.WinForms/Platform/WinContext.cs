@@ -53,10 +53,101 @@ internal class WinContext : OsContext
     RectangleF _currentClip = new RectangleF(-1000000, -1000000, 2000000, 2000000);
     List<RectangleF> _clipStack = new();
 
+    Dictionary<int, string> _mashaledSrings = new();
 
     public WinContext(Graphics graphics)
     {
         _graphics = graphics;
+    }
+
+    void OsContext.MarshalString(string? str, int index)
+    {
+        if (str == null)
+            _mashaledSrings.Remove(index);
+        else
+            _mashaledSrings[index] = str;
+    }
+
+    double OsContext.MeasureTextWidth(string fontName, double fontSize, string text)
+    {
+        // NOTE: Graphics.MeasureString returns too much space (and doesn't measure trailing space)
+        if (text == "")
+            return 0;
+
+        var characterRanges = new[] { new CharacterRange(0, text.Length) };
+        _stringFormat.SetMeasurableCharacterRanges(characterRanges);
+
+        if (fontName != _fontName || fontSize != _fontSize)
+        {
+            _fontName = fontName;
+            _fontSize = fontSize;
+            _font = null;
+        }
+
+        var regions = _graphics.MeasureCharacterRanges(text, GetFont(), LAYOUT_RECT, _stringFormat);
+        var textWidth = regions[0].GetBounds(_graphics).Width;
+        foreach (var r in regions)
+            r.Dispose();
+
+        return textWidth + _fontSize * TEXT_OFFSET_SCALE_X;
+    }
+
+
+    void OsContext.DrawBuffer(OsDrawBuffer drawBuffer)
+    {
+        var buffer = drawBuffer.Buffer;
+        var length = drawBuffer.Length;
+
+        var pc = 0;
+        while (pc < length)
+        {
+            var (command, paramCount) = drawBuffer.GetCommand(pc);
+            var pi = pc + 1;
+            pc += paramCount + 1;
+            switch (command)
+            {
+                case OsDrawCommand.FillColor:
+                    FillColor = Color.ParseCss(_mashaledSrings[(int)buffer[pi]]) ?? new Color(0, 0, 0);
+                    break;
+                case OsDrawCommand.StrokeColor:
+                    StrokeColor = Color.ParseCss(_mashaledSrings[(int)buffer[pi]]) ?? new Color(0, 0, 0);
+                    break;
+                case OsDrawCommand.LineWidth:
+                    LineWidth = buffer[pi];
+                    break;
+                case OsDrawCommand.FontName:
+                    FontName = _mashaledSrings[(int)buffer[pi]];
+                    FontSize = buffer[pi + 1];
+                    break;
+                case OsDrawCommand.FillRect:
+                    FillRect(buffer[pi], buffer[pi + 1], buffer[pi + 2], buffer[pi + 3], buffer[pi + 4]);
+                    break;
+                case OsDrawCommand.StrokeRect:
+                    StrokeRect(buffer[pi], buffer[pi + 1], buffer[pi + 2], buffer[pi + 3], buffer[pi + 4]);
+                    break;
+                case OsDrawCommand.FillText:
+                    var text = _mashaledSrings[(int)buffer[pi]];
+                    FillText(text, buffer[pi + 1], buffer[pi + 2]);
+                    break;
+                case OsDrawCommand.StrokePolyLine:
+                    StrokePolyLine(drawBuffer.GetArray(pi, paramCount), paramCount);
+                    break;
+                case OsDrawCommand.FillPolygon:
+                    FillPolygon(drawBuffer.GetArray(pi, paramCount), paramCount);
+                    break;
+                case OsDrawCommand.PushClip:
+                    Clip(buffer[pi], buffer[pi + 1], buffer[pi + 2], buffer[pi + 3]);
+                    break;
+                case OsDrawCommand.PopClip:
+                    UnClip();
+                    break;
+                default:
+                    Debug.Assert(false);
+                    break;
+
+            }
+        }
+        Debug.Assert(pc == length);
     }
 
     Font GetFont()
@@ -83,9 +174,8 @@ internal class WinContext : OsContext
         return _pen;
     }
 
-    public Color FillColor 
+    Color FillColor 
     {
-        get => _fillColor;
         set 
         { 
             if (value != _fillColor) 
@@ -95,9 +185,8 @@ internal class WinContext : OsContext
             } 
         } 
     }
-    public Color StrokeColor
+    Color StrokeColor
     {
-        get => _strokeColor;
         set
         {
             if (value != _strokeColor)
@@ -108,9 +197,8 @@ internal class WinContext : OsContext
         }
     }
 
-    public double LineWidth
+    double LineWidth
     {
-        get => _lineWidth;
         set
         {
             if (value != _lineWidth)
@@ -121,9 +209,8 @@ internal class WinContext : OsContext
         }
     }
 
-    public string FontName 
+    string FontName 
     {
-        get => _fontName;
         set 
         {
             if (_fontName != value)
@@ -134,9 +221,8 @@ internal class WinContext : OsContext
         } 
     }
 
-    public double FontSize
+    double FontSize
     {
-        get => _fontSize;
         set
         {
             if (value != _fontSize)
@@ -163,7 +249,7 @@ internal class WinContext : OsContext
         return path;
     }
 
-    public void FillRect(double x, double y, double width, double height, double radius)
+    void FillRect(double x, double y, double width, double height, double radius)
     {
         if (radius > 0)
         {
@@ -176,7 +262,7 @@ internal class WinContext : OsContext
         }
     }
 
-    public void StrokeRect(double x, double y, double width, double height, double radius)
+    void StrokeRect(double x, double y, double width, double height, double radius)
     {
         if (radius > 0)
         {
@@ -189,29 +275,12 @@ internal class WinContext : OsContext
         }
     }
 
-    public void FillText(string text, double x, double y)
+    void FillText(string text, double x, double y)
     {
         y -= _fontSize;  // Draw at alphabetic base line
         y += _fontSize * TEXT_OFFSET_SCALE_Y;
         x -= _fontSize * TEXT_OFFSET_SCALE_X;
         _graphics.DrawString(text, GetFont(), GetBrush(), (float)x, (float)y);
-    }
-
-    public double MeasureTextWidth(string text)
-    {
-        // NOTE: Graphics.MeasureString returns too much space (and doesn't measure trailing space)
-        if (text == "")
-            return 0;
-
-        var characterRanges = new[] { new CharacterRange(0, text.Length) };
-        _stringFormat.SetMeasurableCharacterRanges(characterRanges);
-
-        var regions = _graphics.MeasureCharacterRanges(text, GetFont(), LAYOUT_RECT, _stringFormat);
-        var textWidth = regions[0].GetBounds(_graphics).Width;
-        foreach (var r in regions)
-            r.Dispose();
-
-        return textWidth + _fontSize * TEXT_OFFSET_SCALE_X;
     }
 
     static PointF[] ConvertPoints(double[] points, int length)
@@ -224,7 +293,7 @@ internal class WinContext : OsContext
         return result;
     }
 
-    public void StrokePolyLine(double[] points, int length)
+    void StrokePolyLine(double[] points, int length)
     {
         if (length < 4)
             return;
@@ -232,7 +301,7 @@ internal class WinContext : OsContext
         _graphics.DrawLines(GetPen(), winPoints);
     }
 
-    public void FillPolygon(double[] points, int length)
+    void FillPolygon(double[] points, int length)
     {
         if (length < 6)
             return;
@@ -243,7 +312,7 @@ internal class WinContext : OsContext
     /// <summary>
     /// Clip to the specified rectangle in device pixels
     /// </summary>
-    public void Clip(double x, double y, double width, double height)
+    void Clip(double x, double y, double width, double height)
     {
         _clipStack.Add(_currentClip);
         _currentClip = new RectangleF((float)x, (float)y, (float)width, (float)height);
@@ -253,7 +322,7 @@ internal class WinContext : OsContext
         _graphics.Clip = _region;
     }
 
-    public void UnClip()
+    void UnClip()
     {
         _currentClip = new RectangleF(-1000000, -1000000, 2000000, 2000000);
         if (_clipStack.Count > 0)

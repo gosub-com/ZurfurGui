@@ -9,7 +9,7 @@ public class RenderContext
 {
     static readonly Rect EMPTY_DEVICE_CLIP = new Rect(0, 0, double.MaxValue, double.MaxValue);
 
-    public struct Stats
+    public struct RenderContextStats
     {
         public long FillText;
         public long FillRect;
@@ -17,25 +17,37 @@ public class RenderContext
         public long StrokePolyLine;
         public long FillPolygon;
         public long PushClips;
+
+        public static RenderContextStats operator -(RenderContextStats a, RenderContextStats b)
+        {
+            return new RenderContextStats
+            {
+                FillText = a.FillText - b.FillText,
+                FillRect = a.FillRect - b.FillRect,
+                StrokeRect = a.StrokeRect - b.StrokeRect,
+                StrokePolyLine = a.StrokePolyLine - b.StrokePolyLine,
+                FillPolygon = a.FillPolygon - b.FillPolygon,
+                PushClips = a.PushClips - b.PushClips
+            };
+        }
+
     }
 
-    Stats _renderStats;
+    RenderContextStats _stats;
     OsContext _context;
+    OsDrawBuffer _drawBuffer;
     View? _currentView;
-    Point _origin;
-    double _scale = 1.0;
-    Rect _clip = EMPTY_DEVICE_CLIP;
-    List<Rect> _clipStack = new List<Rect>();
-    double[] _pointsBuffer = Array.Empty<double>();
+    Rect _deviceClip = EMPTY_DEVICE_CLIP;
+    Stack<Rect> _deviceClipStack = new();
 
-    public Stats RenderStats => _renderStats;
+    public RenderContextStats RenderStats => _stats;
 
-    public int ClipLevel => _clipStack.Count;
+    public int ClipLevel => _deviceClipStack.Count;
 
     /// <summary>
     /// The clipping rectangle in device pixels
     /// </summary>
-    public Rect DeviceClip => _clip;
+    public Rect DeviceClip => _deviceClip;
 
     
     /// <summary>
@@ -43,29 +55,15 @@ public class RenderContext
     /// </summary>
     public Point PointerDevicePosition { get; private set; }
 
-    public RenderContext(OsContext context)
+    internal RenderContext(OsContext context, OsDrawBuffer drawBuffer)
     {
         _context = context;
+        _drawBuffer = drawBuffer;
     }
 
     public double MeasureTextWidth(string fontName, double fontSize, string text)
     {
-        _context.FontName = fontName;
-        _context.FontSize = 1000;
-        return _context.MeasureTextWidth(text) * 0.001 * fontSize;
-    }
-
-    /// <summary>
-    /// Set the currently rendering view, and  _origin and _scale.
-    /// </summary>
-    internal void SetCurrentViewInternal(View? view)
-    {
-        _currentView = view;
-        if (view != null)
-        {
-            _origin = view.Origin;
-            _scale = view.Scale;
-        }
+        return _context.MeasureTextWidth(fontName, fontSize, text) * 0.001 * fontSize;
     }
 
     internal void SetPointerPosition(Point devicePosition)
@@ -81,14 +79,12 @@ public class RenderContext
         if (brush.Type != BrushType.Solid)
             throw new NotImplementedException("Only BrushType.Solid brushes are supported");
 
-        _context.FillColor = brush.Color;
-
-        // NOTE: Winforms throws an exception if width or height are 0 or negative. 
-        // TBD: Fix winforms driver to match Javascript and then remove this test.
+        // Send to draw buffer
         if (width > 0 && height > 0)
         {
-            _renderStats.FillRect++;
-            _context.FillRect(_scale * x + _origin.X, _scale * y + _origin.Y, _scale * width, _scale * height, radius);
+            _stats.FillRect++;
+            _drawBuffer.FillColor(brush.Color);
+            _drawBuffer.FillRect(x, y, width, height, radius);
         }
     }
 
@@ -99,15 +95,14 @@ public class RenderContext
     {
         if (pen.Brush.Type != BrushType.Solid)
             throw new NotImplementedException("Only BrushType.Solid brushes are supported");
-        _context.StrokeColor = pen.Brush.Color;
-        _context.LineWidth = _scale * pen.Thickness;
 
-        // NOTE: Winforms throws an exception if width or height are 0 or negative.
-        // TBD: Fix winforms driver to match Javascript and then remove this test.
+        // Send to draw buffer
         if (width > 0 && height > 0)
         {
-            _renderStats.StrokeRect++;
-            _context.StrokeRect(_scale * x + _origin.X, _scale * y + _origin.Y, _scale * width, _scale * height, radius);
+            _stats.StrokeRect++;
+            _drawBuffer.StrokeColor(pen.Brush.Color);
+            _drawBuffer.LineWidth(pen.Thickness);
+            _drawBuffer.StrokeRect(x, y, width, height, radius);
         }
     }
 
@@ -118,27 +113,12 @@ public class RenderContext
     {
         if (brush.Type != BrushType.Solid)
             throw new NotImplementedException("Only BrushType.Solid brushes are supported");
-        _context.FillColor = brush.Color;
-        _context.FontName = font.Name;
-        _context.FontSize = _scale * font.Size;
-        _context.FillText(text, _scale * x + _origin.X, _scale * y + _origin.Y);
-        _renderStats.FillText++;
-    }
 
-    double[] TransformPoints(ReadOnlySpan<double> points)
-    {
-        // Expand buffer if needed (amortized allocation)
-        if (_pointsBuffer.Length < points.Length)
-            _pointsBuffer = new double[Math.Max(points.Length, _pointsBuffer.Length * 2)];
-
-        // Transform points into buffer
-        for (int i = 0; i < points.Length; i += 2)
-        {
-            _pointsBuffer[i] = _scale * points[i] + _origin.X;
-            _pointsBuffer[i + 1] = _scale * points[i + 1] + _origin.Y;
-        }
-
-        return _pointsBuffer;
+        // Send to draw buffer
+        _stats.FillText++;
+        _drawBuffer.FillColor(brush.Color);
+        _drawBuffer.FontName(font.Name, font.Size);
+        _drawBuffer.FillText(text, x, y);
     }
 
     public void StrokePolyLine(Pen pen, ReadOnlySpan<double> points)
@@ -149,12 +129,11 @@ public class RenderContext
         if (pen.Brush.Type != BrushType.Solid)
             throw new NotImplementedException("Only BrushType.Solid brushes are supported");
 
-        _context.StrokeColor = pen.Brush.Color;
-        _context.LineWidth = _scale * pen.Thickness;
-
-        var transformed = TransformPoints(points);
-        _context.StrokePolyLine(transformed, points.Length);
-        _renderStats.StrokePolyLine++;
+        // Send to draw buffer
+        _stats.StrokePolyLine++;
+        _drawBuffer.StrokeColor(pen.Brush.Color);
+        _drawBuffer.LineWidth(pen.Thickness);
+        _drawBuffer.StrokePolyLine(points);
     }
 
     public void FillPolygon(Brush brush, ReadOnlySpan<double> points)
@@ -165,53 +144,78 @@ public class RenderContext
         if (brush.Type != BrushType.Solid)
             throw new NotImplementedException("Only BrushType.Solid brushes are supported");
 
-        _context.FillColor = brush.Color;
-
-        var transformed = TransformPoints(points);
-        _context.FillPolygon(transformed, points.Length);
-        _renderStats.FillPolygon++;
+        // Send to draw buffer
+        _stats.FillPolygon++;
+        _drawBuffer.FillColor(brush.Color);
+        _drawBuffer.FillPolygon(points);
     }
 
+    /// <summary>
+    /// Set the currently rendering view.  This is used to stash clip info in the view.
+    /// </summary>
+    internal void SetCurrentViewInternal(View? view)
+    {
+        _currentView = view;
+    }
 
     /// <summary>
     /// Clip to the specified rectangle in device pixels.
     /// Saves clip state to a stack. Restore is automatic and doesn't need to be done by user code.
     /// </summary>
-    public void PushDeviceClip(Rect clip)
+    public void PushClip(Rect clientClip)
     { 
         if (_currentView == null)
             throw new InvalidOperationException("No current view");
-        if (_currentView.PushedContentClip)
-            return; // Already pushed
 
-        _renderStats.PushClips++;
-        _currentView.PushedContentClip = true;
-        _clipStack.Add(_clip);
-        _clip = _clip.Intersect(clip);
-        _context.Clip(_clip.X, _clip.Y, _clip.Width, _clip.Height);
+        var deviceClip = _currentView.toDevice(clientClip);
+
+        _stats.PushClips++;
+        _currentView._pushedClips++;
+        _deviceClipStack.Push(_deviceClip);
+        _deviceClip = _deviceClip.Intersect(deviceClip);
+
+        var newClientClip = _currentView.toClient(_deviceClip);
+
+        // Send to draw buffer
+        _drawBuffer.Clip(newClientClip.X, newClientClip.Y, newClientClip.Width, newClientClip.Height);
     }
 
     /// <summary>
     /// Pops the old clip state from the stack.
     /// </summary>
-    internal void PopDeviceClip(View view)
+    internal void PopClip(View view)
     {
-        if (!view.PushedContentClip)
-            return;  // Not clipped
-        view.PushedContentClip = false;
-
-        if (_clipStack.Count == 0)
+        if (view._pushedClips <= 0)
         {
             Debug.Assert(false, "UnClip without matching Clip");
-            _clip = EMPTY_DEVICE_CLIP;
+            return; 
+        }
+        view._pushedClips--;
+
+        if (_deviceClipStack.Count == 0)
+        {
+            Debug.Assert(false, "UnClip without matching Clip");
+            _deviceClip = EMPTY_DEVICE_CLIP;
         }
         else
         {
-            _clip = _clipStack[^1];
-            _clipStack.RemoveAt(_clipStack.Count - 1);
-            if (_clipStack.Count == 0)
-                Debug.Assert(_clip == EMPTY_DEVICE_CLIP);
+            _deviceClip = _deviceClipStack.Pop();
+            if (_deviceClipStack.Count == 0)
+                Debug.Assert(_deviceClip == EMPTY_DEVICE_CLIP);
         }
-        _context.UnClip();
+
+        // Send to draw buffer
+        _drawBuffer.UnClip();
     }
+
+    internal void ClearClips()
+    {
+        while (_deviceClipStack.Count > 0)
+        {
+            Debug.Assert(false, "Leftover Clips after rendering");
+            _deviceClipStack.Pop();
+            _drawBuffer.UnClip();
+        }
+    }
+
 }

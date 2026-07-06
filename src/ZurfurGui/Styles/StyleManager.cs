@@ -169,14 +169,6 @@ public static class StyleManager
                                 if (view.GetProperty(Panel.IsPressed))
                                     match = false;
                                 break;
-                            case "IsDarkMode":
-                                if (!view.AppWindow?.IsDarkMode ?? false)
-                                    match = false;
-                                break;
-                            case "!IsDarkMode":
-                                if (view.AppWindow?.IsDarkMode ?? false)
-                                    match = false;
-                                break;
                             default:
                                 match = false;
                                 break;

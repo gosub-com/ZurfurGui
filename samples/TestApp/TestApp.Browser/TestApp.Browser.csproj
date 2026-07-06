@@ -4,6 +4,7 @@
 	<OutputType>Exe</OutputType>
 	<RunAOTCompilation>true</RunAOTCompilation>
 	<PublishTrimmed>true</PublishTrimmed>
+	<TrimMode>full</TrimMode>
 	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>

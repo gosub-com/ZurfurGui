@@ -15,26 +15,28 @@ public class DrawText : Drawable
     public static readonly DrawText Instance = new();
 
     public string DrawType => "Text";
+    public bool PromiseToDrawInsideControl => true;
 
     public void Draw(View view, RenderContext context)
     {
         // Quick exit when drawing outside the clip region
-        if (context.DeviceClip.Intersect(view.toDevice(view.ContentRect)).Width == 0)
-            return;
+        //if (context.DeviceClip.Intersect(view.toDevice(view.ContentRect)).Width == 0)
+        //    return;
 
         var color = view.GetStyle(TextView.ColorProperty);
         if (color.A == 0)
             return; // Exit if clear
+
+        var text = view.GetStyle(TextView.TextProperty);
 
         // Clip if content size is larger than available size
         var contentSize = view.ContentRect.Size.Inflate(CLIP_ROUNDING_ERROR);
         if (contentSize.Width < view.DesiredContentSize.Width
             || contentSize.Height < view.DesiredContentSize.Height)
         {
-            context.PushDeviceClip(view.toDevice(view.ContentRect));
+            context.PushClip(view.ContentRect);
         }
 
-        var text = view.GetStyle(TextView.TextProperty);
         var fontProp = view.GetStyle(TextView.FontProperty);
         var fontName = fontProp.Name ?? "Arial";
         var fontSize = fontProp.Size.Or(16.0);

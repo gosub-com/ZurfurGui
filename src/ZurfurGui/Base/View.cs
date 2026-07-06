@@ -15,7 +15,6 @@ public sealed class View
     internal const int PROPERTY_STYLE_CACHE_BEGIN = 10000;
     internal const int PROPERTY_STYLE_CACHE_END = 20000;
 
-
     /// <summary>
     /// All child views. 
     /// </summary>
@@ -91,12 +90,12 @@ public sealed class View
     public ViewFlags FlagsChild { get; internal set; }
 
 
-    internal bool PushedContentClip;
+    // Numberof clips that got pushed on this view during render phase
+    internal int _pushedClips;
 
-    public Point toDevice(Point p) => Origin.ToVector + p * Scale;
-    public Size toDevice(Size s) => Scale * s;
-    public Rect toDevice(Rect r) => new Rect(Origin.ToVector + r.Position * Scale, Scale * r.Size);
-    public Point toClient(Point p) => ((p - Origin) / Scale).ToPoint;
+
+    // TBD: Measure performance and remove if not needed.
+    internal MeasureCache _measureCache;
 
     internal struct MeasureCache
     {
@@ -114,13 +113,18 @@ public sealed class View
         public bool Clip;
     }
 
-    internal MeasureCache _cache;
-
 
     public View(Controllable control)
     {
         Controller = control;
     }
+
+    public Point toDevice(Point p) => new Point(Origin.X + p.X * Scale, Origin.Y + p.Y * Scale);
+    public Size toDevice(Size s) => Scale * s;
+    public Rect toDevice(Rect r) => new Rect(toDevice(r.Position), toDevice(r.Size));
+    public Point toClient(Point p) => new Point((p.X - Origin.X) / Scale, (p.Y - Origin.Y) / Scale);
+    public Size toClient(Size p) => p / Scale;
+    public Rect toClient(Rect r) => new Rect(toClient(r.Position), toClient(r.Size));
 
     public override string ToString()
     {
@@ -276,27 +280,27 @@ public sealed class View
     public void Measure(Size available, MeasureContext measure)
     {
         // Quick exit if invisible
-        _cache.IsVisible = GetStyle(Panel.IsVisible);
-        if (!_cache.IsVisible)
+        _measureCache.IsVisible = GetStyle(Panel.IsVisible);
+        if (!_measureCache.IsVisible)
             return;
 
         // No need to re-measure if the last measurement is still valid
         if ( ((Flags | FlagsChild) & ViewFlags.Measure) == ViewFlags.None
-            && available == _cache.AvaliableAtMeasure)
+            && available == _measureCache.AvaliableAtMeasure)
         {
             return;
         }
 
-        _cache.AvaliableAtMeasure = available;
-        _cache.BackgroundColor = GetStyle(Panel.BackgroundColor);
-        _cache.BorderColor = GetStyle(Panel.BorderColor);
-        _cache.BorderWidth = GetStyle(Panel.BorderWidth);
-        _cache.BorderRadius = GetStyle(Panel.BorderRadius);
-        _cache.Clip = GetStyle(Panel.Clip);
+        _measureCache.AvaliableAtMeasure = available;
+        _measureCache.BackgroundColor = GetStyle(Panel.BackgroundColor);
+        _measureCache.BorderColor = GetStyle(Panel.BorderColor);
+        _measureCache.BorderWidth = GetStyle(Panel.BorderWidth);
+        _measureCache.BorderRadius = GetStyle(Panel.BorderRadius);
+        _measureCache.Clip = GetStyle(Panel.Clip);
 
         // Include padding and border in the measurement
         var margin = GetStyle(Panel.Margin).Or(0);
-        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(_cache.BorderWidth);
+        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(_measureCache.BorderWidth);
 
         // Clamp to view size constraints, then deflate by padding
         var sizeRequest = GetStyle(Panel.SizeRequest);
@@ -331,7 +335,7 @@ public sealed class View
     public void Arrange(Rect final, MeasureContext measure)
     {
         // Quick exit if invisible
-        if (!_cache.IsVisible)
+        if (!_measureCache.IsVisible)
             return;
 
         var margin = GetStyle(Panel.Margin).Or(0);
@@ -357,7 +361,7 @@ public sealed class View
         var sizeMax = GetStyle(Panel.SizeMax).Or(double.PositiveInfinity);
         size = sizeRequest.Or(size).Min(sizeMax).Max(sizeMin);
 
-        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(_cache.BorderWidth);
+        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(_measureCache.BorderWidth);
 
         ContentRect = new Rect(new Point(0, 0), size).Deflate(padding);
         Size = size;
@@ -390,13 +394,13 @@ public sealed class View
 
         // No need to re-arrange children if nothing changed
         if (((Flags | FlagsChild) & ViewFlags.Measure) == ViewFlags.None
-            && final == _cache.FinalAtArrange && scale == _cache.ScaleAtArrange && origin == _cache.OriginAtArrange)
+            && final == _measureCache.FinalAtArrange && scale == _measureCache.ScaleAtArrange && origin == _measureCache.OriginAtArrange)
         {
             return;
         }
-        _cache.FinalAtArrange = final;
-        _cache.ScaleAtArrange = scale;
-        _cache.OriginAtArrange = origin;
+        _measureCache.FinalAtArrange = final;
+        _measureCache.ScaleAtArrange = scale;
+        _measureCache.OriginAtArrange = origin;
         Scale = scale;
         Origin = origin;
 

@@ -58,57 +58,135 @@ globalThis.ZurfurGui.observeCanvasDevicePixelSize = function (canvas) {
     }
 }
 
-globalThis.ZurfurGui.fillText = function(context, text, x, y) { context.fillText(text, x, y); }
-globalThis.ZurfurGui.fillRect = function (context, x, y, width, height, radius) {
-    if (radius > 0) {
-        context.beginPath();
-        context.roundRect(x, y, width, height, radius);
-        context.fill();
+globalThis.ZurfurGui.measureText = function (context, font, text) {
+    context.font = font;
+    return context.measureText(text);
+}
+
+
+globalThis.ZurfurGui.marshaledStrings = [];
+
+globalThis.ZurfurGui.marshalString = function (str, index) {
+    if (str === null) {
+        globalThis.ZurfurGui.marshaledStrings[index | 0] = null;
     } else {
-        context.fillRect(x, y, width, height);
-    }
-}
-globalThis.ZurfurGui.strokeRect = function (context, x, y, width, height, radius) {
-    if (radius > 0) {
-        context.beginPath();
-        context.roundRect(x, y, width, height, radius);
-        context.stroke();
-    } else {
-        context.strokeRect(x, y, width, height);
+        globalThis.ZurfurGui.marshaledStrings[index | 0] = str;
     }
 }
 
-globalThis.ZurfurGui.measureText = function (context, text) { return context.measureText(text); }
+// drawBuffer with persistent state in closure
+globalThis.ZurfurGui.drawBuffer = (function() {
+    // Persistent font state (private to this closure, like C# BrowserContext instance fields)
+    let _fontName = 'sans-serif';
+    let _fontSize = 16;
+    let _fontString = null;
 
-globalThis.ZurfurGui.clipRect = function (context, x, y, width, height) {
-    context.save();
-    context.beginPath();
-    context.rect(x, y, width, height);
-    context.clip();
-}
+    return function(context, buffer, length) {
+        const marshaledStrings = globalThis.ZurfurGui.marshaledStrings;
 
-globalThis.ZurfurGui.unClip = function (context) {
-    context.restore();
-}
+        // Locals pinned to prevent garbage collection allocation churn
+        let command = 0, paramCount = 0, commandHeader = 0.0, text = "", i = 0;
+        let x = 0.0, y = 0.0, width = 0.0, height = 0.0, radius = 0.0;
 
-globalThis.ZurfurGui.strokePolyLine = function (context, points, length) {
-    if (length < 4) return;
-    context.beginPath();
-    context.moveTo(points[0], points[1]);
-    for (let i = 2; i < length; i += 2) {
-        context.lineTo(points[i], points[i + 1]);
-    }
-    context.stroke();
-}
+        let pc = 0; // Program counter
+        let pi = 0; // Parameter index
+        while (pc < length) {
 
-globalThis.ZurfurGui.fillPolygon = function (context, points, length) {
-    if (length < 6) return;
-    context.beginPath();
-    context.moveTo(points[0], points[1]);
-    for (let i = 2; i < length; i += 2) {
-        context.lineTo(points[i], points[i + 1]);
-    }
-    context.closePath();
-    context.fill();
-}
+            // Get command
+            commandHeader = buffer[pc];
+            command = (commandHeader / 0x100000000) | 0; // Shift right 32 bits
+            paramCount = commandHeader & 0xFFFFFFFF;
+
+            // Get pi and advance pc
+            pi = (pc + 1) | 0;
+            pc += (paramCount + 1) | 0;
+            switch (command) {
+                case 1: // FillColor
+                    context.fillStyle = marshaledStrings[buffer[pi] | 0];
+                    break;
+                case 2: // StrokeColor
+                    context.strokeStyle = marshaledStrings[buffer[pi] | 0];
+                    break;
+                case 3: // LineWidth
+                    context.lineWidth = buffer[pi];
+                    break;
+                case 4: // FontName
+                    _fontName = marshaledStrings[buffer[pi] | 0];
+                    _fontSize = buffer[pi + 1];
+                    _fontString = null;
+                    break;
+                case 6: // FillRect
+                    x = buffer[pi];
+                    y = buffer[pi + 1];
+                    width = buffer[pi + 2];
+                    height = buffer[pi + 3];
+                    radius = buffer[pi + 4];
+                    if (radius > 0) {
+                        context.beginPath();
+                        context.roundRect(x, y, width, height, radius);
+                        context.fill();
+                    } else {
+                        context.fillRect(x, y, width, height);
+                    }
+                    break;
+                case 7: // StrokeRect
+                    x = buffer[pi];
+                    y = buffer[pi + 1];
+                    width = buffer[pi + 2];
+                    height = buffer[pi + 3];
+                    radius = buffer[pi + 4];
+                    if (radius > 0) {
+                        context.beginPath();
+                        context.roundRect(x, y, width, height, radius);
+                        context.stroke();
+                    } else {
+                        context.strokeRect(x, y, width, height);
+                    }
+                    break;
+                case 8: // FillText
+                    if (_fontString === null) {
+                        _fontString = _fontSize + "px " + _fontName;
+                        context.font = _fontString;
+                    }
+                    text = marshaledStrings[buffer[pi] | 0];
+                    x = buffer[pi + 1];
+                    y = buffer[pi + 2];
+                    context.fillText(text, x, y);
+                    break;
+                case 9: // StrokePolyLine
+                    if (paramCount < 4) break;
+                    context.beginPath();
+                    context.moveTo(buffer[pi], buffer[pi + 1]);
+                    for (i = 2; i < paramCount; i = (i + 2) | 0) {
+                        context.lineTo(buffer[pi + i], buffer[pi + i + 1]);
+                    }
+                    context.stroke();
+                    break;
+                case 10: // FillPolygon
+                    if (paramCount < 6) break;
+                    context.beginPath();
+                    context.moveTo(buffer[pi], buffer[pi + 1]);
+                    for (i = 2; i < paramCount; i = (i + 2) | 0) {
+                        context.lineTo(buffer[pi + i], buffer[pi + i + 1]);
+                    }
+                    context.closePath();
+                    context.fill();
+                    break;
+                case 11: // PushClip
+                    x = buffer[pi];
+                    y = buffer[pi + 1];
+                    width = buffer[pi + 2];
+                    height = buffer[pi + 3];
+                    context.save();
+                    context.beginPath();
+                    context.rect(x, y, width, height);
+                    context.clip();
+                    break;
+                case 12: // PopClip
+                    context.restore();
+                    break;
+            }
+        }
+    };
+})();
 
