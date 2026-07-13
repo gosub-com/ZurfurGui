@@ -18,10 +18,6 @@ public class DrawScrollBar : Drawable
 
     public void Draw(View view, RenderContext context)
     {
-        // Quick exit when drawing outside the clip region
-        //if (context.DeviceClip.Intersect(view.toDevice(view.ContentRect)).Width == 0)
-        //    return;
-
         var data = _control.DataContext;
         var trackRect = new Rect(new(), view.Size);
         var orientationValue = view.GetStyle(ScrollBar.OrientationProperty);
@@ -108,9 +104,6 @@ public class DrawScrollBar : Drawable
             ];
         }
     }
-
-
-
 
     public bool IsHit(View view, Point point)
     {

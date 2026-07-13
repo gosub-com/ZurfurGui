@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ZurfurGui.Collections;
 
-namespace ZurfurGui.Platform;
+namespace ZurfurGui.Collections;
 
 /// <summary>
 /// Manages a cache of objects of type T, allowing for efficient marshalling of objects to unique indices.
@@ -90,7 +89,4 @@ public class ObjectCache<T> where T : class, IEquatable<T>
             _marshal(null, lruKV.Value);
         }
     }
-
-
-
 }

@@ -50,7 +50,7 @@ internal partial class BrowserContext : OsContext
 
     void OsContext.DrawBuffer(OsDrawBuffer drawBuffer)
     {
-        DrawBuffer(_context, drawBuffer.Buffer, drawBuffer.Length);
+        DrawBuffer(_context, drawBuffer.Commands, drawBuffer.CommandsLength);
     }
 
 }

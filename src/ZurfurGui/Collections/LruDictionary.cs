@@ -21,7 +21,8 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
     int _tailIndex = -1;
     int _freeIndex = -1;
     Dictionary<Key, int> _keys = new();
-    List<Node> _nodes = new List<Node>();
+    Node[] _nodes = new Node[16];
+    int _nodesLength = 0;
 
     public int Count => _keys.Count;
     public bool IsReadOnly => false;
@@ -46,9 +47,7 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
             if (_keys.TryGetValue(key, out int nodeIndex))
             {
                 // Update existing value
-                var node = _nodes[nodeIndex];
-                node.Value = value;
-                _nodes[nodeIndex] = node;
+                _nodes[nodeIndex].Value = value;
                 MoveToHead(nodeIndex);
             }
             else
@@ -65,10 +64,8 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
             throw new ArgumentException($"Key already exists: {key}");
 
         int nodeIndex = AllocateNode();
-        var node = _nodes[nodeIndex];
-        node.Key = key;
-        node.Value = value;
-        _nodes[nodeIndex] = node;
+        _nodes[nodeIndex].Key = key;
+        _nodes[nodeIndex].Value = value;
 
         _keys[key] = nodeIndex;
         AddToHead(nodeIndex);
@@ -148,7 +145,8 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
     public void Clear()
     {
         _keys.Clear();
-        _nodes.Clear();
+        _nodes = new Node[16];
+        _nodesLength = 0;
         _headIndex = -1;
         _tailIndex = -1;
         _freeIndex = -1;
@@ -233,20 +231,22 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
         else
         {
             // Allocate new node
-            int nodeIndex = _nodes.Count;
-            _nodes.Add(new Node { Next = -1, Prev = -1 });
+            if (_nodesLength == _nodes.Length)
+            {
+                Array.Resize(ref _nodes, _nodes.Length * 2);
+            }
+            int nodeIndex = _nodesLength++;
+            _nodes[nodeIndex] = new Node { Next = -1, Prev = -1 };
             return nodeIndex;
         }
     }
 
     private void FreeNode(int nodeIndex)
     {
-        var node = _nodes[nodeIndex];
-        node.Key = default!; // Release reference for GC
-        node.Value = default!; // Release reference for GC
-        node.Next = _freeIndex;
-        node.Prev = -1; // Not used in free list
-        _nodes[nodeIndex] = node;
+        _nodes[nodeIndex].Key = default!; // Release reference for GC
+        _nodes[nodeIndex].Value = default!; // Release reference for GC
+        _nodes[nodeIndex].Next = _freeIndex;
+        _nodes[nodeIndex].Prev = -1; // Not used in free list
         _freeIndex = nodeIndex;
     }
 
@@ -261,46 +261,35 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
 
     private void RemoveFromList(int nodeIndex)
     {
-        var node = _nodes[nodeIndex];
-        int prev = node.Prev;
-        int next = node.Next;
+        int prevIndex = _nodes[nodeIndex].Prev;
+        int nextIndex = _nodes[nodeIndex].Next;
 
-        if (prev != -1)
+        if (prevIndex != -1)
         {
-            var prevNode = _nodes[prev];
-            prevNode.Next = next;
-            _nodes[prev] = prevNode;
+            _nodes[prevIndex].Next = nextIndex;
         }
         else
         {
-            _headIndex = next;
+            _headIndex = nextIndex;
         }
 
-        if (next != -1)
+        if (nextIndex != -1)
         {
-            var nextNode = _nodes[next];
-            nextNode.Prev = prev;
-            _nodes[next] = nextNode;
+            _nodes[nextIndex].Prev = prevIndex;
         }
         else
         {
-            _tailIndex = prev;
+            _tailIndex = prevIndex;
         }
     }
 
     private void AddToHead(int nodeIndex)
     {
-        var node = _nodes[nodeIndex];
-        node.Next = _headIndex;
-        node.Prev = -1;
-        _nodes[nodeIndex] = node;
+        _nodes[nodeIndex].Next = _headIndex;
+        _nodes[nodeIndex].Prev = -1;
 
         if (_headIndex != -1)
-        {
-            var headNode = _nodes[_headIndex];
-            headNode.Prev = nodeIndex;
-            _nodes[_headIndex] = headNode;
-        }
+            _nodes[_headIndex].Prev = nodeIndex;
 
         _headIndex = nodeIndex;
 

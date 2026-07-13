@@ -5,14 +5,17 @@
     ".data": {
         "text": {
             "type": "?TextLines",
+            "flags": "draw,measure",
             "bind": "styledData"
         },
         "font": {
             "type": "?FontProp",
+            "flags": "draw,measure",
             "bind": "styledData"
         },
         "color": {
             "type": "?Color",
+            "flags": "draw",
             "bind": "styledData"
         }
     }

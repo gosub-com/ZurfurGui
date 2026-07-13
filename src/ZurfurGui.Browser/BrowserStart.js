@@ -77,9 +77,12 @@ globalThis.ZurfurGui.marshalString = function (str, index) {
 // drawBuffer with persistent state in closure
 globalThis.ZurfurGui.drawBuffer = (function() {
     // Persistent font state (private to this closure, like C# BrowserContext instance fields)
-    let _fontName = 'sans-serif';
-    let _fontSize = 16;
-    let _fontString = null;
+    let lastFillStyle = null;
+    let lastStrokeStyle = null;
+    let lastLineWidth = null;
+    let lastFontName = null;
+    let lastFontSize = null;
+
 
     return function(context, buffer, length) {
         const marshaledStrings = globalThis.ZurfurGui.marshaledStrings;
@@ -87,9 +90,12 @@ globalThis.ZurfurGui.drawBuffer = (function() {
         // Locals pinned to prevent garbage collection allocation churn
         let command = 0, paramCount = 0, commandHeader = 0.0, text = "", i = 0;
         let x = 0.0, y = 0.0, width = 0.0, height = 0.0, radius = 0.0;
+        let newFillStyle = null, newStrokeStyle = null, newLineWidth = null, newFontName = null, newFontSize = null;
 
         let pc = 0; // Program counter
         let pi = 0; // Parameter index
+
+
         while (pc < length) {
 
             // Get command
@@ -101,19 +107,33 @@ globalThis.ZurfurGui.drawBuffer = (function() {
             pi = (pc + 1) | 0;
             pc += (paramCount + 1) | 0;
             switch (command) {
-                case 1: // FillColor
-                    context.fillStyle = marshaledStrings[buffer[pi] | 0];
+                case 3: // SetStrokeColorWidth
+                    newStrokeStyle = marshaledStrings[buffer[pi] | 0];
+                    if (newStrokeStyle !== lastStrokeStyle) {
+                        context.strokeStyle = newStrokeStyle;
+                        lastStrokeStyle = newStrokeStyle;
+                    }
+                    newLineWidth = buffer[pi + 1];
+                    if (newLineWidth !== lastLineWidth) {
+                        context.lineWidth = newLineWidth;
+                        lastLineWidth = newLineWidth;
+                    }
                     break;
-                case 2: // StrokeColor
-                    context.strokeStyle = marshaledStrings[buffer[pi] | 0];
+                case 4: // SetFillColor
+                    newFillStyle = marshaledStrings[buffer[pi] | 0];
+                    if (newFillStyle !== lastFillStyle) {
+                        context.fillStyle = newFillStyle;
+                        lastFillStyle = newFillStyle;
+                    }
                     break;
-                case 3: // LineWidth
-                    context.lineWidth = buffer[pi];
-                    break;
-                case 4: // FontName
-                    _fontName = marshaledStrings[buffer[pi] | 0];
-                    _fontSize = buffer[pi + 1];
-                    _fontString = null;
+                case 5: // SetFontNameSize
+                    newFontName = marshaledStrings[buffer[pi] | 0];
+                    newFontSize = buffer[pi + 1];
+                    if (newFontName !== lastFontName || newFontSize !== lastFontSize) {
+                        context.font = newFontSize + "px " + newFontName;
+                        lastFontName = newFontName;
+                        lastFontSize = newFontSize;
+                    }
                     break;
                 case 6: // FillRect
                     x = buffer[pi];
@@ -144,28 +164,26 @@ globalThis.ZurfurGui.drawBuffer = (function() {
                     }
                     break;
                 case 8: // FillText
-                    if (_fontString === null) {
-                        _fontString = _fontSize + "px " + _fontName;
-                        context.font = _fontString;
-                    }
                     text = marshaledStrings[buffer[pi] | 0];
                     x = buffer[pi + 1];
                     y = buffer[pi + 2];
                     context.fillText(text, x, y);
                     break;
                 case 9: // StrokePolyLine
-                    if (paramCount < 4) break;
+                    if (paramCount < 4)
+                        break;
                     context.beginPath();
-                    context.moveTo(buffer[pi], buffer[pi + 1]);
+                    context.moveTo(buffer[pi+0], buffer[pi + 1]);
                     for (i = 2; i < paramCount; i = (i + 2) | 0) {
                         context.lineTo(buffer[pi + i], buffer[pi + i + 1]);
                     }
                     context.stroke();
                     break;
                 case 10: // FillPolygon
-                    if (paramCount < 6) break;
+                    if (paramCount < 6)
+                        break;
                     context.beginPath();
-                    context.moveTo(buffer[pi], buffer[pi + 1]);
+                    context.moveTo(buffer[pi+0], buffer[pi + 1]);
                     for (i = 2; i < paramCount; i = (i + 2) | 0) {
                         context.lineTo(buffer[pi + i], buffer[pi + i + 1]);
                     }
@@ -184,6 +202,11 @@ globalThis.ZurfurGui.drawBuffer = (function() {
                     break;
                 case 12: // PopClip
                     context.restore();
+                    lastFillStyle = null;
+                    lastStrokeStyle = null;
+                    lastFontName = null;
+                    lastFontSize = null;
+                    lastLineWidth = null;
                     break;
             }
         }

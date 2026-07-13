@@ -10,6 +10,7 @@ public partial class DebugWindow : Controllable
 
     RenderContext.RenderContextStats _prevContextStatsFrame;
     Renderer.RendererStats _prevRenderStatsOneSecond;
+    Renderer.RendererStats _prevRenderStats;
 
     string _gc = "";
     double _fps = 0;
@@ -72,9 +73,10 @@ public partial class DebugWindow : Controllable
         var _canvas = renderer.Canvas;
         var canvasDeviceSize = _canvas.DeviceSize;
         var canvasStyleSize = _canvas.StyleSize;
+        var rStatsDiff = stats - _prevRenderStats;
         TextLines text = [
             $"FPS={_fps}, ms={_totalMs:F1} ({_renderMs:F1}, {_drawMs:F1}), Frames={stats.FrameCount}",
-            $"Measures={stats.MeasureFrameCount}, Styles={stats.StyleFrameCount}, Buffer={stats.DrawBufferLength}",
+            $"Measures={rStatsDiff.InvalidMeasureCount}, Draws={rStatsDiff.InvalidDrawCount}, Buffer={stats.DrawBufferLength}",
             //$"DPR={_window.DevicePixelRatio:F2}, CDS={canvasDeviceSize:F2}, CSS={canvasStyleSize:F2}",
             //$"WIS={_window.InnerSize}, DPS={_canvas.DevicePixelSize?.ToString() ?? "?"}",
             //$"Screen size: ({_window.ScreenSize}), focus={_canvas.HasFocus}",
@@ -85,7 +87,8 @@ public partial class DebugWindow : Controllable
         // Don't Invalidate measure
         _statsView.View.SetPropertyNoFlags(TextView.TextProperty, text);
         _statsView.View.InvalidateDraw();
-        // _statsView.View.InvalidateMeasure();
+        //_statsView.View.InvalidateMeasure();
+        _prevRenderStats = renderer.Stats;
 
         _prevContextStatsFrame = cStatsNew;
     }

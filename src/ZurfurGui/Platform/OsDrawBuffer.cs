@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using ZurfurGui.Base;
+using ZurfurGui.Collections;
 
 namespace ZurfurGui.Platform;
 
@@ -11,10 +12,9 @@ namespace ZurfurGui.Platform;
 /// </summary>
 public enum OsDrawCommand : ushort
 {
-    FillColor = 1,
-    StrokeColor = 2,
-    LineWidth = 3,
-    FontName = 4,
+    SetStrokeColorWidth = 3,
+    SetFillColor = 4,
+    SetFontNameSize =5,
     FillRect = 6,
     StrokeRect = 7,
     FillText = 8,
@@ -32,227 +32,185 @@ public enum OsDrawCommand : ushort
 /// </summary>
 public class OsDrawBuffer
 {
-    int _length = 0;
-    double[] _buffer = new double[256];
-    ObjectCache<string> _stringCache;
+    int _commandsLength = 0;
+    double[] _commands = Array.Empty<double>();
 
-    Color? _fillColor = null;
-    Color? _strokeColor = null;
-    double? _lineWidtgh = null;
-    string? _fontName = null;
-    double? _fontSize = null;
+    int _stringsLength = 0;
+    string [] _strings = Array.Empty<string>();
 
-    public OsDrawBuffer(ObjectCache<string> stringCache)
+    public static readonly OsDrawBuffer Empty = new OsDrawBuffer();
+
+    public OsDrawBuffer()
     {
-        _stringCache = stringCache;
     }
 
     /// <summary>
     /// Return the underlying buffer array.
     /// </summary>
-    public double[] Buffer => _buffer;
+    public double[] Commands => _commands;
 
     /// <summary>
     /// Current length of the buffer
     /// </summary>
-    public int Length => _length;
+    public int CommandsLength => _commandsLength;
 
     /// <summary>
-    /// Resets the array back to length 0, but does not clear the underlying array.
+    /// Resets the length back to 0, but does not clear the underlying array.
+    /// This is so you can reuse the buffer without allocating a new one each time.
     /// </summary>
-    public void Reset()
+    public void Clear()
     {
-        _length = 0;
-        _fillColor = null;
-        _strokeColor = null;
-        _lineWidtgh = null;
-        _fontName = null;
-        _fontSize = null;
+        _commandsLength = 0;
+        _stringsLength = 0;
+    }
+
+
+    /// <summary>
+    /// Make a clone of this buffer.  If maybeInto is provided, it will try to
+    /// re-use this buffer by cloning into it and returning it, but it won't re-use
+    /// the buffer if it is not the correct length.
+    /// </summary>
+    public OsDrawBuffer Clone()
+    {
+        if (_commandsLength == 0 && _stringsLength == 0)
+            return Empty;
+
+        return new OsDrawBuffer
+        {
+            _commandsLength = _commandsLength,
+            _commands = _commands.AsSpan(0, _commandsLength).ToArray(),
+            _stringsLength = _stringsLength,
+            _strings = _strings.AsSpan(0, _stringsLength).ToArray()
+        };
     }
 
     public (OsDrawCommand command, int paramCount) GetCommand(int index)
     {
-        var commandHeader = (long)_buffer[index];
+        var commandHeader = (long)_commands[index];
         var paramCount = (int)(commandHeader & 0xFFFFFFFF);
         var command = (OsDrawCommand)(commandHeader >> 32);
         return (command, paramCount);
     }
 
-    public string GetString(int index)
-    {
-        return _stringCache.GetObject(index);
-    }
 
     /// <summary>
     /// TBD: Remove heap allocation here by using a Span or similar. 
     /// </summary>
     public double[] GetArray(int index, int length)
     {
-        var buffer = Buffer;
+        var buffer = Commands;
         var result = new double[length];
         for (int i = 0; i < length; i++)
             result[i] = buffer[index + i];
         return result;
     }
 
-
-    public void FillColor(Color color)
+    /// <summary>
+    /// Adds a string to the internal string buffer and returns its index.
+    /// </summary>
+    int AddString(string s)
     {
-        if (_fillColor == color)
-            return;
-        _fillColor = color;
-        AppendCommand(OsDrawCommand.FillColor, _stringCache.GetIndex(color.CssColor));
+        if (_stringsLength >= _strings.Length)
+            Array.Resize(ref _strings, Math.Max(4, _strings.Length * 2));
+        _strings[_stringsLength++] = s;
+        return _stringsLength-1;
     }
 
-    public void StrokeColor(Color color)
+    public void SetStrokeColorWidth(Color color, double width)
     {
-        if (_strokeColor == color)
-            return;
-        _strokeColor = color;
-        AppendCommand(OsDrawCommand.StrokeColor, _stringCache.GetIndex(color.CssColor));
+        var s = AppendCommandSpan(OsDrawCommand.SetStrokeColorWidth, 2);
+        s[0] = AddString(color.CssColor);
+        s[1] = width;
     }
 
-    public void LineWidth(double lineWidth)
+    public void SetFillColor(Color color)
     {
-        if (_lineWidtgh == lineWidth)
-            return;
-        _lineWidtgh = lineWidth;
-        AppendCommand(OsDrawCommand.LineWidth, lineWidth);
+        var s = AppendCommandSpan(OsDrawCommand.SetFillColor, 1);
+        s[0] = AddString(color.CssColor);
     }
 
-    public void FontName(string fontName, double fontSize)
+    public void SetFontNameSize(string fontName, double fontSize)
     {
-        if (_fontName == fontName && _fontSize == fontSize)
-            return;
-        _fontName = fontName;
-        _fontSize = fontSize;
-        AppendCommand(OsDrawCommand.FontName, _stringCache.GetIndex(fontName), fontSize);
+        var s = AppendCommandSpan(OsDrawCommand.SetFontNameSize, 2);
+        s[0] = AddString(fontName);
+        s[1] = fontSize;
     }
 
-    public void FillRect(double x, double y, double width, double height, double radius)
+
+    public void FillRect( 
+        double x, double y, double width, double height, double radius)
     {
-        AppendCommand(OsDrawCommand.FillRect, x, y, width, height, radius);
+        var s = AppendCommandSpan(OsDrawCommand.FillRect, 5);
+        s[0] = x;
+        s[1] = y;
+        s[2] = width;
+        s[3] = height;
+        s[4] = radius;
     }
 
-    public void StrokeRect(double x, double y, double width, double height, double radius)
+    public void StrokeRect(
+        double x, double y, double width, double height, double radius)
     {
-        AppendCommand(OsDrawCommand.StrokeRect, x, y, width, height, radius);
+        var s = AppendCommandSpan(OsDrawCommand.StrokeRect, 5);
+        s[0] = x;
+        s[1] = y;
+        s[2] = width;
+        s[3] = height;
+        s[4] = radius;
     }
 
     public void FillText(string text, double x, double y)
     {
-        AppendCommand(OsDrawCommand.FillText, _stringCache.GetIndex(text), x, y);
+        var s = AppendCommandSpan(OsDrawCommand.FillText, 3);
+        s[0] = AddString(text);
+        s[1] = x;
+        s[2] = y;
     }
 
     public void StrokePolyLine(ReadOnlySpan<double> points)
     {
-        AppendCommandHeader(OsDrawCommand.StrokePolyLine, points.Length);
+        var s = AppendCommandSpan(OsDrawCommand.StrokePolyLine, points.Length);
         for (var i = 0; i < points.Length; i++)
-            Append(points[i]);
+            s[i] = points[i];
     }
 
     public void FillPolygon(ReadOnlySpan<double> points)
     {
-        AppendCommandHeader(OsDrawCommand.FillPolygon, points.Length);
+        var s = AppendCommandSpan(OsDrawCommand.FillPolygon, points.Length);
         for (var i = 0; i < points.Length; i++)
-            Append(points[i]);
+            s[i] = points[i];
     }
+
+    public void Clip(Rect r) =>
+        Clip(r.X, r.Y, r.Width, r.Height);
 
     public void Clip(double x, double y, double width, double height)
     {
-        AppendCommand(OsDrawCommand.PushClip, x, y, width, height);
+        var s = AppendCommandSpan(OsDrawCommand.PushClip, 4);
+        s[0] = x;
+        s[1] = y;
+        s[2] = width;
+        s[3] = height;
     }
 
-    public void UnClip()
+    public void PopClip()
     {
-        AppendCommand(OsDrawCommand.PopClip);
-        _lineWidtgh = null;
-        _fillColor = null;
-        _strokeColor = null;
-        _fontName = null;
-        _fontSize = null;
-    }
-
-
-    /// <summary>
-    /// Append an item, possibly resizing the underlying array if needed.
-    /// </summary>
-    private void Append(double item)
-    {
-        if (_length >= _buffer.Length)
-            Array.Resize(ref _buffer, _buffer.Length * 2);
-        _buffer[_length++] = item;
-    }
-
-    private void AppendCommand(OsDrawCommand command)
-    {
-        AppendCommandHeader(command, 0);
-    }
-
-    private void AppendCommand(OsDrawCommand command, double p1)
-    {
-        AppendCommandHeader(command, 1);
-        Append(p1);
-    }
-
-    private void AppendCommand(OsDrawCommand command, double p1, double p2)
-    {
-        AppendCommandHeader(command, 2);
-        Append(p1);
-        Append(p2);
-    }
-
-    private void AppendCommand(OsDrawCommand command, double p1, double p2, double p3)
-    {
-        AppendCommandHeader(command, 3);
-        Append(p1);
-        Append(p2);
-        Append(p3);
-    }
-
-    private void AppendCommand(OsDrawCommand command, double p1, double p2, double p3, double p4)
-    {
-        AppendCommandHeader(command, 4);
-        Append(p1);
-        Append(p2);
-        Append(p3);
-        Append(p4);
-    }
-
-    private void AppendCommand(OsDrawCommand command, double p1, double p2, double p3, double p4, double p5)
-    {
-        AppendCommandHeader(command, 5);
-        Append(p1);
-        Append(p2);
-        Append(p3);
-        Append(p4);
-        Append(p5);
-    }
-
-    public void AppendCommandHeader(OsDrawCommand command, int paramCount)
-    {
-        Append( ((long)command << 32) + paramCount);
-    }
-
-
-    public Span<double> AsSpan(int start, int length)
-    {
-        if (start + length > _length)
-            throw new ArgumentOutOfRangeException(nameof(length), "Span exceeds buffer length");
-        return _buffer.AsSpan(start, length);
-    }
-
-    public Span<double> AsSpan(int start)
-    {
-        return _buffer.AsSpan(start, _length - start);
+        _ = AppendCommandSpan(OsDrawCommand.PopClip, 0);
     }
 
     /// <summary>
-    /// Transform the buffer in place, applying the given offset and scale to all coordinates.
-    /// NOTE: PushClip is not transformed, as it is assumed to be in device coordinates.
+    /// Draw a buffer into this buffer, applying the given offset and scale to all coordinates.
+    /// Convert string indices into stringCache LRU indices.
     /// </summary>
-    public static void TransformBuffer(Span<double> buffer, Point offset, double scale)
+    public void DrawBuffer(OsDrawBuffer drawBuffer, ObjectCache<string> stringCache, Point offset, double scale)
     {
+        if (drawBuffer._commandsLength == 0)
+            return;
+
+        var buffer = AppendSpan(drawBuffer._commandsLength);
+        drawBuffer._commands.AsSpan(0, drawBuffer._commandsLength).CopyTo(buffer);
+
+
         int pc = 0;
         while (pc < buffer.Length)
         {
@@ -264,31 +222,43 @@ public class OsDrawBuffer
 
             switch (command)
             {
+                case OsDrawCommand.SetStrokeColorWidth:
+                    buffer[pi] = stringCache.GetIndex(drawBuffer._strings[(int)buffer[pi]]);
+                    buffer[pi + 1] = buffer[pi + 1] * scale;
+                    break;
+                case OsDrawCommand.SetFillColor:
+                    buffer[pi] = stringCache.GetIndex(drawBuffer._strings[(int)buffer[pi]]);
+                    break;
+                case OsDrawCommand.SetFontNameSize:
+                    buffer[pi] = stringCache.GetIndex(drawBuffer._strings[(int)buffer[pi]]);
+                    buffer[pi + 1] = buffer[pi + 1] * scale;
+                    break;
                 case OsDrawCommand.FillRect:
+                    buffer[pi + 0] = buffer[pi + 0] * scale + offset.X;
+                    buffer[pi + 1] = buffer[pi + 1] * scale + offset.Y;
+                    buffer[pi + 2] = buffer[pi + 2] * scale;
+                    buffer[pi + 3] = buffer[pi + 3] * scale;
+                    buffer[pi + 4] = buffer[pi + 4] * scale;
+                    break;
                 case OsDrawCommand.StrokeRect:
-                    buffer[pi] = buffer[pi] * scale + offset.X;
+                    buffer[pi + 0] = buffer[pi + 0] * scale + offset.X;
                     buffer[pi + 1] = buffer[pi + 1] * scale + offset.Y;
                     buffer[pi + 2] = buffer[pi + 2] * scale;
                     buffer[pi + 3] = buffer[pi + 3] * scale;
                     buffer[pi + 4] = buffer[pi + 4] * scale;
                     break;
                 case OsDrawCommand.FillText:
+                    buffer[pi] = stringCache.GetIndex(drawBuffer._strings[(int)buffer[pi]]);
                     buffer[pi + 1] = buffer[pi + 1] * scale + offset.X;
                     buffer[pi + 2] = buffer[pi + 2] * scale + offset.Y;
                     break;
-                case OsDrawCommand.StrokePolyLine:
                 case OsDrawCommand.FillPolygon:
+                case OsDrawCommand.StrokePolyLine:
                     for (var i = 0; i < paramCount; i += 2)
                     {
                         buffer[pi + i] = buffer[pi + i] * scale + offset.X;
                         buffer[pi + i + 1] = buffer[pi + i + 1] * scale + offset.Y;
                     }
-                    break;
-                case OsDrawCommand.LineWidth:
-                    buffer[pi] = buffer[pi] * scale;
-                    break;
-                case OsDrawCommand.FontName:
-                    buffer[pi + 1] = buffer[pi + 1] * scale;
                     break;
                 case OsDrawCommand.PushClip:
                     buffer[pi] = buffer[pi] * scale + offset.X;
@@ -296,8 +266,6 @@ public class OsDrawBuffer
                     buffer[pi + 2] = buffer[pi + 2] * scale;
                     buffer[pi + 3] = buffer[pi + 3] * scale;
                     break;
-                case OsDrawCommand.FillColor:
-                case OsDrawCommand.StrokeColor:
                 case OsDrawCommand.PopClip:
                     break;
                 default:
@@ -308,6 +276,32 @@ public class OsDrawBuffer
 
         }
     }
+
+
+    /// <summary>
+    /// Appends a command, returns a span with the given number of parameters.
+    /// </summary>
+    private Span<double> AppendCommandSpan(OsDrawCommand command, int paramCount)
+    {
+        var s = AppendSpan(paramCount + 1);
+        s[0] = ((long)command << 32) + paramCount;
+        return s.Slice(1);
+    }
+
+    /// <summary>
+    /// Returns a span of the given count, resizing the underlying array if needed.
+    /// </summary>
+    Span<double> AppendSpan(int count)
+    {
+        while (_commands.Length < _commandsLength + count)
+            Array.Resize(ref _commands, Math.Max(4, _commands.Length * 2));
+
+        var s = _commands.AsSpan(_commandsLength, count);
+        _commandsLength += count;
+        return s;
+    }
+
+
 
 }
 

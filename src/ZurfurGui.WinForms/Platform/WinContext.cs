@@ -95,8 +95,8 @@ internal class WinContext : OsContext
 
     void OsContext.DrawBuffer(OsDrawBuffer drawBuffer)
     {
-        var buffer = drawBuffer.Buffer;
-        var length = drawBuffer.Length;
+        var buffer = drawBuffer.Commands;
+        var length = drawBuffer.CommandsLength;
 
         var pc = 0;
         while (pc < length)
@@ -106,16 +106,14 @@ internal class WinContext : OsContext
             pc += paramCount + 1;
             switch (command)
             {
-                case OsDrawCommand.FillColor:
+                case OsDrawCommand.SetStrokeColorWidth:
+                    StrokeColor = Color.ParseCss(_mashaledSrings[(int)buffer[pi]]) ?? new Color(0, 0, 0);
+                    LineWidth = buffer[pi + 1];
+                    break;
+                case OsDrawCommand.SetFillColor:
                     FillColor = Color.ParseCss(_mashaledSrings[(int)buffer[pi]]) ?? new Color(0, 0, 0);
                     break;
-                case OsDrawCommand.StrokeColor:
-                    StrokeColor = Color.ParseCss(_mashaledSrings[(int)buffer[pi]]) ?? new Color(0, 0, 0);
-                    break;
-                case OsDrawCommand.LineWidth:
-                    LineWidth = buffer[pi];
-                    break;
-                case OsDrawCommand.FontName:
+                case OsDrawCommand.SetFontNameSize:
                     FontName = _mashaledSrings[(int)buffer[pi]];
                     FontSize = buffer[pi + 1];
                     break;

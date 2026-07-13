@@ -19,10 +19,6 @@ public class DrawText : Drawable
 
     public void Draw(View view, RenderContext context)
     {
-        // Quick exit when drawing outside the clip region
-        //if (context.DeviceClip.Intersect(view.toDevice(view.ContentRect)).Width == 0)
-        //    return;
-
         var color = view.GetStyle(TextView.ColorProperty);
         if (color.A == 0)
             return; // Exit if clear
@@ -45,7 +41,7 @@ public class DrawText : Drawable
 
         for (int i = 0; i < text.Count; i++)
             context.FillText(font, brush, text[i], 0 + view.ContentRect.X,
-                fontSize * TEXT_BASELINE + i * fontSize * LINE_SPACING + (LINE_SPACING - 1) * fontSize * 0.5 + view.ContentRect.Y);
+                fontSize * TEXT_BASELINE + i * fontSize * LINE_SPACING + (LINE_SPACING - 1) * fontSize * 0.5 + view.ContentRect.Y);    
     }
 
     public bool IsHit(View view, Point point)

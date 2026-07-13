@@ -11,10 +11,6 @@ public static class DrawHelper
     /// </summary>
     public static void DrawBackground(View view, RenderContext context)
     {
-        // Quick exit when drawing outside the clip region
-        //if (context.DeviceClip.Intersect(new Rect(view.Origin, view.toDevice(view.Size))).Width == 0)
-        //    return;
-
         // Draw background
         var borderRadius = view._measureCache.BorderRadius;
         var background = view._measureCache.BackgroundColor;

@@ -6,37 +6,43 @@
         // Current scroll position (ranges from Minimum to Maximum)
         "value": {
             "type": "Double",
-            "bind": "data"
+            "bind": "data",
+            "flags": "draw"
         },
 
         // Minimum allowed value (typically 0)
         "minimum": {
             "type": "Double",
-            "bind": "data"
+            "bind": "data",
+            "flags": "draw"
         },
 
         // Maximum allowed value (typically contentSize - viewportSize)
         "maximum": {
             "type": "Double",
             "bind": "data",
+            "flags": "draw",
             "default": "100"
         },
 
         // Size of the visible viewport (used to calculate thumb size)
         "viewportSize": {
             "type": "Double",
+            "flags": "draw",
             "bind": "data"
         },
 
         // Amount to scroll on wheel or arrow click
         "smallChange": {
             "type": "Double",
+            "flags": "draw",
             "bind": "data"
         },
 
         // Amount to scroll on track click (page up/down)
         "largeChange": {
             "type": "Double",
+            "flags": "draw",
             "bind": "data"
         },
 
@@ -44,7 +50,8 @@
         "orientation": {
             "type": "Orientation",
             "bind": "styledData",
-            "default": "Orientation.horizontal"
+            "default": "Orientation.horizontal",
+            "flags": "draw,measure"
         },
 
         // Appearance properties (styled)
@@ -64,7 +71,7 @@
             "type": "Double",
             "bind": "styledOnly",
             "default": "20.0",
-            "flags": "measure"
+            "flags": "measure,draw"
         },
         "borderColor": {
             "type": "Color",

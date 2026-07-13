@@ -5,6 +5,7 @@ using ZurfurGui.Property;
 using ZurfurGui.Render;
 using ZurfurGui.Windows;
 using ZurfurGui.Styles;
+using ZurfurGui.Platform;
 
 namespace ZurfurGui.Base;
 
@@ -14,6 +15,8 @@ public sealed class View
     // TBD: Should we be caching style lookups in the properties?
     internal const int PROPERTY_STYLE_CACHE_BEGIN = 10000;
     internal const int PROPERTY_STYLE_CACHE_END = 20000;
+
+    internal static long s_measureCount {  get; private set; }
 
     /// <summary>
     /// All child views. 
@@ -90,12 +93,10 @@ public sealed class View
     public ViewFlags FlagsChild { get; internal set; }
 
 
-    // Numberof clips that got pushed on this view during render phase
-    internal int _pushedClips;
-
-
     // TBD: Measure performance and remove if not needed.
     internal MeasureCache _measureCache;
+    internal OsDrawBuffer? _drawUnderBuffer;
+    internal OsDrawBuffer? _drawOverBuffer;
 
     internal struct MeasureCache
     {
@@ -173,11 +174,11 @@ public sealed class View
         SetFlags(ViewFlags.StyleDown);
     }
 
-    void SetFlags(ViewFlags flags)
+    /// <summary>
+    /// Set the view flags (e.g. InvalidateMeasure, InvalidateDraw, InvalidateStyle).  
+    /// </summary>
+    public void SetFlags(ViewFlags flags)
     {
-        if ((Flags & flags) == flags)
-            return;
-
         Flags |= flags;
         var view = Parent;
         while (view != null && (view.FlagsChild & flags) != flags)
@@ -290,7 +291,8 @@ public sealed class View
         {
             return;
         }
-
+        
+        s_measureCount++;
         _measureCache.AvaliableAtMeasure = available;
         _measureCache.BackgroundColor = GetStyle(Panel.BackgroundColor);
         _measureCache.BorderColor = GetStyle(Panel.BorderColor);
@@ -309,13 +311,14 @@ public sealed class View
         var constrained = sizeRequest.Or(available.Deflate(margin)).Min(sizeMax).Max(sizeMin).Deflate(padding);
 
         // Measure control content (default is a panel)
+        Size newDesiredContentSize;
         if (Layout is Layoutable layout)
-            DesiredContentSize = layout.MeasureView(this, measure, constrained);
+            newDesiredContentSize = layout.MeasureView(this, measure, constrained);
         else
-            DesiredContentSize = LayoutPanel.MeasurePanel(this, measure, constrained);
+            newDesiredContentSize = LayoutPanel.MeasurePanel(this, measure, constrained);
 
         // Desired total view size includes padding and border
-        var measured = DesiredContentSize.Inflate(padding);
+        var measured = newDesiredContentSize.Inflate(padding);
 
         // Clamp to view size constaints, then min(available)
         measured = sizeRequest.Or(measured).Min(sizeMax).Max(sizeMin).Min(available);
@@ -323,7 +326,16 @@ public sealed class View
         if (double.IsNaN(measured.Width) || double.IsNaN(measured.Height))
             throw new InvalidOperationException("Received NAN in Measure");
 
-        DesiredTotalSize = measured.Inflate(margin).MaxZero;
+        var newDesiredTotalSize = measured.Inflate(margin).MaxZero;
+
+
+        if (newDesiredContentSize != DesiredContentSize || newDesiredTotalSize != DesiredTotalSize)
+        {
+            InvalidateDraw();
+        }
+
+        DesiredContentSize = newDesiredContentSize;
+        DesiredTotalSize = newDesiredTotalSize;
     }
 
 
@@ -343,37 +355,35 @@ public sealed class View
 
         var x = final.X + margin.Left;
         var y = final.Y + margin.Top;
-        var size = availableSize;
+        var newSize = availableSize;
 
         var align = GetStyle(Panel.Align);
         var alignHor = align.Horizontal ?? AlignHorizontal.Stretch;
         var alignVert = align.Vertical ?? AlignVertical.Stretch;
 
         if (alignHor != AlignHorizontal.Stretch)
-            size.Width = Math.Min(size.Width, DesiredTotalSize.Width - margin.Left - margin.Right);
+            newSize.Width = Math.Min(newSize.Width, DesiredTotalSize.Width - margin.Left - margin.Right);
 
         if (alignVert != AlignVertical.Stretch)
-            size.Height = Math.Min(size.Height, DesiredTotalSize.Height - margin.Top - margin.Bottom);
+            newSize.Height = Math.Min(newSize.Height, DesiredTotalSize.Height - margin.Top - margin.Bottom);
 
         // Clamp to view size constraints
         var sizeRequest = GetStyle(Panel.SizeRequest);
         var sizeMin = GetStyle(Panel.SizeMin).Or(0).MaxZero;
         var sizeMax = GetStyle(Panel.SizeMax).Or(double.PositiveInfinity);
-        size = sizeRequest.Or(size).Min(sizeMax).Max(sizeMin);
+        newSize = sizeRequest.Or(newSize).Min(sizeMax).Max(sizeMin);
 
         var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(_measureCache.BorderWidth);
-
-        ContentRect = new Rect(new Point(0, 0), size).Deflate(padding);
-        Size = size;
+        var newContentRect = new Rect(new Point(0, 0), newSize).Deflate(padding);
 
         switch (alignHor)
         {
             case AlignHorizontal.Center:
             case AlignHorizontal.Stretch:
-                x += (availableSize.Width - size.Width) / 2;
+                x += (availableSize.Width - newSize.Width) / 2;
                 break;
             case AlignHorizontal.Right:
-                x += availableSize.Width - size.Width;
+                x += availableSize.Width - newSize.Width;
                 break;
         }
 
@@ -381,28 +391,47 @@ public sealed class View
         {
             case AlignVertical.Center:
             case AlignVertical.Stretch:
-                y += (availableSize.Height - size.Height) / 2;
+                y += (availableSize.Height - newSize.Height) / 2;
                 break;
             case AlignVertical.Bottom:
-                y += availableSize.Height - size.Height;
+                y += availableSize.Height - newSize.Height;
                 break;
         }
 
-        Position = new Vector(x, y) + GetStyle(Panel.Offset).Or(0);
-        var scale = (Parent?.Scale??1) * GetStyle(Panel.Magnification);
-        var origin = (Parent?.Origin??new()).ToVector + scale * Position;
+        var newPosition = new Vector(x, y) + GetStyle(Panel.Offset).Or(0);
+        var newScale = (Parent?.Scale ?? 1) * GetStyle(Panel.Magnification);
+        var newOrigin = (Parent?.Origin ?? new()).ToVector + newScale * newPosition;
+
+        // Invalidate if the size, scale, or content rect changed.
+        if (final.Size != _measureCache.FinalAtArrange.Size
+                || newScale != _measureCache.ScaleAtArrange
+                || newSize != Size
+                || newContentRect != ContentRect)
+        {
+            InvalidateDraw();
+        }
+
+
+        ContentRect = newContentRect;
+        Size = newSize;
+        Position = newPosition;
+
+
 
         // No need to re-arrange children if nothing changed
         if (((Flags | FlagsChild) & ViewFlags.Measure) == ViewFlags.None
-            && final == _measureCache.FinalAtArrange && scale == _measureCache.ScaleAtArrange && origin == _measureCache.OriginAtArrange)
+            && final == _measureCache.FinalAtArrange
+            && newOrigin == _measureCache.OriginAtArrange
+            && newScale == _measureCache.ScaleAtArrange)
         {
             return;
         }
+
         _measureCache.FinalAtArrange = final;
-        _measureCache.ScaleAtArrange = scale;
-        _measureCache.OriginAtArrange = origin;
-        Scale = scale;
-        Origin = origin;
+        _measureCache.ScaleAtArrange = newScale;
+        _measureCache.OriginAtArrange = newOrigin;
+        Scale = newScale;
+        Origin = newOrigin;
 
 
         // Arrange child views

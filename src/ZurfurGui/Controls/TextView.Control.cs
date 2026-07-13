@@ -16,12 +16,4 @@ public partial class TextView : Controllable
         View.Draw = DrawText.Instance;
         View.Layout = LayoutText.Instance;
     }
-
-    static TextView()
-    {
-        TextProperty.Flags = ViewFlags.Measure;
-        FontProperty.Flags = ViewFlags.Measure;
-        ColorProperty.Flags = ViewFlags.Draw;
-    }
-
 }

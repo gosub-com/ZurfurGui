@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
+using ZurfurGui.Property;
+using static ZurfurGui.Base.View;
 
 namespace ZurfurGui.Layout;
 
@@ -18,12 +20,6 @@ public class LayoutText : Layoutable
     public string TypeName => "Text";
 
     public Size MeasureView(View view, MeasureContext measure, Size available)
-    {
-        return MeasureLabel(measure, view);
-    }
-
-
-    static Size MeasureLabel(MeasureContext measure, View view)
     {
         var font = view.GetStyle(TextView.FontProperty);
         var fontName = font.Name ?? "Arial";

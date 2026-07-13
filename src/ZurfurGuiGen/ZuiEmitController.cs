@@ -350,7 +350,19 @@ internal static class ZuiEmitController
             // Data-only bindings: no PropertyKey, nothing to push to the view
             else if (binding.BindType == BindType.Data)
             {
-                sb.AppendIndentedLine(3, $"// '{binding.PascalName}': Data-only binding: stored in DataContext only, no view property to update");
+                // Check if this data-only binding has flags
+                if (!string.IsNullOrWhiteSpace(binding.Flags) && binding.Flags != "ViewFlags.None")
+                {
+                    // Generate a case statement that calls View.SetFlags
+                    sb.AppendIndentedLine(3, $"case \"{binding.PascalName}\":");
+                    sb.AppendIndentedLine(4, $"View.SetFlags({binding.Flags});");
+                    sb.AppendIndentedLine(4, "break;");
+                }
+                else
+                {
+                    // No flags: just leave a comment
+                    sb.AppendIndentedLine(3, $"// '{binding.PascalName}': Data-only binding: stored in DataContext only, no view property to update");
+                }
             }
             // Style-only bindings: no DataContext field, controlled via styles or imperative SetProperty
             else if (binding.BindType == BindType.StyledOnly)
