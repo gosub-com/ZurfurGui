@@ -49,9 +49,9 @@ public sealed class View
     public Layoutable? Layout { get; set; }
 
     /// <summary>
-    /// When null, the control is treated as a panel (i.e. draw backgrond & border, performs hit testing, etc.)
+    /// When null, the control is treated as a panel (i.e. render background & border, performs hit testing, etc.)
     /// </summary>
-    public Drawable? Draw { get; set; }
+    public Renderable? Render { get; set; }
 
     /// <summary>
     /// Desired size of view including margin, border, and padding. Calculated by the measure pass.
@@ -95,23 +95,17 @@ public sealed class View
 
     // TBD: Measure performance and remove if not needed.
     internal MeasureCache _measureCache;
-    internal OsDrawBuffer? _drawUnderBuffer;
-    internal OsDrawBuffer? _drawOverBuffer;
+    internal OsRenderBuffer? _renderUnderBuffer;
+    internal OsRenderBuffer? _renderOverBuffer;
 
     internal struct MeasureCache
     {
-        public Size AvaliableAtMeasure;
+        public bool IsVisible;
+        public Size Avaliable;
+
         public Rect FinalAtArrange;
         public Point OriginAtArrange;
         public double ScaleAtArrange;
-
-        // NOTE: Caching things needed by Drawing.
-        public bool IsVisible;
-        public Color BackgroundColor;
-        public Color BorderColor;
-        public double BorderWidth;
-        public double BorderRadius;
-        public bool Clip;
     }
 
 
@@ -145,23 +139,27 @@ public sealed class View
     }
 
     /// <summary>
-    /// Call when a view's drawing becomes invalid and needs to be redrawn.
-    /// Note: This is called automatically when properties that affect drawing are changed.
+    /// Call when a view's rendering becomes invalid and needs to be re-rendered.
+    /// Note: This is called automatically when properties that affect rendering are changed.
     /// </summary>
-    public void InvalidateDraw()
+    public void InvalidateRender()
     {
-        SetFlags(ViewFlags.Draw);
+        SetFlags(ViewFlags.Render);
     }
 
     internal void InvalidateStyleCacheInternal()
     {
-        var view = this;
-        var keysToRemove = view._properties
+        // Find cached properties
+        var keysToRemove = _properties
             .Select(k => k.key)
             .Where(k => k.IdAsInt >= PROPERTY_STYLE_CACHE_BEGIN && k.IdAsInt < PROPERTY_STYLE_CACHE_END)
-            .ToList();
+            .ToArray();
+
         foreach (var key in keysToRemove)
-            view._properties.RemoveById(key);
+        {
+            var nonCachedKey = new PropertyKeyId(key.IdAsInt - PROPERTY_STYLE_CACHE_BEGIN);
+            nonCachedKey.Info?.RefreshCacheProperty(this);
+        }
     }
 
 
@@ -175,7 +173,7 @@ public sealed class View
     }
 
     /// <summary>
-    /// Set the view flags (e.g. InvalidateMeasure, InvalidateDraw, InvalidateStyle).  
+    /// Set the view flags (e.g. InvalidateMeasure, InvalidateRender, InvalidateStyle).  
     /// </summary>
     public void SetFlags(ViewFlags flags)
     {
@@ -225,16 +223,6 @@ public sealed class View
     }
 
     /// <summary>
-    /// Set a property, don't invalidate to re-draw or re-measure
-    /// </summary>
-    internal void SetPropertyNoFlags<T>(PropertyKey<T> key, T value)
-    {
-        _properties.Set(key, value);
-        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN));
-    }
-
-
-    /// <summary>
     /// Return the property or style (property overrides style)
     /// </summary>
     public T GetStyle<T>(PropertyKey<T> key)
@@ -254,6 +242,22 @@ public sealed class View
         return styledProperty;
     }
 
+    internal void RefreshCacheProperty<T>(PropertyKey<T> key)
+    {
+        var styledProperty = StyleManager.FindStyle(this, key);
+
+        // If cache did not change, no need to invalidate
+        if (_properties.TryGetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN),
+                out var styledValue) && styledValue is T typedStyledValue
+                && EqualityComparer<T>.Default.Equals(typedStyledValue, styledProperty))
+        {
+            return;
+        }
+
+        // Cache the new style property for quick lookup above
+        _properties.SetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN), styledProperty!);
+        SetFlags(key.Flags);
+    }
 
     /// <summary>
     /// Add an event to the property collection
@@ -280,65 +284,56 @@ public sealed class View
     /// </summary>
     public void Measure(Size available, MeasureContext measure)
     {
+        // No need to re-measure if the last measurement is still valid
+        var needsMeasure = Flags.HasFlag(ViewFlags.Measure);
+        var childNeedsMeasure = FlagsChild.HasFlag(ViewFlags.Measure);
+        if (!needsMeasure && !childNeedsMeasure && available == _measureCache.Avaliable)
+        {
+            return;
+        }
+
         // Quick exit if invisible
         _measureCache.IsVisible = GetStyle(Panel.IsVisible);
         if (!_measureCache.IsVisible)
             return;
 
-        // No need to re-measure if the last measurement is still valid
-        if ( ((Flags | FlagsChild) & ViewFlags.Measure) == ViewFlags.None
-            && available == _measureCache.AvaliableAtMeasure)
-        {
-            return;
-        }
-        
+        _measureCache.Avaliable = available;
         s_measureCount++;
-        _measureCache.AvaliableAtMeasure = available;
-        _measureCache.BackgroundColor = GetStyle(Panel.BackgroundColor);
-        _measureCache.BorderColor = GetStyle(Panel.BorderColor);
-        _measureCache.BorderWidth = GetStyle(Panel.BorderWidth);
-        _measureCache.BorderRadius = GetStyle(Panel.BorderRadius);
-        _measureCache.Clip = GetStyle(Panel.Clip);
 
         // Include padding and border in the measurement
         var margin = GetStyle(Panel.Margin).Or(0);
-        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(_measureCache.BorderWidth);
-
-        // Clamp to view size constraints, then deflate by padding
+        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(GetStyle(Panel.BorderWidth));
         var sizeRequest = GetStyle(Panel.SizeRequest);
         var sizeMin = GetStyle(Panel.SizeMin).Or(0).MaxZero;
         var sizeMax = GetStyle(Panel.SizeMax).Or(double.PositiveInfinity);
         var constrained = sizeRequest.Or(available.Deflate(margin)).Min(sizeMax).Max(sizeMin).Deflate(padding);
 
-        // Measure control content (default is a panel)
-        Size newDesiredContentSize;
-        if (Layout is Layoutable layout)
-            newDesiredContentSize = layout.MeasureView(this, measure, constrained);
-        else
-            newDesiredContentSize = LayoutPanel.MeasurePanel(this, measure, constrained);
+        // Measure children controls
+        var newDesiredContentSize = MeasureLayout(measure, constrained);
 
         // Desired total view size includes padding and border
-        var measured = newDesiredContentSize.Inflate(padding);
-
         // Clamp to view size constaints, then min(available)
-        measured = sizeRequest.Or(measured).Min(sizeMax).Max(sizeMin).Min(available);
+        var newDesiredTotalSize = sizeRequest.Or(newDesiredContentSize.Inflate(padding))
+            .Min(sizeMax).Max(sizeMin).Min(available).Inflate(margin).MaxZero;
 
-        if (double.IsNaN(measured.Width) || double.IsNaN(measured.Height))
+        if (double.IsNaN(newDesiredTotalSize.Width) || double.IsNaN(newDesiredTotalSize.Height))
             throw new InvalidOperationException("Received NAN in Measure");
-
-        var newDesiredTotalSize = measured.Inflate(margin).MaxZero;
-
 
         if (newDesiredContentSize != DesiredContentSize || newDesiredTotalSize != DesiredTotalSize)
         {
-            InvalidateDraw();
+            InvalidateRender();
+            DesiredContentSize = newDesiredContentSize;
+            DesiredTotalSize = newDesiredTotalSize;
         }
-
-        DesiredContentSize = newDesiredContentSize;
-        DesiredTotalSize = newDesiredTotalSize;
     }
 
-
+    Size MeasureLayout(MeasureContext measure, Size constrained)
+    {
+        if (Layout is Layoutable layout)
+            return layout.MeasureView(this, measure, constrained);
+        else
+            return LayoutPanel.MeasurePanel(this, measure, constrained);
+    }
 
     /// <summary>
     /// Called to set the Position and Size of the control within the parent.
@@ -373,7 +368,7 @@ public sealed class View
         var sizeMax = GetStyle(Panel.SizeMax).Or(double.PositiveInfinity);
         newSize = sizeRequest.Or(newSize).Min(sizeMax).Max(sizeMin);
 
-        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(_measureCache.BorderWidth);
+        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(GetStyle(Panel.BorderWidth));
         var newContentRect = new Rect(new Point(0, 0), newSize).Deflate(padding);
 
         switch (alignHor)
@@ -408,7 +403,7 @@ public sealed class View
                 || newSize != Size
                 || newContentRect != ContentRect)
         {
-            InvalidateDraw();
+            InvalidateRender();
         }
 
 
@@ -481,8 +476,8 @@ public sealed class View
             throw new InvalidOperationException("AddChild: AppWindow cannot be added to the view tree");
         child.Parent = this;
         _children.Add(child);
-        SetFlags(ViewFlags.Draw | ViewFlags.Measure);
-        child.SetFlags(ViewFlags.Draw | ViewFlags.Measure);
+        SetFlags(ViewFlags.Render | ViewFlags.Measure);
+        child.SetFlags(ViewFlags.Render | ViewFlags.Measure);
         if (AppWindow != null)
             SendAttachMessages(child);
     }
@@ -523,7 +518,7 @@ public sealed class View
             SendDetachMessages(child);
         _children.RemoveAt(index);
         child.Parent = null;
-        SetFlags(ViewFlags.Draw | ViewFlags.Measure);
+        SetFlags(ViewFlags.Render | ViewFlags.Measure);
     }
 
     /// <summary>
@@ -581,12 +576,12 @@ public sealed class View
     /// </summary>
     public bool CapturePointer
     {
-        get { return AppWindow?.PointerHover?.GetIsPointerCaptured(this) ?? false; }
+        get { return AppWindow?.Renderer?.PointerHover?.GetIsPointerCaptured(this) ?? false; }
         set
         {
             if (AppWindow is not AppWindow appWindow)
                 throw new InvalidOperationException("View is not attached to main tree");
-            appWindow?.PointerHover?.SetIsPointerCapture(this, value);
+            appWindow?.Renderer?.PointerHover?.SetIsPointerCapture(this, value);
         }
     }
 

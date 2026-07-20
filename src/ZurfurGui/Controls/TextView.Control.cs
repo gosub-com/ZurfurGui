@@ -1,7 +1,6 @@
 ﻿using ZurfurGui.Base;
 using ZurfurGui.Layout;
 using ZurfurGui.Property;
-using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
@@ -13,7 +12,7 @@ public partial class TextView : Controllable
     public TextView()
     {
         InitializeControl();
-        View.Draw = DrawText.Instance;
-        View.Layout = LayoutText.Instance;
+        View.Render = TextViewRenderer.Instance;
+        View.Layout = new LayoutText();
     }
 }

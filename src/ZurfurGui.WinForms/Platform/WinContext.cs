@@ -43,15 +43,13 @@ internal class WinContext : OsContext
     Pen? _pen;
     Font? _font;
     GraphicsPath _path = new();
-    Region _region = new();
+    Stack<Region> _regionStack = new();
 
     Color _fillColor = new Color(0, 0, 0);
     Color _strokeColor = new Color(0, 0, 0);
     double _lineWidth = 1;
     string _fontName = "Arial";
     double _fontSize = 16;
-    RectangleF _currentClip = new RectangleF(-1000000, -1000000, 2000000, 2000000);
-    List<RectangleF> _clipStack = new();
 
     Dictionary<int, string> _mashaledSrings = new();
 
@@ -93,7 +91,7 @@ internal class WinContext : OsContext
     }
 
 
-    void OsContext.DrawBuffer(OsDrawBuffer drawBuffer)
+    void OsContext.Present(OsRenderBuffer drawBuffer)
     {
         var buffer = drawBuffer.Commands;
         var length = drawBuffer.CommandsLength;
@@ -106,37 +104,37 @@ internal class WinContext : OsContext
             pc += paramCount + 1;
             switch (command)
             {
-                case OsDrawCommand.SetStrokeColorWidth:
+                case OsRenderCommand.SetStrokeColorWidth:
                     StrokeColor = Color.ParseCss(_mashaledSrings[(int)buffer[pi]]) ?? new Color(0, 0, 0);
                     LineWidth = buffer[pi + 1];
                     break;
-                case OsDrawCommand.SetFillColor:
+                case OsRenderCommand.SetFillColor:
                     FillColor = Color.ParseCss(_mashaledSrings[(int)buffer[pi]]) ?? new Color(0, 0, 0);
                     break;
-                case OsDrawCommand.SetFontNameSize:
+                case OsRenderCommand.SetFontNameSize:
                     FontName = _mashaledSrings[(int)buffer[pi]];
                     FontSize = buffer[pi + 1];
                     break;
-                case OsDrawCommand.FillRect:
+                case OsRenderCommand.FillRect:
                     FillRect(buffer[pi], buffer[pi + 1], buffer[pi + 2], buffer[pi + 3], buffer[pi + 4]);
                     break;
-                case OsDrawCommand.StrokeRect:
+                case OsRenderCommand.StrokeRect:
                     StrokeRect(buffer[pi], buffer[pi + 1], buffer[pi + 2], buffer[pi + 3], buffer[pi + 4]);
                     break;
-                case OsDrawCommand.FillText:
+                case OsRenderCommand.FillText:
                     var text = _mashaledSrings[(int)buffer[pi]];
                     FillText(text, buffer[pi + 1], buffer[pi + 2]);
                     break;
-                case OsDrawCommand.StrokePolyLine:
+                case OsRenderCommand.StrokePolyLine:
                     StrokePolyLine(drawBuffer.GetArray(pi, paramCount), paramCount);
                     break;
-                case OsDrawCommand.FillPolygon:
+                case OsRenderCommand.FillPolygon:
                     FillPolygon(drawBuffer.GetArray(pi, paramCount), paramCount);
                     break;
-                case OsDrawCommand.PushClip:
+                case OsRenderCommand.PushClip:
                     Clip(buffer[pi], buffer[pi + 1], buffer[pi + 2], buffer[pi + 3]);
                     break;
-                case OsDrawCommand.PopClip:
+                case OsRenderCommand.PopClip:
                     UnClip();
                     break;
                 default:
@@ -312,26 +310,21 @@ internal class WinContext : OsContext
     /// </summary>
     void Clip(double x, double y, double width, double height)
     {
-        _clipStack.Add(_currentClip);
-        _currentClip = new RectangleF((float)x, (float)y, (float)width, (float)height);
-
-        _region.MakeInfinite();
-        _region.Intersect(_currentClip);
-        _graphics.Clip = _region;
+        _regionStack.Push(_graphics.Clip);
+        var newRegion = _graphics.Clip.Clone();
+        newRegion.Intersect(new RectangleF((float)x, (float)y, (float)width, (float)height));
+        _graphics.Clip = newRegion;
     }
 
     void UnClip()
     {
-        _currentClip = new RectangleF(-1000000, -1000000, 2000000, 2000000);
-        if (_clipStack.Count > 0)
+        if (_regionStack.Count > 0)
         {
-            _currentClip = _clipStack[^1];
-            _clipStack.RemoveAt(_clipStack.Count - 1);
+            _graphics.Clip = _regionStack.Pop();
         }
-
-        _region.MakeInfinite();
-        _region.Intersect(_currentClip);
-        _graphics.Clip = _region;
-
+        else
+        {
+            Debug.Assert(false, "UnClip called without matching Clip");
+        }
     }
 }

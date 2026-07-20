@@ -15,8 +15,10 @@ public partial class DebugWindow : Controllable
     string _gc = "";
     double _fps = 0;
     double _totalMs = 0;
+    double _measureMs = 0;
     double _renderMs = 0;
-    double _drawMs = 0;
+    double _compositeMs = 0;
+    double _presentMs = 0;
 
     public DebugWindow()
     {
@@ -51,15 +53,21 @@ public partial class DebugWindow : Controllable
             _fps = (int)(s.FrameCount - _prevRenderStatsOneSecond.FrameCount);
             if (_fps > 0) 
             {
-                _totalMs = (s.TotalMs - _prevRenderStatsOneSecond.TotalMs) / _fps;
-                _renderMs = (s.RenderMs - _prevRenderStatsOneSecond.RenderMs) / _fps;
-                _drawMs = (s.DrawMs - _prevRenderStatsOneSecond.DrawMs) / _fps;
+                var diff = s - _prevRenderStatsOneSecond;
+
+                _totalMs = diff.TotalMs / _fps;
+                _measureMs = diff.MeasureMs / _fps;
+                _renderMs = diff.RenderMs / _fps;
+                _compositeMs = diff.CompositeMs / _fps;
+                _presentMs = diff.PresentMs / _fps;
             }
             else
             {
                 _totalMs = 0;
+                _measureMs = 0;
                 _renderMs = 0;
-                _drawMs = 0;
+                _compositeMs = 0;
+                _presentMs = 0;
             }
             _prevRenderStatsOneSecond = s;
         }
@@ -75,8 +83,9 @@ public partial class DebugWindow : Controllable
         var canvasStyleSize = _canvas.StyleSize;
         var rStatsDiff = stats - _prevRenderStats;
         TextLines text = [
-            $"FPS={_fps}, ms={_totalMs:F1} ({_renderMs:F1}, {_drawMs:F1}), Frames={stats.FrameCount}",
-            $"Measures={rStatsDiff.InvalidMeasureCount}, Draws={rStatsDiff.InvalidDrawCount}, Buffer={stats.DrawBufferLength}",
+            $"{stats.FrameCount}: {_fps}, ms={_totalMs:F1} ({_measureMs:F2}, {_renderMs:F2}, {_compositeMs:F2}, {_presentMs:F2})",
+            $"Measures={rStatsDiff.MeasureCount}, Renders={rStatsDiff.RenderCount}, Composites={rStatsDiff.CompositeCount}", 
+            $"Buffer={stats.PresentBufferLength}",
             //$"DPR={_window.DevicePixelRatio:F2}, CDS={canvasDeviceSize:F2}, CSS={canvasStyleSize:F2}",
             //$"WIS={_window.InnerSize}, DPS={_canvas.DevicePixelSize?.ToString() ?? "?"}",
             //$"Screen size: ({_window.ScreenSize}), focus={_canvas.HasFocus}",
@@ -84,10 +93,7 @@ public partial class DebugWindow : Controllable
             _gc,
         ];
 
-        // Don't Invalidate measure
-        _statsView.View.SetPropertyNoFlags(TextView.TextProperty, text);
-        _statsView.View.InvalidateDraw();
-        //_statsView.View.InvalidateMeasure();
+        _statsView.DataContext.Text = text;
         _prevRenderStats = renderer.Stats;
 
         _prevContextStatsFrame = cStatsNew;

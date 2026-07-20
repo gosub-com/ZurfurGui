@@ -2,26 +2,26 @@
 using ZurfurGui.Controls;
 
 namespace ZurfurGui.Render;
-public static class DrawHelper
+internal static class RenderHelper
 {
     const byte ALPHA_HIT_THRESHOLD = 16; // Must be visible to user before it's a hit
 
     /// <summary>
-    /// Draws a panel with a border & background.
+    /// Renders a panel with a border & background.
     /// </summary>
-    public static void DrawBackground(View view, RenderContext context)
+    public static void RenderBackground(View view, RenderContext context)
     {
-        // Draw background
-        var borderRadius = view._measureCache.BorderRadius;
-        var background = view._measureCache.BackgroundColor;
-        var borderWidth = Math.Min(view._measureCache.BorderWidth, Math.Min(view.Size.Width, view.Size.Height)/2);
+        // Render background
+        var borderRadius = view.GetStyle(Panel.BorderRadius);
+        var background = view.GetStyle(Panel.BackgroundColor);
+        var borderWidth = Math.Min(view.GetStyle(Panel.BorderWidth), Math.Min(view.Size.Width, view.Size.Height)/2);
         if (background.A != 0)
         {
             context.FillRect(background, new Rect(new(), view.Size).Deflate(borderWidth/2), borderRadius);
         }
 
-        // Draw border
-        var borderColor = view._measureCache.BorderColor;
+        // Render border
+        var borderColor = view.GetStyle(Panel.BorderColor);
         if (borderWidth > 0 && borderColor.A != 0)
         {
             context.StrokeRect(new Pen(borderColor, borderWidth), new Rect(new(), view.Size).Deflate(borderWidth/2), borderRadius);

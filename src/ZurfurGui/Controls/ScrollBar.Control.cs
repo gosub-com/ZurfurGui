@@ -31,7 +31,7 @@ public partial class ScrollBar : Controllable
     public ScrollBar()
     {
         InitializeControl();
-        View.Draw = new DrawScrollBar(this);
+        View.Render = new ScrollBarRenderer(this);
 
         // Subscribe to pointer events
         View.AddEvent(Panel.PointerDown, OnPointerDown);

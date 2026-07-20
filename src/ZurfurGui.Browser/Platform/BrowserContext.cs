@@ -20,8 +20,8 @@ internal partial class BrowserContext : OsContext
     [JSImport("globalThis.ZurfurGui.marshalString")]
     static partial void MarshalString(string? str, int index);
 
-    [JSImport("globalThis.ZurfurGui.drawBuffer")]
-    static partial void DrawBuffer(JSObject context, double[] buffer, int length);
+    [JSImport("globalThis.ZurfurGui.present")]
+    static partial void Present(JSObject context, double[] buffer, int length);
 
     JSObject _context;
 
@@ -48,9 +48,9 @@ internal partial class BrowserContext : OsContext
         MarshalString(str, index);
     }
 
-    void OsContext.DrawBuffer(OsDrawBuffer drawBuffer)
+    void OsContext.Present(OsRenderBuffer renderBuffer)
     {
-        DrawBuffer(_context, drawBuffer.Commands, drawBuffer.CommandsLength);
+        Present(_context, renderBuffer.Commands, renderBuffer.CommandsLength);
     }
 
 }

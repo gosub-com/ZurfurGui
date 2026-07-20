@@ -1,12 +1,12 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
-using ZurfurGui.Input;
 using ZurfurGui.Property;
+using ZurfurGui.Render;
 using ZurfurGui.Windows;
 
 
-namespace ZurfurGui.Render;
+namespace ZurfurGui.Input;
 
 /// <summary>
 /// Keep track of the pointer hover target and send pointer events
@@ -136,12 +136,12 @@ internal class PointerOver
         if (!view.GetProperty(Panel.DisableHitTest))
         {
             // User content hit test
-            if (view.Draw is Drawable renderable)
+            if (view.Render is Renderable renderable)
                 if (renderable.IsHit(view, targetOnDevice))
                     return view;
 
             // Panel hit test
-            if (DrawHelper.IsHitPanel(view, targetOnDevice))
+            if (RenderHelper.IsHitPanel(view, targetOnDevice))
                 return view;
         }
 

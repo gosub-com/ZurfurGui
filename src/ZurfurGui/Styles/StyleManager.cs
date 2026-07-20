@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
+﻿using System.Text.Json;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Property;
@@ -15,7 +9,6 @@ public static class StyleManager
 {
     static Dictionary<string, List<SelectorProperties>> s_styleSheetCache = new();
     record SelectorProperties(string Selector, Dictionary<string, string> Properties);
-
 
     /// <summary>
     /// Register a style sheet from its JSON source.
@@ -221,7 +214,7 @@ public static class StyleManager
         }
     }
 
-    static object ResolveThemeVariable(View view, PropertyKeyInfo propInfo, string variableExpression)
+    static object ResolveThemeVariable(View view, IPropertyKey propInfo, string variableExpression)
     {
         object? value = null;
 
@@ -259,7 +252,7 @@ public static class StyleManager
     // TBD: This will walk the theme chain
     static object? ResolveThemeVariablePartialWalk(
         View view, 
-        PropertyKeyInfo propInfo, 
+        IPropertyKey propInfo, 
         string variableName,
         object? partialValue)
     {
@@ -284,7 +277,7 @@ public static class StyleManager
     /// </summary>
     static object? ResolveThemeVariablePartial(
         View view,
-        PropertyKeyInfo propInfo,
+        IPropertyKey propInfo,
         string variableName,
         string theme,
         object? partialValue)

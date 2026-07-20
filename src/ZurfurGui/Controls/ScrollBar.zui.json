@@ -7,42 +7,42 @@
         "value": {
             "type": "Double",
             "bind": "data",
-            "flags": "draw"
+            "flags": "render"
         },
 
         // Minimum allowed value (typically 0)
         "minimum": {
             "type": "Double",
             "bind": "data",
-            "flags": "draw"
+            "flags": "render"
         },
 
         // Maximum allowed value (typically contentSize - viewportSize)
         "maximum": {
             "type": "Double",
             "bind": "data",
-            "flags": "draw",
+            "flags": "render",
             "default": "100"
         },
 
         // Size of the visible viewport (used to calculate thumb size)
         "viewportSize": {
             "type": "Double",
-            "flags": "draw",
+            "flags": "render",
             "bind": "data"
         },
 
         // Amount to scroll on wheel or arrow click
         "smallChange": {
             "type": "Double",
-            "flags": "draw",
+            "flags": "render",
             "bind": "data"
         },
 
         // Amount to scroll on track click (page up/down)
         "largeChange": {
             "type": "Double",
-            "flags": "draw",
+            "flags": "render",
             "bind": "data"
         },
 
@@ -51,7 +51,7 @@
             "type": "Orientation",
             "bind": "styledData",
             "default": "Orientation.horizontal",
-            "flags": "draw,measure"
+            "flags": "render,measure"
         },
 
         // Appearance properties (styled)
@@ -59,36 +59,36 @@
             "type": "Color",
             "bind": "styledOnly",
             "default": "new Color(128, 128, 128)",
-            "flags": "draw"
+            "flags": "render"
         },
         "trackColor": {
             "type": "Color",
             "bind": "styledOnly",
             "default": "new Color(220, 220, 220)",
-            "flags": "draw"
+            "flags": "render"
         },
         "thumbMinSize": {
             "type": "Double",
             "bind": "styledOnly",
             "default": "20.0",
-            "flags": "measure,draw"
+            "flags": "measure,render"
         },
         "borderColor": {
             "type": "Color",
             "bind": "styledOnly",
             "default": "new Color(160, 160, 160)",
-            "flags": "draw"
+            "flags": "render"
         },
         "borderWidth": {
             "type": "Double",
             "bind": "styledOnly",
             "default": "1.0",
-            "flags": "draw"
+            "flags": "render"
         },
         "thumbRadius": {
             "type": "Double",
             "bind": "styledOnly",
-            "flags": "draw"
+            "flags": "render"
         }
 
     },

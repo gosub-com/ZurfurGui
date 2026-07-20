@@ -4,11 +4,8 @@ using ZurfurGui.Platform;
 
 namespace ZurfurGui.Render;
 
-
 public class RenderContext
 {
-    static readonly Rect EMPTY_DEVICE_CLIP = new Rect(0, 0, double.MaxValue, double.MaxValue);
-
     public struct RenderContextStats
     {
         public long FillText;
@@ -34,11 +31,12 @@ public class RenderContext
     }
 
     RenderContextStats _stats;
-    OsContext _context;
-    OsDrawBuffer _drawBuffer;
+    MeasureContext _measureContext;
+    OsRenderBuffer _renderBuffer = new();
     int _pushedClips;
 
     public RenderContextStats RenderStats => _stats;
+    public MeasureContext MeasureContext => _measureContext;
 
     
     /// <summary>
@@ -46,16 +44,14 @@ public class RenderContext
     /// </summary>
     public Point PointerDevicePosition { get; private set; }
 
-    internal RenderContext(OsContext context, OsDrawBuffer drawBuffer)
+    internal RenderContext(MeasureContext measureContext)
     {
-        _context = context;
-        _drawBuffer = drawBuffer;
+        _measureContext = measureContext;
     }
 
-    public double MeasureTextWidth(string fontName, double fontSize, string text)
-    {
-        return _context.MeasureTextWidth(fontName, fontSize, text) * 0.001 * fontSize;
-    }
+    internal void ClearRenderBuffer() => _renderBuffer.Clear();
+
+    internal OsRenderBuffer CloneRenderBuffer() => _renderBuffer.Clone();
 
     internal void SetPointerPosition(Point devicePosition)
     {
@@ -70,12 +66,12 @@ public class RenderContext
         if (brush.Type != BrushType.Solid)
             throw new NotImplementedException("Only BrushType.Solid brushes are supported");
 
-        // Send to draw buffer
+        // Send to render buffer
         if (width > 0 && height > 0)
         {
             _stats.FillRect++;
-            _drawBuffer.SetFillColor(brush.Color);
-            _drawBuffer.FillRect(x, y, width, height, radius);
+            _renderBuffer.SetFillColor(brush.Color);
+            _renderBuffer.FillRect(x, y, width, height, radius);
         }
     }
 
@@ -87,12 +83,12 @@ public class RenderContext
         if (pen.Brush.Type != BrushType.Solid)
             throw new NotImplementedException("Only BrushType.Solid brushes are supported");
 
-        // Send to draw buffer
+        // Send to render buffer
         if (width > 0 && height > 0)
         {
             _stats.StrokeRect++;
-            _drawBuffer.SetStrokeColorWidth(pen.Brush.Color, pen.Thickness);
-            _drawBuffer.StrokeRect(x, y, width, height, radius);
+            _renderBuffer.SetStrokeColorWidth(pen.Brush.Color, pen.Thickness);
+            _renderBuffer.StrokeRect(x, y, width, height, radius);
         }
     }
 
@@ -104,11 +100,11 @@ public class RenderContext
         if (brush.Type != BrushType.Solid)
             throw new NotImplementedException("Only BrushType.Solid brushes are supported");
 
-        // Send to draw buffer
+        // Send to render buffer
         _stats.FillText++;
-        _drawBuffer.SetFillColor(brush.Color);
-        _drawBuffer.SetFontNameSize(font.Name, font.Size);
-        _drawBuffer.FillText(text, x, y);
+        _renderBuffer.SetFillColor(brush.Color);
+        _renderBuffer.SetFontNameSize(font.Name, font.Size);
+        _renderBuffer.FillText(text, x, y);
     }
 
     public void StrokePolyLine(Pen pen, ReadOnlySpan<double> points)
@@ -119,10 +115,10 @@ public class RenderContext
         if (pen.Brush.Type != BrushType.Solid)
             throw new NotImplementedException("Only BrushType.Solid brushes are supported");
 
-        // Send to draw buffer
+        // Send to render buffer
         _stats.StrokePolyLine++;
-        _drawBuffer.SetStrokeColorWidth(pen.Brush.Color, pen.Thickness);
-        _drawBuffer.StrokePolyLine(points);
+        _renderBuffer.SetStrokeColorWidth(pen.Brush.Color, pen.Thickness);
+        _renderBuffer.StrokePolyLine(points);
     }
 
     public void FillPolygon(Brush brush, ReadOnlySpan<double> points)
@@ -133,10 +129,10 @@ public class RenderContext
         if (brush.Type != BrushType.Solid)
             throw new NotImplementedException("Only BrushType.Solid brushes are supported");
 
-        // Send to draw buffer
+        // Send to render buffer
         _stats.FillPolygon++;
-        _drawBuffer.SetFillColor(brush.Color);
-        _drawBuffer.FillPolygon(points);
+        _renderBuffer.SetFillColor(brush.Color);
+        _renderBuffer.FillPolygon(points);
     }
 
     /// <summary>
@@ -147,7 +143,7 @@ public class RenderContext
     { 
         _stats.PushClips++;
         _pushedClips++;
-        _drawBuffer.Clip(clientClip.X, clientClip.Y, clientClip.Width, clientClip.Height);
+        _renderBuffer.Clip(clientClip.X, clientClip.Y, clientClip.Width, clientClip.Height);
     }
 
     /// <summary>
@@ -164,8 +160,8 @@ public class RenderContext
         _pushedClips--;
 
 
-        // Send to draw buffer
-        _drawBuffer.PopClip();
+        // Send to render buffer
+        _renderBuffer.PopClip();
     }
 
 

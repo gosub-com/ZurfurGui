@@ -2,7 +2,6 @@
     ".controller": "DebugWindow",
     ".namespace": "ZurfurGui.Windows",
     ".layout": "Column",
-    ".sizeRequest": "width:320",
     ".content": [
         {
             ".name": "_statsView",

@@ -1,9 +1,9 @@
 ﻿using ZurfurGui.Base;
-using ZurfurGui.Controls;
+using ZurfurGui.Render;
 
-namespace ZurfurGui.Render;
+namespace ZurfurGui.Controls;
 
-public class DrawText : Drawable
+internal class TextViewRenderer : Renderable
 {
     const double TEXT_BASELINE = 0.8; // Push text down so baseline is in correct place
     public const double LINE_SPACING = 1.2; // Additional space between lines
@@ -12,12 +12,11 @@ public class DrawText : Drawable
     /// <summary>
     /// Since there is no state, we can use a single instance for all text
     /// </summary>
-    public static readonly DrawText Instance = new();
+    public static readonly TextViewRenderer Instance = new();
 
-    public string DrawType => "Text";
-    public bool PromiseToDrawInsideControl => true;
+    public string RenderType => "Text";
 
-    public void Draw(View view, RenderContext context)
+    public void Render(View view, RenderContext context)
     {
         var color = view.GetStyle(TextView.ColorProperty);
         if (color.A == 0)

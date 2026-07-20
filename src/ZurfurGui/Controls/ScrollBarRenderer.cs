@@ -3,44 +3,42 @@ using ZurfurGui.Controls;
 
 namespace ZurfurGui.Render;
 
-public class DrawScrollBar : Drawable
+internal class ScrollBarRenderer : Renderable
 {
     readonly ScrollBar _control;
 
-    public DrawScrollBar(ScrollBar control)
+    public ScrollBarRenderer(ScrollBar control)
     {
         _control = control;
     }
 
-    public string DrawType => "ScrollBar";
+    public string RenderType => "ScrollBar";
 
-    public bool PromiseToDrawInsideControl => true;
-
-    public void Draw(View view, RenderContext context)
+    public void Render(View view, RenderContext context)
     {
         var data = _control.DataContext;
         var trackRect = new Rect(new(), view.Size);
         var orientationValue = view.GetStyle(ScrollBar.OrientationProperty);
 
-        // Draw track background
+        // Render track background
         var trackColor = view.GetStyle(ScrollBar.TrackColorProperty);
         context.FillRect(trackColor, trackRect);
 
-        // Draw border around track
+        // Render border around track
         var borderColor = view.GetStyle(ScrollBar.BorderColorProperty);
         var borderWidth = view.GetStyle(ScrollBar.BorderWidthProperty);
         context.StrokeRect(new Pen(borderColor, borderWidth), trackRect);
 
-        // Only draw thumb if scrollable
+        // Only render thumb if scrollable
         if (data.Maximum > data.Minimum)
         {
-            // Draw thumb with rounded corners
+            // Render thumb with rounded corners
             var thumbRect = _control.CalculateThumbRect();
             var thumbColor = view.GetStyle(ScrollBar.ThumbColorProperty);
             var thumbRadius = view.GetStyle(ScrollBar.ThumbRadiusProperty);
             context.FillRect(thumbColor, thumbRect, thumbRadius);
 
-            // Draw arrow triangles
+            // Render arrow triangles
             var startArrowRect = _control.GetStartArrowRect();
             var startArrowPoints = GetArrowTrianglePoints(startArrowRect, orientationValue, true);
             context.FillPolygon(new Brush(thumbColor), startArrowPoints);

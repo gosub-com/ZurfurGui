@@ -74,8 +74,8 @@ globalThis.ZurfurGui.marshalString = function (str, index) {
     }
 }
 
-// drawBuffer with persistent state in closure
-globalThis.ZurfurGui.drawBuffer = (function() {
+// present with persistent state in closure
+globalThis.ZurfurGui.present = (function() {
     // Persistent font state (private to this closure, like C# BrowserContext instance fields)
     let lastFillStyle = null;
     let lastStrokeStyle = null;

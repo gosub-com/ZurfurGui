@@ -18,17 +18,15 @@ namespace ZurfurGui.Windows;
 ///     
 /// Use View.AppWindow to get access to this object.
 /// </summary>
-public partial class AppWindow : Controllable, Drawable
+public partial class AppWindow : Controllable, Renderable
 {
     readonly bool DRAW_TEST_PATTERN = false;
 
     string _theme = "";
 
-    public string DrawType => "AppWindow";
-    public bool PromiseToDrawInsideControl => true;
+    public string RenderType => "AppWindow";
 
     public Renderer? Renderer { get; private set; }
-    internal PointerOver? PointerHover { get; private set; }
 
     /// <summary>
     /// Triggered before rendering each frame
@@ -39,7 +37,7 @@ public partial class AppWindow : Controllable, Drawable
     public AppWindow()
     {
         InitializeControl();
-        View.Draw = this;
+        View.Render = this;
     }
 
 
@@ -123,10 +121,9 @@ public partial class AppWindow : Controllable, Drawable
     /// <summary>
     /// Called by renderer so we can display some stats
     /// </summary>
-    internal void SetAppWindowGlobals(Renderer renderer, PointerOver pointerHover)
+    internal void SetAppWindowGlobals(Renderer renderer)
     {
         Renderer = renderer;
-        PointerHover = pointerHover;
     }
 
     public bool IsHit(View view, Point point)
@@ -134,7 +131,7 @@ public partial class AppWindow : Controllable, Drawable
         return false;
     }
 
-    public void Draw(View view, RenderContext context)
+    public void Render(View view, RenderContext context)
     {
         if (!DRAW_TEST_PATTERN)
             return;

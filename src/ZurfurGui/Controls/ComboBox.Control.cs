@@ -15,7 +15,7 @@ namespace ZurfurGui.Controls;
 /// </summary>
 public static partial class ComboBox
 {
-    public static readonly PropertyKey<Color> ScrimColor = new("ComboBox.scrimColor", typeof(ComboBox<>), new Color(0, 0, 0, 20), ViewFlags.Draw);
+    public static readonly PropertyKey<Color> ScrimColor = new("ComboBox.scrimColor", typeof(ComboBox<>), new Color(0, 0, 0, 20), ViewFlags.Render);
 }
 
 public sealed partial class ComboBox<Item> : Controllable

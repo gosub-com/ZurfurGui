@@ -1,24 +1,18 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using ZurfurGui.Base;
 
 namespace ZurfurGui.Property;
 
 public enum ViewFlags : short
 {
     None = 0,
-    Draw = 1 << 1,
-    Measure = 1 << 2,
-    StyleThis = 1 << 3,
-    StyleDown = 1 << 4,
+    Render = 1 << 1,
+    // Arrange = 1 << 2, // TBD: Implement this flag and InvaluidateArrange
+    Measure = 1 << 3,
+    StyleThis = 1 << 4,
+    StyleDown = 1 << 5,
 }
-
-/// <summary>
-/// Property key info
-/// </summary>
-public record class PropertyKeyInfo(PropertyKeyId Id, string Name, Type Type)
-{
-    public override string ToString() => Id.ToString();
-};
 
 /// <summary>
 /// Global cache of property keys
@@ -26,31 +20,30 @@ public record class PropertyKeyInfo(PropertyKeyId Id, string Name, Type Type)
 public static class PropertyKeys
 {
     static object _lock = new();
-    static List<PropertyKeyInfo> s_propertiesById = [];
-    static Dictionary<string, PropertyKeyInfo> s_propertiesByName = new() ;
+    static List<IPropertyKey> s_propertiesById = [];
+    static Dictionary<string, IPropertyKey> s_propertiesByName = new() ;
 
-    internal static PropertyKeyId Create(string name, Type type)
+    internal static PropertyKeyId Create(string name, IPropertyKey property)
     {
         lock (_lock)
         {
             if (s_propertiesByName.ContainsKey(name))
                 throw new ArgumentException($"The property '{name}' is already used");
             var id = new PropertyKeyId(s_propertiesById.Count);
-            var info = new PropertyKeyInfo(id, name, type);
-            s_propertiesByName[name] = info;
-            s_propertiesById.Add(info);
+            s_propertiesByName[name] = property;
+            s_propertiesById.Add(property);
             return id;
         }
     }
 
-    internal static PropertyKeyInfo? GetInfo(int id)
+    internal static IPropertyKey? GetInfo(int id)
     {
         if (id >= 0 && id < s_propertiesById.Count)
             return s_propertiesById[id];
         return null;
     }
 
-    public static PropertyKeyInfo? GetInfo(string name)
+    public static IPropertyKey? GetInfo(string name)
     {
         if (s_propertiesByName.TryGetValue(name, out var info))
             return info;
@@ -71,7 +64,7 @@ public readonly struct PropertyKeyId : IEquatable<PropertyKeyId>
         _id = id;
     }
 
-    public PropertyKeyInfo? Info => PropertyKeys.GetInfo(_id);
+    public IPropertyKey? Info => PropertyKeys.GetInfo(_id);
 
     public bool Equals(PropertyKeyId id) => _id == id._id;
     public override bool Equals(object? obj) => obj is PropertyKeyId id && Equals(id);
@@ -80,7 +73,7 @@ public readonly struct PropertyKeyId : IEquatable<PropertyKeyId>
     public override int GetHashCode() => _id;
     public override string ToString()
     {
-        if (Info is PropertyKeyInfo info)
+        if (Info is IPropertyKey info)
             return $"{_id}: '{info.Name}' is {info.Type}";
         return $"{_id}: (unknown)";
     }
@@ -89,27 +82,41 @@ public readonly struct PropertyKeyId : IEquatable<PropertyKeyId>
 
 }
 
+/// <summary>
+/// Info about a propert.  This cannot be implemented outside of this assembly.
+/// </summary>
+public interface IPropertyKey
+{
+    PropertyKeyId Id { get; }
+    string Name { get; }
+    Type Type { get; }
+    Type OwnerType { get; }
+    ViewFlags Flags { get; }
+    string ToString() => Id.ToString();
+    internal void RefreshCacheProperty(View view);
+}
+
 
 /// <summary>
 /// Statically typed property key, used to lookup property name.
 /// </summary>
-public class PropertyKey<T> : IEquatable<PropertyKey<T>>
+public class PropertyKey<T> : IEquatable<PropertyKey<T>>, IPropertyKey    
 {
     readonly PropertyKeyId _id;
-    public readonly string Name;
-    public readonly Type ValueType;
-    public readonly Type OwnerType;
-    public readonly T StyleDefault;
-    public ViewFlags Flags;
+    public string Name { get; }
+    public Type Type { get; }
+    public Type OwnerType { get; }
+    public T StyleDefault { get; }
+    public ViewFlags Flags { get; }
 
     public PropertyKey(string name, Type ownerType, T styleDefault, ViewFlags flags = ViewFlags.None)
     {
-        _id = PropertyKeys.Create(name, typeof(T));
         Name = name;
         Flags = flags;
-        ValueType = typeof(T);
+        Type = typeof(T);
         OwnerType = ownerType;
         StyleDefault = styleDefault;
+        _id = PropertyKeys.Create(name, this);
     }
 
 
@@ -124,6 +131,11 @@ public class PropertyKey<T> : IEquatable<PropertyKey<T>>
     public override string ToString()
     {
         return _id.ToString();
+    }
+
+    void IPropertyKey.RefreshCacheProperty(View view)
+    {
+        view.RefreshCacheProperty(this);
     }
 
 }
@@ -206,7 +218,7 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
     {
         if (value is null)
             throw new ArgumentNullException(nameof(value), "Use Remove instead of assigning null");
-        if (property.Info is PropertyKeyInfo info)
+        if (property.Info is IPropertyKey info)
         {
             // Check type if it's available
             if (info.Type is not null && info.Type.IsAssignableTo(typeof(Delegate)))

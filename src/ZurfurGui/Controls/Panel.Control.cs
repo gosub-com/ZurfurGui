@@ -29,10 +29,10 @@ public partial class Panel : Controllable
     public static readonly PropertyKey<bool> Clip = new(".clip", typeof(Panel), false, ViewFlags.Measure);
     public static readonly PropertyKey<PointProp> Offset = new(".offset", typeof(Panel), new(), ViewFlags.Measure);
     public static readonly PropertyKey<ThicknessProp> Padding = new(".padding", typeof(Panel), new(), ViewFlags.Measure);
-    public static readonly PropertyKey<Color> BackgroundColor = new(".backgroundColor", typeof(Panel), new(), ViewFlags.Draw);
-    public static readonly PropertyKey<Color> BorderColor = new(".borderColor", typeof(Panel), new(), ViewFlags.Draw);
+    public static readonly PropertyKey<Color> BackgroundColor = new(".backgroundColor", typeof(Panel), new(), ViewFlags.Render);
+    public static readonly PropertyKey<Color> BorderColor = new(".borderColor", typeof(Panel), new(), ViewFlags.Render);
     public static readonly PropertyKey<double> BorderWidth = new(".borderWidth", typeof(Panel), new(), ViewFlags.Measure);
-    public static readonly PropertyKey<double> BorderRadius = new(".borderRadius", typeof(Panel), new(), ViewFlags.Draw);
+    public static readonly PropertyKey<double> BorderRadius = new(".borderRadius", typeof(Panel), new(), ViewFlags.Render);
 
     // Style
     public static readonly PropertyKey<TextLines> Selectors = new(".selectors", typeof(Panel), new(), ViewFlags.StyleDown);

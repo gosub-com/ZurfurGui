@@ -23,7 +23,9 @@ public static partial class ZurfurMain
 
         app.SetMainappWindow(new FormQbfWinTest());
 
-        app.ShowWindow(new DebugWindow(), "Debug Window", location: new PointProp(10,10));
+        app.ShowWindow(new DebugWindow(), "Debug Window", 
+            location: new PointProp(10,10), sizeRequst: new SizeProp(360, null));
+
 
         app.ShowWindow(new FormQbfWinTest(), "Qbf Win Test",
             location: new PointProp(95,195), 
@@ -55,7 +57,7 @@ public static partial class ZurfurMain
             sizeRequst: new SizeProp(250, 280));
 
         app.ShowWindow(new FormTestComboBox(), "ComboBox Test",
-            location: new PointProp(20, 150)
+            location: new PointProp(30, 165)
             );
 
     }

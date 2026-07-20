@@ -95,7 +95,7 @@ internal class PropertiesJsonConverter : JsonConverter<Properties>
 
         foreach (var (key, propertyValue) in value)
         {
-            if (key.Info is PropertyKeyInfo info && info.Name != null && info.Type != null)
+            if (key.Info is IPropertyKey info && info.Name != null && info.Type != null)
             {
                 // Special handling for .dataProperties - expand inline instead of nesting
                 if (info.Name == ".dataProperties" && propertyValue is Dictionary<string, JsonElement> dataProps)
