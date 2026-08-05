@@ -12,6 +12,7 @@ public enum ViewFlags : short
     Measure = 1 << 3,
     StyleThis = 1 << 4,
     StyleDown = 1 << 5,
+    Dirty = 1 << 6,
 }
 
 /// <summary>

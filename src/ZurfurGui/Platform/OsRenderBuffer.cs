@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Text;
 using ZurfurGui.Base;
 using ZurfurGui.Collections;
+using ZurfurGui.Controls;
+using ZurfurGui.Render;
 
 namespace ZurfurGui.Platform;
 
@@ -203,6 +205,30 @@ public class OsRenderBuffer
     }
 
     /// <summary>
+    /// Appends a command, returns a span with the given number of parameters.
+    /// </summary>
+    private Span<double> AppendCommandSpan(OsRenderCommand command, int paramCount)
+    {
+        var s = AppendSpan(paramCount + 1);
+        s[0] = ((long)command << 32) + paramCount;
+        return s.Slice(1);
+    }
+
+    /// <summary>
+    /// Returns a span of the given count, resizing the underlying array if needed.
+    /// </summary>
+    Span<double> AppendSpan(int count)
+    {
+        while (_commands.Length < _commandsLength + count)
+            Array.Resize(ref _commands, Math.Max(4, _commands.Length * 2));
+
+        var s = _commands.AsSpan(_commandsLength, count);
+        _commandsLength += count;
+        return s;
+    }
+
+
+    /// <summary>
     /// Composite renderBuffer into this buffer, applying the given offset and scale to all coordinates.
     /// Convert string indices into stringCache LRU indices.
     /// </summary>
@@ -276,36 +302,123 @@ public class OsRenderBuffer
                     Debug.Assert(false);
                     break;
             }
-
-
         }
     }
 
 
     /// <summary>
-    /// Appends a command, returns a span with the given number of parameters.
+    /// Calculate the bounding rectangle of all drawn content in the buffer.
     /// </summary>
-    private Span<double> AppendCommandSpan(OsRenderCommand command, int paramCount)
+    public Rect MeasureBounds(MeasureContext measureContext)
     {
-        var s = AppendSpan(paramCount + 1);
-        s[0] = ((long)command << 32) + paramCount;
-        return s.Slice(1);
-    }
+        if (_commandsLength == 0)
+            return Rect.Empty;
 
+        var bounds = Rect.Empty;
+        var strokeWidth = 0.0;
+        var fontName = "";
+        var fontSize = 0.0;
+
+        var buffer = _commands.AsSpan(0, _commandsLength);
+        int pc = 0;
+        while (pc < buffer.Length)
+        {
+            var commandHeader = (long)buffer[pc];
+            var paramCount = (int)(commandHeader & 0xFFFFFFFF);
+            var command = (OsRenderCommand)(commandHeader >> 32);
+            var pi = pc + 1;
+            pc = pc + paramCount + 1;
+
+            switch (command)
+            {
+                case OsRenderCommand.SetStrokeColorWidth:
+                    strokeWidth = buffer[pi + 1];
+                    break;
+                case OsRenderCommand.SetFillColor:
+                    // No effect on bounds
+                    break;
+                case OsRenderCommand.SetFontNameSize:
+                    fontName = _strings[(int)buffer[pi]];
+                    fontSize = buffer[pi + 1];
+                    break;
+                case OsRenderCommand.FillRect:
+                    {
+                        var rect = new Rect(buffer[pi], buffer[pi + 1], buffer[pi + 2], buffer[pi + 3]);
+                        bounds = bounds.Union(rect);
+                    }
+                    break;
+                case OsRenderCommand.StrokeRect:
+                    {
+                        var rect = new Rect(buffer[pi], buffer[pi + 1], buffer[pi + 2], buffer[pi + 3]);
+                        rect = rect.Inflate(strokeWidth / 2);
+                        bounds = bounds.Union(rect);
+                    }
+                    break;
+                case OsRenderCommand.FillText:
+                    {
+                        var text = _strings[(int)buffer[pi]];
+                        var x = buffer[pi + 1];
+                        var y = buffer[pi + 2];
+                        var textWidth = measureContext.MeasureTextWidth(fontName, fontSize, text);
+                        var metrics = measureContext.GetFontMetrics(fontName, fontSize);
+                        // y is baseline, so rect extends from (y - ascent) to (y + descent)
+                        var rect = new Rect(x, y - metrics.Ascent, textWidth, metrics.Ascent + metrics.Descent);
+                        bounds = bounds.Union(rect);
+                    }
+                    break;
+                case OsRenderCommand.StrokePolyLine:
+                    {
+                        var rect = CalculatePointsBounds(buffer.Slice(pi, paramCount));
+                        if (!rect.IsEmpty)
+                            bounds = bounds.Union(rect.Inflate(strokeWidth / 2));
+                    }
+                    break;
+                case OsRenderCommand.FillPolygon:
+                    bounds = bounds.Union(CalculatePointsBounds(buffer.Slice(pi, paramCount)));
+                    break;
+                case OsRenderCommand.PushClip:
+                case OsRenderCommand.PopClip:
+                    // No effect on bounds
+                    break;
+                default:
+                    Debug.Assert(false);
+                    break;
+            }
+        }
+
+        return bounds;
+    }
     /// <summary>
-    /// Returns a span of the given count, resizing the underlying array if needed.
+    /// Calculate the bounding rectangle from a span of point coordinates (x, y pairs).
     /// </summary>
-    Span<double> AppendSpan(int count)
+    static Rect CalculatePointsBounds(ReadOnlySpan<double> points)
     {
-        while (_commands.Length < _commandsLength + count)
-            Array.Resize(ref _commands, Math.Max(4, _commands.Length * 2));
+        if (points.Length < 2)
+            return Rect.Empty;
 
-        var s = _commands.AsSpan(_commandsLength, count);
-        _commandsLength += count;
-        return s;
+        var minX = points[0];
+        var maxX = points[0];
+        var minY = points[1];
+        var maxY = points[1];
+
+        for (var i = 2; i < points.Length; i += 2)
+        {
+            var x = points[i];
+            var y = points[i + 1];
+            minX = Math.Min(minX, x);
+            maxX = Math.Max(maxX, x);
+            minY = Math.Min(minY, y);
+            maxY = Math.Max(maxY, y);
+        }
+
+        return new Rect(minX, minY, maxX - minX, maxY - minY);
     }
+
 
 }
+
+
+
 
 
 

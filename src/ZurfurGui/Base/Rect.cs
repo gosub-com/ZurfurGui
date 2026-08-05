@@ -31,15 +31,36 @@ public struct Rect : IEquatable<Rect>
     public Point Position => new Point(X, Y);
     public double Right => X + Width;
     public double Bottom => Y + Height;
+    public static Rect Empty => new Rect(0, 0, 0, 0);
 
     public bool Contains(Point p)
     {
-        return p.X >= X && p.X <= X + Width && p.Y >= Y && p.Y <= Y + Height;
+        if (IsEmpty)
+            return false;
+        return p.X >= X && p.X < X + Width && p.Y >= Y && p.Y < Y + Height;
     }
 
+    public bool IsEmpty => Width <= 0 || Height <= 0;
+
+    public Rect Union(Rect r)
+    {
+        if (IsEmpty && r.IsEmpty)
+            return Empty;
+        if (r.IsEmpty)
+            return this;
+        if (IsEmpty)
+            return r;
+        var newX = Math.Min(r.X, X);
+        var newY = Math.Min(r.Y, Y);
+        var newRight = Math.Max(r.Right, Right);
+        var newBottom = Math.Max(r.Bottom, Bottom);
+        return new Rect(newX, newY, newRight - newX, newBottom - newY);
+    }
 
     public Rect Intersect(Rect r)
     {
+        if (IsEmpty || r.IsEmpty)
+            return Empty;
         var newX = Math.Max(r.X, X);
         var newY = Math.Max(r.Y, Y);
         var newRight = Math.Min(r.Right, Right);
@@ -47,8 +68,30 @@ public struct Rect : IEquatable<Rect>
         var width = newRight - newX;
         var height = newBottom - newY;
         if (width <= 0 || height <= 0)
-            return new();
+            return Empty;
         return new Rect(newX, newY, width, height);
+    }
+
+    public Rect Normalize()
+    {
+        var x = X;
+        var y = Y;
+        var width = Width;
+        var height = Height;
+
+        if (width < 0)
+        {
+            x += width;
+            width = Math.Abs(width);
+        }
+
+        if (height < 0)
+        {
+            y += height;
+            height = Math.Abs(height);
+        }
+
+        return new Rect(x, y, width, height);
     }
 
     public Rect Inflate(double thickness)
@@ -58,7 +101,10 @@ public struct Rect : IEquatable<Rect>
 
     public Rect Inflate(Thickness thickness)
     {
-        return new Rect(new Point(X - thickness.Left, Y - thickness.Top), Size.Inflate(thickness));
+        var size = Size.Inflate(thickness);
+        if (size.IsEmpty())
+            return Empty;
+        return new Rect(new Point(X - thickness.Left, Y - thickness.Top), size);
     }
 
     public Rect Deflate(double thickness)
@@ -68,12 +114,15 @@ public struct Rect : IEquatable<Rect>
 
     public Rect Deflate(Thickness thickness)
     {
-        return new Rect(new Point(X + thickness.Left, Y + thickness.Top), Size.Deflate(thickness));
+        var size = Size.Deflate(thickness);
+        if (size.IsEmpty())
+            return Empty;
+        return new Rect(new Point(X + thickness.Left, Y + thickness.Top), size);
     }
 
     public Rect Move(Vector offset)
     {
-        return new Rect(Position + offset, Size);
+        return new Rect(X + offset.X, Y + offset.Y, Width, Height);
     }
 
 

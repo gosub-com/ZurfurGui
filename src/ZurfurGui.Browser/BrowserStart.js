@@ -63,6 +63,17 @@ globalThis.ZurfurGui.measureText = function (context, font, text) {
     return context.measureText(text);
 }
 
+globalThis.ZurfurGui.getFontMetrics = function (context, font) {
+    context.font = font;
+    // Measure using a string that has both ascenders and descenders
+    var metrics = context.measureText('Éygjpq|');
+    return {
+        ascent: metrics.fontBoundingBoxAscent,
+        descent: metrics.fontBoundingBoxDescent,
+        lineHeight: metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent
+    };
+}
+
 
 globalThis.ZurfurGui.marshaledStrings = [];
 

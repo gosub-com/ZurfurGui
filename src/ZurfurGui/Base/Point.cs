@@ -22,10 +22,9 @@ public struct Point : IEquatable<Point>
         return h.GetHashCode();
     }
     public Vector ToVector => new Vector(X, Y);
-    public static Point operator +(Point a, Vector b) => new Point(a.X+b.X, a.Y+b.Y);
+    public static Point operator +(Point a, Vector b) => new Point(a.X + b.X, a.Y + b.Y);
     public static Point operator +(Vector a, Point b) => new Point(a.X + b.X, a.Y + b.Y);
-    public static Vector operator -(Point a, Point b) => new Vector(a.X-b.X, a.Y-b.Y);
-    public static Point operator -(Vector a, Point b) => new Point(a.X - b.X, a.Y - b.Y);
+    public static Vector operator -(Point a, Point b) => new Vector(a.X - b.X, a.Y - b.Y);
     public static Point operator -(Point a, Vector b) => new Point(a.X - b.X, a.Y - b.Y);
     public static Point operator -(Point a) => new Point(-a.X, -a.Y);
     public static Point operator *(Point a, double scale) => new Point(a.X*scale, a.Y*scale);

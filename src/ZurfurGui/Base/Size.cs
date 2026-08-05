@@ -26,8 +26,6 @@ public struct Size : IEquatable<Size>
     public static Size operator +(Size a, Vector b) => new Size(a.Width+b.X, a.Height+b.Y);
     public static Size operator +(Vector a, Size b) => new Size(a.X + b.Width, a.Y + b.Height);
     public static Vector operator -(Size a, Size b) => new Vector(a.Width-b.Width, a.Height-b.Height);
-    public static Size operator -(Vector a, Size b) => new Size(a.X - b.Width, a.Y - b.Height);
-    public static Size operator -(Size a, Vector b) => new Size(a.Width - b.X, a.Height - b.Y);
     public static Size operator -(Size a) => new Size(-a.Width, -a.Height);
     public static Size operator *(Size a, double scale) => new Size(a.Width*scale, a.Height*scale);
     public static Size operator *(double scale, Size b) => new Size(scale*b.Width, scale*b.Height);
@@ -35,6 +33,8 @@ public struct Size : IEquatable<Size>
     public static Size operator /(double scale, Size b) => new Size(scale/b.Width, scale/b.Height);
 
     public Size MaxZero => new Size(Math.Max(Width, 0), Math.Max(Height, 0));
+    public bool IsEmpty() => Width <= 0 || Height <= 0;
+    public static Size Empty => new Size(0, 0);
 
     public Size Min(Size s)
     {
