@@ -1,14 +1,24 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Controls;
 using ZurfurGui.Layout;
+using ZurfurGui.Platform;
 using ZurfurGui.Property;
 using ZurfurGui.Render;
-using ZurfurGui.Windows;
 using ZurfurGui.Styles;
-using ZurfurGui.Platform;
+using ZurfurGui.Windows;
 
 namespace ZurfurGui.Base;
 
+public enum ViewFlags : short
+{
+    None = 0,
+    Render = 1 << 1,
+    Measure = 1 << 3,
+    Style = 1 << 4,
+    StyleDown = 1 << 5,
+    Dirty = 1 << 6,
+    DirtyDown = 1 << 7,
+}
 
 public sealed class View
 {
@@ -70,24 +80,36 @@ public sealed class View
     public Rect ContentRect { get; private set; }
 
     /// <summary>
-    /// Position of view within parent as caluclated by the arrange pass.
+    /// Position of view within parent as calculated by the arrange pass.
     /// </summary>
     public Point Position { get; private set; }
 
     /// <summary>
-    /// Size of view as caluclated by the arrange pass.
+    /// Size of view in parent as calculated by the arrange pass.
     /// </summary>
     public Size Size { get; private set; }
 
     /// <summary>
-    /// Location of view in device pixels as calculated by the post arrange pass.
+    /// Location of view in device pixels as calculated by the arrange pass.
     /// </summary>
     public Point Origin { get; private set; }
 
     /// <summary>
-    /// Scale of view, relative to device pixels as calculated by the post arrange pass.
+    /// Location and size of view in device pixels as calculated by the arrange pass.
+    /// </summary>
+    public Rect OriginRect => new Rect(Origin, toDevice(Size));
+
+    /// <summary>
+    /// Scale of view, relative to device pixels as calculated by the arrange pass.
     /// </summary>
     public double Scale { get; private set; } = 1;
+
+    /// <summary>
+    /// Visual rectangle bounds in view coordinates, set immediately after rendering.
+    /// This includes only what is rendered by the control itself (including background),
+    /// but not any child views. 
+    /// </summary>
+    public Rect VisualBounds { get; internal set; }
 
     public ViewFlags Flags { get; internal set; }
     public ViewFlags FlagsChild { get; internal set; }
@@ -100,12 +122,13 @@ public sealed class View
 
     internal struct MeasureCache
     {
-        public bool IsVisible;
         public Size Avaliable;
 
         public Rect FinalAtArrange;
         public Point OriginAtArrange;
         public double ScaleAtArrange;
+        public Rect VisualDeviceBoundsAtLastRender;
+        public bool VisibleAtLastRender;
     }
 
 
@@ -128,6 +151,35 @@ public sealed class View
     }
 
     public string Name => GetProperty(Panel.Name) ?? "";
+
+
+    /// <summary>
+    /// Alias for GetStyle(Panel.IsVisible)
+    /// </summary>
+    public bool IsVisible
+    {
+        get => GetStyle(Panel.IsVisible);
+        set => SetProperty(Panel.IsVisible, value);
+    }
+
+    /// <summary>
+    /// Returns TRUE if this view is visible, and all views to the root are visible
+    /// </summary>
+    public bool IsEffectivelyVisible
+    {
+        get
+        {
+            var view = this;
+            while (view != null)
+            {
+                if (!view.IsVisible)
+                    return false;
+                view = view.Parent;
+            }
+            return true;
+        }
+    }
+
 
     /// <summary>
     /// Call when a view's measurement becomes invalid and needs to be re-measured.
@@ -162,21 +214,16 @@ public sealed class View
         }
     }
 
-
-    /// <summary>
-    /// Invalidate the style cache for this view and all descendants, forcing a full re-style on the next frame.
-    /// Call this when the global theme or active style sheets change.
-    /// </summary>
-    internal void InvalidateStyleTree()
-    {
-        SetFlags(ViewFlags.StyleDown);
-    }
-
     /// <summary>
     /// Set the view flags (e.g. InvalidateMeasure, InvalidateRender, InvalidateStyle).  
     /// </summary>
     public void SetFlags(ViewFlags flags)
     {
+        if ((flags & Flags) == flags)
+        {
+            return;
+        }
+
         Flags |= flags;
         var view = Parent;
         while (view != null && (view.FlagsChild & flags) != flags)
@@ -201,8 +248,9 @@ public sealed class View
 
     public void SetProperty<T>(PropertyKey<T> key, T value)
     {
-        if (GetProperty(key) is T oldValue && oldValue.Equals(value))
+        if (_properties.TryGet(key, out var oldValueMaybeNull) && oldValueMaybeNull is T oldValue && oldValue.Equals(value))
             return;
+
         SetFlags(key.Flags);
         _properties.Set(key, value);
         _properties.RemoveById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN));
@@ -293,9 +341,12 @@ public sealed class View
         }
 
         // Quick exit if invisible
-        _measureCache.IsVisible = GetStyle(Panel.IsVisible);
-        if (!_measureCache.IsVisible)
+        if (!IsVisible)
+        {
+            DesiredContentSize = Size.Empty;
+            DesiredTotalSize = Size.Empty;
             return;
+        }
 
         _measureCache.Avaliable = available;
         s_measureCount++;
@@ -318,6 +369,8 @@ public sealed class View
 
         if (double.IsNaN(newDesiredTotalSize.Width) || double.IsNaN(newDesiredTotalSize.Height))
             throw new InvalidOperationException("Received NAN in Measure");
+        if (double.IsInfinity(newDesiredTotalSize.Width) || double.IsInfinity(newDesiredTotalSize.Height))
+            throw new InvalidOperationException("Received Infinity in Measure");
 
         if (newDesiredContentSize != DesiredContentSize || newDesiredTotalSize != DesiredTotalSize)
         {
@@ -342,25 +395,20 @@ public sealed class View
     public void Arrange(Rect final, MeasureContext measure)
     {
         // Quick exit if invisible
-        if (!_measureCache.IsVisible)
+        if (!IsVisible)
             return;
 
         var margin = GetStyle(Panel.Margin).Or(0);
         var availableSize = final.Size.Deflate(margin);
-
-        var x = final.X + margin.Left;
-        var y = final.Y + margin.Top;
-        var newSize = availableSize;
-
         var align = GetStyle(Panel.Align);
-        var alignHor = align.Horizontal ?? AlignHorizontal.Stretch;
-        var alignVert = align.Vertical ?? AlignVertical.Stretch;
+        var alignHorizontal = align.Horizontal ?? AlignHorizontal.Stretch;
+        var alignVertical = align.Vertical ?? AlignVertical.Stretch;
 
-        if (alignHor != AlignHorizontal.Stretch)
-            newSize.Width = Math.Min(newSize.Width, DesiredTotalSize.Width - margin.Left - margin.Right);
-
-        if (alignVert != AlignVertical.Stretch)
-            newSize.Height = Math.Min(newSize.Height, DesiredTotalSize.Height - margin.Top - margin.Bottom);
+        var newSize = availableSize;
+        if (alignHorizontal != AlignHorizontal.Stretch || double.IsInfinity(availableSize.Width))
+            newSize.Width = Math.Min(availableSize.Width, DesiredTotalSize.Width - margin.Left - margin.Right);
+        if (alignVertical != AlignVertical.Stretch || double.IsInfinity(availableSize.Height))
+            newSize.Height = Math.Min(availableSize.Height, DesiredTotalSize.Height - margin.Top - margin.Bottom);
 
         // Clamp to view size constraints
         var sizeRequest = GetStyle(Panel.SizeRequest);
@@ -369,27 +417,44 @@ public sealed class View
         newSize = sizeRequest.Or(newSize).Min(sizeMax).Max(sizeMin);
 
         var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(GetStyle(Panel.BorderWidth));
-        var newContentRect = new Rect(new Point(0, 0), newSize).Deflate(padding);
+        var newContentRect = new Rect(0, 0, newSize.Width, newSize.Height).Deflate(padding);
 
-        switch (alignHor)
+        // Calculate position offsets based on layout bounds
+        var x = final.X + margin.Left;
+        switch (alignHorizontal)
         {
             case AlignHorizontal.Center:
-            case AlignHorizontal.Stretch:
-                x += (availableSize.Width - newSize.Width) / 2;
+                if (!double.IsPositiveInfinity(availableSize.Width))
+                    x += (availableSize.Width - newSize.Width) / 2;
                 break;
+
+            case AlignHorizontal.Stretch:
+                if (!double.IsPositiveInfinity(availableSize.Width) && availableSize.Width >= newSize.Width)
+                    x += (availableSize.Width - newSize.Width) / 2;
+                break;
+
             case AlignHorizontal.Right:
-                x += availableSize.Width - newSize.Width;
+                if (!double.IsPositiveInfinity(availableSize.Width))
+                    x += availableSize.Width - newSize.Width;
                 break;
         }
 
-        switch (alignVert)
+        var y = final.Y + margin.Top;
+        switch (alignVertical)
         {
             case AlignVertical.Center:
-            case AlignVertical.Stretch:
-                y += (availableSize.Height - newSize.Height) / 2;
+                if (!double.IsPositiveInfinity(availableSize.Height))
+                    y += (availableSize.Height - newSize.Height) / 2;
                 break;
+
+            case AlignVertical.Stretch:
+                if (!double.IsPositiveInfinity(availableSize.Height) && availableSize.Height >= newSize.Height)
+                    y += (availableSize.Height - newSize.Height) / 2;
+                break;
+
             case AlignVertical.Bottom:
-                y += availableSize.Height - newSize.Height;
+                if (!double.IsPositiveInfinity(availableSize.Height))
+                    y += availableSize.Height - newSize.Height;
                 break;
         }
 
@@ -406,12 +471,9 @@ public sealed class View
             InvalidateRender();
         }
 
-
         ContentRect = newContentRect;
         Size = newSize;
         Position = newPosition;
-
-
 
         // No need to re-arrange children if nothing changed
         if (((Flags | FlagsChild) & ViewFlags.Measure) == ViewFlags.None
@@ -422,12 +484,14 @@ public sealed class View
             return;
         }
 
+        if (Origin != newOrigin || Scale != newScale)
+            SetFlags(ViewFlags.Dirty);
+
         _measureCache.FinalAtArrange = final;
         _measureCache.ScaleAtArrange = newScale;
         _measureCache.OriginAtArrange = newOrigin;
         Scale = newScale;
         Origin = newOrigin;
-
 
         // Arrange child views
         if (Layout is Layoutable layout)
@@ -476,8 +540,9 @@ public sealed class View
             throw new InvalidOperationException("AddChild: AppWindow cannot be added to the view tree");
         child.Parent = this;
         _children.Add(child);
-        SetFlags(ViewFlags.Render | ViewFlags.Measure);
-        child.SetFlags(ViewFlags.Render | ViewFlags.Measure);
+        SetFlags(ViewFlags.Render | ViewFlags.Measure | ViewFlags.Dirty);
+        child.Flags = ViewFlags.None;
+        child.SetFlags(ViewFlags.Render | ViewFlags.Measure | ViewFlags.DirtyDown | ViewFlags.StyleDown);
         if (AppWindow != null)
             SendAttachMessages(child);
     }
@@ -515,10 +580,25 @@ public sealed class View
         var child = _children[index];
         Debug.Assert(child.Parent == this);
         if (child.AppWindow != null)
+        {
+            if (child.IsEffectivelyVisible)
+                ExpandRemovedChildDirtyRect(child);
             SendDetachMessages(child);
+        }
         _children.RemoveAt(index);
         child.Parent = null;
-        SetFlags(ViewFlags.Render | ViewFlags.Measure);
+    }
+
+    static void ExpandRemovedChildDirtyRect(View view)
+    {
+        if (view.IsVisible)
+        {
+            Renderer.s_removedChildDirtyRectDevice = Renderer.s_removedChildDirtyRectDevice.Union(view.toDevice(view.VisualBounds));
+            foreach (var child in view.Children)
+                ExpandRemovedChildDirtyRect(child);
+
+        }
+        return;
     }
 
     /// <summary>
@@ -548,6 +628,7 @@ public sealed class View
             throw new ArgumentException("BringToFront: Parent does not contain this view");
         parent._children.RemoveAt(i);
         parent._children.Add(this);
+        SetFlags(ViewFlags.DirtyDown);
     }
 
 

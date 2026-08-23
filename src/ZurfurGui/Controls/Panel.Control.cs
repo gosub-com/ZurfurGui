@@ -40,12 +40,12 @@ public partial class Panel : Controllable
     public static readonly PropertyKey<Properties[]> Styles = new(".styles", typeof(Panel), Array.Empty<Properties>(), ViewFlags.StyleDown);
 
     // Pseudo classes
-    public static readonly PropertyKey<bool> IsPointerOver = new(".isPointerOver", typeof(Panel), new(), ViewFlags.StyleThis);
+    public static readonly PropertyKey<bool> IsPointerOver = new(".isPointerOver", typeof(Panel), new(), ViewFlags.Style);
     public static readonly PropertyKey<bool> IsEnabled = new(".isEnabled", typeof(Panel), new(), ViewFlags.StyleDown);
     public static readonly PropertyKey<bool> IsWindowActive = new(".isWindowInactive", typeof(Panel), new(), ViewFlags.StyleDown);
-    public static readonly PropertyKey<bool> IsPressed = new(".isPressed", typeof(Panel), new(), ViewFlags.StyleThis);
-    public static readonly PropertyKey<bool> IsFocused = new(".isFocused", typeof(Panel), new(), ViewFlags.StyleThis);
-    public static readonly PropertyKey<bool> IsFocusWithin = new(".isFocusWithin", typeof(Panel), new(), ViewFlags.StyleThis);
+    public static readonly PropertyKey<bool> IsPressed = new(".isPressed", typeof(Panel), new(), ViewFlags.Style);
+    public static readonly PropertyKey<bool> IsFocused = new(".isFocused", typeof(Panel), new(), ViewFlags.Style);
+    public static readonly PropertyKey<bool> IsFocusWithin = new(".isFocusWithin", typeof(Panel), new(), ViewFlags.Style);
 
     // Common UI interaction
     public static readonly PropertyKey<bool> DisableHitTest = new(".disableHitTest", typeof(Panel), new());

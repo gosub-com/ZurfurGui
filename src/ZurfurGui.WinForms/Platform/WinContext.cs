@@ -90,6 +90,27 @@ internal class WinContext : OsContext
         return textWidth + _fontSize * TEXT_OFFSET_SCALE_X;
     }
 
+    ZurfurGui.Base.FontMetrics OsContext.GetFontMetrics(string fontName, double fontSize)
+    {
+        if (fontName != _fontName || fontSize != _fontSize)
+        {
+            _fontName = fontName;
+            _fontSize = fontSize;
+            _font = null;
+        }
+
+        var font = GetFont();
+        var fontFamily = font.FontFamily;
+        var emHeight = fontFamily.GetEmHeight(font.Style);
+
+        // Convert design units to pixels
+        var ascent = fontFamily.GetCellAscent(font.Style) * fontSize / emHeight;
+        var descent = fontFamily.GetCellDescent(font.Style) * fontSize / emHeight;
+        var lineSpacing = fontFamily.GetLineSpacing(font.Style) * fontSize / emHeight;
+
+        return new ZurfurGui.Base.FontMetrics(ascent, descent, lineSpacing);
+    }
+
 
     void OsContext.Present(OsRenderBuffer drawBuffer)
     {

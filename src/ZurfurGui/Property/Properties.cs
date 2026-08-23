@@ -4,16 +4,6 @@ using ZurfurGui.Base;
 
 namespace ZurfurGui.Property;
 
-public enum ViewFlags : short
-{
-    None = 0,
-    Render = 1 << 1,
-    // Arrange = 1 << 2, // TBD: Implement this flag and InvaluidateArrange
-    Measure = 1 << 3,
-    StyleThis = 1 << 4,
-    StyleDown = 1 << 5,
-}
-
 /// <summary>
 /// Global cache of property keys
 /// </summary>

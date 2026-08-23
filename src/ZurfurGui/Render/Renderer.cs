@@ -5,13 +5,22 @@ using ZurfurGui.Collections;
 using ZurfurGui.Controls;
 using ZurfurGui.Input;
 using ZurfurGui.Platform;
-using ZurfurGui.Property;
 using ZurfurGui.Windows;
 
 namespace ZurfurGui.Render;
 
 public class Renderer
 {
+    private static readonly bool DRAW_DIRTY_RECT = false;
+    private static readonly bool DIRTY_RECT_ENABLE = true;
+
+
+    /// <summary>
+    /// Updated by View.ExpandRemovedChildDirtyRect to track removed view dirty rectangles
+    /// </summary>
+    internal static Rect s_removedChildDirtyRectDevice;
+
+
     OsWindow _window;
     OsCanvas _canvas;
     AppWindow _appWindow;
@@ -27,8 +36,6 @@ public class Renderer
         public long MeasureCount;
         public long RenderCount;
         public long CompositeCount;
-        public long StyleFrameCount;
-
         public double TotalMs;
         public double MeasureMs;
         public double RenderMs;
@@ -44,7 +51,6 @@ public class Renderer
                 MeasureCount = a.MeasureCount - b.MeasureCount,
                 RenderCount = a.RenderCount - b.RenderCount,
                 CompositeCount = a.CompositeCount - b.CompositeCount,
-                StyleFrameCount = a.StyleFrameCount - b.StyleFrameCount,
                 TotalMs = a.TotalMs - b.TotalMs,
                 MeasureMs = a.MeasureMs - b.MeasureMs,
                 RenderMs = a.RenderMs - b.RenderMs,
@@ -104,19 +110,28 @@ public class Renderer
         _appWindow.CallPreRenderFrame();
 
         // Measure
-        InvalidateStyles(appView);
+        InvalidateFlagsDown(appView, ViewFlags.None);
         appView.Measure(_mainWindowSize, _measureContext);
         appView.Arrange(new Rect(new(0, 0), _mainWindowSize), _measureContext);
-        ClearFlag(appView, ViewFlags.Measure);
 
         // Render
         var renderStartTime = timer.Elapsed.TotalMilliseconds;
-        RenderView(appView);
+        var dirtyRect = s_removedChildDirtyRectDevice;
+        s_removedChildDirtyRectDevice = Rect.Empty;
+        RenderView(appView, appView.toDevice(appView.ContentRect), ref dirtyRect);
 
         // Composite
         var compositeStartTime = timer.Elapsed.TotalMilliseconds;
-        _presentBuffer.Clear();
-        Composite(appView, appView.toDevice(appView.ContentRect));
+        CompositeMain(appView, appView.toDevice(appView.ContentRect), dirtyRect);
+
+        // Draw invalid rect outline
+        if (DRAW_DIRTY_RECT && !dirtyRect.IsEmpty)
+        {
+            var dirtyRectOutline = new OsRenderBuffer();
+            dirtyRectOutline.SetStrokeColorWidth(Colors.Red, 3);
+            dirtyRectOutline.StrokeRect(dirtyRect.X, dirtyRect.Y, dirtyRect.Width, dirtyRect.Height, 5);
+            _presentBuffer.Composite(dirtyRectOutline, _stringCache, new Point(0, 0), 1);
+        }
 
         // Present
         var presentTimeStart = timer.Elapsed.TotalMilliseconds;
@@ -160,80 +175,78 @@ public class Renderer
         }
     }
 
-    private void InvalidateStyles(View appView)
+    void InvalidateFlagsDown(View view, ViewFlags nukeFlags)
     {
-        if (((appView.Flags | appView.FlagsChild) & (ViewFlags.StyleThis | ViewFlags.StyleDown)) != ViewFlags.None)
-        {
-            _stats.StyleFrameCount++;
-            InvalidateStyle(appView, false);
-        }
-    }
+        nukeFlags = (nukeFlags | view.Flags) & (ViewFlags.StyleDown | ViewFlags.DirtyDown);
 
-    void InvalidateStyle(View view, bool nukem)
-    {
-        if (view.Flags.HasFlag(ViewFlags.StyleDown))
-            nukem = true;
-        var needsClearCache = nukem || view.Flags.HasFlag(ViewFlags.StyleThis);
-        var needsChildTraverse = nukem || (view.FlagsChild & (ViewFlags.StyleThis | ViewFlags.StyleDown)) != ViewFlags.None;
-        
-        view.Flags &= ~(ViewFlags.StyleThis | ViewFlags.StyleDown);
-        view.FlagsChild &= ~(ViewFlags.StyleThis | ViewFlags.StyleDown);
-
-        if (needsClearCache)
-        {
+        // Invalidate style cache
+        if (nukeFlags.HasFlag(ViewFlags.StyleDown) || view.Flags.HasFlag(ViewFlags.Style))
             view.InvalidateStyleCacheInternal();
-        }
+
+        if (nukeFlags.HasFlag(ViewFlags.DirtyDown))
+            view.SetFlags(ViewFlags.Dirty);
+
+
+        if (!view.IsVisible)
+            return;
+
+
+        var needsChildTraverse = nukeFlags != ViewFlags.None 
+            || (view.FlagsChild & (ViewFlags.Style | ViewFlags.StyleDown)) != ViewFlags.None
+            || (view.FlagsChild & (ViewFlags.Dirty | ViewFlags.DirtyDown)) != ViewFlags.None;
 
         if (needsChildTraverse)
             foreach (var child in view.Children)
-                InvalidateStyle(child, nukem);
+                InvalidateFlagsDown(child, nukeFlags);
     }
-
-    static void ClearFlag(View view, ViewFlags flags)
-    {
-        view.Flags &= ~flags;
-        if (view.FlagsChild.HasFlag(flags))
-        {
-            view.FlagsChild &= ~flags;
-            foreach (var child in view.Children)
-                ClearFlag(child, flags);
-        }
-    }
-
 
     /// <summary>
-    /// Render the view tree into the internal view's cache buffers (_renderOver, etc.)
+    /// Render the view tree into the internal view's cache buffers (_renderOver, etc.).
+    /// Update the dirty rectangles.
     /// </summary>
-    void RenderView(View view)
+    void RenderView(View view, Rect deviceClip, ref Rect dirtyRect)
     {
         // Quick exit for invisible
-        if (!view._measureCache.IsVisible)
+        if (!view.IsVisible)
+        {
+            if (view._measureCache.VisibleAtLastRender)
+                UpdateInvisibleDirtyRect(view, ref dirtyRect);
+            view._measureCache.VisibleAtLastRender = false;
             return;
+        }
+        view._measureCache.VisibleAtLastRender = true;
+
+        if (view.GetStyle(Panel.Clip))
+            deviceClip = deviceClip.Intersect(view.toDevice(view.ContentRect));
 
         var needsRender = view.Flags.HasFlag(ViewFlags.Render);
-        var childNeedsRender = view.FlagsChild.HasFlag(ViewFlags.Render);
-
-        view.Flags = ViewFlags.None;
-        view.FlagsChild = ViewFlags.None;
-
+        var dirtyVisualRect = view.Flags.HasFlag(ViewFlags.Dirty);
         var renderer = view.Render;
-        _renderContext.ClearRenderBuffer();
+        var newVisualRect = Rect.Empty;
 
         if (needsRender)
         {
             // Render background
             _stats.RenderCount++;
+            _renderContext.ClearRenderBuffer();
             RenderHelper.RenderBackground(view, _renderContext);
+                       
+            // Call user render function
             if (renderer is not null)
+            {
                 renderer.Render(view, _renderContext);
-            _renderContext.FlushClips();
+                _renderContext.FlushClips();
+            }
             view._renderUnderBuffer = _renderContext.CloneRenderBuffer();
+            newVisualRect = newVisualRect.Union(view._renderUnderBuffer.MeasureBounds(_measureContext));
         }
 
-        if (childNeedsRender)
+        // Recurse down the tree if any child needs render or dirty visual rect
+        if (view.FlagsChild.HasFlag(ViewFlags.Render)
+            || view.FlagsChild.HasFlag(ViewFlags.Dirty))
         {
             foreach (var child in view.Children)
-                RenderView(child);
+                RenderView(child, deviceClip, ref dirtyRect);
         }
 
         if (needsRender)
@@ -241,46 +254,109 @@ public class Renderer
             // Render foreground
             _renderContext.ClearRenderBuffer();
             if (renderer is not null)
+            {
                 renderer.RenderOver(view, _renderContext);
-            _renderContext.FlushClips();
-            view._renderOverBuffer = _renderContext.CloneRenderBuffer();
+                _renderContext.FlushClips();
+                view._renderOverBuffer = _renderContext.CloneRenderBuffer();
+                newVisualRect = newVisualRect.Union(view._renderOverBuffer.MeasureBounds(_measureContext));
+            }
+        }
+
+        if (needsRender || dirtyVisualRect)
+        {
+            // Dirty the old device rect
+            dirtyRect = dirtyRect.Union(view._measureCache.VisualDeviceBoundsAtLastRender.Intersect(deviceClip));
+
+            // Update visual bounds
+            if (needsRender)
+                view.VisualBounds = newVisualRect;
+
+            // Dirty the new device rect
+            view._measureCache.VisualDeviceBoundsAtLastRender = view.toDevice(view.VisualBounds);
+            dirtyRect = dirtyRect.Union(view._measureCache.VisualDeviceBoundsAtLastRender.Intersect(deviceClip));
         }
     }
 
+    void UpdateInvisibleDirtyRect(View view, ref Rect dirtyRect)
+    {
+        if (view.IsVisible || view._measureCache.VisibleAtLastRender)
+        {
+            dirtyRect = dirtyRect.Union(view._measureCache.VisualDeviceBoundsAtLastRender);
+            foreach (var child in view.Children)
+                UpdateInvisibleDirtyRect(child, ref dirtyRect);
+        }
+
+    }
+
+
+    void CompositeMain(View view, Rect deviceClip, Rect dirtyRect)
+    {
+        if (dirtyRect.IsEmpty)
+            return;
+
+        _presentBuffer.Clear();
+
+        if (DIRTY_RECT_ENABLE)
+        {
+            dirtyRect = dirtyRect.Inflate(1);
+            dirtyRect = new Rect(Math.Floor(dirtyRect.X), Math.Floor(dirtyRect.Y),
+                Math.Ceiling(dirtyRect.Width), Math.Ceiling(dirtyRect.Height));
+            _presentBuffer.Clip(dirtyRect);
+        }
+
+        try
+        {
+            Composite(view, deviceClip, dirtyRect);
+        }
+        finally
+        {
+            if (DIRTY_RECT_ENABLE)
+                _presentBuffer.PopClip();
+        }
+    }
 
     /// <summary>
     /// Composite the frame into _presentBuffer.
     /// </summary>
-    void Composite(View view,Rect deviceClip)
+    void Composite(View view, Rect deviceClip, Rect dirtyRect)
     {
-        bool clipped = false;
+        // Quick exit for invisible
+        if (!view.IsVisible)
+            return;
+
+        bool doClip = false;
         try
         {
+            view.Flags = ViewFlags.None;
+            view.FlagsChild = ViewFlags.None;
+
             // Clip the content rect if requested
             var presentBufferIndex = _presentBuffer.CommandsLength;
             if (view.GetStyle(Panel.Clip))
             {
-                clipped = true;
+                doClip = true;
                 deviceClip = deviceClip.Intersect(view.toDevice(view.ContentRect));
                 _presentBuffer.Clip(deviceClip);
             }
 
-            // TBD: Do not render if outside clipping region
-            bool present = true;
-            if (deviceClip.Intersect(new Rect(view.Origin, view.toDevice(view.Size))).Width == 0)
-                present = false;
+            // Do not composite if outside clipping region
+            bool isFullyClipped = false;
+            var drawDeviceRect = deviceClip.Intersect(view.toDevice(view.VisualBounds));
+            if (drawDeviceRect.IsEmpty
+                || DIRTY_RECT_ENABLE && drawDeviceRect.Intersect(dirtyRect).IsEmpty)
+                isFullyClipped = true;
 
             var presented = false;
-            if (present && view._renderUnderBuffer is OsRenderBuffer bufferUnder and { CommandsLength: > 0 })
+            if (!isFullyClipped && view._renderUnderBuffer is OsRenderBuffer bufferUnder and { CommandsLength: > 0 })
             {
                 presented = true;
                 _presentBuffer.Composite(bufferUnder, _stringCache, view.Origin, view.Scale);
             }
 
             foreach (var child in view.Children)
-                Composite(child, deviceClip);
+                Composite(child, deviceClip, dirtyRect);
 
-            if (present && view._renderOverBuffer is OsRenderBuffer bufferOver and { CommandsLength: > 0 })
+            if (!isFullyClipped && view._renderOverBuffer is OsRenderBuffer bufferOver and { CommandsLength: > 0 })
             {
                 presented = true;
                 _presentBuffer.Composite(bufferOver, _stringCache, view.Origin, view.Scale);
@@ -291,7 +367,7 @@ public class Renderer
         }
         finally
         {
-            if (clipped)
+            if (doClip)
                 _presentBuffer.PopClip();
         }
     }

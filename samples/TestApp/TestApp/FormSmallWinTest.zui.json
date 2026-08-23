@@ -11,18 +11,22 @@
             ".margin": "left:100;top:100;right:0;bottom:0"
         },
         {
-            ".name": "button2",
-            ".controller": "Button",
-            "text": "Test 2",
-            ".align": "vertical:top;horizontal:left",
-            ".margin": "left:10;top:20;right:0;bottom:0"
-        },
-        {
-            ".name": "button3",
-            ".controller": "Button",
-            "text": "Test 3",
-            ".align": "vertical:top;horizontal:left",
-            ".margin": "left:10;top:50;right:0;bottom:0"
+            ".controller": "Panel",
+            ".layout": "Row",
+            ".margin": "left:20;top:20",
+            ".content": [
+                {
+                    ".name": "buttonVisibilityTest",
+                    ".controller": "Button",
+                    "text": "Visibility Test",
+                },
+                {
+                    ".name": "textVisibilityTest",
+                    ".controller": "TextView",
+                    ".align": "vertical:center",
+                    "text": "Visible"
+                }
+            ]
         },
         {
             ".controller": "TextView",

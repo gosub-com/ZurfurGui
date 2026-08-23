@@ -117,7 +117,7 @@ internal class PointerOver
     static View? FindHitTarget(View view, Point targetOnDevice)
     {
         // Quick exit when not visible or not in clip region
-        var clip = new Rect(view.Origin, view.toDevice(view.Size));
+        var clip = view.OriginRect;
         if (!clip.Contains(targetOnDevice))
             return null;
 

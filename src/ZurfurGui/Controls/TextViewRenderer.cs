@@ -5,8 +5,6 @@ namespace ZurfurGui.Controls;
 
 internal class TextViewRenderer : Renderable
 {
-    const double TEXT_BASELINE = 0.8; // Push text down so baseline is in correct place
-    public const double LINE_SPACING = 1.2; // Additional space between lines
     const double CLIP_ROUNDING_ERROR = 0.0001; // Don't clip because of rounding errors
 
     /// <summary>
@@ -37,10 +35,16 @@ internal class TextViewRenderer : Renderable
         var fontSize = fontProp.Size.Or(16.0);
         var font = new Font(fontName, fontSize);
         var brush = new Brush(color);
+        var metrics = context.MeasureContext.GetFontMetrics(fontName, fontSize);
+
+        // First line baseline is positioned at ContentRect.Y + Ascent
+        var baselineY = view.ContentRect.Y + metrics.Ascent;
 
         for (int i = 0; i < text.Count; i++)
-            context.FillText(font, brush, text[i], 0 + view.ContentRect.X,
-                fontSize * TEXT_BASELINE + i * fontSize * LINE_SPACING + (LINE_SPACING - 1) * fontSize * 0.5 + view.ContentRect.Y);    
+        {
+            var y = baselineY + i * metrics.LineHeight;
+            context.FillText(font, brush, text[i], view.ContentRect.X, y);
+        }
     }
 
     public bool IsHit(View view, Point point)

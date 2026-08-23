@@ -17,6 +17,9 @@ internal partial class BrowserContext : OsContext
     [JSImport("globalThis.ZurfurGui.measureText")]
     private static partial JSObject MeasureText(JSObject context, string font, string text);
 
+    [JSImport("globalThis.ZurfurGui.getFontMetrics")]
+    private static partial JSObject GetFontMetrics(JSObject context, string font);
+
     [JSImport("globalThis.ZurfurGui.marshalString")]
     static partial void MarshalString(string? str, int index);
 
@@ -37,6 +40,16 @@ internal partial class BrowserContext : OsContext
     {
         var font = $"{fontSize}px {fontName}";
         return MeasureText(_context, font, text).GetPropertyAsDouble("width");
+    }
+
+    FontMetrics OsContext.GetFontMetrics(string fontName, double fontSize)
+    {
+        var font = $"{fontSize}px {fontName}";
+        var metrics = GetFontMetrics(_context, font);
+        var ascent = metrics.GetPropertyAsDouble("ascent");
+        var descent = metrics.GetPropertyAsDouble("descent");
+        var lineHeight = metrics.GetPropertyAsDouble("lineHeight");
+        return new FontMetrics(ascent, descent, lineHeight);
     }
 
     void OsContext.MarshalString(string? str, int index)

@@ -114,7 +114,7 @@ public partial class AppWindow : Controllable, Renderable
             if (value != "" && !ThemeManager.RegisteredThemes.ContainsKey(value))
                 throw new ArgumentException($"Theme '{value}' is not registered. ");
             _theme = value;
-            View.InvalidateStyleTree();
+            View.SetFlags(ViewFlags.StyleDown);
         }
     }
 

@@ -21,6 +21,11 @@ public interface OsContext
     public double MeasureTextWidth(string fontName, double fontSize, string text);
 
     /// <summary>
+    /// Get font metrics (ascent, descent, line height) for the specified font and size.
+    /// </summary>
+    public FontMetrics GetFontMetrics(string fontName, double fontSize);
+
+    /// <summary>
     /// Marshal a string to the specified index.
     /// </summary>
     public void MarshalString(string? str, int index);

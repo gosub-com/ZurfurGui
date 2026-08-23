@@ -12,6 +12,11 @@ public partial class FormSmallWinTest
 
         bigButton.View.AddEvent(Panel.PointerClick, bigButton_Click);
 
+        buttonVisibilityTest.View.AddEvent(Panel.PointerClick, (s, e) =>
+        {
+            textVisibilityTest.View.IsVisible = !textVisibilityTest.View.IsVisible;
+        });
+
     }
 
     void bigButton_Click(object? s, PointerEvent e)
