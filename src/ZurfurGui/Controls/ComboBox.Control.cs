@@ -92,11 +92,7 @@ public sealed partial class ComboBox<Item> : Controllable
         overlay.View.SetProperty(Panel.Align, new(AlignHorizontal.Stretch, AlignVertical.Stretch));
         _dismissOverlay = overlay.View;
 
-        var popup = new Panel();
-        popup.View.Layout = new LayoutColumn();
-        popup.View.SetProperty(Panel.Classes, ["ComboBox.Dropdown"]);
-        popup.View.SetProperty(Panel.Align, new(AlignHorizontal.Left, AlignVertical.Top));
-
+        var popup = new ComboBoxPopup();
         var items = DataContext.Items;
         for (int i = 0; i < items.Count; i++)
         {
@@ -105,10 +101,8 @@ public sealed partial class ComboBox<Item> : Controllable
             var item = CreateItemController(itemData);
 
             // Wrap each item in a thin host panel that owns the dropdown-specific class and click
-            // handler.  This keeps the item's root view untouched so its own classes and styles
-            // (e.g. "ComboBoxItemBadge") are fully preserved.
+            // handler. 
             var wrapper = new Panel();
-            wrapper.View.SetProperty(Panel.Classes, ["ComboBox.DropdownItem"]);
             wrapper.View.AddEvent(Panel.PointerClick, (s, ev) =>
             {
                 DataContext.SelectedIndex = index;

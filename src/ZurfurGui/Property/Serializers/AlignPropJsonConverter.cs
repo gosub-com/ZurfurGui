@@ -22,8 +22,8 @@ internal class AlignPropJsonConverter : JsonConverter<AlignProp>
                 throw new JsonException("AlignProp string value cannot be empty.");
             // Do not accept a single value (e.g. "center") or a number
             if (!str.Contains(":"))
-                throw new JsonException("AlignProp string must be in 'horizontal:Center;vertical:Top' format.");
-            var parts = str.Split(';');
+                throw new JsonException("AlignProp string must be in 'horizontal:Center,vertical:Top' format.");
+            var parts = str.Split(',');
             foreach (var part in parts)
             {
                 var kv = part.Split(':');
@@ -59,6 +59,6 @@ internal class AlignPropJsonConverter : JsonConverter<AlignProp>
             parts.Add($"horizontal:{value.Horizontal.Value}");
         if (value.Vertical.HasValue)
             parts.Add($"vertical:{value.Vertical.Value}");
-        writer.WriteStringValue(string.Join(";", parts));
+        writer.WriteStringValue(string.Join(",", parts));
     }
 }

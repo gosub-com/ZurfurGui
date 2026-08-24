@@ -1,7 +1,7 @@
 {
     ".controller": "TextView",
     ".namespace": "ZurfurGui.Controls",
-    ".classes": [ "TextView" ],
+    "TextView.color": "${color.text.primary}",
     ".data": {
         "text": {
             "type": "?TextLines",

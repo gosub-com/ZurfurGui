@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ZurfurGui.Controls;
 
 namespace ZurfurGui.Property.Serializers;
 
@@ -21,6 +22,7 @@ internal class PropertiesJsonConverter : JsonConverter<Properties>
 
         var properties = new Properties();
         Dictionary<string, JsonElement>? dataProperties = null;
+        Dictionary<string, string>? themeTokens = null;
 
         while (reader.Read())
         {
@@ -49,7 +51,7 @@ internal class PropertiesJsonConverter : JsonConverter<Properties>
 
                 reader.Read();
 
-                // Unknown or data property?
+                // Data property?
                 if (propertyInfo == null)
                 {
                     // Verify it's a data property (must not contain a '.')
@@ -63,6 +65,18 @@ internal class PropertiesJsonConverter : JsonConverter<Properties>
                     continue;
                 }
 
+                // Pallette value?
+                if (reader.TokenType == JsonTokenType.String 
+                    && reader.GetString() is string stringProperty
+                    && stringProperty.StartsWith("${") && stringProperty.EndsWith("}"))
+                {
+                    var themeTokenExpression = stringProperty.Substring(2, stringProperty.Length - 3);
+                    themeTokens ??= new Dictionary<string, string>();
+                    themeTokens[propertyName] = themeTokenExpression;
+                    continue;
+                }
+
+                // Property value
                 var value = JsonSerializer.Deserialize(ref reader, propertyInfo.Type, options);
                 if (value == null)
                 {
@@ -75,13 +89,11 @@ internal class PropertiesJsonConverter : JsonConverter<Properties>
 
         // Store accumulated data properties using Panel.DataProperties key
         if (dataProperties != null && dataProperties.Count > 0)
-        {
-            var dataPropertiesKey = PropertyKeys.GetInfo(".dataProperties");
-            if (dataPropertiesKey != null)
-            {
-                properties.SetById(dataPropertiesKey.Id, dataProperties);
-            }
-        }
+            properties.Set(Panel.DataProperties, dataProperties);
+
+        // Store accumulated theme tokens using Panel.ThemeTokens key
+        if (themeTokens != null && themeTokens.Count > 0)
+            properties.Set(Panel.ThemeTokens, themeTokens);
 
         return properties;
     }

@@ -1,7 +1,11 @@
 {
     ".controller": "Button",
     ".namespace": "ZurfurGui.Controls",
-    ".classes": [ "Button" ],
+    ".borderWidth": "${stroke.width.default}",
+    ".borderRadius": "${radius.corner.medium}",
+    ".borderColor": "${color.interactive.primary.stroke}",
+    ".backgroundColor": "${color.interactive.primary.background}",
+    ".padding": "${padding.button}",
     ".data": {
         "text": {
             "type": "TextLines",
@@ -12,7 +16,7 @@
         {
             ".name": "_buttonText",
             ".controller": "TextView",
-            ".classes": [ "Button.Text" ]
+            "TextView.color": "${color.text.on-primary}"
         }
     ]
 }

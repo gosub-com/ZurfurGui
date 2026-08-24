@@ -273,14 +273,7 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
             _properties.Remove(property.Id);
         else
             _properties[property.Id] = removedEvent;
-    }
-
-    public void SetUnion(Properties p)
-    {
-        foreach (var property in p)
-            _properties[property.key] = property.value; 
-    }
-    
+    }    
 
     public bool Has<T>(PropertyKey<T> property)
     {

@@ -14,4 +14,8 @@
     <AdditionalFiles Include="**\*.zth.json" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="Controls\ComboBoxPopup.zui.json" />
+  </ItemGroup>
+
 </Project>

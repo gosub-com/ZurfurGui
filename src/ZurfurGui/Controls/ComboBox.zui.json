@@ -2,7 +2,12 @@
 {
     ".controller": "ComboBox<Item> where Item : ComboBoxItem",
     ".namespace": "ZurfurGui.Controls",
-    ".classes": [ "ComboBox" ],
+    ".borderWidth": "${stroke.width.default}",
+    ".borderRadius": "${radius.corner.medium}",
+    ".borderColor": "${color.interactive.primary.stroke}",
+    ".backgroundColor": "${color.interactive.primary.background}",
+    ".padding": "${padding.combobox}",
+    "ComboBox.scrimColor": "${color.surface.overlay.scrim}",
     ".layout": "Row",
     ".sizeMin": "width:80",
     ".data": {
@@ -22,14 +27,15 @@
         {
             ".name": "_selectedItem",
             ".controller": "Panel",
-            ".classes": [ "ComboBox.Text" ],
-            ".align": "horizontal:stretch;vertical:center"
+            "TextView.color": "${color.text.primary}",
+            ".align": "horizontal:stretch,vertical:center"
         },
         {
             ".name": "_arrow",
             ".controller": "TextView",
-            ".classes": [ "ComboBox.Arrow" ],
-            ".align": "horizontal:right;vertical:center",
+            "TextView.color": "${color.text.primary}",
+            ".padding": "${padding.combobox.arrow}",
+            ".align": "horizontal:right,vertical:center",
             "text": [ "▾" ]
         }
     ]

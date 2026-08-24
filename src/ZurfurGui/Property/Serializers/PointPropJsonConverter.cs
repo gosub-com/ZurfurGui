@@ -28,7 +28,7 @@ internal class PointPropJsonConverter : JsonConverter<PointProp>
                 return new PointProp(all, all);
             }
 
-            var parts = str.Split(';');
+            var parts = str.Split(',');
             foreach (var part in parts)
             {
                 var kv = part.Split(':');
@@ -60,6 +60,6 @@ internal class PointPropJsonConverter : JsonConverter<PointProp>
             parts.Add($"x:{value.X.Value}");
         if (value.Y.HasValue)
             parts.Add($"y:{value.Y.Value}");
-        writer.WriteStringValue(string.Join(";", parts));
+        writer.WriteStringValue(string.Join(",", parts));
     }
 }

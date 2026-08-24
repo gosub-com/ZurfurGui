@@ -14,6 +14,11 @@ public partial class Panel : Controllable
     public static readonly PropertyKey<string> Layout = new(".layout", typeof(Panel), "");
     public static readonly PropertyKey<string> Implements = new(".implements", typeof(Panel), "");
     public static readonly PropertyKey<Properties[]> Content = new(".content", typeof(Panel), Array.Empty<Properties>(), ViewFlags.Measure);
+    
+    // NOTE: ThemeTokens are the same for every control of a given type.  TBD: Move them out of the instance
+    public static readonly PropertyKey<Dictionary<string, string>> ThemeTokens = new(".themeTokens", typeof(Panel), new(), ViewFlags.None);
+
+    // NOTE: DataProperties are used only by the loader and are removed after the control is loaded.
     public static readonly PropertyKey<Dictionary<string, System.Text.Json.JsonElement>> DataProperties = new(".dataProperties", typeof(Panel), new(), ViewFlags.None);
 
     // NOTE: Data properties are used only by the loader, so don't exist at runtime.  This is just a placeholder.
@@ -33,11 +38,6 @@ public partial class Panel : Controllable
     public static readonly PropertyKey<Color> BorderColor = new(".borderColor", typeof(Panel), new(), ViewFlags.Render);
     public static readonly PropertyKey<double> BorderWidth = new(".borderWidth", typeof(Panel), new(), ViewFlags.Measure);
     public static readonly PropertyKey<double> BorderRadius = new(".borderRadius", typeof(Panel), new(), ViewFlags.Render);
-
-    // Style
-    public static readonly PropertyKey<TextLines> Selectors = new(".selectors", typeof(Panel), new(), ViewFlags.StyleDown);
-    public static readonly PropertyKey<TextLines> Classes = new(".classes", typeof(Panel), new(), ViewFlags.StyleDown);
-    public static readonly PropertyKey<Properties[]> Styles = new(".styles", typeof(Panel), Array.Empty<Properties>(), ViewFlags.StyleDown);
 
     // Pseudo classes
     public static readonly PropertyKey<bool> IsPointerOver = new(".isPointerOver", typeof(Panel), new(), ViewFlags.Style);

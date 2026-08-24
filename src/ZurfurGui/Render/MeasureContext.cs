@@ -19,8 +19,6 @@ public class MeasureContext
     int _prevFontCacheTotal = 0;
     int _prevMetricsCacheTotal = 0;
 
-    internal Rect _dirtyArrange;
-
     record struct FontKey(string FontName, double FontSize, string Text);
     record struct MetricsKey(string FontName, double FontSize);
 

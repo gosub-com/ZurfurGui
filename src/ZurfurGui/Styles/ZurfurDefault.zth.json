@@ -14,20 +14,18 @@
         // Window decorations
         "color.window.title.background": "#4A7BB5",
         "color.window.title.foreground": "White",
-        "color.window.title.foreground.hover": "#D8DEFF",
+        "color.window.close": "isHover ? #D8DEFF",
 
         // Text
         "color.text.primary": "#1F1F1F",
         "color.text.on-primary": "#1F1F1F",
 
         // Buttons, checkboxes, radio buttons, toggles, etc.
-        "color.interactive.primary.background": "#C6E0F7",
-        "color.interactive.primary.background.hover": "#D2E8FA",
-        "color.interactive.primary.background.pressed": "#A6D2F2",
-        "color.interactive.primary.background.selected": "#E5F1FB",
-        "color.interactive.primary.stroke": "#909090",
-        "color.interactive.primary.stroke.hover": "#0078D4",
-        "color.interactive.primary.stroke.pressed": "#005A9E",
+        "color.interactive.primary.stroke": "isPressed ? #005A9E; isHover ? #0078D4; #909090",
+        "color.interactive.primary.background": "isPressed ? #A6D2F2;  isHover ? #D2E8FA; #C6E0F7",
+
+        // Items in a listbox, combobox, etc.
+        "color.interactive.item.background": "isPressed ? #A6D2F2;  isHover ? #D2E8FA; #00000000",
 
         // Text box, etc.
         "color.input.background": "#FFFFFF",
@@ -35,10 +33,8 @@
 
         // ScrollBar
         "color.scroll.track.background": "#E0F0FA",
-        "color.scroll.thumb.background": "#8BB4DC",
-        "color.scroll.thumb.background.hover": "#6A9FD0",
+        "color.scroll.thumb.background": "isHover ? #6A9FD0;#8BB4DC",
         "color.scroll.stroke": "#7070B0",
-        "radius.scroll.thumb": "400",
 
         "color.status.success.background": "#DFF6DD",
         "color.status.warning.background": "#FFF4CE",
@@ -50,81 +46,6 @@
         "color.status.info.foreground": "#004085",
         "color.status.danger.stroke": "#A80000",
         "color.status.success.stroke": "#107C10",
-        "color.status.warning.stroke": "#797775",
-
-        // Opacity for disabled elements
-        "opacity.disabled": "0.38",
-
-        "radius.corner.small": "2", // CheckBox, Radio, etc.
-        "radius.corner.medium": "4", // Button, TextEdit, Dropdowns, etc.
-        "radius.corner.large.inside" :  "6.5",
-        "radius.corner.large": "8", // Windows, Dialogs, etc. (outside)
-
-
-        "spacing.left.extra-small": "left:2",
-        "spacing.left.small": "left:4",
-        "spacing.left.medium": "left:8",
-        "spacing.left.large": "left:16",
-
-        "spacing.right.extra-small": "right:2",
-        "spacing.right.small": "right:4",
-        "spacing.right.medium": "right:8",
-        "spacing.right.large": "right:16",
-
-        "spacing.top.extra-small": "top:2",
-        "spacing.top.small": "top:4",
-        "spacing.top.medium": "top:8",
-        "spacing.top.large": "top:16",
-
-        "spacing.bottom.extra-small": "bottom:2",
-        "spacing.bottom.small": "bottom:4",
-        "spacing.bottom.medium": "bottom:8",
-        "spacing.bottom.large": "bottom:16",
-
-        "spacing.horizontal.extra-small": "left:2;right:2",
-        "spacing.horizontal.small": "left:4;right:4",
-        "spacing.horizontal.medium": "left:8;right:8",
-        "spacing.horizontal.large": "left:16;right:16",
-
-        "spacing.vertical.extra-small": "top:2;bottom:2",
-        "spacing.vertical.small": "top:4;bottom:4",
-        "spacing.vertical.medium": "top:8;bottom:8",
-        "spacing.vertical.large": "top:16;bottom:16",
-
-        "spacing.zero": "0",
-        "spacing.extra-small": "2",
-        "spacing.small": "4",
-        "spacing.medium": "8",
-        "spacing.large": "16",
-
-
-
-        // TBD: Not used yet
-        "font.family.base": "name:Segoe UI, Arial, sans-serif",
-
-        "font.size.base.300": "size:14", //  Standard body text size
-        "font.size.hero.700": "size:32", // Large header text size
-        "font.size.base.200": "size:12", // Small text size
-        "font.size.base.400": "size:16", // Large body text
-        "font.size.base.500": "size:18", // Subtitle text
-        "font.size.base.600": "size:20", // Section header text
-        "font.size.hero.800": "size:40", // Extra large header
-        "font.size.window.title": "size:24",
-
-        "font.weight.regular": "weight:400", // Normal text weight
-        "font.weight.bold": "weight:700", // Bold text weight
-
-
-        "stroke.width.default": "1",
-        "stroke.width.medium": "2",
-
-        "size.window.min": "width:160;height:80",
-        "size.textedit.min": "width:80",
-
-        "padding.button": "left:9;top:4;right:9;bottom:3",
-        "padding.textedit": "left:8;top:4;right:8;bottom:0",
-        "padding.combobox": "left:8;top:3;right:6;bottom:2",
-        "padding.combobox.arrow": "left:4;top:0;right:0;bottom:0"
-
+        "color.status.warning.stroke": "#797775"
     }
 }

@@ -31,7 +31,7 @@ internal class ThicknessPropJsonConverter : JsonConverter<ThicknessProp>
             }
             else
             {
-                var parts = str.Split(';');
+                var parts = str.Split(',');
                 foreach (var part in parts)
                 {
                     var kv = part.Split(':');
@@ -77,6 +77,6 @@ internal class ThicknessPropJsonConverter : JsonConverter<ThicknessProp>
             parts.Add($"right:{value.Right.Value}");
         if (value.Bottom.HasValue)
             parts.Add($"bottom:{value.Bottom.Value}");
-        writer.WriteStringValue(string.Join(";", parts));
+        writer.WriteStringValue(string.Join(",", parts));
     }
 }

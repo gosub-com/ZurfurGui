@@ -17,25 +17,12 @@ internal static void GenerateZurfurMain(
     SourceProductionContext sourceProductionContext,
     Compilation compilation,
     ImmutableArray<ZuiFileInfo> zuiData,
-    ImmutableArray<ZuiFileInfo> zssData,
     ImmutableArray<ZuiFileInfo> zthData
     )
     {
         // Build a list of generated controls (errors already reported in GenerateControllerClasses)
         var generatedControls = zuiData
             .Where(data => data.Diagnostic == null && data.ControllerName != "");
-
-        // Build a list of generated styles (report errors here)
-        var generatedStyles = zssData
-            .Where(data => 
-            { 
-                if (data.Diagnostic != null)
-                {
-                    sourceProductionContext.ReportDiagnostic(data.Diagnostic);
-                    return false;
-                }
-                return true; 
-            });
 
         // Build a list of generated themes (report errors here)
         var generatedThemes = zthData
@@ -50,7 +37,7 @@ internal static void GenerateZurfurMain(
             });
 
         // Skip if no controls, styles, or themes were generated
-        if (!generatedControls.Any() && !generatedStyles.Any() && !generatedThemes.Any())
+        if (!generatedControls.Any() && !generatedThemes.Any())
             return;
 
         // Find and validate ZurfurMain
@@ -70,12 +57,12 @@ internal static void GenerateZurfurMain(
 
         // Generate source code
         var zurfurMainNamespace = zurfurMainClass.ContainingNamespace.ToDisplayString();
-        var zurfurMainSource = GenerateZurfurMainSource(zurfurMainNamespace, generatedControls, generatedStyles, generatedThemes);
+        var zurfurMainSource = GenerateZurfurMainSource(zurfurMainNamespace, generatedControls, generatedThemes);
         sourceProductionContext.AddSource("ZurfurMain.g.cs", SourceText.From(zurfurMainSource, System.Text.Encoding.UTF8));
     }
 
 internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
-    IEnumerable<ZuiFileInfo> generatedControls, IEnumerable<ZuiFileInfo> generatedStyles, IEnumerable<ZuiFileInfo> generatedThemes)
+    IEnumerable<ZuiFileInfo> generatedControls, IEnumerable<ZuiFileInfo> generatedThemes)
     {
         var controlList = generatedControls.ToList();
 
@@ -138,11 +125,6 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
                     + $"        global::ZurfurGui.Loader.RegisterControl(\"{loaderKey}\", typeof(global::ZurfurGui.Controls.{csName}), () => new global::ZurfurGui.Controls.{csName}());";
             }));
 
-
-        var registerStyles = string.Join("\r\n", generatedStyles.Select(t =>
-            $"\r\n        // Register style '{t.ControllerName}'\r\n"
-            + $"        global::ZurfurGui.Styles.StyleManager.RegisterStyleSheet(@\"{Json.Serialize(t.JsonDocument).Replace("\"", "\"\"")}\");\r\n"));
-
         var registerThemes = string.Join("\r\n", generatedThemes.Select(t =>
             $"\r\n        // Register theme '{t.ControllerName}'\r\n"
             + $"        global::ZurfurGui.Styles.ThemeManager.RegisterTheme(@\"{Json.Serialize(t.JsonDocument).Replace("\"", "\"\"")}\");\r\n"));
@@ -179,8 +161,6 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
             sb.AppendIndentedLine(2, "// Register closed generic controls (discovered from usage sites)");
             sb.Append(registerClosedGenerics).Append("\r\n\r\n");
         }
-        if (!string.IsNullOrWhiteSpace(registerStyles))
-            sb.Append(registerStyles);
         if (!string.IsNullOrWhiteSpace(registerThemes))
             sb.Append(registerThemes);
         sb.AppendIndentedLine(1, "}");

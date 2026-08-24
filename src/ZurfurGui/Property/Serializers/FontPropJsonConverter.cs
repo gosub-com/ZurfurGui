@@ -24,7 +24,7 @@ namespace ZurfurGui.Property.Serializers
                 var str = reader.GetString();
                 if (string.IsNullOrWhiteSpace(str))
                     throw new JsonException("FontProp string value cannot be empty.");
-                var parts = str.Split(';');
+                var parts = str.Split(',');
                 foreach (var part in parts)
                 {
                     var kv = part.Split(':');
@@ -56,7 +56,7 @@ namespace ZurfurGui.Property.Serializers
                 parts.Add($"name:{value.Name}");
             if (value.Size.HasValue)
                 parts.Add($"size:{value.Size.Value}");
-            writer.WriteStringValue(string.Join(";", parts));
+            writer.WriteStringValue(string.Join(",", parts));
         }
     }
 }

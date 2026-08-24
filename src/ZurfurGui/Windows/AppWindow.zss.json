@@ -1,9 +1,0 @@
-{
-    "name": "AppWindow",
-    "styles": [
-        {
-            ".selectors": "AppWindow",
-            ".backgroundColor": "@color.surface.canvas"
-        }
-    ]
-}

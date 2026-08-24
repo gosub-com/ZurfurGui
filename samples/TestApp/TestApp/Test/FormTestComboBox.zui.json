@@ -3,7 +3,7 @@
     ".namespace": "TestApp.Test",
     ".use": [ "TestApp.Test.Controls" ],
     ".layout": "Column",
-    ".padding": "left:16;top:16;right:16;bottom:16",
+    ".padding": "left:16,top:16,right:16,bottom:16",
     ".content": [
         {
             ".layout": "Row",
@@ -11,7 +11,7 @@
                 {
                     ".controller": "TextView",
                     "text": [ "Theme:" ],
-                    ".align": "horizontal:left;vertical:center"
+                    ".align": "horizontal:left,vertical:center"
                 },
                 {
                     ".name": "_themeComboBox",
@@ -22,12 +22,12 @@
         },
         {
             ".layout": "Row",
-            ".padding": "left:0;top:12;right:0;bottom:0",
+            ".padding": "left:0,top:12,right:0,bottom:0",
             ".content": [
                 {
                     ".controller": "TextView",
                     "text": [ "Badge Item Test:" ],
-                    ".align": "horizontal:left;vertical:center"
+                    ".align": "horizontal:left,vertical:center"
                 },
                 {
                     ".name": "_badgeCombo",

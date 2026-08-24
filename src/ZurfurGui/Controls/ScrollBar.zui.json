@@ -1,7 +1,11 @@
 {
     ".controller": "ScrollBar",
     ".namespace": "ZurfurGui.Controls",
-    ".classes": [ "ScrollBar" ],
+    "ScrollBar.trackColor": "${color.scroll.track.background}",
+    "ScrollBar.thumbColor": "${color.scroll.thumb.background}",
+    "ScrollBar.borderColor": "${color.scroll.stroke}",
+    "ScrollBar.borderWidth": "${stroke.width.default}",
+    "ScrollBar.thumbRadius": "${radius.scroll.thumb}",
     ".data": {
         // Current scroll position (ranges from Minimum to Maximum)
         "value": {

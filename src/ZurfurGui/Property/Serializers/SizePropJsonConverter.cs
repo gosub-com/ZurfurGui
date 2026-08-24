@@ -27,7 +27,7 @@ internal class SizePropJsonConverter : JsonConverter<SizeProp>
             {
                 return new SizeProp(all, all);
             }
-            var parts = str.Split(';');
+            var parts = str.Split(',');
             foreach (var part in parts)
             {
                 var kv = part.Split(':');
@@ -59,6 +59,6 @@ internal class SizePropJsonConverter : JsonConverter<SizeProp>
             parts.Add($"width:{value.Width.Value}");
         if (value.Height.HasValue)
             parts.Add($"height:{value.Height.Value}");
-        writer.WriteStringValue(string.Join(";", parts));
+        writer.WriteStringValue(string.Join(",", parts));
     }
 }

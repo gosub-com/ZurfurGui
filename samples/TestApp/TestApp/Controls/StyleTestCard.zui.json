@@ -6,7 +6,9 @@
         {
             // Show theme name using the StyleTestSkinHoverTextStyleTestSkinHoverText style
             ".controller": "TextView",
-            ".classes": [ "TextView", "StyleTestSkinHoverText" ],
+            ".name": "debugLabel",
+            "TextView.text": "${style.test.text.hover-nothover}",
+
             ".borderWidth": 2,
             ".borderColor": "Gray"
         },
@@ -18,21 +20,24 @@
         },
         {
             ".controller": "TextView",
-            ".classes": [ "TextView", "StyleC1" ],
+            ".sizeRequest": "${style.test.sizeRequest.c1}",
+            "TextView.font": "${style.test.font.c1}",
             ".borderWidth": 2,
             ".borderColor": "Gray",
             "text": "Style C1"
         },
         {
             ".controller": "TextView",
-            ".classes": [ "TextView", "StyleC2" ],
+            ".sizeRequest": "${style.test.sizeRequest.c2}",
+            "TextView.font": "${style.test.font.c2}",
             ".borderWidth": 2,
             ".borderColor": "Gray",
             "text": "Style C2"
         },
         {
             ".controller": "TextView",
-            ".classes": [ "TextView", "StyleC1", "StyleC2" ],
+            ".sizeRequest": "${style.test.sizeRequest.c1 | style.test.sizeRequest.c2}",
+            "TextView.font": "${style.test.font.c1 | style.test.font.c2}",
             ".borderWidth": 2,
             ".borderColor": "Gray",
             "text": "Style C1 & C2"

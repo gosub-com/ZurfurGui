@@ -1,0 +1,9 @@
+{
+    ".controller": "ComboBoxPopup",
+    ".layout": "Column",
+    ".namespace": "ZurfurGui.Controls",
+    ".backgroundColor": "${color.surface.card}",
+    ".borderWidth": "${stroke.width.default}",
+    ".borderColor": "${color.input.stroke}",
+    ".borderRadius": "${radius.corner.medium}"
+}

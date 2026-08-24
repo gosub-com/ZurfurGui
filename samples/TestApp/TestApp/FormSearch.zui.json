@@ -13,7 +13,7 @@
                 },
                 {
                     ".controller": "CheckBox",
-                    ".margin": "left:0;top:0;right:10;bottom:0",
+                    ".margin": "left:0,top:0,right:10,bottom:0",
                     "text": "Replace",
                     //"isChecked": true,
                     "dock.align": "right"
@@ -33,7 +33,7 @@
                     "text": "Find (F3)",
                     ".sizeRequest": "width:120",
                     "dock.align": "right",
-                    ".margin": "left:10;top:0;right:10;bottom:0"
+                    ".margin": "left:10,top:0,right:10,bottom:0"
                 },
                 {
                     ".controller": "TextEdit",
@@ -64,7 +64,7 @@
                     ".controller": "Button",
                     "text": "Replace",
                     ".sizeRequest": "width:120",
-                    ".margin": "left:10;top:0;right:0;bottom:0",
+                    ".margin": "left:10,top:0,right:0,bottom:0",
                     "dock.align": "right"
                 },
                 {
@@ -80,7 +80,7 @@
                     ".controller": "Button",
                     "text": "Replace All",
                     ".sizeRequest": "width:120",
-                    ".margin": "left:10;top:0;right:0;bottom:0",
+                    ".margin": "left:10,top:0,right:0,bottom:0",
                     "dock.align": "right"
                 },
                 {
@@ -90,7 +90,7 @@
                 {
                     ".controller": "CheckBox",
                     "text": "Match Whole Word",
-                    ".margin": "left:10;top:0;right:0;bottom:0"
+                    ".margin": "left:10,top:0,right:0,bottom:0"
                 }
             ]
         }

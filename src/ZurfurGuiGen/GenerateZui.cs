@@ -32,17 +32,6 @@ public class GenerateZui : IIncrementalGenerator
             return ZuiInput.CollectJsonFiles(text, syntax, cancellationToken);
         });
 
-        // Collect zssData for all ZSS.JSON files
-        var zssData = context.AdditionalTextsProvider
-            .Where(file => file.Path.EndsWith(".zss.json", StringComparison.OrdinalIgnoreCase))
-            .Combine(syntaxTrees)
-            .Select((combined, cancellationToken) =>
-            {
-                var text = combined.Left;
-                var syntax = combined.Right;
-                return ZuiInput.CollectJsonFiles(text, syntax, cancellationToken);
-            });
-
         // Collect zthData for all ZTH.JSON files (theme tokens)
         var zthData = context.AdditionalTextsProvider
             .Where(file => file.Path.EndsWith(".zth.json", StringComparison.OrdinalIgnoreCase))
@@ -60,14 +49,13 @@ public class GenerateZui : IIncrementalGenerator
             (spc, pair) => GenerateControllerClasses(spc, pair.Left, pair.Right));
 
         // Generate the ZurfurMain partial class in each project
-        context.RegisterSourceOutput(zuiData.Collect().Combine(zssData.Collect()).Combine(zthData.Collect())
+        context.RegisterSourceOutput(zuiData.Collect().Combine(zthData.Collect())
             .Combine(context.CompilationProvider), (sourceProductionContext, quad) =>
         {
-            var collectedZuiData = quad.Left.Left.Left;
-            var collectedZssData = quad.Left.Left.Right;
+            var collectedZuiData = quad.Left.Left;
             var collectedZthData = quad.Left.Right;
             var compilation = quad.Right;
-            ZuiEmitMain.GenerateZurfurMain(sourceProductionContext, compilation, collectedZuiData, collectedZssData, collectedZthData);
+            ZuiEmitMain.GenerateZurfurMain(sourceProductionContext, compilation, collectedZuiData, collectedZthData);
         });
     }
 

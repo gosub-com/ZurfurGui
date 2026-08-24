@@ -168,23 +168,18 @@ internal static class ZuiEmitController
         sb.Append("\r\n");
 
         // Add InitializeControl code to initialize named controls
-        sb.AppendIndentedLine(2, "// Initialize named controls");
+        if (controlNames.Any())
+            sb.AppendIndentedLine(2, "// Initialize named controls");
         foreach (var name in controlNames)
             sb.AppendIndentedLine(2, $"{name} = ({namedControlsDict[name]})View.FindByName(\"{name}\").Controller;");
 
         // Initialize DataContext after controls are loaded
         if (allBindings.Any(b => b.BindType != BindType.StyledOnly))
         {
-            sb.Append("\r\n");
             sb.AppendIndentedLine(2, "// Initialize DataContext");
             sb.AppendIndentedLine(2, "DataContext = CreateDefaultDataContext();");
+            sb.Append("\r\n");
         }
-
-        // Always apply data properties recursively (for self and all children)
-        sb.Append("\r\n");
-        sb.AppendIndentedLine(2, "// Apply data properties from JSON (recursively)");
-        sb.AppendIndentedLine(2, "global::ZurfurGui.Loader.ApplyDataProperties(this);");
-
         sb.AppendIndentedLine(1, "}");
 
         // Generate CreateDefaultDataContext factory method

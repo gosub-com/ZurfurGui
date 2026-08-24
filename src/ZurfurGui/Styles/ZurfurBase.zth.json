@@ -1,0 +1,88 @@
+{
+    // Define common GUI variables that often don't change even when the them changes
+    "name": "ZurfurBase",
+    "variables": {
+
+        // Style test - TBD: Remove from here when we walk up the tree view to find them
+        "style.test.text.hover-nothover": "isHover ? Hovering; Not hovering",
+        "style.test.font.c1": "size:28.0",
+        "style.test.font.c2": "name:Times New Roman",
+        "style.test.sizeRequest.c1": "width:120",
+        "style.test.sizeRequest.c2": "height:50",
+
+        // Opacity for disabled elements
+        "opacity.disabled": "0.38",
+
+        "radius.corner.small": "2", // CheckBox, Radio, etc.
+        "radius.corner.medium": "4", // Button, TextEdit, Dropdowns, etc.
+        "radius.corner.large.inside": "6.5",
+        "radius.corner.large": "8", // Windows, Dialogs, etc. (outside)
+
+        "spacing.left.extra-small": "left:2",
+        "spacing.left.small": "left:4",
+        "spacing.left.medium": "left:8",
+        "spacing.left.large": "left:16",
+
+        "spacing.right.extra-small": "right:2",
+        "spacing.right.small": "right:4",
+        "spacing.right.medium": "right:8",
+        "spacing.right.large": "right:16",
+
+        "spacing.top.extra-small": "top:2",
+        "spacing.top.small": "top:4",
+        "spacing.top.medium": "top:8",
+        "spacing.top.large": "top:16",
+
+        "spacing.bottom.extra-small": "bottom:2",
+        "spacing.bottom.small": "bottom:4",
+        "spacing.bottom.medium": "bottom:8",
+        "spacing.bottom.large": "bottom:16",
+
+        "spacing.horizontal.extra-small": "left:2,right:2",
+        "spacing.horizontal.small": "left:4,right:4",
+        "spacing.horizontal.medium": "left:8,right:8",
+        "spacing.horizontal.large": "left:16,right:16",
+
+        "spacing.vertical.extra-small": "top:2,bottom:2",
+        "spacing.vertical.small": "top:4,bottom:4",
+        "spacing.vertical.medium": "top:8,bottom:8",
+        "spacing.vertical.large": "top:16,bottom:16",
+
+        "spacing.zero": "0",
+        "spacing.extra-small": "2",
+        "spacing.small": "4",
+        "spacing.medium": "8",
+        "spacing.large": "16",
+
+
+
+        // TBD: Not used yet
+        "font.family.base": "name:Segoe UI, Arial, sans-serif",
+
+        "font.size.base.300": "size:14", //  Standard body text size
+        "font.size.hero.700": "size:32", // Large header text size
+        "font.size.base.200": "size:12", // Small text size
+        "font.size.base.400": "size:16", // Large body text
+        "font.size.base.500": "size:18", // Subtitle text
+        "font.size.base.600": "size:20", // Section header text
+        "font.size.hero.800": "size:40", // Extra large header
+        "font.size.window.title": "size:24",
+
+        "font.weight.regular": "weight:400", // Normal text weight
+        "font.weight.bold": "weight:700", // Bold text weight
+
+
+        "stroke.width.default": "1",
+        "stroke.width.medium": "2",
+
+        "size.window.min": "width:160,height:80",
+        "size.textedit.min": "width:80",
+
+        "padding.button": "left:9,top:4,right:9,bottom:3",
+        "padding.textedit": "left:8,top:4,right:8,bottom:0",
+        "padding.combobox": "left:8,top:3,right:6,bottom:2",
+        "padding.combobox.arrow": "left:4,top:0,right:0,bottom:0",
+
+        "radius.scroll.thumb": "400"
+    }
+}

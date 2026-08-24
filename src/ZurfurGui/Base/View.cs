@@ -234,8 +234,41 @@ public sealed class View
     }
 
     public int PropertiesCount => _properties.Count;
-    internal void PropertiesSetUnionInternal(Properties properties)
-        => _properties.SetUnion(properties);
+
+
+    /// <summary>
+    /// The newProps take precedence with the old ones used as a backup.
+    /// </summary>
+    internal void MergeOverwrite(Properties newProps)
+    {
+        foreach (var newProp in newProps)
+        {
+            if (newProp.key != Panel.ThemeTokens.Id)
+            {
+                // TBD: Merge mergable properties?  This is probably a bug.
+                _properties.SetById(newProp.key, newProp.value);
+            }
+        }
+
+        if (newProps.TryGet(Panel.ThemeTokens, out var newThemeTokens) && newThemeTokens != null)
+        {
+            if (_properties.TryGet(Panel.ThemeTokens, out var oldThemeTokens) && oldThemeTokens != null)
+            {
+                // Merge into old
+                foreach (var newThemeToken in newThemeTokens)
+                {
+                    oldThemeTokens[newThemeToken.Key] = newThemeToken.Value;
+                }
+            }
+            else
+            {
+                // No old props, just use the new ones
+                _properties.Set(Panel.ThemeTokens, newThemeTokens);
+            }
+        }
+
+
+    }
     
 
     /// <summary>

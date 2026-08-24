@@ -22,7 +22,6 @@ namespace ZurfurGui;
 [JsonSerializable(typeof(ThicknessProp))]
 [JsonSerializable(typeof(PointProp))]
 [JsonSerializable(typeof(DoubleProp))]
-[JsonSerializable(typeof(StyleSheet))]
 [JsonSerializable(typeof(ThemeSheet))]
 [JsonSerializable(typeof(Dictionary<string,JsonElement>))]
 [JsonSerializable(typeof(JsonElement))]
@@ -110,7 +109,8 @@ public static class Loader
     {
         try
         {
-            var properties = LoadJsonProperties(json);
+            var properties = JsonSerializer.Deserialize<Properties>(json, s_jsonSerializerOptions)
+                ?? throw new Exception($"The target control '{target.TypeName}' has invalid or null JSON");
 
             // All of the following checks are enforced by the code generator
             if (target.View.Children.Count != 0)
@@ -125,6 +125,7 @@ public static class Loader
                 throw new ArgumentException($"Top level controller property '{controller}' must match target '{target.TypeName}");
 
             BuildContent(target, properties, ControlCreationContext.From(target));
+            ApplyDataProperties(target);
         }
         catch (Exception ex)
         {
@@ -139,7 +140,7 @@ public static class Loader
         // TBD: Maybe don't send content as parameter here (let LoadContent do it)?
         var content = properties.Get(Panel.Content);
         properties.Remove(Panel.Content);
-        control.View.PropertiesSetUnionInternal(properties);
+        control.View.MergeOverwrite(properties);
         SetLayout(properties, control.View);
         control.LoadContent(content, context);
     }
@@ -152,17 +153,18 @@ public static class Loader
     /// Children are processed first so parent bindings can override child defaults.
     /// Should be called after DataContext is initialized.
     /// </summary>
-    public static void ApplyDataProperties(Controllable control)
+    private static void ApplyDataProperties(Controllable control)
     {
         // Recursively apply to all child controls
         foreach (var childView in control.View.Children)
-        {
             ApplyDataProperties(childView.Controller);
-        }
 
         // Apply data properties to this control (after children)
-        var properties = control.View._properties;
-        var dataProperties = properties.Get(Panel.DataProperties);
+        var dataProperties = control.View._properties.Get(Panel.DataProperties);
+
+        // TBD: We should be able to remove these after applying, but we can't because it changes "stuff".
+        //      Maybe this is caused by a bug in View.MergeOverwrite?
+        //control.View._properties.Remove(Panel.DataProperties);
 
         if (dataProperties != null && dataProperties.Count > 0)
         {
@@ -191,8 +193,7 @@ public static class Loader
                 {
                     throw new InvalidOperationException(
                         $"Failed to deserialize data property '{jsonPropertyName}' to type '{propInfo.BaseType.Name}' " +
-                        $"in control '{control.TypeName}': {ex.Message}", 
-                        ex);
+                        $"in control '{control.TypeName}': {ex.Message}", ex);
                 }
 
                 // Validate nullability
@@ -297,12 +298,6 @@ public static class Loader
         if (s_layouts.ContainsKey(name))
             throw new ArgumentException($"Layout '{name}' is already registered");
         s_layouts[name] = layoutFactory;
-    }
-
-    static Properties LoadJsonProperties(string json)
-    {
-        var properties = JsonSerializer.Deserialize<Properties>(json, s_jsonSerializerOptions);
-        return properties ?? throw new Exception("Invalid or null properties JSON");
     }
 
     /// <summary>

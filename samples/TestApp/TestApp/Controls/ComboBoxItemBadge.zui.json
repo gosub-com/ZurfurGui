@@ -5,31 +5,42 @@
     ".controller": "ComboBoxItemBadge",
     ".namespace": "TestApp.Test.Controls",
     ".implements": "ComboBoxItem",
-    ".classes": [ "ComboBoxItemBadge" ],
+    ".padding": "${spacing.horizontal.small | spacing.vertical.extra-small}",
+    ".backgroundColor": "${color.interactive.item.background}",
     ".data": {
         // Short label shown inside the red-outlined badge pill.
-        "badge": { "type": "TextLines", "bind": "_badge.text" },
+        "badge": {
+            "type": "TextLines",
+            "bind": "_badge.text"
+        },
         // Main descriptive text shown to the right of the badge.
-        "text":  { "type": "TextLines", "bind": "_text.text" }
+        "text": {
+            "type": "TextLines",
+            "bind": "_text.text"
+        }
     },
     ".layout": "Row",
     ".content": [
         {
             // Badge pill: red outline box around the badge text.
-            ".classes": [ "ComboBoxItemBadge.BadgeBox" ],
+            ".borderWidth": "${stroke.width.medium}",
+            ".borderColor": "${color.status.danger.stroke}",
+            ".borderRadius": "${radius.corner.small}",
+            ".padding": "${spacing.vertical.extra-small | spacing.horizontal.small}",
             ".align": "vertical:center",
             ".content": [
                 {
                     ".name": "_badge",
                     ".controller": "TextView",
-                    ".classes": [ "ComboBoxItemBadge.BadgeText" ]
+                    "TextView.color": "${color.status.danger.stroke}"
                 }
             ]
         },
         {
             ".name": "_text",
             ".controller": "TextView",
-            ".classes": [ "ComboBoxItemBadge.Text" ],
+            "TextView.color": "${color.text.primary}",
+            ".padding": "${spacing.left.small | spacing.zero}",
             ".align": "vertical:center"
         }
     ]

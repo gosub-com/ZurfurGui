@@ -3,7 +3,8 @@
     ".controller": "ComboBoxItemText",
     ".namespace": "ZurfurGui.Controls",
     ".implements": "ComboBoxItem",
-    ".classes": [ "ComboBoxItemText" ],
+    ".backgroundColor": "${color.interactive.item.background}",
+    ".padding": "${spacing.horizontal.medium | spacing.vertical.small}",
     ".data": {
         "text": {
             "type": "TextLines",
@@ -14,7 +15,7 @@
         {
             ".name": "_itemText",
             ".controller": "TextView",
-            ".classes": [ "ComboBoxItemText.Text" ]
+            "TextView.color": "${color.text.primary}"
         }
     ]
 }

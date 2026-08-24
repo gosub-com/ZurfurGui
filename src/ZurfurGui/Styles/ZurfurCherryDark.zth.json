@@ -14,20 +14,18 @@
         // Window decorations
         "color.window.title.background": "#6B1530",
         "color.window.title.foreground": "#FFE8EE",
-        "color.window.title.foreground.hover": "#FF5070",
+        "color.window.close": "isHover ? #FF5070",
 
         // Text
         "color.text.primary": "#F0D8E0",
         "color.text.on-primary": "#D8EEFF",
 
         // Buttons, checkboxes, radio buttons, toggles, etc.
-        "color.interactive.primary.background": "#222448",
-        "color.interactive.primary.background.hover": "#2A2E60",
-        "color.interactive.primary.background.pressed": "#181C40",
-        "color.interactive.primary.background.selected": "#2A2E60",
-        "color.interactive.primary.stroke": "#5058A0",
-        "color.interactive.primary.stroke.hover": "#5868C0",
-        "color.interactive.primary.stroke.pressed": "#383E90",
+        "color.interactive.primary.stroke": "isPressed ? #383E90; isHover ? #5868C0; #5058A0",
+        "color.interactive.primary.background": "isPressed ? #181C40; isHover ? #2A2E60; #222448",
+
+        // Items in a listbox, combobox, etc.
+        "color.interactive.item.background": "isPressed ? #181C40; isHover ? #2A2E60; #00000000",
 
         // Text box, etc.
         "color.input.background": "#2A1520",
@@ -35,8 +33,7 @@
 
         // ScrollBar
         "color.scroll.track.background": "#381520",
-        "color.scroll.thumb.background": "#604050",
-        "color.scroll.thumb.background.hover": "#705060",
+        "color.scroll.thumb.background": "isHover ? #705060; #604050",
         "color.scroll.stroke": "#7A3050",
 
         "color.status.success.background": "#27472A",
@@ -50,6 +47,5 @@
         "color.status.danger.stroke": "#FF5F56",
         "color.status.success.stroke": "#92D050",
         "color.status.warning.stroke": "#FFD700"
-
     }
 }

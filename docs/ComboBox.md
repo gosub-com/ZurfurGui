@@ -97,34 +97,49 @@ shows a red-outlined badge label on the left and a descriptive text label vertic
 // Use ".implements": "ComboBoxItem" and reference via ComboBox<ComboBoxItemBadge>.
 {
     ".controller": "ComboBoxItemBadge",
-    ".namespace": "TestApp.Test",
+    ".namespace": "TestApp.Test.Controls",
     ".implements": "ComboBoxItem",
-    ".classes": [ "ComboBoxItemBadge" ],
+    ".padding": "${spacing.horizontal.small | spacing.vertical.extra-small}",
+    ".backgroundColor": "${color.interactive.item.background}",
     ".data": {
-        "badge": { "type": "TextLines", "bind": "_badge.text" },
-        "text":  { "type": "TextLines", "bind": "_text.text" }
+        // Short label shown inside the red-outlined badge pill.
+        "badge": {
+            "type": "TextLines",
+            "bind": "_badge.text"
+        },
+        // Main descriptive text shown to the right of the badge.
+        "text": {
+            "type": "TextLines",
+            "bind": "_text.text"
+        }
     },
     ".layout": "Row",
     ".content": [
         {
-            ".classes": [ "ComboBoxItemBadge.BadgeBox" ],
-            ".align": { "vertical": "center" },
+            // Badge pill: red outline box around the badge text.
+            ".borderWidth": "${stroke.width.medium}",
+            ".borderColor": "${color.status.danger.stroke}",
+            ".borderRadius": "${radius.corner.small}",
+            ".padding": "${spacing.vertical.extra-small | spacing.horizontal.small}",
+            ".align": "vertical:center",
             ".content": [
                 {
                     ".name": "_badge",
                     ".controller": "TextView",
-                    ".classes": [ "ComboBoxItemBadge.BadgeText" ]
+                    "TextView.color": "${color.status.danger.stroke}"
                 }
             ]
         },
         {
             ".name": "_text",
             ".controller": "TextView",
-            ".classes": [ "ComboBoxItemBadge.Text" ],
-            ".align": { "vertical": "center" }
+            "TextView.color": "${color.text.primary}",
+            ".padding": "${spacing.left.small | spacing.zero}",
+            ".align": "vertical:center"
         }
     ]
 }
+
 ```
 
 Key points:
@@ -134,13 +149,8 @@ Key points:
   The generator emits ZUI006 and refuses to build if you do.
 - `.layout": "Row"` is set on the item root itself (not on a wrapper child) to lay the badge and text
   side by side. Use `.align": { "vertical": "center" }` on each child to centre them in the row.
-- The badge outline is entirely a style concern — no border properties in the JSON; they live in the
-  `.zss.json` style sheet.
 
-**2. Add a style sheet** (see `ComboBoxItemBadge.zss.json`):
-
-
-**3. Use the new item in a view** (`FormTestComboBox.zui.json`):
+**2. Use the new item in a view** (`FormTestComboBox.zui.json`):
 
 ```jsonc
 {
@@ -150,7 +160,7 @@ Key points:
 }
 ```
 
-**4. Populate from code** (`FormTestComboBox.Control.cs`):
+**3. Populate from code** (`FormTestComboBox.Control.cs`):
 
 ```csharp
 var items = new (string Badge, string Text)[]
@@ -162,7 +172,7 @@ foreach (var (badge, text) in items)
 _badgeCombo.DataContext.SelectedIndex = 0;
 ```
 
-**5. Show the form** in `ZurfurMain.cs`:
+**4. Show the form** in `ZurfurMain.cs`:
 
 ```csharp
 app.ShowWindow(new FormTestComboBox(), "ComboBox Test",

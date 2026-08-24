@@ -1,59 +1,66 @@
 {
     ".controller": "Window",
     ".namespace": "ZurfurGui.Windows",
-    ".classes": [ "Window" ], // TBD: Remove, as this is the element type (not class)
+    ".backgroundColor": "${color.surface.overlay}",
+    ".borderColor": "${color.surface.overlay.stroke}",
+    ".borderRadius": "${radius.corner.large}",
+    ".borderWidth": "${stroke.width.medium}",
+    ".sizeMin": "${size.window.min}",
     ".content": [
         {
             ".layout": "Dock",
             ".content": [
                 {
                     ".name": "_windowTitle",
-                    ".classes": [ "Window.Title" ],
+                    ".padding": "${spacing.vertical.small | spacing.horizontal.medium}",
+                    ".backgroundColor": "${color.window.title.background}",
+                    ".borderRadius": "${radius.corner.large.inside}",
                     ".layout": "Dock",
-                    ".align":  "vertical:top",
+                    ".align": "vertical:top",
                     "dock.align": "top",
                     ".content": [
                         {
                             ".controller": "TextView",
-                            ".classes": [ "Window.Title.TextColor", "Window.Title.Menu" ],
                             "dock.align": "left",
                             "text": "≡",
-                            "font": "size:24"
+                            "TextView.font": "${font.size.window.title}",
+                            "TextView.color": "${color.window.menu | color.window.title.foreground}"
                         },
                         {
                             ".name": "_closeButton",
                             ".controller": "TextView",
-                            ".classes": [ "Window.Title.TextColor", "Window.Title.Close" ],
                             "dock.align": "right",
                             "text": "X",
-                            "font": "size:24"
+                            "TextView.font": "${font.size.window.title}",
+                            "TextView.color": "${color.window.close | color.window.title.foreground}"
                         },
                         {
                             ".controller": "TextView",
                             ".name": "_title",
-                            ".classes": [ "Window.Title.Text", "Window.Title.TextColor" ],
-                            ".align": "horizontal:center;vertical:center",
+                            ".align": "horizontal:center,vertical:center",
                             "text": "(not set)",
-                            ".disableHitTest": true
+                            "TextView.color": "${color.window.menu | color.window.title.foreground}",
+                            "TextView.font": "${font.size.window.title}"
+
                         }
                     ]
                 },
                 {
                     ".name": "_windowContent",
-                    ".classes": [ "Window.Content" ],
-                    ".clip": true
+                    ".clip": true,
+                    ".margin": "${spacing.window | spacing.large}"
                 }
             ]
         },
         {
             ".name": "_resizeHandle",
-            ".align": "horizontal:right;vertical:bottom",
-            ".margin": "left:0;top:0;right:-5;bottom:-13",
+            ".align": "horizontal:right,vertical:bottom",
+            ".margin": "left:0,top:0,right:-5,bottom:-13",
             ".content": [
                 {
                     ".controller": "TextView",
                     "text": "◢",
-                    ".offset": "x:-0.5;y:-1",
+                    ".offset": "x:-0.5,y:-1",
                     "font": "size:32"
                 }
             ]

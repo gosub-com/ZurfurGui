@@ -71,7 +71,7 @@ creating flexible and maintainable controls.
 *   **Description:** The foundation of Data-Driven Styling. This is a property that is exposed
 	on the data context but also participates in the style system. If the data context
 	provides a value, it is used; if the value is `null`, the system falls back to the value
-	provided by the active stylesheets.
+	provided by the active theme.
 *   **Mechanism:** Uses `"bind": "styledData"`.
 *   **Generated Code:** Creates a nullable property in the `IData` interface and concrete `Data`
 	class, plus a `PropertyKey` field in the controller. The controller merges data and style
@@ -83,7 +83,7 @@ creating flexible and maintainable controls.
 ### 3. Styled (Style-Only)
 
 *   **Description:** A property that defines the look-and-feel of a control but is not exposed
-	on the data context. It can only be configured via stylesheets or by imperative code
+	on the data context. It can only be configured via theme or by imperative code
 	(`view.SetProperty`).
 *   **Mechanism:** Uses `"bind": "styledOnly"` in the `.data` section.
 *   **Generated Code:** Creates only a `PropertyKey` field in the controller class. Does **not**
