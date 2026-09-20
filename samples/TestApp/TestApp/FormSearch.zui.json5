@@ -1,0 +1,98 @@
+{
+    $controller: "FormSearch",
+    $namespace: "TestApp",
+    $layout: "Column",
+    $content: [
+        {
+            $layout: "Dock",
+            $content: [
+                {
+                    $controller: "Button",
+                    text: "X",
+                    "dock.align": "right"
+                },
+                {
+                    $controller: "CheckBox",
+                    $margin: "left:0,top:0,right:10,bottom:0",
+                    text: "Replace",
+                    //isChecked: true,
+                    "dock.align": "right"
+                },
+                {
+                    $controller: "TextView",
+                    text: "Search Form:",
+                    "dock.align": "left"
+                }
+            ]
+        },
+        {
+            $layout: "Dock",
+            $content: [
+                {
+                    $controller: "Button",
+                    text: "Find (F3)",
+                    $sizeRequest: "width:120",
+                    "dock.align": "right",
+                    $margin: "left:10,top:0,right:10,bottom:0"
+                },
+                {
+                    $controller: "TextEdit",
+                    text: "Search Text",
+                    "dock.align": "left"
+                }
+            ]
+        },
+        {
+            $layout: "Dock",
+            $content: [
+                {
+                    $controller: "TextView",
+                    text: "Matches (#)",
+                    $sizeRequest: "width:120",
+                    "dock.align": "right"
+                },
+                {
+                    $controller: "TextView",
+                    text: "Replace with:"
+                }
+            ]
+        },
+        {
+            $layout: "Dock",
+            $content: [
+                {
+                    $controller: "Button",
+                    text: "Replace",
+                    $sizeRequest: "width:120",
+                    $margin: "left:10,top:0,right:0,bottom:0",
+                    "dock.align": "right"
+                },
+                {
+                    $controller: "TextEdit",
+                    text: "Replace Text"
+                }
+            ]
+        },
+        {
+            $layout: "Dock",
+            $content: [
+                {
+                    $controller: "Button",
+                    text: "Replace All",
+                    $sizeRequest: "width:120",
+                    $margin: "left:10,top:0,right:0,bottom:0",
+                    "dock.align": "right"
+                },
+                {
+                    $controller: "CheckBox",
+                    text: "Match Case"
+                },
+                {
+                    $controller: "CheckBox",
+                    text: "Match Whole Word",
+                    $margin: "left:10,top:0,right:0,bottom:0"
+                }
+            ]
+        }
+    ]
+}

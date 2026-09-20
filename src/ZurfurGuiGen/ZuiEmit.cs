@@ -101,7 +101,7 @@ internal static class ZuiEmit
     /// where Constraint is the control named in the "where" clause — keeping the data layer non-generic.
     /// For regular collections (IsCollection), returns ObservableCollection&lt;I{type}Data&gt;.
     /// </summary>
-    internal static string GetBindingDataType(DataBinding binding, Dictionary<string, string> namedControls)
+    internal static string GetBindingDataType(DataBinding binding, Dictionary<string, NamedControlInfo> namedControls)
     {
         if (binding.IsTypeParam)
             // Type param collection: element type is the constraint's data interface, not the type param itself.
@@ -115,13 +115,13 @@ internal static class ZuiEmit
         // type should be that control's data contract (I<ControlName>Data).
         if (IsNamedControl(binding.Bind, namedControls))
         {
-            var controlTypeName = namedControls[binding.Bind];
+            var controlTypeName = namedControls[binding.Bind].Type;
             return $"I{controlTypeName}Data";
         }
 
         return binding.NullableType;
     }
 
-    internal static bool IsNamedControl(string bind, Dictionary<string, string> namedControls)
+    internal static bool IsNamedControl(string bind, Dictionary<string, NamedControlInfo> namedControls)
         => namedControls.ContainsKey(bind);
 }

@@ -8,13 +8,14 @@ Goal: replace MVVM-style runtime bindings with **generated, compile-time contrac
 
 - **View (V)** declares the data it needs (currently in ZUI JSON `data`; other hosts may use an equivalent XAML `data` section).
 - Code generation produces:
-  - Code-behind partial controller class (`*.zui.json` → `<ViewName>.Control.g.cs`)
-  - a strongly typed **data interface** (`*.zui.json` → `<ViewName>.Contract.g.cs`)
-  - a concrete **data class** that implements it (`*.zui.json` → `<ViewName>.Data.g.cs`)
+	- Code-behind partial controller class (`*.zui.json5` → `<ViewName>.Control.g.cs`)
+  - a strongly typed **data interface** (`*.zui.json5` → `<ViewName>.Contract.g.cs`)
+  - a concrete **data class** that implements it (`*.zui.json5` → `<ViewName>.Data.g.cs`)
 - You can:
   - use the generated data class as-is (e.g., deserialize JSON directly into it), or
   - extend it as a `partial` class to map to/from the domain **model (M)**.
-- Avoid runtime reflection for MDV/data propagation and bindings. Prefer code generation (or other compile-time mechanisms) so updates are strongly-typed, AOT-friendly, and trimming-safe.
+- Avoid runtime reflection for MDV/data propagation and bindings. Prefer code generation (or other compile-time
+  mechanisms) so updates are strongly-typed, AOT-friendly, and trimming-safe.
 
 ## Terminology
 
@@ -31,70 +32,73 @@ Goal: replace MVVM-style runtime bindings with **generated, compile-time contrac
 
 ## JSON coding standards (ZUI)
 
-The `.zui.json` and `.zth.json` files use a relaxed JSON dialect parsed by `ZurfurGuiGen/Json.cs`. Two extensions
-beyond standard JSON are supported:
+The `.zui.json5` and `.zth.json5` files use JSON5 syntax parsed by `ZurfurGuiGen/Json.cs`. The legacy
+`.zui.json` and `.zth.json` extensions remain supported for compatibility. In addition to standard JSON,
+the parser supports these JSON5 features:
 
 - **`// line comments`** — a `//` outside a string value starts a comment that runs to the end of the line.
 - **Trailing commas** — a comma after the last property in an object or the last element in an array is silently
   accepted. This matches the JSONC convention used by `tsconfig.json`, VS Code `settings.json`, etc.
+- **Unquoted identifier keys** — valid identifier keys, including keys beginning with `$`, do not need quotes.
 
 These two relaxations are intentional. Strict JSON interoperability is not a goal because these files are consumed
 exclusively by the generator. Comments and trailing commas reduce friction for both human and AI editors.
 
 - In ZUI JSON, all type names are PascalCase (including built-in aliases like `Int`, `Bool`, `String`, etc.).
 - In ZUI JSON, all field names are camelCase.
-- The source generator converts from JSON style to C# style when generating code (field/property names become PascalCase in C#, and built-in type aliases are normalized to the corresponding C# keywords).
+- The source generator converts from JSON style to C# style when generating code (field/property names become
+  PascalCase in C#, and built-in type aliases are normalized to the corresponding C# keywords).
 - Comments are collected by the generator and emitted into generated code as XML doc comments where appropriate.
 
 Naming notes:
 
 - The generated controller type name is exactly `<ViewName>` (it is not suffixed).
 - For view code-behind, use a partial class in `<ViewName>.Control.cs`.
-- If `.data` is present, the generator emits:
+- If `$data` is present, the generator emits:
   - a data contract interface `I<ViewName>Data` in `<ViewName>.Contract.g.cs`
   - a data implementation class `<ViewName>Data` in `<ViewName>.Data.g.cs` (generated as `partial` if you provide `<ViewName>.Data.cs`)
 - For data code-behind/extensibility, use a partial class in `<ViewName>.Data.cs`.
-- All generated and user-authored partials for a view are in the same namespace (the namespace comes from the JSON `.namespace`).
+- All generated and user-authored partials for a view are in the same namespace (the namespace comes from the JSON `$namespace`).
 - For generic controls (e.g. `ComboBox<Item>`), the same conventions apply with the type parameter appended:
   the controller is `ComboBox<Item>`, the data interface is `IComboBoxData<Item>`, and the data class is `ComboBoxData<Item>`.
-- The `.implements` field names a constraint control whose data interface the current control's data interface extends.
-  A control that declares `.implements: "ComboBoxItem"` will have `IComboBoxItemTextData : IComboBoxItemData` generated.
-- `//` line comments immediately preceding a `.data` property or the top-level JSON object are captured by the generator
+- The `$implements` field names a constraint control whose data interface the current control's data interface extends.
+  A control that declares `$implements: "ComboBoxItem"` will have `IComboBoxItemTextData : IComboBoxItemData` generated.
+- `//` line comments immediately preceding a `$data` property or the top-level JSON object are captured by the generator
   and emitted as `<summary>` XML doc comments in all generated files (controller, data class, and data interface).
 
 Detection rules (important for maintaining conventions):
 
-- A view is identified by `*.zui.json` filename (e.g. `Button.zui.json` → `<ViewName>` is `Button`).
+- A view is identified by a `*.zui.json5` filename (legacy `*.zui.json` is also accepted; e.g. `Button.zui.json5` → `<ViewName>` is `Button`).
 - Controller code-behind is detected **by filename**: `<ViewName>.Control.cs`.
 - Data code-behind is detected **by filename**: `<ViewName>.Data.cs`.
-- The generator also validates that the namespace declared in these `.cs` files matches the JSON `.namespace`.
+- The generator also validates that the namespace declared in these `.cs` files matches the JSON `$namespace`.
 
 ## Code generation overview (`ZurfurGuiGen.GenerateZui`)
 
 This repo uses a Roslyn incremental source generator (`ZurfurGuiGen/GenerateZui.cs`) to turn UI JSON files into C#.
 It generates these outputs:
 
-### 1) Per-view controller (`*.zui.json` → `<ViewName>.Control.g.cs`)
+### 1) Per-view controller (`*.zui.json5` → `<ViewName>.Control.g.cs`)
 
-- Each `*.zui.json` file describes a view/control.
-- The generator emits a controller class named after the file (for example, `MyView.zui.json` → `MyView.Control.g.cs`).
+- Each `*.zui.json5` file describes a view/control.
+- The generator emits a controller class named after the file (for example, `MyView.zui.json5` → `MyView.Control.g.cs`).
 - The generated controller embeds the JSON, calls `Loader.Load(...)` to build the view tree, and exposes named child
-  controls as fields (based on `.name` in the JSON).
+	controls as fields (based on `$name` in the JSON).
 - If you provide a matching hand-written `<ViewName>.Control.cs`, the generated class becomes `partial` so you can add
   code-behind without editing generated code.
 
 
-### 2) Per-view data contract (`*.zui.json` → `<ViewName>.Contract.g.cs` + `<ViewName>.Data.g.cs`)
+### 2) Per-view data contract (`*.zui.json5` → `<ViewName>.Contract.g.cs` + `<ViewName>.Data.g.cs`)
 
-- If a view declares a `.data` section, the generator emits:
+- If a view declares a `$data` section, the generator emits:
   - `I<ViewName>Data` in `<ViewName>.Contract.g.cs`
   - `<ViewName>Data : I<ViewName>Data` in `<ViewName>.Data.g.cs`
 - If you provide a matching hand-written `<ViewName>.Data.cs`, the generated data class is emitted as `partial` so you can
   extend it.
 
-#### `.data` bind keywords
+#### `$data` bind keywords
 
-Every entry in a `.data` section must declare a `"bind"` field. The valid values are:
+Every entry in a `$data` section must declare a `"bind"` field. The valid values are:
 
 | `bind` value | `PropertyKey` emitted | Data class field | Use when |
 |---|---|---|---|
@@ -104,22 +108,22 @@ Every entry in a `.data` section must declare a `"bind"` field. The valid values
 
 - **`"styled"`** emits a static `PropertyKey<T>` on the controller (or its non-generic companion class for generic controls). When `DataContext` changes, `OnDataContextPropertyChanged` calls `View.SetProperty` / `View.RemoveProperty`. Nullable `"styled"` properties remove the property when set to `null`, allowing a theme to supply a fallback value.
 - **`"data"`** stores the value only in the generated data class. No `PropertyKey` is emitted. `OnDataContextPropertyChanged` and `SyncAllPropertiesToView` skip these properties entirely — only code-behind observes them via `INotifyPropertyChanged`.
-- Collections (`[]Type`) **must** use `"bind": "data"`. Using any other value is a generator error.
+- Collections (`[]Type`) **must** use `bind: "data"`. Using any other value is a generator error.
 
 #### Collection bindings (`[]Type` syntax)
 
-A `.data` entry whose `type` starts with `[]` declares a collection of item data objects rather than a single value.
+A `$data` entry whose `type` starts with `[]` declares a collection of item data objects rather than a single value.
 
-```jsonc
-".data": {
-	"items": { "type": "[]ComboBoxItem", "bind": "data" }
+```json5
+$data: {
+	items: { type: "[]ComboBoxItem", bind: "data" }
 }
 ```
 
 Rules and generated output:
 
 - `[]Type` is never nullable — `?[]Type` is a generator error. Use `[]Type` only.
-- Collections must use `"bind": "data"` — any other value is a generator error.
+- Collections must use `bind: "data"` — any other value is a generator error.
 - The generator derives the item interface name as `I<Type>Data` (same `I`-prefix convention as all data contracts).
 - The contract property type is `ObservableCollection<I<Type>Data>` (fully qualified as
   `global::System.Collections.ObjectModel.ObservableCollection<I<Type>Data>`).
@@ -138,30 +142,34 @@ changes as needed. See `ComboBox.Control.cs` and `docs/ComboBox.md` for a worked
 - `"styled"` bindings: `OnDataContextPropertyChanged` calls `View.SetProperty` (or `View.RemoveProperty` for
   nullable properties set to `null`, allowing style fallback); `SyncAllPropertiesToView()` pushes all current values on assignment
 - `"data"` bindings: stored only in the data object — `OnDataContextPropertyChanged` and `SyncAllPropertiesToView` skip them entirely; code-behind observes changes via `INotifyPropertyChanged` directly
-- Data properties can also be set directly from `.zui.json` — unknown (non-`.`) property names without a dot are
+- Data properties can also be set directly from `.zui.json5` — unknown non-`$` property names without a dot are
   treated as data properties and applied via `Loader.ApplyDataProperties` after the control tree is built
 
-### 3) Per-project registry (`*.zui.json` + `*.zth.json` → `ZurfurMain.g.cs`)
+### 3) Per-project registry (`*.zui.json5` + `*.zth.json5` → `ZurfurMain.g.cs`)
 
-- The generator collects all views (`*.zui.json`) and themes (`*.zth.json`) in the project.
+- The generator collects all views (`*.zui.json5`) and themes (`*.zth.json5`) in the project. Legacy `.zui.json`
+  and `.zth.json` files are also accepted.
 - It emits a `static partial class ZurfurMain` with an `InitializeControls()` method that:
   - runs static constructors so control properties get registered
   - registers generated controls with `Loader.RegisterControl(...)`
   - registers themes with `ThemeManager.RegisterTheme(...)`
 
-High-level runtime flow: your app's entry point calls the generated initialization, then creates a generated controller
+High-level runtime flow: your app's entry point calls the generated initialization, then creates a generated
+controller
 (or loads one by name) to build and render the UI.
 
 #### Note on file discovery: AdditionalFiles
 
-For the generator to automatically process your `.zui.json` or `.zth.json` files, they should be
+For the generator to automatically process your `.zui.json5` or `.zth.json5` files, they should be
 included as **AdditionalFiles** in your project. This is controlled by the file's build action in Visual Studio
 or by an `<ItemGroup>` in your `.csproj`:
 
 ```xml
 <ItemGroup>
-  <AdditionalFiles Include="**\*.zui.json" />
+	<AdditionalFiles Include="**\*.zui.json" />
+  <AdditionalFiles Include="**\*.zui.json5" />
   <AdditionalFiles Include="**\*.zth.json" />
+  <AdditionalFiles Include="**\*.zth.json5" />
 </ItemGroup>
 ```
 
@@ -172,10 +180,10 @@ build action or add the above ItemGroup to your project file.
 
 ## Generic controls
 
-Controls can be made generic by using a type parameter and `where` constraint in the `.controller` field:
+Controls can be made generic by using a type parameter and `where` constraint in the `$controller` field:
 
-```jsonc
-{ ".controller": "ComboBox<Item> where Item : ComboBoxItem" }
+```json5
+{ $controller: "ComboBox<Item> where Item : ComboBoxItem" }
 ```
 
 The type parameter (`Item`) and constraint (`ComboBoxItem`) are parsed by the generator. The constraint names
@@ -201,10 +209,10 @@ When the collection binding type is the type parameter (`[]Item`), the generator
 data interface (`ObservableCollection<IComboBoxItemData>`) rather than leaving it as the raw parameter, keeping
 the data layer non-generic where possible.
 
-### Constraint controls (`.controller` target)
+### Constraint controls (`$controller` target)
 
 The control named in the `where` clause (e.g. `ComboBoxItem`) acts purely as a **data shape contract**. It defines
-the minimum set of `.data` properties that every concrete item must provide. It should not contain layout or visual
+the minimum set of `$data` properties that every concrete item must provide. It should not contain layout or visual
 content — it exists only to establish the interface.
 
 The constraint name should be specific to the container (e.g. `ComboBoxItem`, `TreeNode`) rather than a
@@ -213,15 +221,15 @@ generic root like `ControlItem`, even if the properties it declares today are un
 uses `IComboBoxItem` to look up which registered concrete controller to instantiate for a given item. A
 shared generic root would collapse all item types into one factory bucket and lose the ability to
 discriminate between, say, combo box items and tree nodes. Each container therefore defines its own
-constraint, and universal properties are simply inherited by every implementing control via `.implements`.
+constraint, and universal properties are simply inherited by every implementing control via `$implements`.
 
-```jsonc
-// ComboBoxItem.zui.json — defines the required data shape; no visual content
+```json5
+// ComboBoxItem.zui.json5 — defines the required data shape; no visual content
 {
-	".controller": "ComboBoxItem",
-	".data": {
-		"isEnabled": { "type": "bool",    "bind": "styled" },
-		"tag":        { "type": "?object", "bind": "styled" }
+	$controller: "ComboBoxItem",
+	$data: {
+		isEnabled: { type: "bool",    bind: "styled" },
+		tag:        { type: "?object", bind: "styled" }
 	}
 }
 ```
@@ -229,26 +237,26 @@ constraint, and universal properties are simply inherited by every implementing 
 The generator does **not** emit a constraint interface (e.g. `IComboBoxItem`) for generic controls, because C#
 does not allow open generic types as generic constraints.
 
-### Implementing controls (`.implements`)
+### Implementing controls (`$implements`)
 
-A concrete item control that should work inside a generic container declares `.implements` pointing to the
+A concrete item control that should work inside a generic container declares `$implements` pointing to the
 constraint control:
 
-```jsonc
-// ComboBoxItemText.zui.json — a concrete item that satisfies ComboBoxItem
+```json5
+// ComboBoxItemText.zui.json5 — a concrete item that satisfies ComboBoxItem
 {
-	".controller": "ComboBoxItemText",
-	".namespace":  "ZurfurGui.Controls",
-	".implements": "ComboBoxItem",
-	".data": {
-		"text": { "type": "TextLines", "bind": "_itemText.text" }
+	$controller: "ComboBoxItemText",
+	$namespace:  "ZurfurGui.Controls",
+	$implements: "ComboBoxItem",
+	$data: {
+		text: { type: "TextLines", bind: "_itemText.text" }
 	},
-	".content": [ { ".name": "_itemText", ".controller": "TextView" } ]
+{ $name: "_itemText", $controller: "TextView" } ]
 }
 ```
 
 Notice that `isEnabled` and `tag` (the properties declared by `ComboBoxItem`) are **not** repeated in the
-`.data` section. The generator automatically inherits them from the constraint and includes them in the
+`$data` section. The generator automatically inherits them from the constraint and includes them in the
 generated controller, data class, and data interface. This means:
 
 - Adding a property to the constraint control propagates to all implementing controls automatically, even
@@ -258,13 +266,13 @@ generated controller, data class, and data interface. This means:
 
 #### Generated data class for implementing controls
 
-When `.implements` is set, the generated concrete data class (e.g. `ComboBoxItemTextData`) uses **delegation**
+When `$implements` is set, the generated concrete data class (e.g. `ComboBoxItemTextData`) uses **delegation**
 rather than re-implementing inherited properties from scratch:
 
 - A private `readonly` instance of the implemented data class is created and named
   `__implement{Implements}` (e.g. `__implementComboBoxItem`). The `__implement*` prefix makes it clear
   this is composition rather than C# inheritance, and the suffix names the specific contract — leaving
-  room for multiple `.implements` entries in the future.
+	room for multiple `$implements` entries in the future.
 - In both constructors, `__implementComboBoxItem.PropertyChanged` is subscribed and forwarded onto the
   outer instance, so subscribers holding a reference to `ComboBoxItemTextData` receive `PropertyChanged`
   notifications for inherited properties (`IsEnabled`, `Tag`) as well as own properties (`Text`).
@@ -278,7 +286,7 @@ public bool IsEnabled
 }
 ```
 
-- Own properties (those declared in the implementing control's own `.data` section) retain full
+- Own properties (those declared in the implementing control's own `$data` section) retain full
   backing fields, `s_*EventArgs` statics, and equality-guarded setters as normal.
 - The `s_*EventArgs` statics and backing fields for inherited properties are **not** emitted in the
   implementing class — they already exist inside `{Implements}Data` and are used there.
@@ -295,9 +303,9 @@ The generator resolves inherited bindings using one of two strategies:
    the Roslyn `Compilation` to find the compiled `I{Implements}Data` interface and synthesizes `DataBinding`
    objects from its property members.
 
-If the `.implements` target cannot be found by either strategy, the generator emits a **ZUI005** error.
+If the `$implements` target cannot be found by either strategy, the generator emits a **ZUI005** error.
 
-If a property in the `.data` section has the same name as an inherited property, the generator emits a
+If a property in the `$data` section has the same name as an inherited property, the generator emits a
 **ZUI006** error and instructs the author to remove the duplicate.
 
 The generator also emits a controller interface `IComboBoxItem` for the constraint control. Concrete item
@@ -309,7 +317,7 @@ The implementing control is also registered in a data-controller lookup table ke
 type. At runtime, `Loader.CreateDataController<IComboBoxItem>(itemData)` finds the right factory without
 requiring the generic container to know concrete types.
 
-### Cross-assembly `.implements` synthesis
+### Cross-assembly `$implements` synthesis
 
 When the constraint control lives in a referenced assembly, the generator synthesizes inherited bindings from
 Roslyn metadata rather than from the original JSON source. The following table documents what is and is not
@@ -319,15 +327,15 @@ supported in that path — these are intentional design boundaries, not temporar
 |---|---|---|
 | Scalar `bool`, `string`, value types | ✅ | ✅ |
 | Nullable reference types (`?object`) | ✅ | ✅ (via `NullableAnnotation`) |
-| `"bind": "styled"` | ✅ | ✅ (hardcoded — all synthesized bindings use `"styled"`) |
-| `ObservableCollection<>` (collection) | ✅ | ❌ ZUI007 error — must be declared explicitly in `.data` |
+| `bind: "styled"` | ✅ | ✅ (hardcoded — all synthesized bindings use `bind: "styled"`) |
+| `ObservableCollection<>` (collection) | ✅ | ❌ ZUI007 error — must be declared explicitly in `$data` |
 | XML doc comments | ✅ | ❌ comments are not preserved in compiled metadata |
 
 The delegation approach in `ZuiEmitData.cs` means the generated **data class** for inherited properties never
 inspects the `Bind` value — it simply delegates to the already-generated `{Implements}Data` instance. However,
 the generated **controller class** still uses binding metadata (e.g. `Bind`, `IsCollection`) from `allBindings`
 when emitting `OnDataContextPropertyChanged` and `SyncAllPropertiesToView`. For this reason, constraint controls
-should only declare properties with `"bind": "styled"` and no `ObservableCollection` bindings.
+should only declare properties with `bind: "styled"` and no `ObservableCollection` bindings.
 
 ### Property keys and generics
 
@@ -359,12 +367,14 @@ MDV creates **two parallel, independent graphs**:
 2. **DataContext tree** (strongly-typed data objects implementing generated interfaces)
    - Built after control tree initialization
    - Uses `INotifyPropertyChanged` for reactivity
-   - **May** include references to sub-control `DataContext` objects, but only when explicitly declared by the view's `.data` section
+	  - **May** include references to sub-control `DataContext` objects, but only when explicitly declared by the view's `$data` section
 	 (i.e., the data graph is *selectively composed* and is not required to mirror the control tree)
 
-**Key principle:** Controls reference data; data may reference other data objects—but **data never references controls**.
-The control tree and data graph are logically independent; the data graph shape is determined by what the view declares
-in `.data`.
+**Key principle:** Controls reference data; data may reference other data objects—but **data never references
+controls**.
+The control tree and data graph are logically independent; the data graph shape is determined by what the view
+declares
+in `$data`.
 
 ### Initialization sequence (per control)
 
@@ -378,11 +388,11 @@ Generated `InitializeControl()` runs in this order:
 3. **Cache named controls**: `_title = (TextView)View.FindByName("_title").Controller` — stores references to named children
 4. **Create DataContext tree**: `DataContext = CreateDefaultDataContext()`
    - For primitive types: initializes with default values (e.g., `new TextLines()`)
-   - For sub-control data (optional): if a `.data` binding targets a named control itself (e.g., `"bind": "card1"`), the
+	  - For sub-control data (optional): if a `$data` binding targets a named control itself (e.g., `bind: "card1"`), the
 	 generated initializer uses the child's already-initialized `DataContext` (e.g., `Card1 = card1.DataContext`)
    - Otherwise, the initializer creates new view-shaped data objects (e.g., `Title = new TextLines()`)
 5. **Apply JSON data properties**: `Loader.ApplyDataProperties(this)` — deserializes any data properties written
-   directly in the `.zui.json` file (camelCase names without a leading `.`) and pushes them into `DataContext`
+	  directly in the `.zui.json5` file (camelCase names without a leading `.`) and pushes them into `DataContext`
    via `SetDataProperty`. Children are processed before parents.
 
 **Critical:** Child controls are fully initialized (including their `DataContext`, if any) before the parent's
@@ -402,26 +412,28 @@ conforming item type, while the data model remains strongly typed end-to-end.
 
 ### Relation to MVVM
 
-This is similar in spirit to MVVM having a visual/control tree plus a ViewModel object graph, but MDV does not assume
-a 1:1 tree shape. Like MVVM, the data side should not reach into controls; integration should happen through declared
+This is similar in spirit to MVVM having a visual/control tree plus a ViewModel object graph, but MDV does not
+assume
+a 1:1 tree shape. Like MVVM, the data side should not reach into controls; integration should happen through
+declared
 contracts/bindings.
 
 ## Where to look first (for AI agents)
 
 - `ZurfurGuiGen/GenerateZui.cs`: source generator entry point; wires up ZUI and ZTH pipelines.
-- `ZurfurGuiGen/ZuiInput.cs`: collects data from `.zui.json` / `.zth.json` files into `FileInfo`; parses generic `.controller` syntax, `where` constraints, `.implements`, and top-level `$comment` into metadata fields.
-- `ZurfurGuiGen/ZuiSchema.cs`: parses `.data` bindings, named-control discovery, `$comment` injection per binding, and control-name-to-C#-type translation (including generic forms).
+- `ZurfurGuiGen/ZuiInput.cs`: collects data from `.zui.json5` / `.zth.json5` files into `FileInfo`; parses generic `$controller` syntax, `where` constraints, `$implements`, and top-level `#comment` into metadata fields. Legacy `.json` extensions remain supported.
+- `ZurfurGuiGen/ZuiSchema.cs`: parses `$data` bindings, named-control discovery, `#comment` injection per binding, and control-name-to-C#-type translation (including generic forms).
 - `ZurfurGuiGen/ZuiEmitController.cs`: emits the controller class, `InitializeControl`, `DataContext` property,
   `OnDataContextPropertyChanged`, `SyncAllPropertiesToView`, and `SetDataProperty`; handles generic class headers and non-generic companion key containers.
 - `ZurfurGuiGen/ZuiEmitContract.cs`: emits `I<ViewName>Data` interface; skips constraint-interface generation for generic controls; propagates top-level and per-binding XML doc comments.
 - `ZurfurGuiGen/ZuiEmitData.cs`: emits `<ViewName>Data` implementation class; handles generic data classes and top-level doc comment propagation.
 - `ZurfurGuiGen/ZuiEmitMain.cs`: emits `ZurfurMain.InitializeControls()` — control registration, theme registration, `RunClassConstructor` calls for both open generic types and each closed generic instantiation (to ensure property keys exist before style loading).
 - `ZurfurGuiGen/ZuiEmit.cs`: shared code-emission helpers.
-- `ZurfurGuiGen/Json.cs`: generator JSON parser (does not use `System.Text.Json`); supports `//` line comments, trailing commas, captures comments and injects them as `"$comment"` into adjacent dictionaries, and strips all `$`-prefixed keys during serialization so generator-only metadata is not embedded in generated `.cs` files.
+- `ZurfurGuiGen/Json.cs`: generator JSON parser (does not use `System.Text.Json`); supports `//` line comments and trailing commas, captures comments and injects them as `#comment` into adjacent dictionaries, and uses explicit `RemoveKeys` calls before generator-only metadata is embedded in generated `.cs` files.
 - `ZurfurGui/Loader.cs`: runtime loader, `RegisterControl`, `Load`, `ApplyDataProperties`; factory-based control registry keyed by data interface type; `CreateDataController<TConstraint>(itemData)` for generic item instantiation.
 - `ZurfurGui/Styles`: Style and theme property resolution and caching
 - `ZurfurGui/Controls/Panel.Control.cs`: all Panel `PropertyKey` definitions (attached properties).
-- `ZurfurGui/Controls/*.zui.json`: view/control definitions and `.data` declarations.
+- `ZurfurGui/Controls/*.zui.json5`: view/control definitions and `$data` declarations.
 - `docs/ComboBox.md`: how the ComboBox control works, how to use it, and how to create custom item renderers.
 
 ### Naming conventions for generic controls
@@ -438,8 +450,8 @@ contracts/bindings.
 
 Usage sites in JSON (e.g. a named child control) use the concrete form:
 
-```jsonc
-{ ".name": "_themeComboBox", ".controller": "ComboBox<ComboBoxItemText>" }
+```json5
+{ $name: "_themeComboBox", $controller: "ComboBox<ComboBoxItemText>" }
 ```
 
 The generator translates this to the C# type `ComboBox<IComboBoxItemTextData>` in the generated code.

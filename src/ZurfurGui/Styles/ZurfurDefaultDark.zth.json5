@@ -1,8 +1,8 @@
 // Fluent 2 starter token palette for ZurfurGui
 {
-    "name": "ZurfurDefaultDark",
+    name: "ZurfurDefaultDark",
 
-    "variables": {
+    variables: {
 
         // Windows, Panels, Cards, etc.
         "color.surface.canvas": "#252526", // Main app window

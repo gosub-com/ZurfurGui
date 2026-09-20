@@ -21,14 +21,14 @@ internal static class ZuiInput
     {
         var zuiPath = text.Path;
         var jsonNameWithoutJsonExt = Path.GetFileNameWithoutExtension(zuiPath); // removes .json
-        var jsonNameWithoutAnyExt = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui, .zss, zth
+        var jsonNameWithoutAnyExt = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui or .zth
 
         // Parse the json file (errors are collected into diagnostic)
         Diagnostic? diagnostic = null;
         Dictionary<string, object?> jsonDocument = new();
         var controllerName = "";
         var nameSpace = "";
-        var fileNameOnly = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui, .zss, .zth
+        var fileNameOnly = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui or .zth
         var userSuppliedControllerClass = false;
         var userSuppliedDataClass = false;
         var use = new List<string>();
@@ -41,13 +41,13 @@ internal static class ZuiInput
             // Parse the JSON content, find the controller or style name
             jsonDocument = Json.Parse(text.GetText(cancellationToken)?.ToString() ?? "");
             var extension = Path.GetExtension(jsonNameWithoutJsonExt).ToLower();
-            if (extension == ".zss" || extension == ".zth")
+            if (extension == ".zth")
             {
                 controllerName = GetMatchingJsonFileName(fileNameOnly, jsonDocument);
             }
             else if (extension == ".zui")
             {
-                nameSpace = GetJsonValue(jsonDocument, ".namespace");
+                nameSpace = GetJsonValue(jsonDocument, "$namespace");
 
                 use = GetUsingLines(jsonDocument);
 
@@ -90,7 +90,7 @@ internal static class ZuiInput
             }
             else
             {
-                throw new Exception($"Unexpected file extension '{extension}' in file '{zuiPath}'. Expected '.zui', '.zss', or '.zth'.");
+                throw new Exception($"Unexpected file extension '{extension}' in file '{zuiPath}'. Expected '.zui' or '.zth'.");
             }
         }
         catch (LocationException lex)
@@ -117,7 +117,7 @@ internal static class ZuiInput
             FileName = fileNameOnly,
             Diagnostic = diagnostic,
             JsonDocument = jsonDocument,
-            Comment = jsonDocument.TryGetValue("$comment", out var topComment) && topComment is string topCommentStr ? topCommentStr : "",
+            Comment = jsonDocument.TryGetValue("#comment", out var topComment) && topComment is string topCommentStr ? topCommentStr : "",
             ControllerName = controllerName,
             Namespace = nameSpace,
             Use = use,
@@ -136,7 +136,7 @@ internal static class ZuiInput
     /// </summary>
     static List<string> GetUsingLines(Dictionary<string, object?> jsonDocument)
     {
-        if (!jsonDocument.TryGetValue(".use", out var useObj) || useObj == null)
+        if (!jsonDocument.TryGetValue("$use", out var useObj) || useObj == null)
             return new List<string>();
 
         if (useObj is List<object?> list)
@@ -170,7 +170,7 @@ internal static class ZuiInput
         typeParam = "";
         typeParamConstraint = "";
 
-        string controllerValue = GetJsonValue(jsonDocument, ".controller");
+        string controllerValue = GetJsonValue(jsonDocument, "$controller");
 
         var match = s_genericControllerRegex.Match(controllerValue);
         if (match.Success)

@@ -1,10 +1,12 @@
 # Initialization Procedure
 
-This document describes the startup and initialization sequence for applications using the ZurfurGui library, including
+This document describes the startup and initialization sequence for applications using the ZurfurGui library,
+including
 both Windows and browser targets.
 
 ## Overview
-ZurfurGui is a library distributed as a DLL. Applications (such as TestApp) are responsible for starting the library
+ZurfurGui is a library distributed as a DLL. Applications (such as TestApp) are responsible for starting the
+library
 and initializing controls, styles, and themes before running any application logic.
 
 ## Startup Sequence

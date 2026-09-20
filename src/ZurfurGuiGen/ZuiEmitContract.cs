@@ -17,7 +17,7 @@ internal static class ZuiEmitContract
 
         var interfaceName = $"I{data.ControllerName}Data";
 
-        // When .implements is set, this data interface extends the constraint's data interface
+        // When $implements is set, this data interface extends the constraint's data interface
         // (e.g. IComboBoxItemTextData : IComboBoxItemData) so that it satisfies
         // ObservableCollection<IComboBoxItemData> without an explicit cast.
         var dataBaseInterface = data.Implements != ""

@@ -1,0 +1,56 @@
+{
+    $controller: "FormTestComboBox",
+    $namespace: "TestApp.Test",
+    $use: [ "TestApp.Test.Controls" ],
+    $layout: "Column",
+    $padding: "left:16,top:16,right:16,bottom:16",
+    $content: [
+        {
+            $layout: "Row",
+            $content: [
+                {
+                    $controller: "TextView",
+                    text: [ "Theme:" ],
+                    $align: "horizontal:left,vertical:center"
+                },
+                {
+                    $name: "_themeComboBox",
+                    $controller: "ComboBox<ComboBoxItemText>",
+                    $align: "horizontal:left"
+                }
+            ]
+        },
+        {
+            $layout: "Row",
+            $padding: "left:0,top:12,right:0,bottom:0",
+            $content: [
+                {
+                    $controller: "TextView",
+                    text: [ "Badge Item Test:" ],
+                    $align: "horizontal:left,vertical:center"
+                },
+                {
+                    $name: "_badgeCombo",
+                    $controller: "ComboBox<ComboBoxItemBadge>",
+                    $align: "horizontal:left"
+                }
+            ]
+        },
+        {
+            $controller: "TextView",
+            $name: "_textViewScrollBar",
+            text: [ "ScrollBar Test:" ]
+        },
+        {
+            $name: "_scrollTest",
+            $controller: "ScrollBar",
+            $sizeRequest: "height:16",
+            orientation: "Horizontal",
+            maximum: 400,
+            viewportSize: 100,
+            smallChange: 16,
+            largeChange: 100
+
+        }
+    ]
+}

@@ -1,0 +1,37 @@
+{
+    $controller: "ControlCard",
+    $namespace: "TestApp.Controls",
+    $layout: "Column",
+    $data: {
+        title: {
+            type: "TextLines",
+            bind: "_title.text"
+        },
+        description: {
+            type: "TextLines",
+            bind: "_description.text"
+        },
+        byLine: {
+            type: "TextLines",
+            bind: "_byline.text"
+        }
+    },
+    $content: [
+        {
+            $controller: "TextView",
+            $name: "_title",
+            text: "Default control card title",
+            font: "size:18"
+        },
+        {
+            $controller: "TextView",
+            $name: "_description",
+            text: "Defaut control card description. "
+        },
+        {
+            $controller: "TextView",
+            $name: "_byline",
+            text: "Default control card title"
+        }
+    ]
+}

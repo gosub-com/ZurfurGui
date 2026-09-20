@@ -12,9 +12,6 @@ internal static class ZuiEmitController
 {
     internal static string GenerateControllerClassSource(ZuiFileInfo data, List<DataBinding>? inheritedBindings, string? implementsNamespace)
     {
-        // Serialize JSON and escape double quotes for verbatim string
-        var zuiJsonContent = Json.Serialize(data.JsonDocument).Replace("\"", "\"\"");
-
         // All bindings: inherited ones first, then the control's own bindings.
         var allBindings = inheritedBindings != null
             ? inheritedBindings.Concat(data.Bindings).ToList()
@@ -58,7 +55,7 @@ internal static class ZuiEmitController
         sb.AppendIndentedLine(1, $"public TextLines TypeUses => new TextLines([{string.Join(",",
             data.Use.Select(s => "\"" + s + "\""))}]);");
         // Register the controller's own concrete data interface (e.g. IComboBoxItemBadgeData),
-        // NOT the base .implements interface (e.g. IComboBoxItemData).
+        // NOT the base $implements interface (e.g. IComboBoxItemData).
         // GetDataControllerFactory walks a concrete data class's interfaces to find a registered
         // factory; if two controllers both register IComboBoxItemData, whichever registered first
         // wins and the wrong controller is instantiated for the other item type.
@@ -68,7 +65,7 @@ internal static class ZuiEmitController
         sb.AppendIndentedLine(1, $"public static readonly global::System.Type[] s_implementsDataInterfaces = {implementsArray};");
         sb.AppendIndentedLine(1, "public global::System.Type[] ImplementsDataInterfaces => s_implementsDataInterfaces;");
 
-        // Generated PropertyKey fields for ".data" entries that bind to "styledData" or "styleOnly" (excluding collections).
+        // Generated PropertyKey fields for "$data" entries that bind to "styledData" or "styleOnly" (excluding collections).
         // For generic controls, keys must live in a non-generic companion static class to avoid
         // per-closed-type duplication (each closed type would try to register the same key name,
         // causing a duplicate-registration exception in PropertyKey's constructor).
@@ -141,12 +138,16 @@ internal static class ZuiEmitController
 
         // Create named control variables
         var namedControlsDict = ZuiSchema.FindNamedControlsDictionary(data.JsonDocument);
+        Json.RemoveKeys(data.JsonDocument, new List<string> { "#comment", "$namespace", "$use", "$implements", "$data" });
+        var zuiJsonContent = Json.Serialize(data.JsonDocument).Replace("\"", "\"\"");
         var controlNames = namedControlsDict.Keys.OrderBy(n => n);
         sb.AppendIndentedLine(1, "// Named controls (public unless name starts with '_')");
         foreach (var name in controlNames)
         {
             var qualifier = name.StartsWith("_") ? "private" : "public ";
-            sb.AppendIndentedLine(1, $"{qualifier} {namedControlsDict[name]} {name} = null!; // Set by InitializeControl");
+            sb.AppendIndentedLine(1, "");
+            ZuiEmit.AppendXmlDocComment(sb, 1, namedControlsDict[name].Comment);
+            sb.AppendIndentedLine(1, $"{qualifier} {namedControlsDict[name].Type} {name} = null!; // Set by InitializeControl");
         }
 
         // Add constructor if no .cs file is supplied
@@ -171,7 +172,7 @@ internal static class ZuiEmitController
         if (controlNames.Any())
             sb.AppendIndentedLine(2, "// Initialize named controls");
         foreach (var name in controlNames)
-            sb.AppendIndentedLine(2, $"{name} = ({namedControlsDict[name]})View.FindByName(\"{name}\").Controller;");
+            sb.AppendIndentedLine(2, $"{name} = ({namedControlsDict[name].Type})View.FindByName(\"{name}\").Controller;");
 
         // Initialize DataContext after controls are loaded
         if (allBindings.Any(b => b.BindType != BindType.StyledOnly))
@@ -237,7 +238,7 @@ internal static class ZuiEmitController
         sb.Append("\r\n");
         sb.AppendIndentedLine(1, $"static string _zuiJsonContent => @\"{zuiJsonContent}\";");
 
-        // Explicit interface implementation for .implements contract.
+        // Explicit interface implementation for $implements contract.
         // The public DataContext property is typed as I{ControllerName}Data (e.g. IComboBoxItemTextData),
         // but I{Implements} (e.g. IComboBoxItem) requires DataContext typed as I{Implements}Data.
         // C# won't satisfy the interface via the public property since types differ even when one
@@ -444,7 +445,7 @@ internal static class ZuiEmitController
         sb.AppendIndentedLine(1, "}");
     }
 
-    private static void GenerateSetDataProperty(IEnumerable<DataBinding> bindings, StringBuilder sb, Dictionary<string, string> namedControls, ZuiFileInfo data)
+    private static void GenerateSetDataProperty(IEnumerable<DataBinding> bindings, StringBuilder sb, Dictionary<string, NamedControlInfo> namedControls, ZuiFileInfo data)
     {
         sb.Append("\r\n");
         sb.AppendIndentedLine(1, "public bool SetDataProperty(string name, object? value)");

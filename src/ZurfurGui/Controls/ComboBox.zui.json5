@@ -1,0 +1,42 @@
+// A drop down combo box
+{
+    $controller: "ComboBox<Item> where Item : ComboBoxItem",
+    $namespace: "ZurfurGui.Controls",
+    $borderWidth: "${stroke.width.default}",
+    $borderRadius: "${radius.corner.medium}",
+    $borderColor: "${color.interactive.primary.stroke}",
+    $backgroundColor: "${color.interactive.primary.background}",
+    $padding: "${padding.combobox}",
+    "ComboBox.scrimColor": "${color.surface.overlay.scrim}",
+    $layout: "Row",
+    $sizeMin: "width:80",
+    $data: {
+        // The list of data items in the combo box. 
+        // For ComboBox<ComboBoxTextItem> the data type is `IComboBoxTextItemData`
+        items: {
+            type: "[]Item",
+            bind: "data"
+        },
+        // The currently selected index, or NULL if nothing is selected.
+        selectedIndex: {
+            type: "?int",
+            bind: "data"
+        }
+    },
+    $content: [
+        {
+            $name: "_selectedItem",
+            $controller: "Panel",
+            "TextView.color": "${color.text.primary}",
+            $align: "horizontal:stretch,vertical:center"
+        },
+        {
+            $name: "_arrow",
+            $controller: "TextView",
+            "TextView.color": "${color.text.primary}",
+            $padding: "${padding.combobox.arrow}",
+            $align: "horizontal:right,vertical:center",
+            text: [ "▾" ]
+        }
+    ]
+}

@@ -21,9 +21,10 @@ public class GenerateZui : IIncrementalGenerator
         var syntaxTrees = context.CompilationProvider.Select((compilation, _) => compilation.SyntaxTrees.ToArray());
 
 
-        // Collect zuiData for all ZUI.JSON files
+        // Collect zuiData for all ZUI JSON5 files
         var zuiData = context.AdditionalTextsProvider
-            .Where(file => file.Path.EndsWith(".zui.json", StringComparison.OrdinalIgnoreCase))
+            .Where(file => file.Path.EndsWith(".zui.json", StringComparison.OrdinalIgnoreCase)
+                || file.Path.EndsWith(".zui.json5", StringComparison.OrdinalIgnoreCase))
             .Combine(syntaxTrees)
             .Select((combined, cancellationToken) =>
         {
@@ -32,9 +33,10 @@ public class GenerateZui : IIncrementalGenerator
             return ZuiInput.CollectJsonFiles(text, syntax, cancellationToken);
         });
 
-        // Collect zthData for all ZTH.JSON files (theme tokens)
+        // Collect zthData for all ZTH JSON5 files (theme tokens)
         var zthData = context.AdditionalTextsProvider
-            .Where(file => file.Path.EndsWith(".zth.json", StringComparison.OrdinalIgnoreCase))
+            .Where(file => file.Path.EndsWith(".zth.json", StringComparison.OrdinalIgnoreCase)
+                || file.Path.EndsWith(".zth.json5", StringComparison.OrdinalIgnoreCase))
             .Combine(syntaxTrees)
             .Select((combined, cancellationToken) =>
             {
@@ -44,7 +46,7 @@ public class GenerateZui : IIncrementalGenerator
             });
 
         // Generate controller classes (combined with CompilationProvider so inherited bindings
-        // can be resolved from referenced assemblies when .implements targets a DLL control)
+        // can be resolved from referenced assemblies when $implements targets a DLL control)
         context.RegisterSourceOutput(zuiData.Collect().Combine(context.CompilationProvider),
             (spc, pair) => GenerateControllerClasses(spc, pair.Left, pair.Right));
 
@@ -91,7 +93,7 @@ public class GenerateZui : IIncrementalGenerator
 
             try
             {
-                // Resolve inherited bindings when .implements is set.
+                // Resolve inherited bindings when $implements is set.
                 List<DataBinding>? inheritedBindings = null;
                 string? implementsNamespace = null;
                 if (data.Implements != "")
@@ -129,8 +131,8 @@ public class GenerateZui : IIncrementalGenerator
                                     spc.ReportDiagnostic(ZuiDiagnostics.GetDiagnostic(errorLocation,
                                         "ZUI007", "ZUI Implements Cross-Assembly Collection Not Supported",
                                         $"Property '{p.Name}' in 'I{data.Implements}Data' uses ObservableCollection. "
-                                        + "Cross-assembly '.implements' does not support collection properties. "
-                                        + "Declare it explicitly in '.data' instead."));
+                                        + "Cross-assembly '$implements' does not support collection properties. "
+                                        + "Declare it explicitly in '$data' instead."));
                                     hasError = true;
                                 }
                                 else
@@ -175,13 +177,13 @@ public class GenerateZui : IIncrementalGenerator
                             // 3) Not found anywhere — emit a compile-time error.
                             spc.ReportDiagnostic(ZuiDiagnostics.GetDiagnostic(errorLocation,
                                 "ZUI005", "ZUI Implements Not Found",
-                                $"'.implements': \"{data.Implements}\" — constraint interface 'I{data.Implements}Data' "
+                                $"'$implements': \"{data.Implements}\" — constraint interface 'I{data.Implements}Data' "
                                 + $"was not found in source or referenced assemblies."));
                             continue;
                         }
                     }
 
-                    // Check for duplicate property names between .data and .implements — error ZUI006.
+                    // Check for duplicate property names between $data and $implements — error ZUI006.
                     var inheritedNames = new HashSet<string>(inheritedBindings.Select(b => b.Name), StringComparer.OrdinalIgnoreCase);
                     foreach (var binding in data.Bindings)
                     {
@@ -189,8 +191,8 @@ public class GenerateZui : IIncrementalGenerator
                         {
                             spc.ReportDiagnostic(ZuiDiagnostics.GetDiagnostic(errorLocation,
                                 "ZUI006", "ZUI Duplicate Inherited Property",
-                                $"Property '{binding.Name}' in '.data' is already declared by '.implements': \"{data.Implements}\". "
-                                + $"Remove it from '.data' — it is inherited automatically."));
+                                $"Property '{binding.Name}' in '$data' is already declared by '$implements': \"{data.Implements}\". "
+                                + $"Remove it from '$data' — it is inherited automatically."));
                         }
                     }
                 }

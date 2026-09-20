@@ -1,7 +1,7 @@
 {
     // Define common GUI variables that often don't change even when the them changes
-    "name": "ZurfurBase",
-    "variables": {
+    name: "ZurfurBase",
+    variables: {
 
         // Opacity for disabled elements
         "opacity.disabled": "0.38",

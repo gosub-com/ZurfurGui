@@ -33,7 +33,7 @@ internal class DataBinding
         
     /// <summary>
     /// True when this collection's element type is the file's declared generic type parameter
-    /// (e.g. "[]Item" in a file whose .controller is "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
+    /// (e.g. "[]Item" in a file whose $controller is "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
     /// When true, the element type resolves to the constraint's data interface rather than a
     /// concrete data type, keeping the data layer non-generic.
     /// </summary>
@@ -60,6 +60,12 @@ internal class DataBinding
     /// PropertyKey field name with "Property" suffix (e.g., "TextProperty", "OrientationProperty").
     /// </summary>
     public string PropertyKeyName { get; set; } = "";
+}
+
+internal class NamedControlInfo
+{
+    public string Type { get; set; } = "";
+    public string Comment { get; set; } = "";
 }
 
 // NOTE: We can't use record class here because code generators must target netstandard2.0
@@ -116,19 +122,19 @@ internal class ZuiFileInfo
     /// <summary>
     /// When set, the generated data class additionally implements I{Implements}Data,
     /// and the generated controller class additionally implements I{Implements}.
-    /// Populated from the JSON ".implements" key (e.g. ".implements": "ComboBoxItem").
+    /// Populated from the JSON "$implements" key (e.g. "$implements": "ComboBoxItem").
     /// </summary>
     public string Implements { get; set; } = "";
 
     /// <summary>
-    /// Generic type parameter name parsed from the .controller value
+    /// Generic type parameter name parsed from the $controller value
     /// (e.g. "Item" from "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
     /// Empty string when the control is not generic.
     /// </summary>
     public string TypeParam { get; set; } = "";
 
     /// <summary>
-    /// Constraint control name parsed from the .controller where clause
+    /// Constraint control name parsed from the $controller where clause
     /// (e.g. "ComboBoxItem" from "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
     /// The generated C# constraint becomes "where Item : IComboBoxItemData".
     /// Empty string when the control is not generic.

@@ -1,7 +1,7 @@
 {
     // Define common GUI variables that often don't change even when the them changes
-    "name": "StyleTestCard",
-    "variables": {
+    name: "StyleTestCard",
+    variables: {
 
         "style.test.text.hover-nothover": "isPointerOver ? Hovering; Not hovering",
         "style.test.font.c1": "size:28.0",

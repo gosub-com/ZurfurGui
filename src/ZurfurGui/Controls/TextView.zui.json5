@@ -1,0 +1,22 @@
+{
+    $controller: "TextView",
+    $namespace: "ZurfurGui.Controls",
+    "TextView.color": "${color.text.primary}",
+    $data: {
+        text: {
+            type: "?TextLines",
+            flags: "render,measure",
+            bind: "styledData"
+        },
+        font: {
+            type: "?FontProp",
+            flags: "render,measure",
+            bind: "styledData"
+        },
+        color: {
+            type: "?Color",
+            flags: "render",
+            bind: "styledData"
+        }
+    }
+}

@@ -7,7 +7,11 @@ namespace ZurfurGuiGen;
 
 
 /// <summary>
-/// We can't use System.Text.Json in the source generator, so use this minimal AI generated json parser instead.
+/// We can't use System.Text.Json in the source generator, so use this small JSON5-subset parser instead.
+/// Supported JSON5 additions are // and /* */ comments, trailing commas, single-quoted strings,
+/// ASCII identifier keys without quotes, and +, .5, and 5. decimal numbers.
+/// JSON5 features intentionally not supported are NaN, Infinity, hexadecimal numbers, the full
+/// Unicode identifier grammar, and uncommon JSON5 escape forms.
 /// Never allow NULL in the JSON file.
 /// </summary>
 public static class Json
@@ -22,8 +26,8 @@ public static class Json
     ///     true
     ///     false
     ///     null
-    /// NOTE: Collects comments in the json and injects them into the dictionary as "$comment".
-    ///       The serializer throws away metadata (anything starting with a "$")
+    /// NOTE: Collects comments in the json and injects them into the dictionary as "#comment".
+    ///       The serializer omits generator-only metadata but preserves runtime properties.
     /// </summary>
     public static Dictionary<string, object?> Parse(string json)
     {
@@ -33,9 +37,48 @@ public static class Json
             throw new LocationException("JSON must start with '{'", 0, 0);
 
         var result = ParseObject(json, ref index);
+        SkipWhitespaceAndCollectComment(json, ref index);
+        if (index != json.Length)
+            throw GetLocationException("Unexpected content after the root object", json, index);
         if (topComment != "")
-            result["$comment"] = topComment;
+            result["#comment"] = topComment;
         return result;
+    }
+
+    /// <summary>
+    /// Remove the specified keys from a parsed JSON object, including nested objects and arrays.
+    /// </summary>
+    public static void RemoveKeys(Dictionary<string, object?> dictionary, List<string> keys)
+    {
+        var keysToRemove = new HashSet<string>(keys);
+        RemoveKeysFromDictionary(dictionary, keysToRemove);
+    }
+
+    private static void RemoveKeysFromDictionary(Dictionary<string, object?> dictionary, HashSet<string> keysToRemove)
+    {
+        foreach (var key in keysToRemove)
+        {
+            dictionary.Remove(key);
+        }
+
+        foreach (var value in dictionary.Values)
+        {
+            if (value is Dictionary<string, object?> childDictionary)
+                RemoveKeysFromDictionary(childDictionary, keysToRemove);
+            else if (value is List<object?> childArray)
+                RemoveKeysFromArray(childArray, keysToRemove);
+        }
+    }
+
+    private static void RemoveKeysFromArray(List<object?> array, HashSet<string> keysToRemove)
+    {
+        foreach (var value in array)
+        {
+            if (value is Dictionary<string, object?> childDictionary)
+                RemoveKeysFromDictionary(childDictionary, keysToRemove);
+            else if (value is List<object?> childArray)
+                RemoveKeysFromArray(childArray, keysToRemove);
+        }
     }
 
     private static Dictionary<string, object?> ParseObject(string json, ref int index)
@@ -50,10 +93,13 @@ public static class Json
             if (index >= json.Length || json[index] == '}')
                 break;
 
-            var key = ParseString(json, ref index);
+            if (pendingComment != "" && dict.Count == 0)
+                dict["#comment"] = pendingComment;
+
+            var key = ParseKey(json, ref index);
             SkipWhitespaceAndCollectComment(json, ref index); // discard any comment between key and ':'
 
-            if (json[index] != ':')
+            if (index >= json.Length || json[index] != ':')
                 throw GetLocationException($"Expected ':' after key '{key}' at location {index}", json, index);
             index++; // skip ':'
 
@@ -62,11 +108,13 @@ public static class Json
 
             // If the value is a dictionary and there was a comment before the key, inject it
             if (pendingComment != "" && value is Dictionary<string, object?> childDict)
-                childDict["$comment"] = pendingComment;
+                childDict["#comment"] = pendingComment;
 
             dict[key] = value;
 
             SkipWhitespace(json, ref index);
+            if (index >= json.Length)
+                throw GetLocationException("Expected ',' or '}' in object", json, index);
             if (json[index] == ',')
             {
                 index++; // skip ','
@@ -95,6 +143,8 @@ public static class Json
             var value = ParseValue(json, ref index);
             list.Add(value);
             SkipWhitespace(json, ref index);
+            if (index >= json.Length)
+                throw GetLocationException("Expected ',' or ']' in array", json, index);
             if (json[index] == ',')
             {
                 index++; // skip ','
@@ -119,51 +169,60 @@ public static class Json
             throw GetLocationException("Unexpected end of JSON", json, index);
 
         char c = json[index];
-        if (c == '"')
+        if (c == '"' || c == '\'')
             return ParseString(json, ref index);
         if (c == '{')
             return ParseObject(json, ref index);
         if (c == '[')
             return ParseArray(json, ref index);
-        if (char.IsDigit(c) || c == '-')
+        if (char.IsDigit(c) || c == '-' || c == '+' || c == '.')
             return ParseNumber(json, ref index);
-        if (json.Substring(index).StartsWith("true"))
-        {
-            index += 4;
-            return true;
-        }
-        if (json.Substring(index).StartsWith("false"))
-        {
-            index += 5;
-            return false;
-        }
-        if (json.Substring(index).StartsWith("null"))
-        {
-            index += 4;
-            return null;
-        }
+        if (TryParseLiteral(json, ref index, "true", true, out var trueValue))
+            return trueValue;
+        if (TryParseLiteral(json, ref index, "false", false, out var falseValue))
+            return falseValue;
+        if (TryParseLiteral(json, ref index, "null", null, out var nullValue))
+            return nullValue;
         throw GetLocationException($"Unexpected character '{c}' at position {index}", json, index);
+    }
+
+    private static string ParseKey(string json, ref int index)
+    {
+        if (index < json.Length && (json[index] == '"' || json[index] == '\''))
+            return ParseString(json, ref index);
+
+        int start = index;
+        if (index >= json.Length || !IsIdentifierStart(json[index]))
+            throw GetLocationException("Expected a quoted or identifier object key", json, index);
+        index++;
+        while (index < json.Length && IsIdentifierPart(json[index]))
+            index++;
+        return json.Substring(start, index - start);
     }
 
     private static string ParseString(string json, ref int index)
     {
-        if (json[index] != '"')
-            throw GetLocationException("Expected '\"' at start of string", json, index);
+        if (index >= json.Length || (json[index] != '"' && json[index] != '\''))
+            throw GetLocationException("Expected a quoted string", json, index);
+        char quote = json[index];
         index++; // skip '"'
         var sb = new StringBuilder();
         while (index < json.Length)
         {
             char c = json[index++];
-            if (c == '"')
-                break;
+            if (c == quote)
+                return sb.ToString();
+            if (c < ' ' || c == '\r' || c == '\n' || c == '\u2028' || c == '\u2029')
+                throw GetLocationException("Unescaped control character in string", json, index - 1);
             if (c == '\\')
             {
                 if (index >= json.Length)
-                    throw new FormatException("Unexpected end of string escape");
+                    throw GetLocationException("Unexpected end of string escape", json, index);
                 char esc = json[index++];
                 switch (esc)
                 {
                     case '"': sb.Append('"'); break;
+                    case '\'': sb.Append('\''); break;
                     case '\\': sb.Append('\\'); break;
                     case '/': sb.Append('/'); break;
                     case 'b': sb.Append('\b'); break;
@@ -175,7 +234,10 @@ public static class Json
                         if (index + 4 > json.Length)
                             throw GetLocationException("Invalid unicode escape", json, index);
                         string hex = json.Substring(index, 4);
-                        sb.Append((char)Convert.ToInt32(hex, 16));
+                        if (!int.TryParse(hex, System.Globalization.NumberStyles.HexNumber,
+                            System.Globalization.CultureInfo.InvariantCulture, out int codePoint))
+                            throw GetLocationException("Invalid unicode escape", json, index);
+                        sb.Append((char)codePoint);
                         index += 4;
                         break;
                     default:
@@ -187,42 +249,92 @@ public static class Json
                 sb.Append(c);
             }
         }
-        return sb.ToString();
+        throw GetLocationException("Unterminated string", json, index);
     }
 
     private static object ParseNumber(string json, ref int index)
     {
         int start = index;
-        if (json[index] == '-')
+        if (index < json.Length && (json[index] == '-' || json[index] == '+'))
             index++;
-        while (index < json.Length && char.IsDigit(json[index]))
+
+        int integerDigits = 0;
+        while (index < json.Length && IsAsciiDigit(json[index]))
+        {
             index++;
+            integerDigits++;
+        }
+
+        int fractionalDigits = 0;
         if (index < json.Length && json[index] == '.')
         {
             index++;
-            while (index < json.Length && char.IsDigit(json[index]))
+            while (index < json.Length && IsAsciiDigit(json[index]))
+            {
                 index++;
+                fractionalDigits++;
+            }
         }
+
+        if (integerDigits == 0 && fractionalDigits == 0)
+            throw GetLocationException("Invalid number", json, start);
+
+        bool hasExponent = false;
         if (index < json.Length && (json[index] == 'e' || json[index] == 'E'))
         {
+            hasExponent = true;
             index++;
             if (index < json.Length && (json[index] == '+' || json[index] == '-'))
                 index++;
-            while (index < json.Length && char.IsDigit(json[index]))
+            int exponentDigits = 0;
+            while (index < json.Length && IsAsciiDigit(json[index]))
+            {
                 index++;
+                exponentDigits++;
+            }
+            if (exponentDigits == 0)
+                throw GetLocationException("Invalid number exponent", json, index);
         }
         string numStr = json.Substring(start, index - start);
-        if (numStr.Contains(".") || numStr.Contains("e") || numStr.Contains("E"))
+        if (fractionalDigits > 0 || numStr.Contains(".") || hasExponent || numStr.Contains("e") || numStr.Contains("E"))
         {
             if (double.TryParse(numStr, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double d))
                 return d;
         }
         else
         {
-            if (long.TryParse(numStr, out long l))
+            if (long.TryParse(numStr, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out long l))
                 return l;
         }
         throw GetLocationException($"Invalid number: {numStr}", json, index);
+    }
+
+    private static bool TryParseLiteral(string json, ref int index, string literal, object? value, out object? result)
+    {
+        result = null;
+        if (index + literal.Length > json.Length || string.CompareOrdinal(json, index, literal, 0, literal.Length) != 0)
+            return false;
+        int end = index + literal.Length;
+        if (end < json.Length && IsIdentifierPart(json[end]))
+            return false;
+        index = end;
+        result = value;
+        return true;
+    }
+
+    private static bool IsIdentifierStart(char c)
+    {
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_' || c == '$';
+    }
+
+    private static bool IsIdentifierPart(char c)
+    {
+        return IsIdentifierStart(c) || (c >= '0' && c <= '9');
+    }
+
+    private static bool IsAsciiDigit(char c)
+    {
+        return c >= '0' && c <= '9';
     }
 
     private static void SkipWhitespace(string json, ref int index)
@@ -231,7 +343,8 @@ public static class Json
     }
 
     /// <summary>
-    /// Skips whitespace and any number of // comment lines.
+    /// Skips whitespace and comments. Only // comment lines retain the existing #comment behavior;
+    /// block comments are treated as whitespace.
     /// Returns the concatenated text of all comment lines (trimmed, joined with a single space),
     /// or "" if there were no comments.
     /// </summary>
@@ -258,6 +371,19 @@ public static class Json
                         comment.Append(' ');
                     comment.Append(trimmed);
                 }
+                continue;
+            }
+
+            // Skip a block comment without changing the existing #comment behavior.
+            if (index + 1 < json.Length && json[index] == '/' && json[index + 1] == '*')
+            {
+                int commentStart = index;
+                index += 2;
+                while (index + 1 < json.Length && !(json[index] == '*' && json[index + 1] == '/'))
+                    index++;
+                if (index + 1 >= json.Length)
+                    throw GetLocationException("Unterminated block comment", json, commentStart);
+                index += 2;
                 continue;
             }
 
@@ -320,11 +446,7 @@ public static class Json
         {
             var entries = new List<string>();
             foreach (var kvp in dict)
-            {
-                if (kvp.Key.StartsWith("$"))
-                    continue; // generator-only metadata, not for runtime JSON
                 entries.Add($"\"{EscapeString(kvp.Key)}\": {Serialize(kvp.Value)}");
-            }
             return $"{{{string.Join(", ", entries)}}}";
         }
 

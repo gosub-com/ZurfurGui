@@ -1,0 +1,23 @@
+{
+    $controller: "TextEdit",
+    $namespace: "ZurfurGui.Controls",
+    $backgroundColor: "${color.input.background}",
+    $borderWidth: "${stroke.width.default}",
+    $borderColor: "${color.input.stroke}",
+    $sizeMin: "${size.textedit.min}",
+    $padding: "${padding.textedit}",
+    $data: {
+        text: {
+            type: "TextLines",
+            flags: "render,measure",
+            bind: "_textContent.text"
+        }
+    },
+    $content: [
+        {
+            $name: "_textContent",
+            $controller: "TextView",
+            "TextView.color": "${color.text.primary}"
+        }
+    ]
+}

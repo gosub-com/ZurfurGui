@@ -1,0 +1,21 @@
+// This is a combo box item that shows simple text.  It implements ComboBoxItem.
+{
+    $controller: "ComboBoxItemText",
+    $namespace: "ZurfurGui.Controls",
+    $implements: "ComboBoxItem",
+    $backgroundColor: "${color.interactive.item.background}",
+    $padding: "${spacing.horizontal.medium | spacing.vertical.small}",
+    $data: {
+        text: {
+            type: "TextLines",
+            bind: "_itemText.text"
+        }
+    },
+    $content: [
+        {
+            $name: "_itemText",
+            $controller: "TextView",
+            "TextView.color": "${color.text.primary}"
+        }
+    ]
+}

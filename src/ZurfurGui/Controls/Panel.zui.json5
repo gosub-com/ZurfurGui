@@ -1,0 +1,4 @@
+{
+    $controller: "Panel",
+    $namespace: "ZurfurGui.Controls"
+}

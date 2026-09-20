@@ -12,21 +12,21 @@ individual controls.
 
 The key components are:
 
-- **Theme files** (`.zth.json`) define named tokens (color, spacing, fonts, etc.)
-- **View files** (`.zui.json`) reference tokens using `"${token.name}"` syntax
+- **Theme files** (`.zth.json5`) define named tokens (color, spacing, fonts, etc.)
+- **View files** (`.zui.json5`) reference tokens using `"${token.name}"` syntax
 - **Theme resolution** walks up the view chain searching for active themes
 - **Token fallbacks** using the `|` operator enable third-party controls to gracefully
   degrade
 
-## Theme Files (`.zth.json`)
+## Theme Files (`.zth.json5`)
 
-Theme files define reusable design tokens. Each theme has a name and a dictionary of
-variables:
+Theme files use JSON5 and define reusable design tokens. Each theme has a name and a dictionary of
+variables. Legacy `.zth.json` files remain supported:
 
-```json
+```json5
 {
-    "name": "ZurfurDefault",
-    "variables": {
+    name: "ZurfurDefault",
+    variables: {
         "color.surface.canvas": "#EAF4FB",
         "color.text.primary": "#1F1F1F",
         "spacing.medium": "8",
@@ -41,7 +41,7 @@ variables:
 **Conditional expressions**: Tokens can respond to view states using
 `condition ? value; alternativeValue` syntax:
 
-```json
+```json5
 "color.interactive.primary.background": "isPressed ? #A6D2F2; isPointerOver ? #D2E8FA; #C6E0F7"
 ```
 
@@ -56,7 +56,7 @@ condition is found. The last value (without a condition) serves as the default.
 together using the `IMergable` interface. For example, spacing tokens can define
 individual edges:
 
-```json
+```json5
 "spacing.horizontal.medium": "left:8,right:8",
 "spacing.vertical.small": "top:4,bottom:4"
 ```
@@ -79,15 +79,16 @@ below).
 
 ## Using Theme Tokens in Views
 
-In `.zui.json` files, wrap token names with `${}` to reference theme tokens:
+In `.zui.json5` files, wrap token names with `${}` to reference theme tokens. Legacy `.zui.json` files
+remain supported:
 
-```json
+```json5
 {
-    ".controller": "Button",
-    ".borderWidth": "${stroke.width.default}",
-    ".borderRadius": "${radius.corner.medium}",
-    ".borderColor": "${color.interactive.primary.stroke}",
-    ".backgroundColor": "${color.interactive.primary.background}"
+    $controller: "Button",
+    $borderWidth: "${stroke.width.default}",
+    $borderRadius: "${radius.corner.medium}",
+    $borderColor: "${color.interactive.primary.stroke}",
+    $backgroundColor: "${color.interactive.primary.background}"
 }
 ```
 
@@ -101,8 +102,8 @@ Multiple token names can be specified with `|`. This is critical for third-party
 controls that define their own tokens but want to fall back to standard system tokens if
 the user's theme doesn't define the custom ones:
 
-```json
-".padding": "${spacing.my-control-inner-padding | spacing.horizontal.small | spacing.vertical.extra-small}"
+```json5
+$padding: "${spacing.my-control-inner-padding | spacing.horizontal.small | spacing.vertical.extra-small}"
 ```
 
 First, the custom token `spacing.my-control-inner-padding` is tried.  If the application has
@@ -113,7 +114,7 @@ token fully resolves the property, the rest are ignored.
 
 **Example from Window title text color**:
 
-```json
+```json5
 "TextView.color": "${color.window.menu | color.window.title.foreground}"
 ```
 
@@ -122,7 +123,7 @@ This tries `color.window.menu` first (custom token), then falls back to
 
 The `|` operator combined with `IMergable` properties enables powerful composition:
 
-```json
+```json5
 "TextView.font": "${style.test.font.c1 | style.test.font.c2}"
 ```
 
@@ -200,19 +201,21 @@ When a view requests a themed property (e.g., `backgroundColor` mapped to
 ## Theme Registration
 
 Themes are registered at application startup via the generated
-`ZurfurMain.InitializeControls()` method. The source generator scans all `.zth.json`
-files in the project and emits:
+`ZurfurMain.InitializeControls()` method. The source generator scans all `.zth.json5`
+files in the project (and continues to accept legacy `.zth.json` files) and emits:
 
 ```csharp
 ThemeManager.RegisterTheme(/* embedded JSON string */);
 ```
 
-This happens automatically—developers just need to ensure `.zth.json` files are marked as
+This happens automatically—developers just need to ensure both `.zth.json5` files and any legacy
+`.zth.json` files are marked as
 `AdditionalFiles` in the project:
 
 ```xml
 <ItemGroup>
   <AdditionalFiles Include="**\*.zth.json" />
+  <AdditionalFiles Include="**\*.zth.json5" />
 </ItemGroup>
 ```
 
@@ -220,14 +223,14 @@ This happens automatically—developers just need to ensure `.zth.json` files ar
 
 To create a custom theme:
 
-1. **Create a `.zth.json` file** in your project (mark as AdditionalFiles).
+1. **Create a `.zth.json5` file** in your project (mark as AdditionalFiles).
 
 2. **Define a unique name and variables**:
 
-```json
+```json5
 {
-    "name": "MyBrandTheme",
-    "variables": {
+    name: "MyBrandTheme",
+    variables: {
         "color.surface.canvas": "#F0F0FF",
         "color.text.primary": "#000033",
         "my.custom.accent": "#FF6600"
@@ -235,10 +238,10 @@ To create a custom theme:
 }
 ```
 
-3. **Reference your tokens in `.zui.json` files**:
+3. **Reference your tokens in `.zui.json5` files**:
 
-```json
-".backgroundColor": "${my.custom.accent | color.interactive.primary.background}"
+```json5
+$backgroundColor: "${my.custom.accent | color.interactive.primary.background}"
 ```
 
 The `|` fallback ensures your control still works in themes that don't define
@@ -299,7 +302,7 @@ void ThemeComboBox_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 
 The ZurfurGui theme system provides:
 
-- **Centralized design tokens** in `.zth.json` files
+- **Centralized design tokens** in `.zth.json5` files (with `.zth.json` retained for compatibility)
 - **Flexible activation** via `View.ActiveThemes` at any hierarchy level
 - **Graceful fallbacks** using `|` for third-party control compatibility
 - **State-driven styling** with conditional expressions

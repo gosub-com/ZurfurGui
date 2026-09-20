@@ -1,0 +1,12 @@
+{
+    $controller: "DebugWindow",
+    $namespace: "ZurfurGui.Windows",
+    $layout: "Column",
+    $content: [
+        {
+            $name: "_statsView",
+            $controller: "TextView"
+        },
+
+    ]
+}

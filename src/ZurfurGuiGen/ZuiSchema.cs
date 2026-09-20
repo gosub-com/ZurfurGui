@@ -8,35 +8,35 @@ namespace ZurfurGuiGen;
 internal static class ZuiSchema
 {
     /// <summary>
-    /// Read the ".implements" key from a ZUI JSON document.
+    /// Read the "$implements" key from a ZUI JSON document.
     /// Returns "" if not present.
     /// </summary>
     internal static string GetImplements(Dictionary<string, object?> jsonDocument)
     {
-        if (jsonDocument.TryGetValue(".implements", out var v) && v is string s && !string.IsNullOrWhiteSpace(s))
+        if (jsonDocument.TryGetValue("$implements", out var v) && v is string s && !string.IsNullOrWhiteSpace(s))
             return s.Trim();
         return "";
     }
 
     internal static List<DataBinding> GetDataBindings(Dictionary<string, object?> jsonDocument, string typeParam = "", string typeParamConstraint = "")
     {
-        if (!jsonDocument.TryGetValue(".data", out var dataSectionObj) || dataSectionObj == null)
+        if (!jsonDocument.TryGetValue("$data", out var dataSectionObj) || dataSectionObj == null)
             return new List<DataBinding>();
 
         if (dataSectionObj is not Dictionary<string, object?> dataSection)
-            throw new Exception("The JSON '.data' key must be an object");
+            throw new Exception("The JSON '$data' key must be an object");
 
         var result = new List<DataBinding>();
         foreach (var kvp in dataSection)
         {
-            if (kvp.Key.StartsWith("$"))
-                continue; // generator-only metadata (e.g. $comment), not a binding entry
+            if (kvp.Key.StartsWith("$") || kvp.Key.StartsWith("#"))
+                continue; // generator-only metadata (e.g. #comment), not a binding entry
 
             if (kvp.Value is not Dictionary<string, object?> entry)
-                throw new Exception($"The JSON '.data.{kvp.Key}' value must be an object");
+                throw new Exception($"The JSON '$data.{kvp.Key}' value must be an object");
 
             if (!entry.TryGetValue("type", out var typeObj) || typeObj is not string typeName || string.IsNullOrWhiteSpace(typeName))
-                throw new Exception($"The JSON '.data.{kvp.Key}.type' must be a non-empty string");
+                throw new Exception($"The JSON '$data.{kvp.Key}.type' must be a non-empty string");
 
             var binding = entry.TryGetValue("bind", out var bindingObj) && bindingObj is string bindingStr ? bindingStr : "";
             var bindingType = binding switch
@@ -45,7 +45,7 @@ internal static class ZuiSchema
                 "styledData" => BindType.StyledData,
                 "styledOnly" => BindType.StyledOnly,
                 "attached" => BindType.Attached,
-                "" => throw new Exception($"The JSON '.data.{kvp.Key}' must have an explicit 'bind' value (use 'data', etc.)."),
+                "" => throw new Exception($"The JSON '$data.{kvp.Key}' must have an explicit 'bind' value (use 'data', etc.)."),
                 _ => BindType.Forwarded,
             };
 
@@ -67,9 +67,9 @@ internal static class ZuiSchema
             if (isCollection)
             {
                 if (isNullable)
-                    throw new Exception($"The JSON '.data.{kvp.Key}.type' must not be nullable (\"?[]\") for collection types. Use \"[]Type\" instead.");
+                    throw new Exception($"The JSON '$data.{kvp.Key}.type' must not be nullable (\"?[]\") for collection types. Use \"[]Type\" instead.");
                 if (bindingType != BindType.Data)
-                    throw new Exception($"The JSON '.data.{kvp.Key}' is a collection and must use \"bind\": \"data\" (got \"{binding}\").");
+                    throw new Exception($"The JSON '$data.{kvp.Key}' is a collection and must use \"bind\": \"data\" (got \"{binding}\").");
 
                 // Detect when the element type is the file's declared generic type parameter
                 // (e.g. "[]Item" in "ComboBox<Item> where Item : ComboBoxItem").
@@ -82,7 +82,7 @@ internal static class ZuiSchema
                 }
             }
 
-            var comment = entry.TryGetValue("$comment", out var commentObj) && commentObj is string commentStr ? commentStr : "";
+            var comment = entry.TryGetValue("#comment", out var commentObj) && commentObj is string commentStr ? commentStr : "";
             var defaultValue = entry.TryGetValue("default", out var defaultObj) && defaultObj is string defaultStr ? defaultStr : "";
             var flags = entry.TryGetValue("flags", out var flagsObj) && flagsObj is string flagsStr ? flagsStr : "";
 
@@ -106,8 +106,8 @@ internal static class ZuiSchema
             });
         }
 
-        // The .data section of the JSON is not used at runtime because we collected everything we wanted out of it.
-        jsonDocument.Remove(".data");
+        // The $data section of the JSON is not used at runtime because we collected everything we wanted out of it.
+        jsonDocument.Remove("$data");
 
         return result;
     }
@@ -158,23 +158,23 @@ internal static class ZuiSchema
 
     /// <summary>
     /// Recursively scan JSON control, looking for named controls.
-    /// Returns a dictionary of ControlName -> C# ControlType.
+    /// Returns a dictionary of ControlName -> control metadata.
     /// Throws if duplicate ControlName is detected.
     /// </summary>
-    internal static Dictionary<string, string> FindNamedControlsDictionary(Dictionary<string, object?> json)
+    internal static Dictionary<string, NamedControlInfo> FindNamedControlsDictionary(Dictionary<string, object?> json)
     {
-        var result = new Dictionary<string, string>(StringComparer.Ordinal);
+        var result = new Dictionary<string, NamedControlInfo>(StringComparer.Ordinal);
         ScanJson(json);
         return result;
 
         // Helper function to recursively scan the JSON
         void ScanJson(Dictionary<string, object?> currentJson)
         {
-            if (currentJson.TryGetValue(".name", out var controlNameObj)
+            if (currentJson.TryGetValue("$name", out var controlNameObj)
                 && controlNameObj is string controlName)
             {
                 var controller = "Panel";
-                if (currentJson.TryGetValue(".controller", out var controllerObj) && controllerObj is string controllerStr)
+                if (currentJson.TryGetValue("$controller", out var controllerObj) && controllerObj is string controllerStr)
                 {
                     controller = ControllerNameToCsType(controllerStr);
                 }
@@ -182,7 +182,11 @@ internal static class ZuiSchema
                 if (result.ContainsKey(controlName))
                     throw new Exception($"Duplicate control name '{controlName}' detected");
 
-                result.Add(controlName, controller);
+                var comment = currentJson.TryGetValue("#comment", out var commentObj)
+                    && commentObj is string commentStr
+                    ? commentStr
+                    : "";
+                result.Add(controlName, new NamedControlInfo { Type = controller, Comment = comment });
             }
 
             // Recursively scan nested dictionaries or arrays

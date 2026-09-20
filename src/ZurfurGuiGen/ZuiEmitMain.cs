@@ -103,7 +103,7 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
                 : $"        global::ZurfurGui.Loader.RegisterControl(\"{t.NamespaceFileName}\", typeof(global::{t.NamespaceFileName}), () => new global::{t.NamespaceFileName}());"));
 
         // Scan all JSON documents recursively for closed generic controller usages
-        // (e.g. ".controller": "ComboBox<ComboBoxItemText>" at a usage site).
+        // (e.g. "$controller": "ComboBox<ComboBoxItemText>" at a usage site).
         // Open generic definitions (e.g. "ComboBox<Item>") are skipped.
         // The dictionary maps JSON name (used as Loader key) -> C# type name (for typeof/new).
         // Control names in type args are translated to their data interface names
@@ -126,8 +126,11 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
             }));
 
         var registerThemes = string.Join("\r\n", generatedThemes.Select(t =>
-            $"\r\n        // Register theme '{t.ControllerName}'\r\n"
-            + $"        global::ZurfurGui.Styles.ThemeManager.RegisterTheme(@\"{Json.Serialize(t.JsonDocument).Replace("\"", "\"\"")}\");\r\n"));
+        {
+            Json.RemoveKeys(t.JsonDocument, new List<string> { "#comment", "$namespace", "$use", "$implements", "$data" });
+            return $"\r\n        // Register theme '{t.ControllerName}'\r\n"
+                + $"        global::ZurfurGui.Styles.ThemeManager.RegisterTheme(@\"{Json.Serialize(t.JsonDocument).Replace("\"", "\"\"")}\");\r\n";
+        }));
 
         var sb = new StringBuilder();
         sb.Append($"namespace {zurfurMainNamespace};\r\n\r\n");
@@ -169,8 +172,8 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
     }
 
     /// <summary>
-    /// Recursively scan a JSON document for .controller values that are closed generics
-    /// (e.g. ".controller": "ComboBox&lt;ComboBoxItemText&gt;" at a usage site).
+    /// Recursively scan a JSON document for $controller values that are closed generics
+    /// (e.g. "$controller": "ComboBox&lt;ComboBoxItemText&gt;" at a usage site).
     /// Skips open generic definitions where the type argument matches the source file's own TypeParam.
     /// Translates the control-name type argument to its data interface name using controlList
     /// (e.g. ComboBoxItemText -> IComboBoxItemTextData), producing the C# type name for registration.
@@ -182,7 +185,7 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
     {
         foreach (var kvp in json)
         {
-            if (kvp.Key == ".controller" && kvp.Value is string controllerValue)
+            if (kvp.Key == "$controller" && kvp.Value is string controllerValue)
             {
                 var match = s_closedGenericRegex.Match(controllerValue);
                 if (match.Success)

@@ -54,8 +54,8 @@ internal class PropertiesJsonConverter : JsonConverter<Properties>
                 // Data property?
                 if (propertyInfo == null)
                 {
-                    // Verify it's a data property (must not contain a '.')
-                    if (propertyName.Contains("."))
+                    // Verify it's a data property, not reserved metadata or a dotted property path.
+                    if (propertyName.StartsWith("$") || propertyName.Contains("."))
                         throw new JsonException($"Unknown property name: '{propertyName}' instead");
 
                     // Accumulate unknown data property as JsonElement
@@ -110,7 +110,7 @@ internal class PropertiesJsonConverter : JsonConverter<Properties>
             if (key.Info is IPropertyKey info && info.Name != null && info.Type != null)
             {
                 // Special handling for .dataProperties - expand inline instead of nesting
-                if (info.Name == ".dataProperties" && propertyValue is Dictionary<string, JsonElement> dataProps)
+                if (info.Name == "$dataProperties" && propertyValue is Dictionary<string, JsonElement> dataProps)
                 {
                     foreach (var (name, jsonElement) in dataProps)
                     {

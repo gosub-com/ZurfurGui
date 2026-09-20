@@ -107,6 +107,8 @@ public static class Loader
     /// </summary>
     public static void Load(Controllable target, string json)
     {
+        RuntimeHelpers.RunClassConstructor(typeof(Panel).TypeHandle);
+
         try
         {
             var properties = JsonSerializer.Deserialize<Properties>(json, s_jsonSerializerOptions)

@@ -41,6 +41,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{364462A5-2
 		docs\Style.md = docs\Style.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{1953B885-4C35-463A-8EB7-248AB2F519ED}"
+	ProjectSection(SolutionItems) = preProject
+		.github\copilot-instructions.md = .github\copilot-instructions.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +93,7 @@ Global
 		{4EA975F4-9B30-41D8-8870-9A8F70B18D26} = {C3333333-3333-3333-3333-333333333333}
 		{DDAFF2A4-6107-42BE-9F5A-A422B84B6855} = {C3333333-3333-3333-3333-333333333333}
 		{99A89CF5-A3CE-4306-5EBD-EDA2FD70743A} = {C3333333-3333-3333-3333-333333333333}
+		{1953B885-4C35-463A-8EB7-248AB2F519ED} = {364462A5-2DD0-4477-BB03-D6466DBAC47F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EE03DE1F-DD7E-42B7-A2AC-32975A8A15D2}

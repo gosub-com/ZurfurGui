@@ -9,21 +9,22 @@ touching the combo box itself.
 
 | File | Purpose |
 |------|---------|
-| `src/ZurfurGui/Controls/ComboBox.zui.json` | Generic view definition and `.data` contract |
+| `src/ZurfurGui/Controls/ComboBox.zui.json5` | Generic view definition and `$data` contract |
 | `src/ZurfurGui/Controls/ComboBox.Control.cs` | Hand-written code-behind: dropdown lifecycle, item creation, selection sync |
-| `src/ZurfurGui/Controls/ComboBoxItem.zui.json` | Constraint definition — the minimum data shape every item must provide |
-| `src/ZurfurGui/Controls/ComboBoxItemText.zui.json` | Built-in text item renderer; fully generated, no hand-written code-behind |
+| `src/ZurfurGui/Controls/ComboBoxItem.zui.json5` | Constraint definition ? the minimum data shape every item must provide |
+| `src/ZurfurGui/Controls/ComboBoxItemText.zui.json5` | Built-in text item renderer; fully generated, no hand-written code-behind |
 
 ## Using ComboBox in a view
 
-Because `ComboBox` is generic, you always use a concrete closed form in `.zui.json`. Use
+Because `ComboBox` is generic, you always use a concrete closed form in `.zui.json5`. Legacy `.zui.json`
+files remain supported. Use
 `ComboBox<ComboBoxItemText>` for the common text-only case:
 
-```jsonc
+```json5
 {
-    ".name": "_themeComboBox",
-    ".controller": "ComboBox<ComboBoxItemText>",
-    ".align": { "horizontal": "left" }
+    $name: "_themeComboBox",
+    $controller: "ComboBox<ComboBoxItemText>",
+    $align: { horizontal: "left" }
 }
 ```
 
@@ -32,8 +33,8 @@ controller's generated code. You refer to it in code-behind simply as `_themeCom
 
 ## Populating and using ComboBox from code
 
-`_themeComboBox.DataContext.Items` is an `ObservableCollection<IComboBoxItemData>`. Add item data objects —
-not item controls — to this collection. Use `ComboBoxItemTextData` (the generated data class) directly:
+`_themeComboBox.DataContext.Items` is an `ObservableCollection<IComboBoxItemData>`. Add item data objects ï¿½
+not item controls ï¿½ to this collection. Use `ComboBoxItemTextData` (the generated data class) directly:
 
 ```csharp
 foreach (var label in new[] { "Zurfur Light", "Zurfur Dark", "Cherry Light", "Cherry Dark" })
@@ -44,7 +45,7 @@ _themeComboBox.DataContext.SelectedIndex = 0;
 ```
 
 The combo box creates the visual item controllers at dropdown-open time from the data objects in `Items`.
-Never add a controller (e.g. `new ComboBoxItemText()`) to the collection — only data objects belong there.
+Never add a controller (e.g. `new ComboBoxItemText()`) to the collection ï¿½ only data objects belong there.
 
 ### Reacting to selection changes
 
@@ -89,53 +90,53 @@ The generic design means you can add a new item renderer without modifying `Comb
 full process, using `ComboBoxItemBadge` (a real item type in `samples/TestApp`) as the worked example. It
 shows a red-outlined badge label on the left and a descriptive text label vertically centred to its right.
 
-**1. Define the item view** (see `ComboBoxItemBadge.zui.json`):
+**1. Define the item view** (see `ComboBoxItemBadge.zui.json5`):
 
-```jsonc
+```json5
 // Combo box item that shows a badge label and a text label side by side.
 // The badge is outlined in red; the text is vertically centred to the right of it.
-// Use ".implements": "ComboBoxItem" and reference via ComboBox<ComboBoxItemBadge>.
+// Use $implements: "ComboBoxItem" and reference via ComboBox<ComboBoxItemBadge>.
 {
-    ".controller": "ComboBoxItemBadge",
-    ".namespace": "TestApp.Test.Controls",
-    ".implements": "ComboBoxItem",
-    ".padding": "${spacing.horizontal.small | spacing.vertical.extra-small}",
-    ".backgroundColor": "${color.interactive.item.background}",
-    ".data": {
+    $controller: "ComboBoxItemBadge",
+    $namespace: "TestApp.Test.Controls",
+    $implements: "ComboBoxItem",
+    $padding: "${spacing.horizontal.small | spacing.vertical.extra-small}",
+    $backgroundColor: "${color.interactive.item.background}",
+    $data: {
         // Short label shown inside the red-outlined badge pill.
-        "badge": {
-            "type": "TextLines",
-            "bind": "_badge.text"
+        badge: {
+            type: "TextLines",
+            bind: "_badge.text"
         },
         // Main descriptive text shown to the right of the badge.
-        "text": {
-            "type": "TextLines",
-            "bind": "_text.text"
+        text: {
+            type: "TextLines",
+            bind: "_text.text"
         }
     },
-    ".layout": "Row",
-    ".content": [
+    $layout: "Row",
+    $content: [
         {
             // Badge pill: red outline box around the badge text.
-            ".borderWidth": "${stroke.width.medium}",
-            ".borderColor": "${color.status.danger.stroke}",
-            ".borderRadius": "${radius.corner.small}",
-            ".padding": "${spacing.vertical.extra-small | spacing.horizontal.small}",
-            ".align": "vertical:center",
-            ".content": [
+            $borderWidth: "${stroke.width.medium}",
+            $borderColor: "${color.status.danger.stroke}",
+            $borderRadius: "${radius.corner.small}",
+            $padding: "${spacing.vertical.extra-small | spacing.horizontal.small}",
+            $align: "vertical:center",
+            $content: [
                 {
-                    ".name": "_badge",
-                    ".controller": "TextView",
+                    $name: "_badge",
+                    $controller: "TextView",
                     "TextView.color": "${color.status.danger.stroke}"
                 }
             ]
         },
         {
-            ".name": "_text",
-            ".controller": "TextView",
+            $name: "_text",
+            $controller: "TextView",
             "TextView.color": "${color.text.primary}",
-            ".padding": "${spacing.left.small | spacing.zero}",
-            ".align": "vertical:center"
+            $padding: "${spacing.left.small | spacing.zero}",
+            $align: "vertical:center"
         }
     ]
 }
@@ -143,20 +144,20 @@ shows a red-outlined badge label on the left and a descriptive text label vertic
 ```
 
 Key points:
-- `.implements": "ComboBoxItem"` causes the generator to emit `IComboBoxItemBadgeData : IComboBoxItemData`,
+- `$implements": "ComboBoxItem"` causes the generator to emit `IComboBoxItemBadgeData : IComboBoxItemData`,
   satisfying the `where Item : IComboBoxItemData` constraint.
-- `isEnabled` and `tag` from `ComboBoxItem` are **automatically inherited** — do not redeclare them.
+- `isEnabled` and `tag` from `ComboBoxItem` are **automatically inherited** ï¿½ do not redeclare them.
   The generator emits ZUI006 and refuses to build if you do.
-- `.layout": "Row"` is set on the item root itself (not on a wrapper child) to lay the badge and text
-  side by side. Use `.align": { "vertical": "center" }` on each child to centre them in the row.
+- `$layout": "Row"` is set on the item root itself (not on a wrapper child) to lay the badge and text
+  side by side. Use `$align: { vertical: "center" }` on each child to centre them in the row.
 
-**2. Use the new item in a view** (`FormTestComboBox.zui.json`):
+**2. Use the new item in a view** (`FormTestComboBox.zui.json5`):
 
-```jsonc
+```json5
 {
-    ".name": "_badgeCombo",
-    ".controller": "ComboBox<ComboBoxItemBadge>",
-    ".align": { "horizontal": "left" }
+    $name: "_badgeCombo",
+    $controller: "ComboBox<ComboBoxItemBadge>",
+    $align: { horizontal: "left" }
 }
 ```
 
@@ -188,7 +189,7 @@ app.ShowWindow(new FormTestComboBox(), "ComboBox Test",
 string constructor instead:
 
 ```csharp
-// ? CS9187 — TextLinesBuilder.Create is internal
+// ? CS9187 ï¿½ TextLinesBuilder.Create is internal
 Badge = ["A"]
 
 // ? correct
@@ -196,20 +197,21 @@ Badge = new TextLines("A")   // explicit
 Badge = new("A")             // or target-typed new
 ```
 
-**The namespace of `.implements` target does not have to match your namespace.**
+**The namespace of `$implements` target does not have to match your namespace.**
 The generator searches the entire compilation (source and referenced assemblies) for `I{Implements}Data`
-by name. You do not need to redeclare or mirror the namespace — just use the short constraint name
+by name. You do not need to redeclare or mirror the namespace ï¿½ just use the short constraint name
 (e.g. `"ComboBoxItem"`) and the generator resolves it.
 
-**Cross-assembly `.implements` does not support collection properties.**
+**Cross-assembly `$implements` does not support collection properties.**
 If the constraint control (e.g. `ComboBoxItem`) is compiled into a referenced DLL rather than the same
 project, the generator synthesizes inherited bindings from Roslyn metadata. This works for scalar types
 (`bool`, `string`, `TextLines`, nullable references, etc.) but not for `ObservableCollection<>` properties.
-If you hit ZUI007, declare that property explicitly in your own `.data` section.
+If you hit ZUI007, declare that property explicitly in your own `$data` section.
 
 **Redeclaring inherited properties is a hard error (ZUI006).**
-The generator emits ZUI006 and stops generating the control if you copy `isEnabled` or `tag` from the
-constraint into your `.data`. Remove the duplicates — they are emitted automatically.
+The generator emits ZUI006 and stops generating the control if you copy
+isEnabled or `tag` from the
+constraint into your `$data`. Remove the duplicates ? they are emitted automatically.
 
 ### Conventions for item renderers
 
@@ -225,10 +227,10 @@ constraint into your `.data`. Remove the duplicates — they are emitted automatic
 
 ### Generic constraint and registration
 
-`ComboBox` is declared in `ComboBox.zui.json` as:
+`ComboBox` is declared in `ComboBox.zui.json5` as:
 
-```jsonc
-{ ".controller": "ComboBox<Item> where Item : ComboBoxItem" }
+```json5
+{ $controller: "ComboBox<Item> where Item : ComboBoxItem" }
 ```
 
 The generator parses the type parameter (`Item`) and constraint (`ComboBoxItem`), then emits:
@@ -238,7 +240,7 @@ public sealed partial class ComboBox<Item> : Controllable
     where Item : IComboBoxItemData { ... }
 ```
 
-The constraint `ComboBoxItem` names another `.zui.json`-defined control. The generator maps that name to its
+The constraint `ComboBoxItem` names another `.zui.json5`-defined control. The generator maps that name to its
 generated data interface (`IComboBoxItemData`) rather than the controller class, so the constraint lives
 entirely in the data layer. A controller interface `IComboBoxItem` is also generated and used as the type
 argument to `Loader.CreateDataController<IComboBoxItem>(itemData)` at runtime.
@@ -281,14 +283,14 @@ renderer as the dropdown rows.
 
 When the combo box is clicked, `OpenDropdown(AppWindow)` runs:
 
-1. **Dismiss overlay** — a full-screen `Panel` is added as a floating panel. Its `BackgroundColor` is
+1. **Dismiss overlay** ï¿½ a full-screen `Panel` is added as a floating panel. Its `BackgroundColor` is
    set to `View.GetStyle(ScrimColor)` so the tint comes from the active theme. The alpha must be greater
    than 16 (`DrawHelper.ALPHA_HIT_THRESHOLD`) so the overlay registers pointer hits; a fully transparent
    overlay will not close the dropdown when clicked. Clicking the overlay calls `CloseDropdown()`. Because
    `AppWindow.ShowFloatingPanel` always sets alignment to `Left/Top`, the overlay's `Stretch/Stretch`
    alignment must be applied **after** the call.
 
-2. **Popup panel** — a second floating `Panel` with `LayoutColumn` is positioned at the logical coordinates
+2. **Popup panel** ï¿½ a second floating `Panel` with `LayoutColumn` is positioned at the logical coordinates
    just below the combo box. Each item in `DataContext.Items` gets an item controller created via
    `CreateItemController(itemData)`. Clicking an item sets `DataContext.SelectedIndex`, calls
    `SyncSelectedItem()`, and calls `CloseDropdown()`.
