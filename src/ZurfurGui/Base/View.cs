@@ -182,6 +182,22 @@ public sealed class View
 
 
     /// <summary>
+    /// Get or set a list of active themes.  The theme is active for this and all child controls.
+    /// </summary>
+    public TextLines? ActiveThemes
+    {
+        get => GetProperty(Panel.ActiveThemes);
+        set 
+        {
+            if (value != null)
+                SetProperty(Panel.ActiveThemes, value);
+            else
+                RemoveProperty(Panel.ActiveThemes); 
+        }
+    }
+
+
+    /// <summary>
     /// Call when a view's measurement becomes invalid and needs to be re-measured.
     /// NOTE: This is called automatically when properties that affect measurement are changed.
     /// </summary>
@@ -245,8 +261,12 @@ public sealed class View
         {
             if (newProp.key != Panel.ThemeTokens.Id)
             {
-                // TBD: Merge mergable properties?  This is probably a bug.
-                _properties.SetById(newProp.key, newProp.value);
+                var newPropValue = newProp.value;
+                if (newPropValue != null && newPropValue is IMergable && _properties.TryGetById(newProp.key, out var oldPropValue))
+                    newPropValue = ThemeManager.Merge(newPropValue, oldPropValue);
+
+                if (newPropValue != null)
+                    _properties.SetById(newProp.key, newPropValue);
             }
         }
 
@@ -266,10 +286,7 @@ public sealed class View
                 _properties.Set(Panel.ThemeTokens, newThemeTokens);
             }
         }
-
-
     }
-    
 
     /// <summary>
     /// Get a property from the view's property collection, or return the property default when not found.
@@ -315,7 +332,7 @@ public sealed class View
             return typedStyledValue;
         }
 
-        var styledProperty = StyleManager.FindStyle(this, key);
+        var styledProperty = ThemeManager.FindStyle(this, key);
 
         // Cache the styled property for quick lookup above
         _properties.SetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN), styledProperty!);
@@ -325,7 +342,7 @@ public sealed class View
 
     internal void RefreshCacheProperty<T>(PropertyKey<T> key)
     {
-        var styledProperty = StyleManager.FindStyle(this, key);
+        var styledProperty = ThemeManager.FindStyle(this, key);
 
         // If cache did not change, no need to invalidate
         if (_properties.TryGetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN),

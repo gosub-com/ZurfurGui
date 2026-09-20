@@ -22,8 +22,6 @@ public partial class AppWindow : Controllable, Renderable
 {
     readonly bool DRAW_TEST_PATTERN = false;
 
-    string _theme = "";
-
     public string RenderType => "AppWindow";
 
     public Renderer? Renderer { get; private set; }
@@ -98,24 +96,6 @@ public partial class AppWindow : Controllable, Renderable
         control.View.SetProperty(Panel.Offset, location);
         _floatingWindows.View.AddChild(control.View);
         return control.View;
-    }
-
-    /// <summary>
-    /// Set the active theme by style sheet name (e.g. "ZurfurDefault", "ZurfurCherry").
-    /// An empty theme (Theme == "") uses the default theme.
-    /// </summary>
-    public string Theme
-    {
-        get => _theme;
-        set
-        {
-            if (value == _theme)
-                return;
-            if (value != "" && !ThemeManager.RegisteredThemes.ContainsKey(value))
-                throw new ArgumentException($"Theme '{value}' is not registered. ");
-            _theme = value;
-            View.SetFlags(ViewFlags.StyleDown);
-        }
     }
 
     /// <summary>

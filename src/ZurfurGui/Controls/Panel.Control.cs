@@ -17,6 +17,7 @@ public partial class Panel : Controllable
     
     // NOTE: ThemeTokens are the same for every control of a given type.  TBD: Move them out of the instance
     public static readonly PropertyKey<Dictionary<string, string>> ThemeTokens = new(".themeTokens", typeof(Panel), new(), ViewFlags.None);
+    public static readonly PropertyKey<TextLines> ActiveThemes = new(".activeThemes", typeof(Panel), new(), ViewFlags.StyleDown);
 
     // NOTE: DataProperties are used only by the loader and are removed after the control is loaded.
     public static readonly PropertyKey<Dictionary<string, System.Text.Json.JsonElement>> DataProperties = new(".dataProperties", typeof(Panel), new(), ViewFlags.None);

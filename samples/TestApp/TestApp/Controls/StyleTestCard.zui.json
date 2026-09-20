@@ -2,6 +2,7 @@
     ".controller": "StyleTestCard",
     ".namespace": "TestApp.Controls",
     ".layout": "Column",
+    ".activeThemes": ["StyleTestCard"],
     ".content": [
         {
             // Show theme name using the StyleTestSkinHoverTextStyleTestSkinHoverText style

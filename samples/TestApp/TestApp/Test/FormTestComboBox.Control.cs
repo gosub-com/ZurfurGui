@@ -55,10 +55,10 @@ public partial class FormTestComboBox
             return;
         switch (_themeComboBox.DataContext.SelectedIndex)
         {
-            case 0: appWindow.Theme = "ZurfurDefault"; break;
-            case 1: appWindow.Theme = "ZurfurDefaultDark"; break;
-            case 2: appWindow.Theme = "ZurfurCherry"; break;
-            case 3: appWindow.Theme = "ZurfurCherryDark"; break;
+            case 0: appWindow.View.ActiveThemes = ["ZurfurDefault"]; break;
+            case 1: appWindow.View.ActiveThemes = ["ZurfurDefaultDark"]; break;
+            case 2: appWindow.View.ActiveThemes = ["ZurfurCherry"]; break;
+            case 3: appWindow.View.ActiveThemes = ["ZurfurCherryDark"]; break;
         }
     }
 }

@@ -16,7 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Style\" />
+    <AdditionalFiles Remove="Style\**" />
+    <Compile Remove="Style\**" />
+    <EmbeddedResource Remove="Style\**" />
+    <None Remove="Style\**" />
   </ItemGroup>
 
 </Project>

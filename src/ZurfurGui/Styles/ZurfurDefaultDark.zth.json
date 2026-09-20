@@ -14,18 +14,18 @@
         // Window decorations
         "color.window.title.background": "#1E3A5A",
         "color.window.title.foreground": "#E8EEFF",
-        "color.window.close": "isHover ? #D8DEFF",
+        "color.window.close": "isPointerOver ? #D8DEFF",
 
         // Text
         "color.text.primary": "#D4D4D4",
         "color.text.on-primary": "#D4D4D4",
 
         // Buttons, checkboxes, radio buttons, toggles, etc.
-        "color.interactive.primary.stroke": "isPressed ? #3A80B0; isHover ? #4CA0D0; #3973B7",
-        "color.interactive.primary.background": "isPressed ? #18325A; isHover ? #295A96; #23406C",
+        "color.interactive.primary.stroke": "isPressed ? #3A80B0; isPointerOver ? #4CA0D0; #3973B7",
+        "color.interactive.primary.background": "isPressed ? #18325A; isPointerOver ? #295A96; #23406C",
 
         // Items in a listbox, combobox, etc.
-        "color.interactive.item.background": "isPressed ? #18325A; isHover ? #295A96; #00000000",
+        "color.interactive.item.background": "isPressed ? #18325A; isPointerOver ? #295A96; #00000000",
 
         // Text box, etc.
         "color.input.background": "#252526",
@@ -33,7 +33,7 @@
 
         // ScrollBar
         "color.scroll.track.background": "#252526",
-        "color.scroll.thumb.background": "isHover ? #4A749F; #3A5F8F",
+        "color.scroll.thumb.background": "isPointerOver ? #4A749F; #3A5F8F",
         "color.scroll.stroke": "#4A7090",
 
         "color.status.success.background": "#27472A",

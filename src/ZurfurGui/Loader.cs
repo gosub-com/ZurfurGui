@@ -163,7 +163,6 @@ public static class Loader
         var dataProperties = control.View._properties.Get(Panel.DataProperties);
 
         // TBD: We should be able to remove these after applying, but we can't because it changes "stuff".
-        //      Maybe this is caused by a bug in View.MergeOverwrite?
         //control.View._properties.Remove(Panel.DataProperties);
 
         if (dataProperties != null && dataProperties.Count > 0)

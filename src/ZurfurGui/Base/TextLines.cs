@@ -157,9 +157,9 @@ public class TextLines : IEquatable<TextLines>, IEnumerable<string>, IReadOnlyLi
         public void Dispose() { }
     }
 
-    internal static class TextLinesBuilder
+    public static class TextLinesBuilder
     {
-        internal static TextLines Create(ReadOnlySpan<string> values)
+        public static TextLines Create(ReadOnlySpan<string> values)
         {
             if (values.Length == 0)
                 return Empty;

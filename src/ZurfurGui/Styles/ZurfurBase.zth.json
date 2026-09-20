@@ -3,13 +3,6 @@
     "name": "ZurfurBase",
     "variables": {
 
-        // Style test - TBD: Remove from here when we walk up the tree view to find them
-        "style.test.text.hover-nothover": "isHover ? Hovering; Not hovering",
-        "style.test.font.c1": "size:28.0",
-        "style.test.font.c2": "name:Times New Roman",
-        "style.test.sizeRequest.c1": "width:120",
-        "style.test.sizeRequest.c2": "height:50",
-
         // Opacity for disabled elements
         "opacity.disabled": "0.38",
 
