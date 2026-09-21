@@ -1,10 +1,9 @@
 // Combo box item that shows a badge label and a text label side by side.
 // The badge is outlined in red; the text is vertically centred to the right of it.
-// Use $implements: "ComboBoxItem" and reference via ComboBox<ComboBoxItemBadge>.
+// Implement IComboBoxItem in the generated data partial and reference via ComboBox<ComboBoxItemBadge>.
 {
     $controller: "ComboBoxItemBadge",
     $namespace: "TestApp.Test.Controls",
-    $implements: "ComboBoxItem",
     $padding: "${spacing.horizontal.small | spacing.vertical.extra-small}",
     $backgroundColor: "${color.interactive.item.background}",
     $data: {

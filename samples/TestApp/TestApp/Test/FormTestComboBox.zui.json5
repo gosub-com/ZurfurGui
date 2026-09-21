@@ -14,6 +14,7 @@
                     $align: "horizontal:left,vertical:center"
                 },
                 {
+                    // Theme combo box
                     $name: "_themeComboBox",
                     $controller: "ComboBox<ComboBoxItemText>",
                     $align: "horizontal:left"
@@ -30,6 +31,7 @@
                     $align: "horizontal:left,vertical:center"
                 },
                 {
+                    // Badge combo box
                     $name: "_badgeCombo",
                     $controller: "ComboBox<ComboBoxItemBadge>",
                     $align: "horizontal:left"

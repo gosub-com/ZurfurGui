@@ -19,7 +19,7 @@ public static partial class ComboBox
 }
 
 public sealed partial class ComboBox<Item> : Controllable
-    where Item : IComboBoxItemData
+    where Item : IComboBoxItem
 {
 
     View? _dropdownView;
@@ -38,11 +38,10 @@ public sealed partial class ComboBox<Item> : Controllable
             SyncSelectedItem();
     }
 
-    Controllable CreateItemController(IComboBoxItemData itemData)
+    Controllable CreateItemController(Item itemData)
     {
-        var controller = global::ZurfurGui.Loader.CreateDataController<IComboBoxItem>(itemData);
-        controller.DataContext = itemData;
-        return (Controllable)controller;
+        var controller = global::ZurfurGui.Loader.CreateDataController(itemData);
+        return controller;
     }
 
     void SyncSelectedItem()

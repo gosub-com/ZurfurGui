@@ -52,9 +52,8 @@ public static class Loader
     static Dictionary<string, ControlEntry> s_controllers = new();
     static Dictionary<string, Func<Layoutable?>> s_layouts = new();
 
-    // Maps item data interface type → factory; built automatically in RegisterControl
-    // from each control's ImplementsDataInterfaces property.
-    static Dictionary<Type, Func<Controllable>> s_dataControllers = new();
+    // Maps concrete generated data type → item controller factory.
+    static Dictionary<Type, Func<object, Controllable>> s_dataControllers = new();
 
     // Combine source-generated context with custom converters
     static readonly JsonSerializerOptions s_jsonSerializerOptions = new JsonSerializerOptions
@@ -247,51 +246,52 @@ public static class Loader
     }
 
     /// <summary>
-    /// Register a control and wire up its data-controller mappings from its static
-    /// ImplementsDataInterfaces array. Eliminates the need for a separate RegisterDataController call.
+    /// Registers the factory used to create a controller for a concrete data-item type.
+    /// This method is intended to be called by generated <c>ZurfurMain.InitializeControls</c> code during startup.
+    /// The <paramref name="dataType"/> is the concrete runtime type of a data item, and the
+    /// <paramref name="factory"/> maps an instance of that type to its controller.
+    /// The factory's lambda parameter is the data item instance, received as <see cref="object"/> because the
+    /// loader stores factories for different data types in one registry. The lambda returns the controller that
+    /// renders the item and should assign that same data item to the controller's <c>DataContext</c>.
     /// </summary>
-    public static void RegisterControl(string name, Type type, Func<Controllable> factory,
-        Type[] implementsDataInterfaces)
+    /// <param name="dataType">The concrete data-item type used as the registry key.</param>
+    /// <param name="factory">
+    /// A mapping from the data item instance to its controller. The lambda receives the data item as
+    /// <see cref="object"/> and returns the corresponding <see cref="Controllable"/>.
+    /// </param>
+    public static void RegisterDataController(Type dataType, Func<object, Controllable> factory)
     {
-        RegisterControl(name, type, factory);
-        foreach (var iface in implementsDataInterfaces)
-        {
-            if (!s_dataControllers.ContainsKey(iface))
-                s_dataControllers[iface] = factory;
-        }
+        if (s_dataControllers.ContainsKey(dataType))
+            throw new ArgumentException($"Data controller for '{dataType.Name}' is already registered");
+        s_dataControllers[dataType] = factory;
     }
 
     /// <summary>
-    /// Get the factory for the item controller that handles the given item data interface type.
-    /// Accepts either the registered interface type or a concrete class that implements it.
+    /// Get the factory for the item controller that handles the given concrete item data type.
     /// </summary>
-    public static Func<Controllable> GetDataControllerFactory(Type dataType)
+    public static Func<object, Controllable> GetDataControllerFactory(Type dataType)
     {
-        // Direct match (called with the interface type itself)
         if (s_dataControllers.TryGetValue(dataType, out var factory))
             return factory;
-
-        // Walk the type's interfaces to find a registered one (called with a concrete class type)
-        foreach (var iface in dataType.GetInterfaces())
-            if (s_dataControllers.TryGetValue(iface, out factory))
-                return factory!;
 
         throw new ArgumentException($"No data controller registered for '{dataType.Name}'");
     }
 
     /// <summary>
-    /// Create an item controller for the given item data, cast to the specified constraint interface.
-    /// Throws if no controller is registered for the data type or if the controller does not
-    /// implement <typeparamref name="TConstraint"/>.
+    /// Creates the controller registered for a concrete data-item instance.
+    /// This method is intended to be called by controls such as <c>ComboBox&lt;Item&gt;</c> when they need to render
+    /// an item. The loader uses the runtime type of <paramref name="itemData"/> to find the factory previously
+    /// registered by <see cref="RegisterDataController(Type, Func{object, Controllable})"/>, passes the same data
+    /// item to that factory, and returns the resulting controller.
     /// </summary>
-    public static TConstraint CreateDataController<TConstraint>(object itemData)
-        where TConstraint : class
+    /// <param name="itemData">
+    /// The concrete data object to render. Its runtime type selects the registered controller factory, and its
+    /// values are preserved when the factory assigns it to the controller's <c>DataContext</c>.
+    /// </param>
+    /// <returns>A controller configured to render <paramref name="itemData"/>.</returns>
+    public static Controllable CreateDataController(object itemData)
     {
-        var controller = GetDataControllerFactory(itemData.GetType())();
-        if (controller is not TConstraint result)
-            throw new InvalidOperationException(
-                $"Data controller '{controller.GetType().Name}' does not implement '{typeof(TConstraint).Name}'");
-        return result;
+        return GetDataControllerFactory(itemData.GetType())(itemData);
     }
 
     public static void RegisterLayout(string name, Func<Layoutable?> layoutFactory)

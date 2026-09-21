@@ -45,10 +45,9 @@ public class GenerateZui : IIncrementalGenerator
                 return ZuiInput.CollectJsonFiles(text, syntax, cancellationToken);
             });
 
-        // Generate controller classes (combined with CompilationProvider so inherited bindings
-        // can be resolved from referenced assemblies when $implements targets a DLL control)
-        context.RegisterSourceOutput(zuiData.Collect().Combine(context.CompilationProvider),
-            (spc, pair) => GenerateControllerClasses(spc, pair.Left, pair.Right));
+        // Generate controller classes.
+        context.RegisterSourceOutput(zuiData.Collect(),
+            (spc, data) => GenerateControllerClasses(spc, data));
 
         // Generate the ZurfurMain partial class in each project
         context.RegisterSourceOutput(zuiData.Collect().Combine(zthData.Collect())
@@ -65,13 +64,8 @@ public class GenerateZui : IIncrementalGenerator
     /// Collect FileInfo from a .json file.
     /// If a corresponding .cs file exists, collect the namespace from it.
     /// </summary>
-    static void GenerateControllerClasses(SourceProductionContext spc, ImmutableArray<ZuiFileInfo> zuiData, Compilation compilation)
+    static void GenerateControllerClasses(SourceProductionContext spc, ImmutableArray<ZuiFileInfo> zuiData)
     {
-        // Build a lookup from controller name → full FileInfo for same-project controls.
-        var infoByController = zuiData
-            .Where(d => d.Diagnostic == null && d.ControllerName != "")
-            .ToDictionary(d => d.ControllerName, d => d);
-
         foreach (var data in zuiData)
         {
             // Should have valid data here
@@ -93,127 +87,11 @@ public class GenerateZui : IIncrementalGenerator
 
             try
             {
-                // Resolve inherited bindings when $implements is set.
-                List<DataBinding>? inheritedBindings = null;
-                string? implementsNamespace = null;
-                if (data.Implements != "")
-                {
-                    // 1) Same-project: look up the constraint control's FileInfo directly.
-                    if (infoByController.TryGetValue(data.Implements, out var fromSourceInfo))
-                    {
-                        inheritedBindings = fromSourceInfo.Bindings;
-                        implementsNamespace = fromSourceInfo.Namespace;
-                    }
-                    else
-                    {
-                        // 2) Referenced assembly: synthesize DataBinding objects from the compiled
-                        //    I{Implements}Data interface members.
-                        //    GetSymbolsWithName only searches the current project's source, so we
-                        //    must also walk referenced assembly symbols to find the type.
-                        var targetTypeName = $"I{data.Implements}Data";
-                        var ifaceSymbol = FindTypeInCompilation(compilation, targetTypeName);
-                        if (ifaceSymbol != null)
-                        {
-                            implementsNamespace = ifaceSymbol.ContainingNamespace?.ToDisplayString();
-                            // Limitation: only simple scalar "new" bindings are supported here.
-                            // Collection properties (ObservableCollection<>) are detected and rejected
-                            // with ZUI007 because IsCollection/IsTypeParam cannot be reconstructed
-                            // from metadata alone. Forwarding binds and future bind kinds are also
-                            // unsupported — constraint interfaces should only contain scalar properties.
-                            var props = ifaceSymbol.GetMembers().OfType<IPropertySymbol>().Where(p => !p.IsStatic).ToList();
-                            var synthesized = new List<DataBinding>();
-                            var hasError = false;
-                            foreach (var p in props)
-                            {
-                                var fullType = p.Type.ToDisplayString();
-                                if (fullType.Contains("ObservableCollection"))
-                                {
-                                    spc.ReportDiagnostic(ZuiDiagnostics.GetDiagnostic(errorLocation,
-                                        "ZUI007", "ZUI Implements Cross-Assembly Collection Not Supported",
-                                        $"Property '{p.Name}' in 'I{data.Implements}Data' uses ObservableCollection. "
-                                        + "Cross-assembly '$implements' does not support collection properties. "
-                                        + "Declare it explicitly in '$data' instead."));
-                                    hasError = true;
-                                }
-                                else
-                                {
-                                    var name = ZuiEmit.ToCamelCase(p.Name);
-                                    var pascalName = ZuiEmit.ToPascalCase(name);
-
-                                    // NOTE: Semantically different from DataBinding in ZuiSchema.cs
-                                    // - ZuiSchema: Full property declaration with metadata from .zui JSON source
-                                    //              (has Comment, Default, PropertyKeyName, actual Bind mode)
-                                    // - Here: Minimal type signature synthesized from compiled Roslyn symbols
-                                    //         (missing original metadata, used only for type signatures and delegation)
-                                    synthesized.Add(new DataBinding
-                                    {   
-                                        Name = name,
-                                        BaseType = p.Type.WithNullableAnnotation(Microsoft.CodeAnalysis.NullableAnnotation.NotAnnotated).ToDisplayString(),
-                                        IsNullable = p.NullableAnnotation == Microsoft.CodeAnalysis.NullableAnnotation.Annotated,
-                                        PascalName = pascalName,
-
-
-                                        // Bind mode unknown for cross-assembly inherited properties.
-                                        // Validation only checks data.Bindings (not inheritedBindings).
-                                        // OnDataContextPropertyChanged generates "TBD" comment for empty Bind.
-                                        // Same-project inheritance preserves original Bind value from base FileInfo.
-                                        BindType = BindType.Unused,
-                                        Bind = "",
-
-                                        // Fields unused after this point (inherited properties are delegated to base implementation):
-                                        Comment = "",          // Comment unused - base class property already documented
-                                        Default = "",          // Default unused - base class handles initialization
-                                        PropertyKeyName = "",  // PropertyKeyName unused - filtered out by Bind != "styled"
-                                    });
-                                }
-                            }
-                            if (!hasError)
-                                inheritedBindings = synthesized;
-                            else
-                                continue;
-                        }
-                        else
-                        {
-                            // 3) Not found anywhere — emit a compile-time error.
-                            spc.ReportDiagnostic(ZuiDiagnostics.GetDiagnostic(errorLocation,
-                                "ZUI005", "ZUI Implements Not Found",
-                                $"'$implements': \"{data.Implements}\" — constraint interface 'I{data.Implements}Data' "
-                                + $"was not found in source or referenced assemblies."));
-                            continue;
-                        }
-                    }
-
-                    // Check for duplicate property names between $data and $implements — error ZUI006.
-                    var inheritedNames = new HashSet<string>(inheritedBindings.Select(b => b.Name), StringComparer.OrdinalIgnoreCase);
-                    foreach (var binding in data.Bindings)
-                    {
-                        if (inheritedNames.Contains(binding.Name))
-                        {
-                            spc.ReportDiagnostic(ZuiDiagnostics.GetDiagnostic(errorLocation,
-                                "ZUI006", "ZUI Duplicate Inherited Property",
-                                $"Property '{binding.Name}' in '$data' is already declared by '$implements': \"{data.Implements}\". "
-                                + $"Remove it from '$data' — it is inherited automatically."));
-                        }
-                    }
-                }
-
-                // Generate the source code for the control
-                var source = ZuiEmitController.GenerateControllerClassSource(data, inheritedBindings, implementsNamespace);
+                var source = ZuiEmitController.GenerateControllerClassSource(data);
                 if (source != "")
                     spc.AddSource($"{data.FileName}.Control.g.cs", SourceText.From(source, Encoding.UTF8));
 
-                // Generate the source code for the contract (IControllerNameData) and
-                // constraint (IControllerName) interfaces — both go into the same file.
-                // Pass the inherited binding names so they are not re-declared in the sub-interface.
-                var inheritedNames2 = inheritedBindings != null
-                    ? (IEnumerable<string>)inheritedBindings.Select(b => b.Name)
-                    : null;
-                var contractSource = ZuiEmitContract.GenerateContractInterfaceSource(data, inheritedNames2);
-                if (contractSource != "")
-                    spc.AddSource($"{data.FileName}.Contract.g.cs", SourceText.From(contractSource, Encoding.UTF8));
-
-                // Generate the source code for the data implementation (partial if *Data.cs exists)
-                var dataImplSource = ZuiEmitData.GenerateDataImplementationSource(data, inheritedBindings);
+            var dataImplSource = ZuiEmitData.GenerateDataImplementationSource(data);
                 if (dataImplSource != "")
                     spc.AddSource($"{data.FileName}.Data.g.cs", SourceText.From(dataImplSource, Encoding.UTF8));
             }
@@ -226,47 +104,6 @@ public class GenerateZui : IIncrementalGenerator
             }
         }
 
-    }
-
-    /// <summary>
-    /// Searches the compilation and all referenced assemblies for a named type.
-    /// GetSymbolsWithName only covers source symbols in the current project, so we
-    /// must walk referenced assembly global namespaces to find types compiled into DLLs.
-    /// </summary>
-    static INamedTypeSymbol? FindTypeInCompilation(Compilation compilation, string typeName)
-    {
-        // First check source symbols in the current project.
-        var fromSource = compilation.GetSymbolsWithName(typeName, SymbolFilter.Type)
-            .OfType<INamedTypeSymbol>()
-            .FirstOrDefault();
-        if (fromSource != null)
-            return fromSource;
-
-        // Walk all referenced assembly namespaces recursively.
-        foreach (var reference in compilation.References)
-        {
-            var assemblySymbol = compilation.GetAssemblyOrModuleSymbol(reference) as IAssemblySymbol;
-            if (assemblySymbol == null)
-                continue;
-            var found = FindTypeInNamespace(assemblySymbol.GlobalNamespace, typeName);
-            if (found != null)
-                return found;
-        }
-
-        return null;
-    }
-
-    static INamedTypeSymbol? FindTypeInNamespace(INamespaceSymbol ns, string typeName)
-    {
-        foreach (var type in ns.GetTypeMembers(typeName))
-            return type;
-        foreach (var child in ns.GetNamespaceMembers())
-        {
-            var found = FindTypeInNamespace(child, typeName);
-            if (found != null)
-                return found;
-        }
-        return null;
     }
 
 }

@@ -10,12 +10,9 @@ namespace ZurfurGuiGen;
 
 internal static class ZuiEmitController
 {
-    internal static string GenerateControllerClassSource(ZuiFileInfo data, List<DataBinding>? inheritedBindings, string? implementsNamespace)
+    internal static string GenerateControllerClassSource(ZuiFileInfo data)
     {
-        // All bindings: inherited ones first, then the control's own bindings.
-        var allBindings = inheritedBindings != null
-            ? inheritedBindings.Concat(data.Bindings).ToList()
-            : data.Bindings;
+        var allBindings = data.Bindings;
 
         // Add file header, usings, and namespace
         var sb = new StringBuilder();
@@ -27,44 +24,31 @@ internal static class ZuiEmitController
         // Add class header
         ZuiEmit.AppendXmlDocComment(sb, 0, data.Comment);
         var partialKeyword = data.UserSuppliedControllerClass ? "partial " : "";
-        var implementsInterface = data.Implements != "" ? $", I{data.Implements}" : "";
         if (data.TypeParam != "")
         {
-            // Generic controller: the type parameter is the item data interface type.
-            // The constraint keeps the data layer concrete while the controller stays generic.
-            var constraintInterface = $"I{data.TypeParamConstraint}Data";
+            // Generic controllers use a concrete data type parameter with a handwritten constraint.
+            var constraintInterface = ZuiEmit.GetConstraintType(data.TypeParamConstraint);
             sb.Append($"public sealed {partialKeyword}class {data.FileName}<{data.TypeParam}>"
-                + $" : global::ZurfurGui.Base.Controllable{implementsInterface}\r\n");
+                + " : global::ZurfurGui.Base.Controllable\r\n");
             sb.Append($"    where {data.TypeParam} : {constraintInterface}\r\n{{\r\n");
         }
         else
         {
             sb.Append($"public sealed {partialKeyword}class {data.FileName}"
-                + $" : global::ZurfurGui.Base.Controllable{implementsInterface}\r\n{{\r\n");
+                + " : global::ZurfurGui.Base.Controllable\r\n{\r\n");
         }
 
         // Add class variables
         sb.AppendIndentedLine(1, "public global::ZurfurGui.Base.View View { get; private set; } = null!; // Set by InitializeControl");
         if (data.TypeParam != "")
             // For generic controls, TypeName is the open base name (e.g. "ComboBox").
-            // Closed forms (e.g. "ComboBox<IComboBoxItemTextData>") are registered separately in ZurfurMain.g.cs.
+            // Closed forms (e.g. "ComboBox<ComboBoxItemTextData>") are registered separately in ZurfurMain.g.cs.
             sb.AppendIndentedLine(1, $"public string TypeName => \"{data.ControllerName}\";");
         else
             sb.AppendIndentedLine(1, $"public string TypeName => \"{data.ControllerName}\";");
         sb.AppendIndentedLine(1, $"public string TypeNamespace => \"{data.Namespace}\";");
         sb.AppendIndentedLine(1, $"public TextLines TypeUses => new TextLines([{string.Join(",",
             data.Use.Select(s => "\"" + s + "\""))}]);");
-        // Register the controller's own concrete data interface (e.g. IComboBoxItemBadgeData),
-        // NOT the base $implements interface (e.g. IComboBoxItemData).
-        // GetDataControllerFactory walks a concrete data class's interfaces to find a registered
-        // factory; if two controllers both register IComboBoxItemData, whichever registered first
-        // wins and the wrong controller is instantiated for the other item type.
-        var implementsArray = data.Implements != ""
-            ? $"new global::System.Type[] {{ typeof(global::{data.Namespace}.I{data.ControllerName}Data) }}"
-            : "global::System.Array.Empty<global::System.Type>()";
-        sb.AppendIndentedLine(1, $"public static readonly global::System.Type[] s_implementsDataInterfaces = {implementsArray};");
-        sb.AppendIndentedLine(1, "public global::System.Type[] ImplementsDataInterfaces => s_implementsDataInterfaces;");
-
         // Generated PropertyKey fields for "$data" entries that bind to "styledData" or "styleOnly" (excluding collections).
         // For generic controls, keys must live in a non-generic companion static class to avoid
         // per-closed-type duplication (each closed type would try to register the same key name,
@@ -93,11 +77,9 @@ internal static class ZuiEmitController
             sb.Append("}\r\n\r\n");
             // Reopen the generic class
             var partialKeyword2 = data.UserSuppliedControllerClass ? "partial " : "";
-            var constraintInterface2 = $"I{data.TypeParamConstraint}Data";
-            var implementsInterface2 = data.Implements != "" ? $", I{data.Implements}" : "";
             sb.Append($"public sealed {partialKeyword2}class {data.FileName}<{data.TypeParam}>"
-                + $" : global::ZurfurGui.Base.Controllable{implementsInterface2}\r\n");
-            sb.Append($"    where {data.TypeParam} : {constraintInterface2}\r\n{{\r\n");
+                + " : global::ZurfurGui.Base.Controllable\r\n");
+            sb.Append($"    where {data.TypeParam} : {ZuiEmit.GetConstraintType(data.TypeParamConstraint)}\r\n{{\r\n");
 
             // Static constructor: touching one companion field forces the companion's static
             // constructor to run whenever any closed form's static constructor runs.
@@ -138,7 +120,7 @@ internal static class ZuiEmitController
 
         // Create named control variables
         var namedControlsDict = ZuiSchema.FindNamedControlsDictionary(data.JsonDocument);
-        Json.RemoveKeys(data.JsonDocument, new List<string> { "#comment", "$namespace", "$use", "$implements", "$data" });
+        Json.RemoveKeys(data.JsonDocument, new List<string> { "#comment", "$namespace", "$use", "$data" });
         var zuiJsonContent = Json.Serialize(data.JsonDocument).Replace("\"", "\"\"");
         var controlNames = namedControlsDict.Keys.OrderBy(n => n);
         sb.AppendIndentedLine(1, "// Named controls (public unless name starts with '_')");
@@ -189,7 +171,7 @@ internal static class ZuiEmitController
         {
             sb.Append("\r\n");
             var genericSuffix = data.TypeParam != "" ? $"<{data.TypeParam}>" : "";
-            sb.AppendIndentedLine(1, $"I{data.ControllerName}Data{genericSuffix} CreateDefaultDataContext()");
+            sb.AppendIndentedLine(1, $"{data.ControllerName}Data{genericSuffix} CreateDefaultDataContext()");
             sb.AppendIndentedLine(1, "{");
             sb.AppendIndentedLine(2, $"return new {data.ControllerName}Data{genericSuffix}(");
 
@@ -238,25 +220,6 @@ internal static class ZuiEmitController
         sb.Append("\r\n");
         sb.AppendIndentedLine(1, $"static string _zuiJsonContent => @\"{zuiJsonContent}\";");
 
-        // Explicit interface implementation for $implements contract.
-        // The public DataContext property is typed as I{ControllerName}Data (e.g. IComboBoxItemTextData),
-        // but I{Implements} (e.g. IComboBoxItem) requires DataContext typed as I{Implements}Data.
-        // C# won't satisfy the interface via the public property since types differ even when one
-        // implements the other, so this explicit implementation bridges the two with casts.
-        if (data.Implements != "")
-        {
-            sb.Append("\r\n");
-            sb.AppendIndentedLine(1, $"// Explicit interface implementation for I{data.Implements}.");
-            sb.AppendIndentedLine(1, $"// The public DataContext is typed as I{data.ControllerName}Data, but I{data.Implements} requires");
-            sb.AppendIndentedLine(1, $"// I{data.Implements}Data. C# won't satisfy the interface via the public property even when one");
-            sb.AppendIndentedLine(1, $"// type implements the other, so this explicit implementation bridges the two with casts.");
-            sb.AppendIndentedLine(1, $"I{data.Implements}Data I{data.Implements}.DataContext");
-            sb.AppendIndentedLine(1, "{");
-            sb.AppendIndentedLine(2, $"get => (I{data.Implements}Data)DataContext;");
-            sb.AppendIndentedLine(2, $"set => DataContext = (I{data.ControllerName}Data)value;");
-            sb.AppendIndentedLine(1, "}");
-        }
-
         sb.Append("}");
         return sb.ToString();
     }
@@ -267,7 +230,7 @@ internal static class ZuiEmitController
             return;
 
         var genericSuffix = data.TypeParam != "" ? $"<{data.TypeParam}>" : "";
-        var dataType = $"I{data.ControllerName}Data{genericSuffix}";
+        var dataType = $"{data.ControllerName}Data{genericSuffix}";
 
         // Generate backing field and full property with event hookup
         sb.AppendIndentedLine(1, $"{dataType} _dataContext = null!; // Set by InitializeControl");
@@ -476,9 +439,9 @@ internal static class ZuiEmitController
                 continue;
             }
 
-            // If binding to a named control, use the interface type for pattern matching
+            // If binding to a named control, use its concrete generated data type for pattern matching
             var matchType = ZuiEmit.IsNamedControl(binding.Bind, namedControls) 
-                ? $"I{baseType}Data" 
+                ? $"{baseType}Data" 
                 : baseType;
 
             // Use pattern matching to handle nullable/non-nullable scenarios
@@ -549,7 +512,7 @@ internal static class ZuiEmitController
                 var comma = i < bindingList.Count - 1 ? "," : "";
                 var nullableStr = binding.IsNullable ? "true" : "false";
                 var typeofStr = binding.IsCollection
-                    ? $"typeof(global::System.Collections.ObjectModel.ObservableCollection<I{binding.BaseType}Data>)"
+                    ? $"typeof({ZuiEmit.GetBindingDataType(binding, new Dictionary<string, NamedControlInfo>())})"
                     : $"typeof({binding.BaseType})";
                 sb.AppendIndentedLine(2, $"[\"{binding.PascalName}\"] = new(\"{binding.PascalName}\", {typeofStr}, {nullableStr}){comma}");
             }

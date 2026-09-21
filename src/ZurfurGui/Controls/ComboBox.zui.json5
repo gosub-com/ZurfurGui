@@ -1,6 +1,6 @@
 // A drop down combo box
 {
-    $controller: "ComboBox<Item> where Item : ComboBoxItem",
+    $controller: "ComboBox<Item> where Item : IComboBoxItem",
     $namespace: "ZurfurGui.Controls",
     $borderWidth: "${stroke.width.default}",
     $borderRadius: "${radius.corner.medium}",
@@ -12,7 +12,7 @@
     $sizeMin: "width:80",
     $data: {
         // The list of data items in the combo box. 
-        // For ComboBox<ComboBoxTextItem> the data type is `IComboBoxTextItemData`
+        // For ComboBox<ComboBoxItemText> the data type is ComboBoxItemTextData.
         items: {
             type: "[]Item",
             bind: "data"

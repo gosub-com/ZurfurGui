@@ -12,6 +12,9 @@ internal static class ZuiEmit
         sb.Append($"// This file is generated from '{sourceFileName}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}\r\n");
     }
 
+    internal static string GetConstraintType(string constraint)
+        => constraint.StartsWith("I", StringComparison.Ordinal) ? constraint : $"I{constraint}";
+
     internal static void AppendIndentedLine(this StringBuilder sb, int indentLevel, string line)
     {
         for (var i = 0; i < indentLevel; i++)
@@ -97,26 +100,24 @@ internal static class ZuiEmit
 
     /// <summary>
     /// Returns the C# data type for a binding.
-    /// For type-param collections (IsTypeParam), returns ObservableCollection&lt;I{Constraint}Data&gt;
-    /// where Constraint is the control named in the "where" clause — keeping the data layer non-generic.
-    /// For regular collections (IsCollection), returns ObservableCollection&lt;I{type}Data&gt;.
+    /// For type-param collections (IsTypeParam), returns ObservableCollection&lt;T&gt;.
+    /// For regular collections (IsCollection), returns ObservableCollection&lt;{type}Data&gt;.
     /// </summary>
     internal static string GetBindingDataType(DataBinding binding, Dictionary<string, NamedControlInfo> namedControls)
     {
         if (binding.IsTypeParam)
-            // Type param collection: element type is the constraint's data interface, not the type param itself.
-            // e.g. "[]Item where Item : ComboBoxItem" -> ObservableCollection<IComboBoxItemData>
-            return $"global::System.Collections.ObjectModel.ObservableCollection<I{binding.BaseType}Data>";
+            // Type param collection: retain the generic item type itself.
+            return "global::System.Collections.ObjectModel.ObservableCollection<Item>";
 
         if (binding.IsCollection)
-            return $"global::System.Collections.ObjectModel.ObservableCollection<I{binding.BaseType}Data>";
+            return $"global::System.Collections.ObjectModel.ObservableCollection<{binding.BaseType}Data>";
 
         // If the binding targets a named control itself (e.g. "bind": "_card1"), the data-binding
         // type should be that control's data contract (I<ControlName>Data).
         if (IsNamedControl(binding.Bind, namedControls))
         {
             var controlTypeName = namedControls[binding.Bind].Type;
-            return $"I{controlTypeName}Data";
+            return $"{controlTypeName}Data";
         }
 
         return binding.NullableType;

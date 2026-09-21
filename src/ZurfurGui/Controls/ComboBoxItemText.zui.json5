@@ -2,7 +2,6 @@
 {
     $controller: "ComboBoxItemText",
     $namespace: "ZurfurGui.Controls",
-    $implements: "ComboBoxItem",
     $backgroundColor: "${color.interactive.item.background}",
     $padding: "${spacing.horizontal.medium | spacing.vertical.small}",
     $data: {

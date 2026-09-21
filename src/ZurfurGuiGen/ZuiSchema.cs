@@ -7,17 +7,6 @@ namespace ZurfurGuiGen;
 
 internal static class ZuiSchema
 {
-    /// <summary>
-    /// Read the "$implements" key from a ZUI JSON document.
-    /// Returns "" if not present.
-    /// </summary>
-    internal static string GetImplements(Dictionary<string, object?> jsonDocument)
-    {
-        if (jsonDocument.TryGetValue("$implements", out var v) && v is string s && !string.IsNullOrWhiteSpace(s))
-            return s.Trim();
-        return "";
-    }
-
     internal static List<DataBinding> GetDataBindings(Dictionary<string, object?> jsonDocument, string typeParam = "", string typeParamConstraint = "")
     {
         if (!jsonDocument.TryGetValue("$data", out var dataSectionObj) || dataSectionObj == null)
@@ -73,12 +62,10 @@ internal static class ZuiSchema
 
                 // Detect when the element type is the file's declared generic type parameter
                 // (e.g. "[]Item" in "ComboBox<Item> where Item : ComboBoxItem").
-                // When true, BaseType is set to the constraint name so GetBindingDataType emits
-                // ObservableCollection<IComboBoxItemData> rather than ObservableCollection<IItemData>.
+                // When true, the binding refers to the generic item type itself.
                 if (typeParam != "" && typeName == typeParam)
                 {
                     isTypeParam = true;
-                    typeName = typeParamConstraint; // resolve to constraint name
                 }
             }
 
@@ -146,13 +133,13 @@ internal static class ZuiSchema
     /// Translate a JSON controller string to the C# type name used in generated code.
     /// Plain names (e.g. "Panel") pass through unchanged.
     /// Closed generics with a control-name type arg (e.g. "ComboBox&lt;ComboBoxItemText&gt;")
-    /// become "ComboBox&lt;IComboBoxItemTextData&gt;" — using the data interface convention.
+    /// become "ComboBox&lt;ComboBoxItemTextData&gt;" — using the generated concrete data class.
     /// </summary>
     internal static string ControllerNameToCsType(string controllerName)
     {
         var m = s_closedGenericControllerRegex.Match(controllerName);
         if (m.Success)
-            return $"{m.Groups[1].Value}<I{m.Groups[2].Value}Data>";
+            return $"{m.Groups[1].Value}<{m.Groups[2].Value}Data>";
         return controllerName;
     }
 

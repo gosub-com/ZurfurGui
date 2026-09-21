@@ -120,13 +120,6 @@ internal class ZuiFileInfo
     public bool UserSuppliedDataClass { get; set; }
 
     /// <summary>
-    /// When set, the generated data class additionally implements I{Implements}Data,
-    /// and the generated controller class additionally implements I{Implements}.
-    /// Populated from the JSON "$implements" key (e.g. "$implements": "ComboBoxItem").
-    /// </summary>
-    public string Implements { get; set; } = "";
-
-    /// <summary>
     /// Generic type parameter name parsed from the $controller value
     /// (e.g. "Item" from "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
     /// Empty string when the control is not generic.
@@ -136,7 +129,7 @@ internal class ZuiFileInfo
     /// <summary>
     /// Constraint control name parsed from the $controller where clause
     /// (e.g. "ComboBoxItem" from "ComboBox&lt;Item&gt; where Item : ComboBoxItem").
-    /// The generated C# constraint becomes "where Item : IComboBoxItemData".
+    /// The generated C# constraint becomes "where Item : IComboBoxItem".
     /// Empty string when the control is not generic.
     /// </summary>
     public string TypeParamConstraint { get; set; } = "";

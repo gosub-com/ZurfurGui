@@ -33,7 +33,6 @@ internal static class ZuiInput
         var userSuppliedDataClass = false;
         var use = new List<string>();
         var dataBindings = new List<DataBinding>();
-        var implements = "";
         var typeParam = "";
         var typeParamConstraint = "";
         try
@@ -86,7 +85,6 @@ internal static class ZuiInput
                     .OrderBy(p => p.Name)
                     .ToList();
 
-                implements = ZuiSchema.GetImplements(jsonDocument);
             }
             else
             {
@@ -124,7 +122,6 @@ internal static class ZuiInput
             Bindings = dataBindings,
             UserSuppliedControllerClass = userSuppliedControllerClass,
             UserSuppliedDataClass = userSuppliedDataClass,
-            Implements = implements,
             TypeParam = typeParam,
             TypeParamConstraint = typeParamConstraint
         };
