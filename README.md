@@ -19,7 +19,7 @@ The following docs cover the internals of this project:
 - [Initialization](docs/initialization.md) — Startup and initialization procedure for applications using
   ZurfurGui
 - [Property Binding](docs/property-binding.md) — Property binding system
-- [Styles and Themes](docs/style.md) — Style and theme system (style sheets, selectors, pseudo-classes, and
+- [Styles and Themes](docs/styles-and-themes.md) — Style and theme system (style sheets, selectors, pseudo-classes, and
   property resolution)
 - [ComboBox](docs/combo-box.md) — ComboBox control: usage, generic item types, styling, and internals
 - [ScrollViewer](docs/scroll-viewer.md) — ScrollViewer control: usage, styling, and internals
