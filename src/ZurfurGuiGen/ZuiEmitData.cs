@@ -32,13 +32,14 @@ internal static class ZuiEmitData
             ? $"\r\n    where {data.TypeParam} : {ZuiEmit.GetConstraintType(data.TypeParamConstraint)}"
             : "";
         var partialKeyword = data.UserSuppliedDataClass ? "partial " : "";
+        var implements = string.IsNullOrWhiteSpace(data.Implements) ? "" : $", {data.Implements}";
 
         var sb = new StringBuilder();
         ZuiEmit.AppendFileHeader(sb, Path.GetFileName(data.Path));
         sb.Append(ZuiEmit.GenerateUsingCode(data));
         sb.Append("#nullable enable\r\n\r\n");
         sb.Append($"namespace {data.Namespace};\r\n\r\n");
-        sb.Append($"public sealed {partialKeyword}class {className}{genericSuffix} : INotifyPropertyChanged{genericConstraint}\r\n{{\r\n");
+        sb.Append($"public sealed {partialKeyword}class {className}{genericSuffix} : INotifyPropertyChanged{implements}{genericConstraint}\r\n{{\r\n");
 
         foreach (var binding in bindings)
             sb.AppendIndentedLine(1, $"static readonly PropertyChangedEventArgs s_{binding.Name}EventArgs = new(nameof({binding.PascalName}));");
@@ -48,6 +49,7 @@ internal static class ZuiEmitData
             sb.AppendIndentedLine(1, $"{ZuiEmit.GetBindingDataType(binding, namedControls)} __{binding.Name};");
         sb.Append("\r\n");
 
+        sb.AppendIndentedLine(1, "[JsonConstructor]");
         sb.AppendIndentedLine(1, $"public {className}()");
         sb.AppendIndentedLine(1, "{");
         foreach (var binding in bindings)

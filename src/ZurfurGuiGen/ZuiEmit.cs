@@ -13,7 +13,7 @@ internal static class ZuiEmit
     }
 
     internal static string GetConstraintType(string constraint)
-        => constraint.StartsWith("I", StringComparison.Ordinal) ? constraint : $"I{constraint}";
+        => constraint;
 
     internal static void AppendIndentedLine(this StringBuilder sb, int indentLevel, string line)
     {
@@ -46,6 +46,7 @@ internal static class ZuiEmit
         var sb = new StringBuilder();
         sb.Append("using System.Collections.ObjectModel;\r\n");
         sb.Append("using System.ComponentModel;\r\n");
+        sb.Append("using System.Text.Json.Serialization;\r\n");
         sb.Append("using ZurfurGui.Base;\r\n");
         sb.Append("using ZurfurGui.Property;\r\n");
         sb.Append("using ZurfurGui.Controls;\r\n\r\n");

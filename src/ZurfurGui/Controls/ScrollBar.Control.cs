@@ -15,12 +15,24 @@ public enum ScrollBarHitRegion
     Thumb
 }
 
+public enum ScrollBarVisibility
+{
+    Auto,
+    Visible,
+    Hidden
+}
+
 public partial class ScrollBar : Controllable
 {
     // Drag state (not in data - pure UI state)
     bool _isDragging;
+    bool _isPointerDown;
     double _dragStartValue;
     Point _dragStartPoint;
+
+    internal bool IsDragging => _isDragging;
+    internal bool IsPointerDown => _isPointerDown;
+
 
     static ScrollBar()
     {
@@ -141,6 +153,33 @@ public partial class ScrollBar : Controllable
     }
 
     /// <summary>
+    /// Calculate the fixed-width visual thumb centered inside the scrollbar's interaction rectangle.
+    /// The interaction rectangle and thumb position/length do not change when the scrollbar is hovered.
+    /// </summary>
+    public Rect CalculateVisualThumbRect()
+    {
+        var thumbRect = CalculateThumbRect();
+        var thickness = Math.Max(0, View.GetStyle(ThumbThicknessProperty));
+
+        if (View.GetStyle(OrientationProperty) == Orientation.Vertical)
+        {
+            thickness = Math.Min(thickness, View.Size.Width);
+            return new Rect(
+                (View.Size.Width - thickness) / 2,
+                thumbRect.Y,
+                thickness,
+                thumbRect.Height);
+        }
+
+        thickness = Math.Min(thickness, View.Size.Height);
+        return new Rect(
+            thumbRect.X,
+            (View.Size.Height - thickness) / 2,
+            thumbRect.Width,
+            thickness);
+    }
+
+    /// <summary>
     /// Calculate the thumb size based on viewport ratio.
     /// </summary>
     double CalculateThumbSize()
@@ -185,6 +224,13 @@ public partial class ScrollBar : Controllable
         var region = HitTest(viewPos);
         var data = DataContext;
 
+        // Capture every scrollbar interaction so pressed visuals and pointer events continue outside the
+        // scrollbar's original hit area. PointerOver clears Panel.IsPressed when hover leaves, so maintain the
+        // pressed state locally until pointer-up or capture-loss.
+        _isPointerDown = true;
+        View.SetProperty(Panel.IsPressed, true);
+        View.CapturePointer = true;
+
         switch (region)
         {
             case ScrollBarHitRegion.StartArrow:
@@ -202,7 +248,6 @@ public partial class ScrollBar : Controllable
                 _isDragging = true;
                 _dragStartValue = data.Value;
                 _dragStartPoint = viewPos;
-                View.CapturePointer = true;
                 break;
 
             case ScrollBarHitRegion.Track:
@@ -220,6 +265,9 @@ public partial class ScrollBar : Controllable
 
     void OnPointerMove(object? sender, PointerEvent e)
     {
+        if (_isPointerDown)
+            View.SetProperty(Panel.IsPressed, true);
+
         // Handle dragging
         if (!_isDragging)
             return;
@@ -252,16 +300,23 @@ public partial class ScrollBar : Controllable
 
     void OnPointerUp(object? sender, PointerEvent e)
     {
-        if (_isDragging)
-        {
-            _isDragging = false;
-            View.CapturePointer = false;
-        }
+        _isDragging = false;
+        _isPointerDown = false;
+        View.SetProperty(Panel.IsPressed, false);
+        View.CapturePointer = false;
     }
 
     void OnPointerCaptureLost(object? sender, EventArgs e)
     {
         _isDragging = false;
+        _isPointerDown = false;
+        View.SetProperty(Panel.IsPressed, false);
+
+        if (View.AppWindow?.Renderer?.PointerHover is { } pointerHover
+            && !View.OriginRect.Contains(pointerHover.PointerDevicePosition))
+        {
+            View.SetProperty(Panel.IsPointerOver, false);
+        }
     }
 }
 

@@ -50,6 +50,14 @@
             bind: "data"
         },
 
+        // Controls whether the ScrollViewer displays this scrollbar automatically, always, or never.
+        visibility: {
+            type: "ScrollBarVisibility",
+            bind: "data",
+            default: "ScrollBarVisibility.auto",
+            flags: "measure,render"
+        },
+
         // Horizontal or Vertical orientation
         orientation: {
             type: "Orientation",
@@ -76,6 +84,12 @@
             bind: "styledOnly",
             default: "20.0",
             flags: "measure,render"
+        },
+        thumbThickness: {
+            type: "Double",
+            bind: "styledOnly",
+            default: "4.0",
+            flags: "render"
         },
         borderColor: {
             type: "Color",

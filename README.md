@@ -15,13 +15,14 @@ This project is exploring **MDV/MDCV** as an alternative to MVVM.
 
 The following docs cover the internals of this project:
 
-- [Architecture](docs/Architecture.md) — MDV architecture, code generation, and system internals
-- [Initialization](docs/Initialization.md) — Startup and initialization procedure for applications using
+- [Architecture](docs/architecture.md) — MDV architecture, code generation, and system internals
+- [Initialization](docs/initialization.md) — Startup and initialization procedure for applications using
   ZurfurGui
-- [Property Binding](docs/PropertyBinding.md) — Property binding system
-- [Styles and Themes](docs/Style.md) — Style and theme system (style sheets, selectors, pseudo-classes, and
+- [Property Binding](docs/property-binding.md) — Property binding system
+- [Styles and Themes](docs/style.md) — Style and theme system (style sheets, selectors, pseudo-classes, and
   property resolution)
-- [ComboBox](docs/ComboBox.md) — ComboBox control: usage, generic item types, styling, and internals
+- [ComboBox](docs/combo-box.md) — ComboBox control: usage, generic item types, styling, and internals
+- [ScrollViewer](docs/scroll-viewer.md) — ScrollViewer control: usage, styling, and internals
 
 ## Design Goals
 

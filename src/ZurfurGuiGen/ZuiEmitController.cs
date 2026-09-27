@@ -21,6 +21,32 @@ internal static class ZuiEmitController
         sb.Append("#nullable enable\r\n\r\n");
         sb.Append($"namespace {data.Namespace};\r\n\r\n");
 
+        // Generated PropertyKey fields for "$data" entries that bind to "styledData" or "styleOnly" (excluding collections).
+        // For generic controls, keys must live in a non-generic companion static class to avoid
+        // per-closed-type duplication (each closed type would try to register the same key name,
+        // causing a duplicate-registration exception in PropertyKey's constructor).
+        var newBindings = allBindings.Where(b => (b.BindType == BindType.StyledData || b.BindType == BindType.StyledOnly) && !b.IsCollection).ToList();
+        if (data.TypeParam != "" && newBindings.Count > 0)
+        {
+            sb.Append($"/// <summary>Non-generic companion holding PropertyKey fields for {data.ControllerName}&lt;{data.TypeParam}&gt;.</summary>\r\n");
+            sb.Append($"public static partial class {data.ControllerName}\r\n{{\r\n");
+            sb.AppendIndentedLine(1, "// Property Keys");
+            foreach (var binding in newBindings)
+            {
+                ZuiEmit.AppendXmlDocComment(sb, 1, binding.Comment);
+                var defaultValue = string.IsNullOrWhiteSpace(binding.Default)
+                    ? "new()"
+                    : ZuiEmit.NormalizeDefaultValue(binding.Default);
+                var flagsParam = string.IsNullOrWhiteSpace(binding.Flags) || binding.Flags == "ViewFlags.None"
+                    ? ""
+                    : $", {binding.Flags}";
+                sb.AppendIndentedLine(1,
+                    $"public static readonly PropertyKey<{binding.BaseType}> {binding.PropertyKeyName}"
+                        + $" = new(\"{data.ControllerName}.{binding.Name}\", typeof({data.ControllerName}<>), {defaultValue}{flagsParam});");
+            }
+            sb.Append("}\r\n\r\n");
+        }
+
         // Add class header
         ZuiEmit.AppendXmlDocComment(sb, 0, data.Comment);
         var partialKeyword = data.UserSuppliedControllerClass ? "partial " : "";
@@ -49,38 +75,8 @@ internal static class ZuiEmitController
         sb.AppendIndentedLine(1, $"public string TypeNamespace => \"{data.Namespace}\";");
         sb.AppendIndentedLine(1, $"public TextLines TypeUses => new TextLines([{string.Join(",",
             data.Use.Select(s => "\"" + s + "\""))}]);");
-        // Generated PropertyKey fields for "$data" entries that bind to "styledData" or "styleOnly" (excluding collections).
-        // For generic controls, keys must live in a non-generic companion static class to avoid
-        // per-closed-type duplication (each closed type would try to register the same key name,
-        // causing a duplicate-registration exception in PropertyKey's constructor).
-        var newBindings = allBindings.Where(b => (b.BindType == BindType.StyledData || b.BindType == BindType.StyledOnly) && !b.IsCollection).ToList();
         if (data.TypeParam != "" && newBindings.Count > 0)
         {
-            // Close the generic class temporarily, emit the companion static class, then reopen.
-            sb.Append("}\r\n\r\n");
-            sb.Append($"/// <summary>Non-generic companion holding PropertyKey fields for {data.ControllerName}&lt;{data.TypeParam}&gt;.</summary>\r\n");
-            sb.Append($"public static partial class {data.ControllerName}\r\n{{\r\n");
-            sb.AppendIndentedLine(1, "// Property Keys");
-            foreach (var binding in newBindings)
-            {
-                ZuiEmit.AppendXmlDocComment(sb, 1, binding.Comment);
-                var defaultValue = string.IsNullOrWhiteSpace(binding.Default)
-                    ? "new()"
-                    : ZuiEmit.NormalizeDefaultValue(binding.Default);
-                var flagsParam = string.IsNullOrWhiteSpace(binding.Flags) || binding.Flags == "ViewFlags.None"
-                    ? ""
-                    : $", {binding.Flags}";
-                sb.AppendIndentedLine(1,
-                    $"public static readonly PropertyKey<{binding.BaseType}> {binding.PropertyKeyName}"
-                        + $" = new(\"{data.ControllerName}.{binding.Name}\", typeof({data.ControllerName}<>), {defaultValue}{flagsParam});");
-            }
-            sb.Append("}\r\n\r\n");
-            // Reopen the generic class
-            var partialKeyword2 = data.UserSuppliedControllerClass ? "partial " : "";
-            sb.Append($"public sealed {partialKeyword2}class {data.FileName}<{data.TypeParam}>"
-                + " : global::ZurfurGui.Base.Controllable\r\n");
-            sb.Append($"    where {data.TypeParam} : {ZuiEmit.GetConstraintType(data.TypeParamConstraint)}\r\n{{\r\n");
-
             // Static constructor: touching one companion field forces the companion's static
             // constructor to run whenever any closed form's static constructor runs.
             // ZurfurMain.g.cs calls RunClassConstructor for both ComboBox<> and each closed form,

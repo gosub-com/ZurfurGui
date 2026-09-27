@@ -1,0 +1,33 @@
+{
+    $controller: "ScrollViewer",
+    $namespace: "ZurfurGui.Controls",
+    $content: [
+        {
+            $name: "_contentViewport",
+            $controller: "Panel",
+            $clip: true,
+            $align: "horizontal:stretch,vertical:stretch",
+            $content: [
+                {
+                    $name: "_contentWindow",
+                    $controller: "Panel",
+                    $align: "horizontal:stretch,vertical:stretch"
+                }
+            ]
+        },
+        {
+            $name: "horizontalScrollBar",
+            $controller: "ScrollBar",
+            orientation: "Horizontal",
+            $sizeRequest: "height:16",
+            $align: "horizontal:stretch,vertical:bottom"
+        },
+        {
+            $name: "verticalScrollBar",
+            $controller: "ScrollBar",
+            orientation: "Vertical",
+            $sizeRequest: "width:16",
+            $align: "horizontal:right,vertical:stretch"
+        }
+    ]
+}

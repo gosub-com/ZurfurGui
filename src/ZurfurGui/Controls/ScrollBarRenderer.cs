@@ -19,33 +19,41 @@ internal class ScrollBarRenderer : Renderable
         var data = _control.DataContext;
         var trackRect = new Rect(new(), view.Size);
         var orientationValue = view.GetStyle(ScrollBar.OrientationProperty);
+        var isPressed = view.GetProperty(Panel.IsPressed)
+            || _control.IsPointerDown
+            || _control.IsDragging;
+        var isHovered = view.GetProperty(Panel.IsPointerOver) && !isPressed;
+        var isActive = isHovered || isPressed;
 
-        // Render track background
-        var trackColor = view.GetStyle(ScrollBar.TrackColorProperty);
-        context.FillRect(trackColor, trackRect);
+        if (isActive)
+        {
+            var trackColor = view.GetStyle(ScrollBar.TrackColorProperty);
+            context.FillRect(trackColor, trackRect);
 
-        // Render border around track
-        var borderColor = view.GetStyle(ScrollBar.BorderColorProperty);
-        var borderWidth = view.GetStyle(ScrollBar.BorderWidthProperty);
-        context.StrokeRect(new Pen(borderColor, borderWidth), trackRect);
+            var borderColor = view.GetStyle(ScrollBar.BorderColorProperty);
+            var borderWidth = view.GetStyle(ScrollBar.BorderWidthProperty);
+            context.StrokeRect(new Pen(borderColor, borderWidth), trackRect);
+        }
 
-        // Only render thumb if scrollable
+        // The thumb remains in the same position and has the same length in every visual state. At rest it is
+        // rendered as a thin translucent indicator; hover and press are represented by style colors only.
         if (data.Maximum > data.Minimum)
         {
-            // Render thumb with rounded corners
-            var thumbRect = _control.CalculateThumbRect();
+            var thumbRect = _control.CalculateVisualThumbRect();
             var thumbColor = view.GetStyle(ScrollBar.ThumbColorProperty);
             var thumbRadius = view.GetStyle(ScrollBar.ThumbRadiusProperty);
             context.FillRect(thumbColor, thumbRect, thumbRadius);
 
-            // Render arrow triangles
-            var startArrowRect = _control.GetStartArrowRect();
-            var startArrowPoints = GetArrowTrianglePoints(startArrowRect, orientationValue, true);
-            context.FillPolygon(new Brush(thumbColor), startArrowPoints);
+            if (isActive)
+            {
+                var startArrowRect = _control.GetStartArrowRect();
+                var startArrowPoints = GetArrowTrianglePoints(startArrowRect, orientationValue, true);
+                context.FillPolygon(new Brush(thumbColor), startArrowPoints);
 
-            var endArrowRect = _control.GetEndArrowRect();
-            var endArrowPoints = GetArrowTrianglePoints(endArrowRect, orientationValue, false);
-            context.FillPolygon(new Brush(thumbColor), endArrowPoints);
+                var endArrowRect = _control.GetEndArrowRect();
+                var endArrowPoints = GetArrowTrianglePoints(endArrowRect, orientationValue, false);
+                context.FillPolygon(new Brush(thumbColor), endArrowPoints);
+            }
         }
     }
 

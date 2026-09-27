@@ -20,22 +20,6 @@ public partial class FormTestComboBox
 
         _scrollTest.DataContext.PropertyChanged += ScrollTest_PropertyChanged;
 
-
-        // Setup badge test
-        var items = new (string Badge, string Text)[]
-        {
-            ("A", "Pick 1"),
-            ("B", "Pick 2"),
-            ("C", "Pick 3"),
-            ("D", "Pick 4"),
-            ("E", "Pick 5"),
-            ("F", "Pick 6"),
-        };
-
-        foreach (var (badge, text) in items)
-            _badgeCombo.DataContext.Items.Add(new ComboBoxItemBadgeData { Badge = new(badge), Text = new(text) });
-
-        _badgeCombo.DataContext.SelectedIndex = 0;
     }
 
     private void ScrollTest_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

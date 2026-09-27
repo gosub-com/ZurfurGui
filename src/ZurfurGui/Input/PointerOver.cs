@@ -68,6 +68,11 @@ internal class PointerOver
             UpdateViewChain(_currentPressChain, IntersectViewChain(_hoverChain, _pressChain), Panel.IsPressed);
         }
 
+        // A captured control remains pressed until capture is released, even after the pointer leaves its
+        // original hover chain. This is required for drag operations and pressed visuals outside the control.
+        foreach (var capturedView in _pointerCaptureList)
+            capturedView.SetProperty(Panel.IsPressed, true);
+
         // Send low level mouse event (move, up, down)
         SendPointerEvent(ev, chain);
 

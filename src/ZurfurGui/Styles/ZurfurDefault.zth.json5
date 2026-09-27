@@ -6,7 +6,7 @@
 
         // App, Dialogs, Panels, Cards, etc.
         "color.surface.canvas": "#EAF4FB", // Main app window
-        "color.surface.card": "#F0F8FC", // Panels, cards, etc. on top of main app window
+        "color.surface.card": "#FCFCFF", // Panels, cards, etc. on top of main app window
         "color.surface.overlay": "#F5FAFD", // Modless windows and dialogs
         "color.surface.overlay.stroke": "#5068A0",
         "color.surface.overlay.scrim": "#00000050",
@@ -32,9 +32,9 @@
         "color.input.stroke": "#7070B0",
 
         // ScrollBar
-        "color.scroll.track.background": "#E0F0FA",
-        "color.scroll.thumb.background": "isPointerOver ? #6A9FD0;#8BB4DC",
-        "color.scroll.stroke": "#7070B0",
+        "color.scroll.track.background": "isPressed ? #B8D8F0D0; isPointerOver ? #E0F0FAA0; #00000000",
+        "color.scroll.thumb.background": "isPressed ? #005A9E; isPointerOver ? #6A9FD0; #8BB4DC80",
+        "color.scroll.stroke": "isPressed ? #005A9E; isPointerOver ? #7070B0A0; #00000000",
 
         "color.status.success.background": "#DFF6DD",
         "color.status.warning.background": "#FFF4CE",

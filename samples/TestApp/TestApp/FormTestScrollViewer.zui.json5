@@ -1,0 +1,68 @@
+{
+    $controller: "FormTestScrollViewer",
+    $namespace: "TestApp",
+    //$padding: "left:16,top:16,right:16,bottom:16",
+    $layout: "Dock",
+    $content: [
+        {
+            $layout: "Row",
+            "dock.align": "top",
+            $margin: "bottom:8",
+            $content: [
+                {
+                    $controller: "TextView",
+                    text: "ScrollViewer Test"
+                },
+                {
+                    $name: "buttonOffsetPlus",
+                    $controller: "Button",
+                    text: "Offset +"
+                },
+                {
+                    $name: "buttonOffsetMinus",
+                    $controller: "Button",
+                    text: "Offset -"
+                }
+            ]
+        },
+        {
+            $name: "scrollViewer",
+            $controller: "ScrollViewer",
+            $content: [
+                {
+                    $controller: "Panel",
+                    $layout: "Column",
+                    //$padding: "left:16,top:16,right:16,bottom:16",
+                    $backgroundColor: "${color.surface.card}",
+                    $content: [
+                        {
+                            $controller: "TextView",
+                            text: [
+                                "Top-left of naturally oversized content",
+                                "The content has no size request; its extent comes from its text.",
+                                "This long line helps exercise natural horizontal measurement beyond the viewer width.",
+                                "Content row 4",
+                                "Content row 5",
+                                "Content row 6",
+                                "Content row 7",
+                                "Content row 8",
+                                "Content row 9",
+                                "Content row 10",
+                                "Content row 11",
+                                "Content row 12",
+                                "Content row 13",
+                                "Content row 14",
+                                "Content row 15",
+                                "Content row 16",
+                                "Content row 17",
+                                "Content row 18",
+                                "Content row 19",
+                                "Bottom of naturally oversized content"
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

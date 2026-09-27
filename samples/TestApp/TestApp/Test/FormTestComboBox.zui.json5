@@ -23,6 +23,28 @@
         },
         {
             $layout: "Row",
+            $content: [
+                {
+                    $controller: "TextView",
+                    text: [ "Text:" ],
+                    $align: "horizontal:left,vertical:center"
+                },
+                {
+                    // Text combo box
+                    $name: "_textComboBox",
+                    $controller: "ComboBox<ComboBoxItemText>",
+                    $align: "horizontal:left",
+                    items: [
+                        { text: [ "One" ] },
+                        { text: [ "Two" ] },
+                        { text: [ "Three" ] }
+                    ],
+                    selectedIndex: 0
+                }
+            ]
+        },
+        {
+            $layout: "Row",
             $padding: "left:0,top:12,right:0,bottom:0",
             $content: [
                 {
@@ -34,7 +56,13 @@
                     // Badge combo box
                     $name: "_badgeCombo",
                     $controller: "ComboBox<ComboBoxItemBadge>",
-                    $align: "horizontal:left"
+                    $align: "horizontal:left",
+                    items: [
+                        { badge: [ "A" ], text: [ "Pick 1" ] },
+                        { badge: [ "B" ], text: [ "Pick 2" ] },
+                        { badge: [ "C" ], text: [ "Pick 3" ] }
+                    ],
+                    selectedIndex: 0
                 }
             ]
         },

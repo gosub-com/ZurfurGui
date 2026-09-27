@@ -1,15 +1,17 @@
 # Coding agents / AI notes
 
-This repo experiments with a minimal C# GUI stack (WebAssembly + native Windows) using a Model Data View approach.
+This repo experiments with a minimal C# GUI stack (WebAssembly + native Windows) using
+a **Model Data View (MDV)** approach.
 
-## Design direction (MDV / MDCV)
+## Design direction (MDV)
 
-Goal: replace MVVM-style runtime bindings with **generated, compile-time view data shapes**.
+Goal: replace **MVVM** style runtime bindings with **generated, compile-time view data shapes**.
 
-- **View (V)** declares the data it needs (currently in ZUI JSON `data`; other hosts may use an equivalent XAML `data` section).
+- The **View (V)** declares the **data (D)** it needs (in ZUI JSON `data` section).
 - Code generation produces:
   - Code-behind partial controller class (`*.zui.json5` → `<ViewName>.Control.g.cs`)
-  - a strongly typed data class (`*.zui.json5` → `<ViewName>.Data.g.cs`)
+  - A strongly typed data class (`*.zui.json5` → `<ViewName>.Data.g.cs`)
+  - Library initialization `ZurfurMain.cs` partial class, constructed from `*.zui.json5` and `*.zth.json5` files.
 - You can:
   - use the generated data class as-is (for example, deserialize or populate it directly), or
   - extend it as a `partial` class to map to/from the domain **model (M)**.
@@ -22,13 +24,29 @@ Goal: replace MVVM-style runtime bindings with **generated, compile-time view da
 - **Data (D):** view-shaped data generated from the view's declared needs.
 - **View (V):** the renderer/layout/input layer that consumes the generated data class.
 
-## Editing guidelines
+## Two-tree architecture
 
-- Prefer minimal allocations and small payloads (WASM download size matters).
-- Avoid adding new dependencies unless necessary.
-- Generated code should not be hand-edited; change the source schema/generator instead.
-- The source generator targets `netstandard2.0` (avoid language/runtime features that require newer TFMs inside
-  `ZurfurGuiGen`).
+MDV creates **two parallel, independent graphs**:
+
+1. **Control tree** (`Controllable` → `View` → child `View` nodes)
+   - Built depth-first by `Loader.Load()` deserializing ZUI JSON
+   - Each control has a `View` with optional children, layout, and draw handlers
+   - Hierarchy: parent `View` → `_children` list → child `View` instances
+
+2. **DataContext tree** (strongly typed concrete data objects implementing `INotifyPropertyChanged`)
+   - Built after control tree initialization
+   - Uses `INotifyPropertyChanged` for reactivity
+   - May include references to sub-control `DataContext` objects, but only when explicitly declared by the view's
+     `$data` section
+
+**Key principle:** Controls reference data; data may reference other data objects—but **data never references
+controls**. The control tree and data graph are independent; the data graph shape is determined by what the view
+declares in `$data`.
+
+### Relation to MVVM
+
+This resembles MVVM's visual tree plus ViewModel graph, but MDV does not assume a 1:1 tree shape. The data side
+should not reach into controls; integration should happen through declared bindings.
 
 ## JSON coding standards (ZUI)
 
@@ -41,8 +59,8 @@ the parser supports these JSON5 features:
   accepted. This matches the JSONC convention used by `tsconfig.json`, VS Code `settings.json`, etc.
 - **Unquoted identifier keys** — valid identifier keys, including keys beginning with `$`, do not need quotes.
 
-- In ZUI JSON, all type names are PascalCase (including built-in aliases like `Int`, `Bool`, `String`, etc.).
-- In ZUI JSON, all field names are camelCase.
+- Type names are PascalCase (including built-in aliases like `Int`, `Bool`, `String`, etc.).
+- Field names are camelCase.
 - The source generator converts from JSON style to C# style when generating code (field/property names become
   PascalCase in C#, and built-in type aliases are normalized to the corresponding C# keywords).
 - Comments are collected by the generator and emitted into generated code as XML doc comments where appropriate.
@@ -57,8 +75,8 @@ Naming notes:
 - All generated and user-authored partials for a view are in the same namespace (the namespace comes from the JSON `$namespace`).
 - For generic controls (for example, `ComboBox<Item>`), the same conventions apply with the type parameter appended:
   the controller is `ComboBox<Item>`, and the data class is `ComboBoxData<Item>`.
-- `ComboBox<Item>` uses the handwritten empty `IComboBoxItem` marker as its generic constraint. Item data classes
-  explicitly implement that marker when they are used with ComboBox.
+- `ComboBox<Item>` uses the handwritten empty `IComboBoxItem` marker as its generic constraint. An item view declares
+  that its generated data class implements the marker with `$implements: "IComboBoxItem"`.
 - `//` line comments immediately preceding a `$data` property or the top-level JSON object are captured by the generator
   and emitted as `<summary>` XML doc comments in generated files (controller and data class).
 
@@ -136,12 +154,13 @@ Rules and generated output:
   `ObservableCollection<Item>`.
 - The concrete data class initializes the collection in its constructor, so callers receive a live, non-null
   collection.
-- The generated controller skips collection synchronization.
-  Handwritten code-behind must observe collection changes and refresh the view.
+- The generated controller skips collection synchronization. A control that needs collection-driven updates must manage
+  them in handwritten code-behind.
 
-Because the generator skips view-sync for collections, controls that use `[]Type` bindings must be implemented as
-handwritten partial classes (`<ViewName>.Control.cs`) that subscribe to `CollectionChanged` or react to data-context
-changes as needed. See `ComboBox.Control.cs` and `docs/ComboBox.md` for a worked example.
+Because the generator skips view-sync for collections, controls that use `[]Type` bindings must implement any
+collection synchronization they require in handwritten code-behind. Such controls may subscribe to
+  `CollectionChanged` or react to data-context changes as needed. See `ComboBox.Control.cs` and `docs/combo-box.md` for
+the current behavior.
 
 #### Data binding runtime behavior
 
@@ -170,51 +189,6 @@ changes as needed. See `ComboBox.Control.cs` and `docs/ComboBox.md` for a worked
 High-level runtime flow: the app calls generated initialization before creating controls.
 A generated controller loads its embedded ZUI JSON, creates child controls, creates its concrete `DataContext`, and
 applies JSON data properties.
-
-#### Loader registration and lookup
-
-`Loader` maintains separate registries for controls and for controllers that render concrete data objects:
-
-- `RegisterControl` maps a controller name to a `Controllable` type and a parameterless factory. It is used when
-  `CreateControl` reads a `$controller` value from ZUI JSON.
-- `RegisterDataController` maps a concrete generated data `Type` to a factory that receives the data object and
-  returns its item controller. `GetDataControllerFactory` performs an exact runtime-type lookup in this registry.
-
-The control registry is name-based because ZUI contains controller names. Lookup tries the fully qualified name,
-the containing control's namespace, its `$use` namespaces, and finally the built-in `ZurfurGui.Controls` namespace.
-`RegisterControl` rejects a conflicting name/type registration but allows the same type to be registered again.
-
-The data-controller registry is type-based rather than name-based. This preserves the concrete data instance and
-avoids requiring generated interface contracts or metadata discovery. A control such as `ComboBox<Item>` calls
-`Loader.CreateDataController(itemData)` when it needs to render an item. The loader uses `itemData.GetType()` to
-find the factory, and the factory assigns that same object to the new controller's `DataContext`.
-
-Registration happens before control creation. `Loader.Init` calls the application's `ZurfurMain.MainApp`, which must
-call the generated `InitializeControls` method. That method runs relevant static constructors, registers ordinary
-and closed-generic controls, registers concrete data-controller factories, and registers themes. Later, a generated
-controller's `InitializeControl` calls `Loader.Load`; while loading its content, `CreateControl` resolves child
-controllers through the control registry. Data contexts and JSON data properties are applied after the control tree
-is built. Item data-controller lookup occurs afterward when a data-driven control, such as ComboBox, creates an item.
-
-#### Note on file discovery: AdditionalFiles
-
-For the generator to automatically process your `.zui.json5` or `.zth.json5` files, they should be
-included as **AdditionalFiles** in your project. This is controlled by the file's build action in Visual Studio
-or by an `<ItemGroup>` in your `.csproj`:
-
-```xml
-<ItemGroup>
-	<AdditionalFiles Include="**\*.zui.json" />
-  <AdditionalFiles Include="**\*.zui.json5" />
-  <AdditionalFiles Include="**\*.zth.json" />
-  <AdditionalFiles Include="**\*.zth.json5" />
-</ItemGroup>
-```
-
-If you do not set the build action to "C# analyzer" (or "AdditionalFiles"), the generator will not see the file.
-Some project templates may add these rules automatically, but if your files are not being picked up, check the
-build action or add the above ItemGroup to your project file.
-
 
 ## Generic controls
 
@@ -246,26 +220,30 @@ public sealed class ComboBoxData<Item> : INotifyPropertyChanged
 When a collection binding type is the type parameter (`[]Item`), the generator preserves `Item`, producing a strongly
 typed collection such as `ObservableCollection<Item>`.
 
+### MDV with generic controls
+
+Generic controls follow the same MDV pattern as non-generic ones. The container (`ComboBox<Item>`) owns a
+`DataContext` of type `ComboBoxData<Item>`, which exposes the item collection as `ObservableCollection<Item>`. The
+concrete item type is known in each closed form, such as `ComboBox<ComboBoxItemTextData>`.
+
+The hand-written code-behind (`ComboBox.Control.cs`) calls `Loader.CreateDataController(itemData)` to instantiate the
+right item controller for each element. The generic container remains reusable because the lookup is keyed by the
+runtime concrete data type, while the generated item data and controller remain strongly typed end-to-end.
+
+
 ### Constraint types
 
 A generic constraint should be a real C# type available to the generated controller. For ComboBox, the library
-provides the minimal handwritten marker `ZurfurGui.Controls.IComboBoxItem`. An item data partial explicitly implements
-that marker when the item is used with ComboBox:
-
-```csharp
-public sealed partial class ComboBoxItemTextData : IComboBoxItem
-{
-}
-```
+provides the minimal handwritten marker `ZurfurGui.Controls.IComboBoxItem`. An item view normally supplies the marker
+with `$implements: "IComboBoxItem"` in its ZUI definition, causing the generated data class to implement it.
 
 The marker does not define generated data properties or create inheritance between item data classes.
 Each item view declares its own `$data` properties.
 
 ### Concrete item controls
 
-A concrete item control does not declare `$implements`. Its ZUI file contains its own `$data` section, and its generated
-`<ViewName>Data` class is a concrete type. If it is a ComboBox item, provide a matching `.Data.cs` partial that
-implements `IComboBoxItem`.
+A concrete item control declares its own `$data` section, and its generated `<ViewName>Data` class is a concrete type.
+If it is a ComboBox item, its ZUI definition also declares `$implements: "IComboBoxItem"`.
 
 The generator emits a concrete data-controller registration for each non-generic data-bearing control. For example,
 `ComboBoxItemTextData` is registered with `ComboBoxItemText`. At runtime, `Loader.CreateDataController(itemData)`
@@ -294,24 +272,7 @@ Hand-written `PropertyKey` fields that belong conceptually to the control but mu
 (e.g. `ScrimColor`) are declared directly in the hand-written `ComboBox.Control.cs` partial, using
 `typeof(ComboBox<>)` as the owner type.
 
-## Two-tree architecture
-
-MDV creates **two parallel, independent graphs**:
-
-1. **Control tree** (`Controllable` → `View` → child `View` nodes)
-   - Built depth-first by `Loader.Load()` deserializing ZUI JSON
-   - Each control has a `View` with optional children, layout, and draw handlers
-   - Hierarchy: parent `View` → `_children` list → child `View` instances
-
-2. **DataContext tree** (strongly typed concrete data objects implementing `INotifyPropertyChanged`)
-   - Built after control tree initialization
-   - Uses `INotifyPropertyChanged` for reactivity
-   - May include references to sub-control `DataContext` objects, but only when explicitly declared by the view's
-     `$data` section
-
-**Key principle:** Controls reference data; data may reference other data objects—but **data never references
-controls**. The control tree and data graph are independent; the data graph shape is determined by what the view
-declares in `$data`.
+## Loader and runtime initialization
 
 ### Initialization sequence (per control)
 
@@ -335,20 +296,113 @@ Generated `InitializeControl()` runs in this order:
 **Critical:** Child controls are fully initialized (including their `DataContext`, if any) before the parent's
 `CreateDefaultDataContext()` runs, so parent data can safely reference child data when explicitly declared.
 
-### MDV with generic controls
+### Loader registration and lookup
 
-Generic controls follow the same MDV pattern as non-generic ones. The container (`ComboBox<Item>`) owns a
-`DataContext` of type `ComboBoxData<Item>`, which exposes the item collection as `ObservableCollection<Item>`. The
-concrete item type is known in each closed form, such as `ComboBox<ComboBoxItemTextData>`.
+`Loader` maintains separate registries for controls and for controllers that render concrete data objects:
 
-The hand-written code-behind (`ComboBox.Control.cs`) calls `Loader.CreateDataController(itemData)` to instantiate the
-right item controller for each element. The generic container remains reusable because the lookup is keyed by the
-runtime concrete data type, while the generated item data and controller remain strongly typed end-to-end.
+- `RegisterControl` maps a controller name to a `Controllable` type and a parameterless factory. It is used when
+  `CreateControl` reads a `$controller` value from ZUI JSON.
+- `RegisterDataController` maps a concrete generated data `Type` to a factory that receives the data object and
+  returns its item controller. `GetDataControllerFactory` performs an exact runtime-type lookup in this registry.
 
-### Relation to MVVM
+The control registry is name-based because ZUI contains controller names. Lookup tries the fully qualified name,
+the containing control's namespace, its `$use` namespaces, and finally the built-in `ZurfurGui.Controls` namespace.
+`RegisterControl` rejects a conflicting name/type registration but allows the same type to be registered again.
 
-This resembles MVVM's visual tree plus ViewModel graph, but MDV does not assume a 1:1 tree shape. The data side
-should not reach into controls; integration should happen through declared bindings.
+The data-controller registry is type-based rather than name-based. This preserves the concrete data instance and
+avoids requiring generated interface contracts or metadata discovery. A control such as `ComboBox<Item>` calls
+`Loader.CreateDataController(itemData)` when it needs to render an item. The loader uses `itemData.GetType()` to
+find the factory, and the factory assigns that same object to the new controller's `DataContext`.
+
+Registration happens before control creation. `Loader.Init` calls the application's `ZurfurMain.MainApp`, which must
+call the generated `InitializeControls` method. That method runs relevant static constructors, registers ordinary
+and closed-generic controls, registers concrete data-controller factories, and registers themes. Later, a generated
+controller's `InitializeControl` calls `Loader.Load`; while loading its content, `CreateControl` resolves child
+controllers through the control registry. Data contexts and JSON data properties are applied after the control tree
+is built. Item data-controller lookup occurs afterward when a data-driven control, such as ComboBox, creates an item.
+
+### File discovery: AdditionalFiles
+
+For the generator to automatically process your `.zui.json5` or `.zth.json5` files, they should be
+included as **AdditionalFiles** in your project. This is controlled by the file's build action in Visual Studio
+or by an `<ItemGroup>` in your `.csproj`:
+
+```xml
+<ItemGroup>
+	<AdditionalFiles Include="**\*.zui.json" />
+  <AdditionalFiles Include="**\*.zui.json5" />
+  <AdditionalFiles Include="**\*.zth.json" />
+  <AdditionalFiles Include="**\*.zth.json5" />
+</ItemGroup>
+```
+
+If you do not set the build action to "C# analyzer" (or "AdditionalFiles"), the generator will not see the file.
+Some project templates may add these rules automatically, but if your files are not being picked up, check the
+build action or add the above ItemGroup to your project file.
+
+### ScrollViewer content loading
+
+`ScrollViewer` has two kinds of content that are loaded through the current `LoadContent` lifecycle:
+
+- Its internal ZUI content declares the content window and the horizontal and vertical scrollbar controls.
+- Content supplied by a parent through the ScrollViewer's `$content` is user content and must be placed inside the
+  named content window.
+
+The current loader invokes `LoadContent` for both cases. During the first call, the ScrollViewer has no children, so
+it creates its internal ZUI children directly on the ScrollViewer. During the later parent-content call, those
+children already exist, so the supplied content is created and added to `_contentWindow` instead. This keeps user
+content separate from the overlay scrollbars while preserving the normal container-control `$content` behavior.
+
+This phase distinction is currently inferred from whether the ScrollViewer has children. It is intentionally local to
+ScrollViewer so the initial control can use the existing loader without changing behavior for other controls.
+
+Possible future improvements include separate loader hooks for internal/template content and parent-supplied content,
+or an explicit load-phase parameter. Either option would make the lifecycle contract clearer and remove the need to
+infer the phase from the current child count. Such a loader change should be designed as a general framework change,
+not as a ScrollViewer-specific workaround.
+
+For measurement, arrangement, sizing, and content-extent behavior, see [ScrollViewer.md](ScrollViewer.md).
+
+## Input and interaction architecture
+
+### Mouse capture and pressed state
+
+Pointer capture is required for controls that continue an interaction after the pointer leaves their bounds, such as
+scrollbar thumb dragging, arrow clicks, window movement, and resize handles. A control should capture the pointer in
+its pointer-down handler and release interaction state from `PointerCaptureLost`. Pointer-up is not sufficient as the
+only cleanup path because the pointer router clears capture before it performs the normal hit-test dispatch for a
+pointer-up outside the original control.
+
+The pointer router has two related but independent state concepts:
+
+- `Panel.IsPointerOver` describes the current hit-test result. It must be recalculated from the pointer position and
+  should not be forced off merely because capture ended.
+- `Panel.IsPressed` describes an active press. A captured control remains pressed while the pointer is outside its
+  original hover chain and must clear that state when capture is lost.
+
+Captured views receive pointer events before the router recalculates the current hover chain. Code that sets pressed
+state during a captured move must therefore not rely on the hover chain to preserve it; the router reasserts pressed
+state for captured views until capture ends. Controls may also keep local drag or pointer-down state for rendering and
+interaction decisions.
+
+Capture-loss cleanup must avoid leaving stale visual state:
+
+- Clear local drag and pointer-down state and `Panel.IsPressed` when capture ends.
+- Let the pointer router own `Panel.IsPointerOver`, or clear it only after verifying that the current pointer is outside
+  the control's actual hit rectangle. Clearing it unconditionally causes a release inside the control to lose its
+  hover appearance.
+- For overlay controls, keep the full outer view rectangle as the hit target even when the resting visual is only a
+  thin line. Visual geometry and interaction geometry are separate.
+
+When adding a captured interaction, verify all of these transitions: press inside and release inside, press and drag
+outside then release, pointer leave while captured, and capture loss without a normal pointer-up event.
+
+## Editing guidelines
+
+- Prefer minimal allocations and small payloads (WASM download size matters).
+- Avoid adding new dependencies unless necessary.
+- The source generator (i.e `ZurfurGuiGen`) targets `netstandard2.0`
+- The generated code targets `.net 10`
 
 ## Where to look first (for AI agents)
 
@@ -374,6 +428,4 @@ should not reach into controls; integration should happen through declared bindi
 - `ZurfurGui/Styles`: Style and theme property resolution and caching
 - `ZurfurGui/Controls/Panel.Control.cs`: all Panel `PropertyKey` definitions (attached properties).
 - `ZurfurGui/Controls/*.zui.json5`: view/control definitions and `$data` declarations.
-- `docs/ComboBox.md`: how the ComboBox control works, how to use it, and how to create custom item renderers.
-
-
+- `docs/combo-box.md`: how the ComboBox control works, how to use it, and how to create custom item renderers.

@@ -4,6 +4,7 @@
 {
     $controller: "ComboBoxItemBadge",
     $namespace: "TestApp.Test.Controls",
+    $implements: "IComboBoxItem",
     $padding: "${spacing.horizontal.small | spacing.vertical.extra-small}",
     $backgroundColor: "${color.interactive.item.background}",
     $data: {

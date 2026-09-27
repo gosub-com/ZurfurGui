@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.3.11505.172
@@ -34,11 +34,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "samples\TestApp\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{364462A5-2DD0-4477-BB03-D6466DBAC47F}"
 	ProjectSection(SolutionItems) = preProject
-		docs\Architecture.md = docs\Architecture.md
-		docs\ComboBox.md = docs\ComboBox.md
-		docs\Initialization.md = docs\Initialization.md
-		docs\PropertyBinding.md = docs\PropertyBinding.md
-		docs\Style.md = docs\Style.md
+			docs\architecture.md = docs\architecture.md
+		docs\combo-box.md = docs\combo-box.md
+		docs\future-improvements.md = docs\future-improvements.md
+		docs\initialization.md = docs\initialization.md
+		docs\property-binding.md = docs\property-binding.md
+		docs\scroll-viewer.md = docs\scroll-viewer.md
+		docs\style.md = docs\style.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{1953B885-4C35-463A-8EB7-248AB2F519ED}"

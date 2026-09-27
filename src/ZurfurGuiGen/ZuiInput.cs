@@ -32,6 +32,7 @@ internal static class ZuiInput
         var userSuppliedControllerClass = false;
         var userSuppliedDataClass = false;
         var use = new List<string>();
+        var implements = "";
         var dataBindings = new List<DataBinding>();
         var typeParam = "";
         var typeParamConstraint = "";
@@ -49,6 +50,7 @@ internal static class ZuiInput
                 nameSpace = GetJsonValue(jsonDocument, "$namespace");
 
                 use = GetUsingLines(jsonDocument);
+                implements = GetOptionalJsonValue(jsonDocument, "$implements");
 
                 // Try to find the .cs file with the same name as the JSON file (code-behind)
                 var csTree = syntax.FirstOrDefault(tree =>
@@ -119,6 +121,7 @@ internal static class ZuiInput
             ControllerName = controllerName,
             Namespace = nameSpace,
             Use = use,
+            Implements = implements,
             Bindings = dataBindings,
             UserSuppliedControllerClass = userSuppliedControllerClass,
             UserSuppliedDataClass = userSuppliedDataClass,
@@ -202,6 +205,15 @@ internal static class ZuiInput
         if (controllerKey is not string controllerName || string.IsNullOrWhiteSpace(controllerName))
             throw new Exception($"The JSON '{key}' key must be a non-empty string");
         return controllerName;
+    }
+
+    static string GetOptionalJsonValue(Dictionary<string, object?> jsonDocument, string key)
+    {
+        if (!jsonDocument.TryGetValue(key, out var value))
+            return "";
+        if (value is not string stringValue || string.IsNullOrWhiteSpace(stringValue))
+            throw new Exception($"The JSON '{key}' key must be a non-empty string");
+        return stringValue;
     }
 
     static string GetMatchingJsonFileName(string fileName, Dictionary<string, object?> jsonDocument)

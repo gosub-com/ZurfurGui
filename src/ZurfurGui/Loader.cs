@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Layout;
@@ -55,11 +56,32 @@ public static class Loader
     // Maps concrete generated data type → item controller factory.
     static Dictionary<Type, Func<object, Controllable>> s_dataControllers = new();
 
-    // Combine source-generated context with custom converters
-    static readonly JsonSerializerOptions s_jsonSerializerOptions = new JsonSerializerOptions
+    static readonly List<IJsonTypeInfoResolver> s_jsonTypeInfoResolvers = new();
+    static JsonSerializerOptions? s_jsonSerializerOptions;
+
+    /// <summary>
+    /// Registers source-generated JSON metadata from the consuming application.
+    /// This must be called before the first JSON load.
+    /// </summary>
+    public static void RegisterJsonTypeInfoResolver(IJsonTypeInfoResolver resolver)
     {
-        TypeInfoResolver = ZurfurJsonContext.Default,
-        Converters = {
+        if (s_jsonSerializerOptions != null)
+            throw new InvalidOperationException("JSON type info resolvers must be registered before JSON loading starts.");
+
+        s_jsonTypeInfoResolvers.Add(resolver);
+    }
+
+    static JsonSerializerOptions CreateJsonSerializerOptions()
+    {
+        var resolvers = new List<IJsonTypeInfoResolver> { ZurfurJsonContext.Default };
+        resolvers.AddRange(s_jsonTypeInfoResolvers);
+        resolvers.Add(new DefaultJsonTypeInfoResolver());
+
+        return new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            TypeInfoResolver = JsonTypeInfoResolver.Combine(resolvers.ToArray()),
+            Converters = {
             // Add custom converters
             new PropertiesJsonConverter(),
             new DoublePropJsonConverter(),
@@ -70,13 +92,14 @@ public static class Loader
             new PointPropJsonConverter(),
             new SizePropJsonConverter(),
             new AlignPropJsonConverter(),
-            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-        },
-        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
-    };
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+            },
+            UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.AllowNamedFloatingPointLiterals,
+        };
+    }
 
-    public static JsonSerializerOptions JsonSerializerOptions => s_jsonSerializerOptions;
+    public static JsonSerializerOptions JsonSerializerOptions => s_jsonSerializerOptions ??= CreateJsonSerializerOptions();
 
     /// <summary>
     /// Initialize the library with the built in controls, etc.

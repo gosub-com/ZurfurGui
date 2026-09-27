@@ -105,6 +105,11 @@ internal class ZuiFileInfo
     public List<string> Use { get; set; } = new();
 
     /// <summary>
+    /// Optional interface implemented by the generated data class.
+    /// </summary>
+    public string Implements { get; set; } = "";
+
+    /// <summary>
     /// Data bindings extracted from the JSON `.data` section.
     /// </summary>
     public List<DataBinding> Bindings { get; set; } = new();
