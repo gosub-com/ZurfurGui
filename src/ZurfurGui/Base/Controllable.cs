@@ -40,20 +40,35 @@ public interface Controllable
     View View { get; }
 
     /// <summary>
-    /// Load content.  By default, it's a Panel and content gets loaded accordingly.
-    /// Windows, Tabs, and other complex controls may need to override this function.
-    /// The contents parameter contains the contents from the components parent.
-    /// The View.Properties[Zui.Content] still contains the original content properties
-    /// from this component's zui.json.
-    /// TBD: From a user perspective we should probably copy the parent content to this 
-    ///      component.  This components content is part of the visual tree, while the
-    ///      parent content is part of the logical tree.  We will get that sorted out later.
+    /// The view that receives content supplied by the control's parent.
+    /// By default, parent content is added to the control's main view.
     /// </summary>
-    void LoadContent(Properties[]? contents, ControlCreationContext context) 
-    { 
+    View ContentHost => View;
+
+    /// <summary>
+    /// Loads the control's own ZUI-defined visual children.
+    ///
+    /// This is separate from <see cref="LoadParentContent"/>, which receives content supplied by the parent.
+    /// Controls with a separate internal visual structure may override this method.
+    /// </summary>
+    void LoadTemplateContent(Properties[]? contents, ControlCreationContext context)
+    {
         if (contents != null)
             foreach (var property in contents)
                 View.AddChild(Loader.CreateControl(property, context).View);
+    }
+
+    /// <summary>
+    /// Loads content supplied by the control's parent.
+    ///
+    /// By default, content is added directly to the control's view. Controls with a dedicated content host,
+    /// such as ScrollViewer, may override the content host to route parent content there.
+    /// </summary>
+    void LoadParentContent(Properties[]? contents, ControlCreationContext context)
+    { 
+        if (contents != null)
+            foreach (var property in contents)
+                ContentHost.AddChild(Loader.CreateControl(property, context).View);
     }
 
     /// <summary>

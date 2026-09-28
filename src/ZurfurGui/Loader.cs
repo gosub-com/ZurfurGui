@@ -148,7 +148,7 @@ public static class Loader
             if (controllerBaseName != target.TypeName)
                 throw new ArgumentException($"Top level controller property '{controller}' must match target '{target.TypeName}");
 
-            BuildContent(target, properties, ControlCreationContext.From(target));
+            BuildTemplateContent(target, properties, ControlCreationContext.From(target));
             ApplyDataProperties(target);
         }
         catch (Exception ex)
@@ -158,15 +158,30 @@ public static class Loader
         }
     }
 
-    private static void BuildContent(Controllable control, Properties properties, ControlCreationContext context)
+    private static void BuildTemplateContent(
+        Controllable control,
+        Properties properties,
+        ControlCreationContext context)
     {
-        // The properties become overrides, but the content becomes a parameter to LoadContent
-        // TBD: Maybe don't send content as parameter here (let LoadContent do it)?
+        // The properties become overrides, but the control's own content is handled by the template hook.
         var content = properties.Get(Panel.Content);
         properties.Remove(Panel.Content);
         control.View.MergeOverwrite(properties);
         SetLayout(properties, control.View);
-        control.LoadContent(content, context);
+        control.LoadTemplateContent(content, context);
+    }
+
+    private static void BuildParentContent(
+        Controllable control,
+        Properties properties,
+        ControlCreationContext context)
+    {
+        // The properties become overrides, and the parent's content is handled by the parent-content hook.
+        var content = properties.Get(Panel.Content);
+        properties.Remove(Panel.Content);
+        control.View.MergeOverwrite(properties);
+        SetLayout(properties, control.View);
+        control.LoadParentContent(content, context);
     }
 
     /// <summary>
@@ -343,7 +358,7 @@ public static class Loader
             throw new ArgumentException($"Could not create instance of '{controller}': {ex.Message}", ex);
         }
 
-        BuildContent(control, properties, context);
+        BuildParentContent(control, properties, context);
 
         return control;
     }

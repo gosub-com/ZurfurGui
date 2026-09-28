@@ -48,6 +48,23 @@ variables. Legacy `.zth.json` files remain supported:
 Supported conditions:
 - `isPointerOver` / `!isPointerOver`
 - `isPressed` / `!isPressed`
+- Any registered boolean property using its exact name, such as `ScrollBar.isExpanded`
+- A leading `!` negates any supported condition
+
+Registered boolean property conditions read the control's current runtime value rather than resolving the
+property as a style. Conditions must name a property exactly; unknown properties and non-boolean properties
+are invalid conditions.
+
+For example, scrollbar themes can use the effective expanded state instead of the physical pointer state:
+
+```json5
+"color.scroll.thumb.background":
+    "isPressed ? #005A9E; ScrollBar.isExpanded ? #6A9FD0; #8BB4DC80"
+```
+
+`ScrollBar.isExpanded` is true when the scrollbar is expanded because it is hovered, pressed, or configured not
+to expand only on hover. This allows a theme to style the effective visual state without changing the meaning of
+`isPointerOver`.
 
 Multiple expressions are separated by semicolons, evaluated in order until a matching
 condition is found. The last value (without a condition) serves as the default.

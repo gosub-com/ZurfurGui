@@ -58,7 +58,6 @@ the parser supports these JSON5 features:
 - **Trailing commas** — a comma after the last property in an object or the last element in an array is silently
   accepted. This matches the JSONC convention used by `tsconfig.json`, VS Code `settings.json`, etc.
 - **Unquoted identifier keys** — valid identifier keys, including keys beginning with `$`, do not need quotes.
-
 - Type names are PascalCase (including built-in aliases like `Int`, `Bool`, `String`, etc.).
 - Field names are camelCase.
 - The source generator converts from JSON style to C# style when generating code (field/property names become
@@ -340,26 +339,60 @@ If you do not set the build action to "C# analyzer" (or "AdditionalFiles"), the 
 Some project templates may add these rules automatically, but if your files are not being picked up, check the
 build action or add the above ItemGroup to your project file.
 
-### ScrollViewer content loading
+### Control content loading
 
-`ScrollViewer` has two kinds of content that are loaded through the current `LoadContent` lifecycle:
+Controls have two kinds of content in the loader lifecycle:
 
-- Its internal ZUI content declares the content window and the horizontal and vertical scrollbar controls.
-- Content supplied by a parent through the ScrollViewer's `$content` is user content and must be placed inside the
-  named content window.
+- Template content is the control's own ZUI-defined visual structure.
+- Parent content is supplied by the containing control through the child control's `$content`.
 
-The current loader invokes `LoadContent` for both cases. During the first call, the ScrollViewer has no children, so
-it creates its internal ZUI children directly on the ScrollViewer. During the later parent-content call, those
-children already exist, so the supplied content is created and added to `_contentWindow` instead. This keeps user
-content separate from the overlay scrollbars while preserving the normal container-control `$content` behavior.
+The calls happen in this order:
 
-This phase distinction is currently inferred from whether the ScrollViewer has children. It is intentionally local to
-ScrollViewer so the initial control can use the existing loader without changing behavior for other controls.
+```text
+Generated control constructor
+        |
+        v
+Loader.Load(control, control's own ZUI JSON)
+        |
+        +--> merge properties and layout
+        |
+        +--> LoadTemplateContent(template content)
+        |       default: add children to View
+        |       custom:  add or organize control-owned children
+        |
+        +--> apply data properties
+        |
+        +--> initialize generated named-control fields and DataContext
 
-Possible future improvements include separate loader hooks for internal/template content and parent-supplied content,
-or an explicit load-phase parameter. Either option would make the lifecycle contract clearer and remove the need to
-infer the phase from the current child count. Such a loader change should be designed as a general framework change,
-not as a ScrollViewer-specific workaround.
+Parent creates a child from its $content
+        |
+        v
+Loader.CreateControl(child properties, context)
+        |
+        +--> construct child and complete its Loader.Load sequence
+        |
+        +--> merge parent properties and layout
+        |
+        +--> LoadParentContent(parent content)
+                default: add children to ContentHost
+                custom:  override only when parent content needs special handling
+```
+
+`Loader.Load` invokes `Controllable.LoadTemplateContent` for the control's own ZUI content. The default implementation
+adds that content to `View`. `Loader.CreateControl` invokes `Controllable.LoadParentContent` after the child has been
+constructed. The default implementation adds parent content to `ContentHost`, which is `View` by default.
+
+`ContentHost` controls the destination for parent content; it does not change the call order or the ownership of the
+content. `LoadTemplateContent` is for the control-owned structure, while `LoadParentContent` is for content supplied by
+the parent.
+
+`ScrollViewer` overrides `LoadTemplateContent` to create its content viewport and overlay scrollbars as direct
+children. It overrides `ContentHost` to identify `_contentWindow` as the destination for parent content. The default
+`LoadParentContent` implementation then keeps user content separate from the overlay scrollbars.
+
+This explicit distinction avoids inferring the loading phase from the current child count. It also provides a
+foundation for future controls with templates or named content hosts without adding control-specific phase detection to
+the loader.
 
 For measurement, arrangement, sizing, and content-extent behavior, see [ScrollViewer.md](ScrollViewer.md).
 

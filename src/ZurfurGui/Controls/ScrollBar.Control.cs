@@ -24,6 +24,12 @@ public enum ScrollBarVisibility
 
 public partial class ScrollBar : Controllable
 {
+    internal static readonly PropertyKey<bool> IsExpandedProperty = new(
+        "ScrollBar.isExpanded",
+        typeof(ScrollBar),
+        false,
+        ViewFlags.Style | ViewFlags.Render);
+
     // Drag state (not in data - pure UI state)
     bool _isDragging;
     bool _isPointerDown;
@@ -32,6 +38,7 @@ public partial class ScrollBar : Controllable
 
     internal bool IsDragging => _isDragging;
     internal bool IsPointerDown => _isPointerDown;
+    internal bool IsExpanded => View.GetProperty(IsExpandedProperty);
 
 
     static ScrollBar()
@@ -50,6 +57,32 @@ public partial class ScrollBar : Controllable
         View.AddEvent(Panel.PointerMove, OnPointerMove);
         View.AddEvent(Panel.PointerUp, OnPointerUp);
         View.AddEvent(Panel.PointerCaptureLost, OnPointerCaptureLost);
+        View.PropertyChanged += OnViewPropertyChanged;
+        UpdateExpandedState();
+    }
+
+    void OnViewPropertyChanged(IPropertyKey property)
+    {
+        if (property.Id == Panel.IsPointerOver.Id
+            || property.Id == Panel.IsPressed.Id
+            || property.Id == ExpandOnHoverProperty.Id)
+        {
+            UpdateExpandedState();
+        }
+    }
+
+    internal void UpdateExpandedState()
+    {
+        var isPressed = View.GetProperty(Panel.IsPressed) || IsPointerDown || IsDragging;
+        var isExpanded = !View.GetStyle(ExpandOnHoverProperty)
+            || View.GetProperty(Panel.IsPointerOver)
+            || isPressed;
+
+        if (IsExpanded != isExpanded)
+        {
+            View.SetProperty(IsExpandedProperty, isExpanded);
+            View.InvalidateStyleCacheInternal();
+        }
     }
 
     /// <summary>
@@ -153,28 +186,37 @@ public partial class ScrollBar : Controllable
     }
 
     /// <summary>
-    /// Calculate the fixed-width visual thumb centered inside the scrollbar's interaction rectangle.
-    /// The interaction rectangle and thumb position/length do not change when the scrollbar is hovered.
+    /// Calculate the visual thumb inside the scrollbar's interaction rectangle.
+    /// The resting thumb is thin and near the outer edge; the active thumb is wider and centered.
+    /// The interaction rectangle and thumb position/length do not change between visual states.
     /// </summary>
-    public Rect CalculateVisualThumbRect()
+    public Rect CalculateVisualThumbRect(bool isActive)
     {
         var thumbRect = CalculateThumbRect();
-        var thickness = Math.Max(0, View.GetStyle(ThumbThicknessProperty));
+        var thickness = Math.Max(0, View.GetStyle(
+            isActive ? ThumbThicknessProperty : ThumbRestingThicknessProperty));
+        var edgeInset = Math.Max(0, View.GetStyle(ThumbEdgeInsetProperty));
 
         if (View.GetStyle(OrientationProperty) == Orientation.Vertical)
         {
             thickness = Math.Min(thickness, View.Size.Width);
+            var x = isActive
+                ? (View.Size.Width - thickness) / 2
+                : Math.Max(0, View.Size.Width - thickness - edgeInset);
             return new Rect(
-                (View.Size.Width - thickness) / 2,
+                x,
                 thumbRect.Y,
                 thickness,
                 thumbRect.Height);
         }
 
         thickness = Math.Min(thickness, View.Size.Height);
+        var y = isActive
+            ? (View.Size.Height - thickness) / 2
+            : Math.Max(0, View.Size.Height - thickness - edgeInset);
         return new Rect(
             thumbRect.X,
-            (View.Size.Height - thickness) / 2,
+            y,
             thumbRect.Width,
             thickness);
     }

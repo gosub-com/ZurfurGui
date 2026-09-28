@@ -1,6 +1,5 @@
 ﻿using ZurfurGui;
 using ZurfurGui.Controls;
-using ZurfurGui.Input;
 
 namespace TestApp;
 
@@ -10,16 +9,16 @@ public partial class FormSmallWinTest
     {
         InitializeControl();
 
-        bigButton.View.AddEvent(Panel.PointerClick, bigButton_Click);
+        bigButton.Click += BigButton_Click;
 
-        buttonVisibilityTest.View.AddEvent(Panel.PointerClick, (s, e) =>
+        buttonVisibilityTest.Click += (s, e) =>
         {
             textVisibilityTest.View.IsVisible = !textVisibilityTest.View.IsVisible;
-        });
+        };
 
     }
 
-    void bigButton_Click(object? s, PointerEvent e)
+    void BigButton_Click(object? s, EventArgs e)
     {
 
     }

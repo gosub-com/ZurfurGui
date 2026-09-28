@@ -19,27 +19,19 @@ internal class ScrollBarRenderer : Renderable
         var data = _control.DataContext;
         var trackRect = new Rect(new(), view.Size);
         var orientationValue = view.GetStyle(ScrollBar.OrientationProperty);
-        var isPressed = view.GetProperty(Panel.IsPressed)
-            || _control.IsPointerDown
-            || _control.IsDragging;
-        var isHovered = view.GetProperty(Panel.IsPointerOver) && !isPressed;
-        var isActive = isHovered || isPressed;
+        var isActive = _control.IsExpanded;
 
         if (isActive)
         {
             var trackColor = view.GetStyle(ScrollBar.TrackColorProperty);
-            context.FillRect(trackColor, trackRect);
-
-            var borderColor = view.GetStyle(ScrollBar.BorderColorProperty);
-            var borderWidth = view.GetStyle(ScrollBar.BorderWidthProperty);
-            context.StrokeRect(new Pen(borderColor, borderWidth), trackRect);
+            context.FillRect(trackColor, trackRect, 1000);
         }
 
-        // The thumb remains in the same position and has the same length in every visual state. At rest it is
-        // rendered as a thin translucent indicator; hover and press are represented by style colors only.
+        // The thumb keeps the same position and length along the scroll direction in every visual state. At rest
+        // it is thin and near the outer edge; hover and press make it wider and centered.
         if (data.Maximum > data.Minimum)
         {
-            var thumbRect = _control.CalculateVisualThumbRect();
+            var thumbRect = _control.CalculateVisualThumbRect(isActive);
             var thumbColor = view.GetStyle(ScrollBar.ThumbColorProperty);
             var thumbRadius = view.GetStyle(ScrollBar.ThumbRadiusProperty);
             context.FillRect(thumbColor, thumbRect, thumbRadius);

@@ -150,13 +150,19 @@ Scrollbar visibility is evaluated from the content extent and the unchanged view
 scrollbar does not reduce the size used to measure content, so visibility does not require the iterative
 two-axis measurement used by traditional scrollbars that consume layout space.
 
-When an overflowing scrollbar is not hovered, it renders only a thin translucent thumb. The thumb keeps its
-normal calculated position and length, so it indicates the portion of content currently visible without covering
-the full content edge. The scrollbar's full outer rectangle remains available as an invisible pointer target.
+ScrollViewer configures its internal scrollbars with `expandOnHover: true`. When an overflowing scrollbar is not
+hovered, it renders only a thin translucent thumb near the outer edge. The thumb keeps its normal calculated
+position and length along the scroll direction, so it indicates the portion of content currently visible without
+covering the full content edge. The scrollbar's full outer rectangle remains available as an invisible pointer
+target.
 
 When the pointer enters that outer rectangle, the scrollbar renders its partially opaque track, opaque thumb, and
-arrow indicators. The track, thumb, and arrow geometry does not change between resting, hovered, and pressed
-states. Arrow space remains reserved even while the arrow indicators are not drawn.
+arrow indicators. The thumb becomes thicker and moves toward the center of the scrollbar. Pressing or dragging also
+uses the expanded appearance. Arrow space remains reserved even while the arrow indicators are not drawn, so the
+scroll range and layout do not change between visual states.
+
+Scrollbar theme colors use the effective `ScrollBar.isExpanded` condition rather than relying only on
+`isPointerOver`. This keeps colors synchronized with the expanded geometry during hover, press, and drag states.
 
 The standard range model is:
 
@@ -212,19 +218,48 @@ ScrollViewer's parent `$content` is placed in this host rather than directly bes
 
 ## Content loading implementation
 
-The current loader calls `LoadContent` for both a control's internal ZUI content and content supplied by
-its parent. ScrollViewer handles these calls in two phases:
+The loader distinguishes between a control's own template content and content supplied by its parent. The calls occur
+in this order:
 
-1. The first call loads the ScrollViewer's own ZUI children directly onto the ScrollViewer. These children
-   create the content viewport, content window, and scrollbars.
-2. A later call loads the parent's content into `_contentWindow`. This keeps application content separate
-   from the ScrollViewer's internal overlay controls.
+```text
+ScrollViewer constructor
+        |
+        +--> Loader.Load(ScrollViewer, ScrollViewer's own ZUI JSON)
+        |       |
+        |       +--> LoadTemplateContent(template content)
+        |               |
+        |               +--> add _contentViewport to ScrollViewer.View
+        |               +--> add horizontalScrollBar to ScrollViewer.View
+        |               +--> add verticalScrollBar to ScrollViewer.View
+        |               +--> _contentWindow is created under _contentViewport
+        |
+        +--> generated named fields are initialized
+        +--> ScrollViewer-specific layout and scrollbar setup completes
 
-The current implementation detects the first phase by checking whether `View.Children.Count` is zero.
-This is local to ScrollViewer and avoids changing the loader contract used by existing controls.
+Parent creates the ScrollViewer from its $content
+        |
+        +--> Loader.CreateControl(ScrollViewer properties, context)
+                |
+                +--> construct ScrollViewer and complete the sequence above
+                +--> LoadParentContent(parent content)
+                        |
+                        +--> ContentHost returns _contentWindow.View
+                        +--> default implementation adds user content there
+```
 
-A future loader API should provide separate lifecycle hooks for internal/template content and
-parent-supplied content. That would replace the implicit child-count test with an explicit contract.
+`Loader.Load` invokes `LoadTemplateContent` for the ScrollViewer's own ZUI children. These children create the content
+viewport, content window, and scrollbars directly on the ScrollViewer. Later, `Loader.CreateControl` invokes the
+default `LoadParentContent` implementation for the parent's content. ScrollViewer's `ContentHost` points to
+`_contentWindow`, so application content is added inside the clipped content subtree.
+
+`LoadTemplateContent` and `LoadParentContent` both have default implementations. The former adds internal content to
+the main view, while the latter adds parent content to `ContentHost`, which is the main view by default. ScrollViewer
+only needs to override the template hook and content host; it no longer infers the loading phase from
+`View.Children.Count`.
+
+The separate lifecycle is also useful for future controls with templates or named content hosts. Those controls can
+build their internal structure through `LoadTemplateContent` and direct ordinary parent content through an appropriate
+content host without adding special cases to the loader.
 
 ## Measurement and arrangement
 

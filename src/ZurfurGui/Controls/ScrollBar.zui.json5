@@ -3,8 +3,6 @@
     $namespace: "ZurfurGui.Controls",
     "ScrollBar.trackColor": "${color.scroll.track.background}",
     "ScrollBar.thumbColor": "${color.scroll.thumb.background}",
-    "ScrollBar.borderColor": "${color.scroll.stroke}",
-    "ScrollBar.borderWidth": "${stroke.width.default}",
     "ScrollBar.thumbRadius": "${radius.scroll.thumb}",
     $data: {
         // Current scroll position (ranges from Minimum to Maximum)
@@ -91,16 +89,21 @@
             default: "4.0",
             flags: "render"
         },
-        borderColor: {
-            type: "Color",
-            bind: "styledOnly",
-            default: "new Color(160, 160, 160)",
-            flags: "render"
-        },
-        borderWidth: {
+        thumbRestingThickness: {
             type: "Double",
             bind: "styledOnly",
-            default: "1.0",
+            default: "4.0",
+            flags: "render"
+        },
+        thumbEdgeInset: {
+            type: "Double",
+            bind: "styledOnly",
+            default: "2.0",
+            flags: "render"
+        },
+        expandOnHover: {
+            type: "Bool",
+            bind: "styledOnly",
             flags: "render"
         },
         thumbRadius: {

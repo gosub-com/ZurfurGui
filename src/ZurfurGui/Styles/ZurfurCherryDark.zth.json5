@@ -32,9 +32,8 @@
         "color.input.stroke": "#7A3050",
 
         // ScrollBar
-        "color.scroll.track.background": "isPressed ? #603040D0; isPointerOver ? #381520A0; #00000000",
-        "color.scroll.thumb.background": "isPressed ? #A05070; isPointerOver ? #705060; #60405080",
-        "color.scroll.stroke": "isPressed ? #A05070; isPointerOver ? #7A3050A0; #00000000",
+        "color.scroll.track.background": "isPressed ? #603040D0; isPointerOver ? #4C2A30B8; ScrollBar.isExpanded ? #381520A0; #00000000",
+        "color.scroll.thumb.background": "isPressed ? #A05070; isPointerOver ? #885060; ScrollBar.isExpanded ? #705060; #60405080",
 
         "color.status.success.background": "#27472A",
         "color.status.warning.background": "#4F442B",

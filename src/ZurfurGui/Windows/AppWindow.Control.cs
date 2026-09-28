@@ -80,7 +80,7 @@ public partial class AppWindow : Controllable, Renderable
         if (title != null)
             window.SetTitle(title);
 
-        window.LoadContent([control]);
+        window.LoadControl(control);
         _floatingWindows.View.AddChild(window.View);
         return window;
     }

@@ -15,6 +15,7 @@ public partial class Window : Controllable
     bool _mouseDown;
     Point _mousePosition;
 
+
     public Window()
     {
         InitializeControl();
@@ -37,10 +38,20 @@ public partial class Window : Controllable
         _closeButton.View.AddEvent(Panel.PointerUp, (s, e) => View.RemoveFromParent());
     }
 
-    public void LoadContent(Controllable[] contents)
+    /// <summary>
+    /// Receives parent-supplied content in the _windowContent.
+    /// The default LoadParentContent implementation uses ContentHost, so this control only needs to provide the host.
+    /// </summary>
+    public View ContentHost => _windowContent.View;
+
+
+    /// <summary>
+    /// Set the window contents to the given Controllable's View. 
+    /// </summary>
+    public void LoadControl(Controllable control)
     {
-        foreach (var control in contents)
-            _windowContent.View.AddChild(control.View);
+        _windowContent.View.ClearChildren();
+        _windowContent.View.AddChild(control.View);
     }
 
 

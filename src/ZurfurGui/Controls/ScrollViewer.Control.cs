@@ -13,6 +13,8 @@ public sealed partial class ScrollViewer
     public ScrollViewer()
     {
         InitializeControl();
+        horizontalScrollBar.View.SetProperty(ScrollBar.ExpandOnHoverProperty, true);
+        verticalScrollBar.View.SetProperty(ScrollBar.ExpandOnHoverProperty, true);
         _contentViewport.View.Layout = new ContentViewportLayout(_contentWindow.View);
         View.Layout = new ScrollViewerLayout(this);
         horizontalScrollBar.DataContext.PropertyChanged += OnScrollBarDataChanged;
@@ -20,38 +22,10 @@ public sealed partial class ScrollViewer
     }
 
     /// <summary>
-    /// Loads content in two phases because the current loader uses LoadContent both for a control's own ZUI content
-    /// and for content supplied by its parent. The first call builds the ScrollViewer's internal children directly.
-    /// A later call routes parent-supplied content into the existing content window, keeping it separate from the
-    /// overlay scrollbars.
-    ///
-    /// Future loader improvements could provide separate template-content and parent-content lifecycle hooks. That
-    /// would remove the need to infer the phase from the current child count, but is outside the initial ScrollViewer
-    /// implementation.
+    /// Receives parent-supplied content in the content window rather than beside the overlay scrollbars.
+    /// The default LoadParentContent implementation uses ContentHost, so this control only needs to provide the host.
     /// </summary>
-    public void LoadContent(Properties[]? contents, Loader.ControlCreationContext context)
-    {
-        if (contents == null)
-            return;
-
-        // The first LoadContent call loads the ScrollViewer's own ZUI children. View has no children yet,
-        // so these internal controls must be added directly to the ScrollViewer.
-        if (View.Children.Count == 0)
-        {
-            foreach (var property in contents)
-                View.AddChild(Loader.CreateControl(property, context).View);
-            return;
-        }
-
-        // Later LoadContent calls contain content supplied by the parent. Route it into the already-created
-        // content window so user content stays separate from the ScrollViewer's overlay controls.
-        var contentWindow = View.FindByName("_contentWindow");
-        foreach (var property in contents)
-            contentWindow.AddChild(Loader.CreateControl(property, context).View);
-
-        ScrollOffset = _scrollOffset;
-    }
-
+    public View ContentHost => _contentWindow.View;
 
     public Point ScrollOffset
     {

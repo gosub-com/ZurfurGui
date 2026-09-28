@@ -39,6 +39,17 @@ public sealed class View
     internal readonly Properties _properties = new();
 
     /// <summary>
+    /// Raised when a stored view property changes. The event provides the strongly typed property metadata
+    /// used by ZurfurGui, rather than only a property name.
+    ///
+    /// This is separate from <see cref="System.ComponentModel.INotifyPropertyChanged"/> because view
+    /// properties are registered <see cref="PropertyKey{T}"/> instances and can be identified without
+    /// string-based lookup or reflection. Use this event only when a control needs to react to a specific
+    /// view-property change; ordinary data binding should continue to use INotifyPropertyChanged.
+    /// </summary>
+    public event Action<IPropertyKey>? PropertyChanged;
+
+    /// <summary>
     /// Iterate and find child views.  Use AddChild (and friends) to modify the children
     /// </summary>
     public RoList<View> Children => new RoList<View>(_children);
@@ -266,7 +277,10 @@ public sealed class View
                     newPropValue = ThemeManager.Merge(newPropValue, oldPropValue);
 
                 if (newPropValue != null)
+                {
                     _properties.SetById(newProp.key, newPropValue);
+                    RaisePropertyChanged(newProp.key.Info!);
+                }
             }
         }
 
@@ -284,6 +298,7 @@ public sealed class View
             {
                 // No old props, just use the new ones
                 _properties.Set(Panel.ThemeTokens, newThemeTokens);
+                RaisePropertyChanged(Panel.ThemeTokens);
             }
         }
     }
@@ -304,6 +319,7 @@ public sealed class View
         SetFlags(key.Flags);
         _properties.Set(key, value);
         _properties.RemoveById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN));
+        RaisePropertyChanged(key);
     }
 
     public bool ContainsProperty<T>(PropertyKey<T> key)
@@ -318,6 +334,12 @@ public sealed class View
         SetFlags(key.Flags);
         _properties.Remove(key);
         _properties.RemoveById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN));
+        RaisePropertyChanged(key);
+    }
+
+    void RaisePropertyChanged(IPropertyKey property)
+    {
+        PropertyChanged?.Invoke(property);
     }
 
     /// <summary>

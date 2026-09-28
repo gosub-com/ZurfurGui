@@ -41,6 +41,40 @@ item controllers respond to those changes.
 
 Add integration tests for every supported collection operation before standardizing the public API.
 
+### Collection update strategies
+
+The framework should support more than one update strategy. The simplest strategy is reset and rebuild: when a new
+collection is received, discard the existing item controllers and recreate the visible items. This does not require
+item identity and is reasonable for small collections or controls such as the current `ComboBox`, whose drop-down is
+created from the current collection each time it opens. The current implementation is therefore effectively doing a
+full replacement of the drop-down, but it does not synchronize an already-open drop-down or the selected-item view.
+
+Another strategy is to replace the collection and reconcile the old and new sequences. A diff can identify insertions,
+removals, replacements, and moves, allowing a list control to update its existing item controllers instead of
+rebuilding the entire list. This is especially useful for a visible `ListBox` and may also be useful for tree nodes.
+The application should be able to replace a collection populated from server JSON without manually issuing an
+`Insert` or `Remove` for every change. Without stable item keys, the reconciler can use positional comparison or fall
+back to a reset; stable identity is needed when per-item controller state must follow a logical item through a move.
+
+The reusable synchronizer described as option #4 is a framework-level mechanism for both paths, not necessarily one
+specific diff algorithm. It should normalize collection notifications and collection replacement into operations such
+as add, remove, replace, move, and reset. Controls would retain their own visual policies: a `ComboBox` may rebuild its
+drop-down, a `ListBox` may apply incremental changes, and a tree control may maintain a synchronizer for each node's
+child collection. Item-controller creation and ownership can be a separate layer so that the basic collection watcher
+does not prematurely define templates, virtualization, or rendering behavior.
+
+Selection must be an explicit part of the contract. Preserving only an integer selected index is incorrect when an item
+is inserted before the selection. A control may preserve the selected item's stable identity and calculate its new
+index, or use a documented positional policy when identity is unavailable. If the selected item is removed, the
+contract should define whether selection moves to the next item, the previous item, or becomes empty. The framework
+should not require a single policy for every control, but it should provide the collection changes needed for each
+control to implement its policy consistently.
+
+The preferred direction remains undecided between reset/rebuild and replacement with diffing. Before standardizing a
+public API, compare both approaches with integration tests covering server refreshes, insertion before the selected
+item, removal of the selected item, reordering, item property changes, collection replacement, and updates while a
+control is visible. A full rebuild is a valid fallback when identity or an efficient diff is unavailable.
+
 ## Priority 2: Item controller and template creation
 
 The current data-controller registry maps an exact concrete data `Type` to a controller factory. This is convenient for
@@ -163,7 +197,58 @@ Important validation areas include:
 
 Runtime string-based failures should be minimized when the generator can validate the same relationship at compile time.
 
-## Priority 8: Generated data API stability
+## Priority 8: Template and content-host contract
+
+The current loader explicitly separates control-owned template content from content supplied by a parent:
+
+```text
+LoadTemplateContent
+    -> builds the control's internal ZUI-defined structure
+
+LoadParentContent
+    -> adds parent-supplied content to ContentHost
+```
+
+This is similar in concept to template and content-presenter systems in other GUI frameworks. The current API is a
+good minimal contract for generated controls, but it should be formalized before more template-aware controls are added.
+
+Document and test:
+
+- The ordering of `LoadTemplateContent` and `LoadParentContent`.
+- The ownership distinction between template content and parent content.
+- The default behavior of both lifecycle methods.
+- The role of `ContentHost` as the destination for parent content.
+- Whether parent content can be replaced after initial construction.
+- Whether content hosts remain valid when a control is detached and reattached.
+- Whether content changes require layout, rendering, or both to be invalidated.
+
+The current `ContentHost` represents one content destination. Future controls may need multiple named content slots,
+such as:
+
+```text
+Content       -> main content host
+Header        -> header host
+Footer        -> footer host
+Overlay       -> overlay host
+Items         -> items host
+```
+
+A future template system could declare these slots and allow parent content to target a named slot. This would be a
+natural extension of `ContentHost`, rather than requiring each control to add another specialized loading method.
+
+Possible future abstractions include:
+
+- Named content hosts or presenters.
+- A template contract that declares available content slots.
+- Explicit content replacement and removal operations.
+- A presenter-like object that maps content data to a host view.
+- Template diagnostics for missing, duplicate, or incompatible content slots.
+
+`ScrollViewer` is the current motivating example: its internal template creates the viewport, content window, and
+scrollbars, while parent content is directed to the content window. A future multi-slot system could express that
+relationship declaratively as `Content -> _contentWindow`.
+
+## Priority 9: Generated data API stability
 
 Decide which parts of generated data classes are public compatibility contracts:
 
@@ -179,7 +264,7 @@ Decide which parts of generated data classes are public compatibility contracts:
 Once applications consume generated data types directly, changing these details becomes a source and binary compatibility
 concern. The generator should have compatibility tests for representative generated controls and generic controls.
 
-## Priority 9: JSON initialization versus generated initialization
+## Priority 10: JSON initialization versus generated initialization
 
 The current loader applies JSON data properties at runtime using property names and runtime type information. This is
 convenient, but it is less aligned with the compile-time MDV goal than generated typed initialization.
@@ -199,8 +284,9 @@ behavior becomes a permanent public API.
 5. Add an overridable item factory or template abstraction.
 6. Add generator diagnostics for invalid bindings and generic relationships.
 7. Introduce scoped registration behind the existing generated initialization path.
-8. Define generated data API compatibility rules.
-9. Revisit runtime JSON data initialization.
+8. Formalize template and content-host contracts, including named content slots.
+9. Define generated data API compatibility rules.
+10. Revisit runtime JSON data initialization.
 
 ## Explicit non-goal
 

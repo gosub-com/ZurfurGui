@@ -241,19 +241,30 @@ public static class ThemeManager
 
     static bool ThemeConditionMatches(View view, string themeCondition)
     {
-        switch (themeCondition)
+        var isNegated = themeCondition.StartsWith("!");
+        var conditionName = isNegated ? themeCondition[1..] : themeCondition;
+        bool conditionValue;
+
+        switch (conditionName)
         {
             case "isPointerOver":
-                return view.GetProperty(Panel.IsPointerOver);
-            case "!isPointerOver":
-                return !view.GetProperty(Panel.IsPointerOver);
+                conditionValue = view.GetProperty(Panel.IsPointerOver);
+                break;
             case "isPressed":
-                return view.GetProperty(Panel.IsPressed);
-            case "!isPressed":
-                return !view.GetProperty(Panel.IsPressed);
+                conditionValue = view.GetProperty(Panel.IsPressed);
+                break;
             default:
-                throw new ArgumentException($"Invalid theme condition '{themeCondition}'");
+                if (PropertyKeys.GetInfo(conditionName) is not PropertyKey<bool> property
+                    || !property.OwnerType.IsAssignableFrom(view.Controller.GetType()))
+                {
+                    throw new ArgumentException($"Invalid theme condition '{themeCondition}'");
+                }
+
+                conditionValue = view.GetProperty(property);
+                break;
         }
+
+        return isNegated ? !conditionValue : conditionValue;
     }
 
 
