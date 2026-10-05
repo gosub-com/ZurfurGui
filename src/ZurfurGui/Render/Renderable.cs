@@ -1,4 +1,5 @@
 ﻿using ZurfurGui.Base;
+using ZurfurGui.Input;
 
 namespace ZurfurGui.Render;
 
@@ -24,7 +25,7 @@ public interface Renderable
     /// <summary>
     /// Override to determine if the point hits the renderable area of the view.
     /// </summary>
-    public bool IsHit(View view, Point point);
+    public bool IsHit(View view, HitTestContext context);
 
 
 }

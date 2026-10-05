@@ -49,7 +49,7 @@ public partial class Panel : Controllable
     public static readonly PropertyKey<bool> IsFocusWithin = new("$isFocusWithin", typeof(Panel), new(), ViewFlags.Style);
 
     // Common UI interaction
-    public static readonly PropertyKey<bool> DisableHitTest = new("$disableHitTest", typeof(Panel), new());
+    public static readonly PropertyKey<HitTestMode> HitTest = new("$hitTest", typeof(Panel), HitTestMode.Normal);
     public static readonly PropertyKey<EventHandler<PointerEvent>> PointerDown = new("$pointerDown", typeof(Panel), static (s, e) => { });
     public static readonly PropertyKey<EventHandler<PointerEvent>> PointerMove = new("$pointerMove", typeof(Panel), static (s, e) => { });
     public static readonly PropertyKey<EventHandler<PointerEvent>> PointerUp = new("$pointerUp", typeof(Panel), static (s, e) => { });

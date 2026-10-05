@@ -26,23 +26,26 @@ internal static class ZuiEmitController
         // per-closed-type duplication (each closed type would try to register the same key name,
         // causing a duplicate-registration exception in PropertyKey's constructor).
         var newBindings = allBindings.Where(b => (b.BindType == BindType.StyledData || b.BindType == BindType.StyledOnly) && !b.IsCollection).ToList();
-        if (data.TypeParam != "" && newBindings.Count > 0)
+        if (data.TypeParam != "")
         {
             sb.Append($"/// <summary>Non-generic companion holding PropertyKey fields for {data.ControllerName}&lt;{data.TypeParam}&gt;.</summary>\r\n");
             sb.Append($"public static partial class {data.ControllerName}\r\n{{\r\n");
-            sb.AppendIndentedLine(1, "// Property Keys");
-            foreach (var binding in newBindings)
+            if (newBindings.Count > 0)
             {
-                ZuiEmit.AppendXmlDocComment(sb, 1, binding.Comment);
-                var defaultValue = string.IsNullOrWhiteSpace(binding.Default)
-                    ? "new()"
-                    : ZuiEmit.NormalizeDefaultValue(binding.Default);
-                var flagsParam = string.IsNullOrWhiteSpace(binding.Flags) || binding.Flags == "ViewFlags.None"
-                    ? ""
-                    : $", {binding.Flags}";
-                sb.AppendIndentedLine(1,
-                    $"public static readonly PropertyKey<{binding.BaseType}> {binding.PropertyKeyName}"
-                        + $" = new(\"{data.ControllerName}.{binding.Name}\", typeof({data.ControllerName}<>), {defaultValue}{flagsParam});");
+                sb.AppendIndentedLine(1, "// Property Keys");
+                foreach (var binding in newBindings)
+                {
+                    ZuiEmit.AppendXmlDocComment(sb, 1, binding.Comment);
+                    var defaultValue = string.IsNullOrWhiteSpace(binding.Default)
+                        ? "new()"
+                        : ZuiEmit.NormalizeDefaultValue(binding.Default);
+                    var flagsParam = string.IsNullOrWhiteSpace(binding.Flags) || binding.Flags == "ViewFlags.None"
+                        ? ""
+                        : $", {binding.Flags}";
+                    sb.AppendIndentedLine(1,
+                        $"public static readonly PropertyKey<{binding.BaseType}> {binding.PropertyKeyName}"
+                            + $" = new(\"{data.ControllerName}.{binding.Name}\", typeof({data.ControllerName}<>), {defaultValue}{flagsParam});");
+                }
             }
             sb.Append("}\r\n\r\n");
         }

@@ -26,16 +26,16 @@ public partial class Window : Controllable
             View.BringToFront();
         });
 
-        // Title events
-        _windowTitle.View.AddEvent(Panel.PreviewPointerDown, _windowTitle_PreviewPointerDown);
-        _windowTitle.View.AddEvent(Panel.PreviewPointerMove, _windowTitle_PreviewPointerMove);
-        _windowTitle.View.AddEvent(Panel.PointerCaptureLost, (s, e) =>_mouseDown = false);
+        // Drag window events
+        _dragWindow.View.AddEvent(Panel.PreviewPointerDown, _drawWindow_PreviewPointerDown);
+        _dragWindow.View.AddEvent(Panel.PreviewPointerMove, _drawWindpow_PreviewPointerMove);
+        _dragWindow.View.AddEvent(Panel.PointerCaptureLost, (s, e) =>_mouseDown = false);
 
         _resizeHandle.View.AddEvent(Panel.PreviewPointerDown, _resizeHandle_PreviewPointerDown);
         _resizeHandle.View.AddEvent(Panel.PreviewPointerMove, _resizeHandle_PreviewPointerMove);
         _resizeHandle.View.AddEvent(Panel.PointerCaptureLost, (s, e) => _mouseDown = false);
 
-        _closeButton.View.AddEvent(Panel.PointerUp, (s, e) => View.RemoveFromParent());
+        _closeButton.View.AddEvent(Panel.PointerClick, (s, e) => View.RemoveFromParent());
     }
 
     /// <summary>
@@ -55,19 +55,19 @@ public partial class Window : Controllable
     }
 
 
-    void _windowTitle_PreviewPointerDown(object? s, PointerEvent e)
+    void _drawWindow_PreviewPointerDown(object? s, PointerEvent e)
     {
         _mouseDown = true;
-        _mousePosition = View.Parent?.toClient(e.DevicePosition) ?? new();
-        _windowTitle.View.CapturePointer = true;
+        _mousePosition = View.Parent?.toClient(e.Contact.DevicePosition) ?? new();
+        _dragWindow.View.CapturePointer = true;
     }
 
-    void _windowTitle_PreviewPointerMove(object? s, PointerEvent e)
+    void _drawWindpow_PreviewPointerMove(object? s, PointerEvent e)
     {
         if (!_mouseDown)
             return;
 
-        var position = View.Parent?.toClient(e.DevicePosition) ?? new();
+        var position = View.Parent?.toClient(e.Contact.DevicePosition) ?? new();
         var diff = position - _mousePosition;
         _mousePosition = position;
 
@@ -78,7 +78,7 @@ public partial class Window : Controllable
     void _resizeHandle_PreviewPointerDown(object? s, PointerEvent e)
     {
         _mouseDown = true;
-        _mousePosition = View.Parent?.toClient(e.DevicePosition) ?? new();
+        _mousePosition = View.Parent?.toClient(e.Contact.DevicePosition) ?? new();
         _resizeHandle.View.CapturePointer = true;
     }
 
@@ -87,7 +87,7 @@ public partial class Window : Controllable
         if (!_mouseDown)
             return;
 
-        var position = View.Parent?.toClient(e.DevicePosition) ?? new();
+        var position = View.Parent?.toClient(e.Contact.DevicePosition) ?? new();
         var diff = position - _mousePosition;
         _mousePosition = position;
 

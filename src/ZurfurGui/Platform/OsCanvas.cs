@@ -39,5 +39,5 @@ public interface OsCanvas
     /// <summary>
     /// Observe the pointer input
     /// </summary>
-    public Action<PointerEvent>? PointerInput { get; set; }
+    public Action<OsPointerEvent>? PointerInput { get; set; }
 }

@@ -190,17 +190,17 @@ public partial class ScrollBar : Controllable
     /// The resting thumb is thin and near the outer edge; the active thumb is wider and centered.
     /// The interaction rectangle and thumb position/length do not change between visual states.
     /// </summary>
-    public Rect CalculateVisualThumbRect(bool isActive)
+    public Rect CalculateVisualThumbRect(bool isExpanded)
     {
         var thumbRect = CalculateThumbRect();
         var thickness = Math.Max(0, View.GetStyle(
-            isActive ? ThumbThicknessProperty : ThumbRestingThicknessProperty));
+            isExpanded ? ThumbThicknessProperty : ThumbRestingThicknessProperty));
         var edgeInset = Math.Max(0, View.GetStyle(ThumbEdgeInsetProperty));
 
         if (View.GetStyle(OrientationProperty) == Orientation.Vertical)
         {
             thickness = Math.Min(thickness, View.Size.Width);
-            var x = isActive
+            var x = isExpanded
                 ? (View.Size.Width - thickness) / 2
                 : Math.Max(0, View.Size.Width - thickness - edgeInset);
             return new Rect(
@@ -211,7 +211,7 @@ public partial class ScrollBar : Controllable
         }
 
         thickness = Math.Min(thickness, View.Size.Height);
-        var y = isActive
+        var y = isExpanded
             ? (View.Size.Height - thickness) / 2
             : Math.Max(0, View.Size.Height - thickness - edgeInset);
         return new Rect(
@@ -262,7 +262,7 @@ public partial class ScrollBar : Controllable
     void OnPointerDown(object? sender, PointerEvent e)
     {
         // Convert from device coordinates to local control coordinates
-        var viewPos = View.toClient(e.DevicePosition);
+        var viewPos = View.toClient(e.Contact.DevicePosition);
         var region = HitTest(viewPos);
         var data = DataContext;
 
@@ -315,7 +315,7 @@ public partial class ScrollBar : Controllable
             return;
 
         // Convert from device coordinates to local control coordinates
-        var viewPos = View.toClient(e.DevicePosition);
+        var viewPos = View.toClient(e.Contact.DevicePosition);
 
         var data = DataContext;
         var orientationValue = View.GetStyle(OrientationProperty);

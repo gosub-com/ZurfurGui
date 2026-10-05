@@ -1,0 +1,5 @@
+{
+	$controller: "Scrim",
+	$namespace: "ZurfurGui.Controls",
+	$backgroundColor: "${color.surface.overlay.scrim}"
+}

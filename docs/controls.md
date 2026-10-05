@@ -62,6 +62,25 @@ arrange those controls. Common layouts include `Row`, `Column`, and `Dock`.
 }
 ```
 
+### Scrim
+
+`Scrim` displays a themed, full-screen overlay for transient UI such as dropdowns, menus, and modal content. Its
+background uses the active theme's `color.surface.overlay.scrim` token.
+
+Call `Show` with the current `AppWindow` to display the Scrim. It returns the `View` added to the floating-window
+layer. Subscribe to `Dismissed` to close the transient UI, then remove the returned view from its parent:
+
+```csharp
+View? scrimView = null;
+var scrim = new Scrim();
+scrim.Dismissed += (_, _) => scrimView?.RemoveFromParent();
+scrimView = scrim.Show(appWindow);
+```
+
+The caller owns the Scrim's lifetime. Remove its returned view when the transient UI closes. Also remove it when the
+owning control is detached. Content displayed above the Scrim should be added as a separate floating panel rather than
+as a child of the Scrim, so clicks on that content do not dismiss the Scrim.
+
 ### TextView
 
 `TextView` displays text. Its `text` property can be a string or an array of lines. Use styles and layout properties

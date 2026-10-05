@@ -21,19 +21,19 @@
         "color.text.on-primary": "#3D1020",
 
         // Buttons, checkboxes, radio buttons, toggles, etc.
-        "color.interactive.primary.stroke": "isPressed ? #202880; isPointerOver ? #B0304A; #C090A0",
-        "color.interactive.primary.background": "isPressed ? #FDEAF0;  isPointerOver ? #F5E8EC; #F8D8E0",
+        "color.interactive.primary.stroke": "isPressed ? #7A1035; isPointerOver ? #B0304A; #C090A0",
+        "color.interactive.primary.background": "isPressed ? #E8B8C8;  isPointerOver ? #F5E8EC; #F8D8E0",
 
         // Items in a listbox, combobox, etc.
-        "color.interactive.item.background": "isPressed ? #FDEAF0;  isPointerOver ? #F5E8EC; #00000000",
+        "color.interactive.item.background": "isPressed ? #E8B8C8;  isPointerOver ? #F5E8EC; #00000000",
 
         // Text box, etc.
         "color.input.background": "#FFFFFF",
         "color.input.stroke": "#8B3058",
 
         // ScrollBar
-        "color.scroll.track.background": "isPressed ? #E0C0CCD0; isPointerOver ? #EAD4DCB8; ScrollBar.isExpanded ? #F5E8ECA0; #00000000",
-        "color.scroll.thumb.background": "isPressed ? #9A5070; isPointerOver ? #AD7890; ScrollBar.isExpanded ? #C0A0B0; #D0B8C080",
+        "color.scroll.track.background": "isPressed ? #E0C0CCD0; isPointerOver ? #E5CAD4C4; ScrollBar.isExpanded ? #EAD4DCB8; #00000000",
+        "color.scroll.thumb.background": "isPressed ? #9A5070; isPointerOver ? #A36480; ScrollBar.isExpanded ? #AD7890; #D0B8C080",
 
         "color.status.success.background": "#DFF6DD",
         "color.status.warning.background": "#FFF4CE",

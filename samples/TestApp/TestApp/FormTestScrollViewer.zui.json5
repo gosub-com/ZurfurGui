@@ -41,6 +41,17 @@
                                 "Top-left of naturally oversized content",
                                 "The content has no size request; its extent comes from its text.",
                                 "This long line helps exercise natural horizontal measurement beyond the viewer width.",
+                            ]
+                        },
+                        {
+                            $name: "buttonClickTest",
+                            $controller: "Button",
+                            text: "Click Test",
+                            $align: "horizontal:center"
+                        },
+                        {
+                            $controller: "TextView",
+                            text: [
                                 "Content row 4",
                                 "Content row 5",
                                 "Content row 6",

@@ -67,9 +67,9 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
         var controlList = generatedControls.ToList();
 
         // typeof() for open generics requires the <> syntax; non-generics use the plain name.
-        // For generic controls, also emit a RunClassConstructor for the non-generic companion
-        // static class (e.g. "ComboBox") that holds hand-written PropertyKey fields such as
-        // ScrimColor.  Running only the open generic (ComboBox<>) does not reliably trigger the
+        // For generic controls, also emit a RunClassConstructor for the generated non-generic
+        // companion static class (e.g. "ComboBox"), which may contain hand-written PropertyKey
+        // fields. Running only the open generic (ComboBox<>) does not reliably trigger the
         // companion's type initializer, so those keys would remain unregistered when style sheets
         // are parsed — causing "Unknown property name" exceptions at runtime.
         var runStaticConstructors = string.Join("\r\n", controlList.SelectMany(t =>
@@ -81,10 +81,8 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
             {
                 $"        global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof({typeName}).TypeHandle);"
             };
-            // Generic controls have a non-generic companion static class that may hold
-            // hand-authored PropertyKey fields (e.g. ComboBox.ScrimColor).  Run its
-            // static constructor explicitly so those keys are registered before any
-            // style sheet is parsed.
+            // Run the generated non-generic companion's static constructor explicitly so any
+            // hand-authored PropertyKey fields are registered before style sheets are parsed.
             if (t.TypeParam != "")
             {
                 var companionName = $"global::{t.Namespace}.{t.ControllerName}";

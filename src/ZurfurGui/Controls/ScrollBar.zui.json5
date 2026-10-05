@@ -24,7 +24,7 @@
             type: "Double",
             bind: "data",
             flags: "render",
-            default: "100"
+            default: "0"
         },
 
         // Size of the visible viewport (used to calculate thumb size)

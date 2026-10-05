@@ -29,6 +29,9 @@ public partial class FormZurfurGui : Form
 
     private void PictureMain_MouseWheel(object? sender, MouseEventArgs e)
     {
+        if ((Control.ModifierKeys & Keys.Control) != Keys.Control)
+            return;
+
         if (e.Delta < 0)
             _magIndex = Math.Max(0, _magIndex - 1);
         else

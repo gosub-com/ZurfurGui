@@ -1,4 +1,5 @@
 ﻿using ZurfurGui.Base;
+using ZurfurGui.Input;
 using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
@@ -47,9 +48,9 @@ internal class TextViewRenderer : Renderable
         }
     }
 
-    public bool IsHit(View view, Point point)
+    public bool IsHit(View view, HitTestContext context)
     {
-        var p = view.toClient(point);
+        var p = view.toClient(context.Contact.DevicePosition);
         return new Rect(new(0, 0), view.DesiredTotalSize).Contains(p);
     }
 

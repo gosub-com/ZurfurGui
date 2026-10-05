@@ -2,21 +2,10 @@ using System.Collections.ObjectModel;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Input;
-using ZurfurGui.Layout;
 using ZurfurGui.Property;
 using ZurfurGui.Windows;
 
 namespace ZurfurGui.Controls;
-
-/// <summary>
-/// Non-generic companion class holding PropertyKey fields for ComboBox&lt;Item&gt;.
-/// Keys must live here rather than on the generic class to avoid per-closed-type
-/// static field duplication (which would cause duplicate PropertyKey registration).
-/// </summary>
-public static partial class ComboBox
-{
-    public static readonly PropertyKey<Color> ScrimColor = new("ComboBox.scrimColor", typeof(ComboBox<>), new Color(0, 0, 0, 20), ViewFlags.Render);
-}
 
 public sealed partial class ComboBox<Item> : Controllable
     where Item : IComboBoxItem
@@ -84,12 +73,9 @@ public sealed partial class ComboBox<Item> : Controllable
         // Full-screen transparent overlay catches clicks outside the dropdown.
         // BackgroundColor alpha must be > 16 to pass the panel hit test (see DrawHelper.ALPHA_HIT_THRESHOLD).
         // Align must be set AFTER ShowFloatingPanel because ShowFloatingPanel overwrites it with Left/Top.
-        var overlay = new Panel();
-        overlay.View.SetProperty(Panel.BackgroundColor, View.GetStyle(ComboBox.ScrimColor));
-        overlay.View.AddEvent(Panel.PointerClick, (s, ev) => CloseDropdown());
-        appWindow.ShowFloatingPanel(overlay, new(0, 0));
-        overlay.View.SetProperty(Panel.Align, new(AlignHorizontal.Stretch, AlignVertical.Stretch));
-        _dismissOverlay = overlay.View;
+        var scrim = new Scrim();
+        scrim.Dismissed += (_, _) => CloseDropdown();
+        _dismissOverlay = scrim.Show(appWindow);
 
         var popup = new ComboBoxPopup();
         var items = DataContext.Items;

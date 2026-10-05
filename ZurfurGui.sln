@@ -38,6 +38,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{364462A5-2
 		docs\controls.md = docs\controls.md
 		docs\future-improvements.md = docs\future-improvements.md
 		docs\initialization.md = docs\initialization.md
+		docs\input-events.md = docs\input-events.md
 		docs\property-binding.md = docs\property-binding.md
 		docs\scroll-viewer.md = docs\scroll-viewer.md
 		docs\styles-and-themes.md = docs\styles-and-themes.md

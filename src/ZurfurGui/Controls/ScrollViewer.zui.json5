@@ -1,6 +1,14 @@
 {
     $controller: "ScrollViewer",
     $namespace: "ZurfurGui.Controls",
+    $data: {
+        autoScrollToEnd: {
+            type: "bool",
+            bind: "styledData",
+            default: false,
+            flags: "measure"
+        }
+    },
     $content: [
         {
             $name: "_contentViewport",

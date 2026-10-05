@@ -1,5 +1,6 @@
 ﻿using ZurfurGui.Base;
 using ZurfurGui.Controls;
+using ZurfurGui.Input;
 
 namespace ZurfurGui.Render;
 internal static class RenderHelper
@@ -31,10 +32,10 @@ internal static class RenderHelper
     /// <summary>
     /// Perform hit test on a panel.
     /// </summary>
-    public static bool IsHitPanel(View view, Point point)
+    public static bool IsHitPanel(View view, HitTestContext context)
     {
         // Check if within bounds
-        var p = view.toClient(point);
+        var p = view.toClient(context.Contact.DevicePosition);
         if (!new Rect(new(0, 0), view.Size).Contains(p))
             return false;
 

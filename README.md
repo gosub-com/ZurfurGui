@@ -10,7 +10,10 @@ You can see the result here: https://gosub.com/zurfurgui
 
 This project is exploring **MDV** as an alternative to **MVVM**.  
 
-## For contributors and AI agents
+## Documentationm
+
+To get started, have your AI read [Controls](docs/controls.md)
+and [Architecture](docs/architecture.md) first.
 
 
 The following docs cover the internals of this project:
@@ -22,6 +25,7 @@ The following docs cover the internals of this project:
 - [Property Binding](docs/property-binding.md) — Property binding system
 - [Styles and Themes](docs/styles-and-themes.md) — Style and theme system (style sheets, selectors, pseudo-classes, and
   property resolution)
+- [Input and Pointer Events](docs/input-events.md) — Pointer input ingress, hit testing, capture, routing, and clicks
 - [ComboBox](docs/combo-box.md) — ComboBox control: usage, generic item types, styling, and internals
 - [ScrollViewer](docs/scroll-viewer.md) — ScrollViewer control: usage, styling, and internals
 - [Future Plans and Improvements](docs/future-improvements.md) — Future plans and improvements

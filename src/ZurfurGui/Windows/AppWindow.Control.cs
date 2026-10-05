@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
+using ZurfurGui.Input;
 using ZurfurGui.Property;
 using ZurfurGui.Render;
 using ZurfurGui.Styles;
@@ -106,7 +107,7 @@ public partial class AppWindow : Controllable, Renderable
         Renderer = renderer;
     }
 
-    public bool IsHit(View view, Point point)
+    public bool IsHit(View view, HitTestContext context)
     {
         return false;
     }

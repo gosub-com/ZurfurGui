@@ -7,7 +7,6 @@
     $borderColor: "${color.interactive.primary.stroke}",
     $backgroundColor: "${color.interactive.primary.background}",
     $padding: "${padding.combobox}",
-    "ComboBox.scrimColor": "${color.surface.overlay.scrim}",
     $layout: "Row",
     $sizeMin: "width:80",
     $data: {

@@ -63,6 +63,10 @@ public static partial class ZurfurMain
         app.ShowWindow(new FormTestScrollViewer(), "ScrollViewer Test",
             location: new PointProp(450, 165));
 
+        app.ShowWindow(new FormTestInput(), "Input Test",
+            location: new PointProp(550, 350),
+            sizeRequst: new SizeProp(700, 600));
+
     }
 
 }

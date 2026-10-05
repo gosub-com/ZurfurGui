@@ -1,0 +1,92 @@
+{
+    $controller: "FormTestInput",
+    $namespace: "TestApp",
+    $layout: "Dock",
+    $padding: "left:12,top:12,right:12,bottom:12",
+    $content: [
+        {
+            "dock.align": "top",
+            $controller: "TextView",
+            text: "Pointer Input Test"
+        },
+        {
+            "dock.align": "top",
+            $layout: "Row",
+            $content: [
+                {
+                    $name: "inputSurface",
+                    $controller: "Panel",
+                    $layout: "Column",
+                    $sizeRequest: "width:240,height:220",
+                    $margin: "right:12",
+                    $backgroundColor: "${color.surface.card}",
+                    $borderColor: "${color.input.stroke}",
+                    $borderWidth: 1,
+                    //$hitTest: "always",
+                    $content: [
+                        {
+                            $controller: "TextView",
+                            text: [
+                                "Input surface",
+                                "Move, press, and drag here.",
+                                "Drag outside while pressed."
+                            ],
+                            $align: "horizontal:center,vertical:center"
+                        },
+                        {
+                            $controller: "Button",
+                            text: [
+                                "Button on Surface"
+                            ],
+                            $align: "horizontal:center,vertical:center"
+                        },
+                        {
+                            $controller: "TextView",
+                            text: [
+                                "Text on Surface"
+                            ],
+                            $align: "horizontal:center,vertical:center"
+                        }
+                    ]
+                },
+                {
+                    $name: "currentState",
+                    $controller: "TextView",
+                    text: "Waiting for pointer input...",
+                    $margin: "top:4"
+                }
+            ]
+        },
+        {
+            "dock.align": "top",
+            $layout: "Row",
+            $margin: "top:12,bottom:4",
+            $content: [
+                {
+                    $controller: "TextView",
+                    text: "Event log"
+                },
+                {
+                    $name: "buttonClearLog",
+                    $controller: "Button",
+                    text: "Clear Log"
+                }
+            ]
+        },
+        {
+            $name: "eventLog",
+            $controller: "ScrollViewer",
+            autoScrollToEnd: true,
+            $backgroundColor: "${color.input.background}",
+            $borderWidth: "${stroke.width.default}",
+            $borderColor: "${color.input.stroke}",
+            $content: [
+                {
+                    $name: "eventLogText",
+                    $controller: "TextView",
+                    text: "No events yet."
+                }
+            ]
+        }
+    ]
+}

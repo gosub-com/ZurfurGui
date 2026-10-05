@@ -6,7 +6,7 @@
 
         // Windows, Panels, Cards, etc.
         "color.surface.canvas": "#2A1520", // Main app window
-        "color.surface.card": "#2A1520", // Panels, cards, etc. on top of main app window
+        "color.surface.card": "#321D28", // Panels, cards, etc. on top of main app window
         "color.surface.overlay": "#381520", // Windows and dialogs
         "color.surface.overlay.stroke": "#7A3050",
         "color.surface.overlay.scrim": "#FFFFFF50",
@@ -18,22 +18,22 @@
 
         // Text
         "color.text.primary": "#F0D8E0",
-        "color.text.on-primary": "#D8EEFF",
+        "color.text.on-primary": "#FFE8EE",
 
         // Buttons, checkboxes, radio buttons, toggles, etc.
-        "color.interactive.primary.stroke": "isPressed ? #383E90; isPointerOver ? #5868C0; #5058A0",
-        "color.interactive.primary.background": "isPressed ? #181C40; isPointerOver ? #2A2E60; #222448",
+        "color.interactive.primary.stroke": "isPressed ? #7A1035; isPointerOver ? #D06080; #9A5068",
+        "color.interactive.primary.background": "isPressed ? #381520; isPointerOver ? #633044; #4A2635",
 
         // Items in a listbox, combobox, etc.
-        "color.interactive.item.background": "isPressed ? #181C40; isPointerOver ? #2A2E60; #00000000",
+        "color.interactive.item.background": "isPressed ? #381520; isPointerOver ? #633044; #00000000",
 
         // Text box, etc.
-        "color.input.background": "#2A1520",
+        "color.input.background": "#38222C",
         "color.input.stroke": "#7A3050",
 
         // ScrollBar
-        "color.scroll.track.background": "isPressed ? #603040D0; isPointerOver ? #4C2A30B8; ScrollBar.isExpanded ? #381520A0; #00000000",
-        "color.scroll.thumb.background": "isPressed ? #A05070; isPointerOver ? #885060; ScrollBar.isExpanded ? #705060; #60405080",
+        "color.scroll.track.background": "isPressed ? #603040D0; isPointerOver ? #562D38C4; ScrollBar.isExpanded ? #4C2A30B8; #00000000",
+        "color.scroll.thumb.background": "isPressed ? #A05070; isPointerOver ? #945068; ScrollBar.isExpanded ? #885060; #60405080",
 
         "color.status.success.background": "#27472A",
         "color.status.warning.background": "#4F442B",

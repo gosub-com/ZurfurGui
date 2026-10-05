@@ -257,19 +257,19 @@ composition rather than generator metadata.
 
 In C#, static fields on a generic class are per closed type — `ComboBox<A>` and `ComboBox<B>` each have their own copy.
 This would cause duplicate `PropertyKey` registration exceptions at startup. To avoid this, the generator emits
-`PropertyKey` fields into a separate non-generic companion static class with the same base name:
+an empty non-generic companion static partial class with the same base name for every generic control. Any generated
+`PropertyKey` fields are emitted into that companion rather than the generic class:
 
 ```csharp
 // PropertyKeys for ComboBox<> live here rather than on the generic class
 // to avoid per-closed-type static field duplication.
-public static class ComboBox {
+public static partial class ComboBox {
     public static readonly PropertyKey<int> SelectedIndex = new(..., typeof(ComboBox<>), ...);
 }
 ```
 
-Hand-written `PropertyKey` fields that belong conceptually to the control but must live outside the generic class
-(e.g. `ScrimColor`) are declared directly in the hand-written `ComboBox.Control.cs` partial, using
-`typeof(ComboBox<>)` as the owner type.
+The companion is generated even when the generic control has no generated property keys. Hand-written static members
+can be added through a matching partial companion when a generic control needs them.
 
 ## Loader and runtime initialization
 
@@ -398,37 +398,13 @@ For measurement, arrangement, sizing, and content-extent behavior, see [ScrollVi
 
 ## Input and interaction architecture
 
-### Mouse capture and pressed state
+For the complete pointer-input pipeline, including hit testing, preview and bubble routing, capture, and click
+generation, see [Input and pointer events](input-events.md).
 
-Pointer capture is required for controls that continue an interaction after the pointer leaves their bounds, such as
-scrollbar thumb dragging, arrow clicks, window movement, and resize handles. A control should capture the pointer in
-its pointer-down handler and release interaction state from `PointerCaptureLost`. Pointer-up is not sufficient as the
-only cleanup path because the pointer router clears capture before it performs the normal hit-test dispatch for a
-pointer-up outside the original control.
-
-The pointer router has two related but independent state concepts:
-
-- `Panel.IsPointerOver` describes the current hit-test result. It must be recalculated from the pointer position and
-  should not be forced off merely because capture ended.
-- `Panel.IsPressed` describes an active press. A captured control remains pressed while the pointer is outside its
-  original hover chain and must clear that state when capture is lost.
-
-Captured views receive pointer events before the router recalculates the current hover chain. Code that sets pressed
-state during a captured move must therefore not rely on the hover chain to preserve it; the router reasserts pressed
-state for captured views until capture ends. Controls may also keep local drag or pointer-down state for rendering and
-interaction decisions.
-
-Capture-loss cleanup must avoid leaving stale visual state:
-
-- Clear local drag and pointer-down state and `Panel.IsPressed` when capture ends.
-- Let the pointer router own `Panel.IsPointerOver`, or clear it only after verifying that the current pointer is outside
-  the control's actual hit rectangle. Clearing it unconditionally causes a release inside the control to lose its
-  hover appearance.
-- For overlay controls, keep the full outer view rectangle as the hit target even when the resting visual is only a
-  thin line. Visual geometry and interaction geometry are separate.
-
-When adding a captured interaction, verify all of these transitions: press inside and release inside, press and drag
-outside then release, pointer leave while captured, and capture loss without a normal pointer-up event.
+Pointer capture is required for controls that continue an interaction after the pointer leaves their bounds. Controls
+should capture during pointer-down and clear interaction state from `PointerCaptureLost`; pointer-up is not sufficient
+as the only cleanup path. Keep pointer-over and pressed state conceptually separate while capture is active. These
+rules apply to interactions such as scrollbar dragging, window movement, and resize handles.
 
 ## Editing guidelines
 
@@ -446,7 +422,7 @@ outside then release, pointer leave while captured, and capture loss without a n
   control-name-to-C#-type translation (including generic forms).
 - `ZurfurGuiGen/ZuiEmitController.cs`: emits the controller class, `InitializeControl`, `DataContext` property,
   `OnDataContextPropertyChanged`, `SyncAllPropertiesToView`, and `SetDataProperty`; handles generic class headers and
-  non-generic companion key containers.
+  always emits non-generic companion classes for generic controls.
 - `ZurfurGuiGen/ZuiEmitData.cs`: emits `<ViewName>Data` concrete data classes; handles generic data classes and top-level
   doc comment propagation.
 - `ZurfurGuiGen/ZuiEmitMain.cs`: emits `ZurfurMain.InitializeControls()` — control registration, concrete data-controller

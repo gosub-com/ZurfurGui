@@ -35,7 +35,7 @@ internal partial class BrowserCanvas : OsCanvas
     BrowserWindow _window;
     JSObject _canvas { get; set; }
     string _canvasId { get; set; }
-    Action<PointerEvent>? _pointerInput;
+    Action<OsPointerEvent>? _pointerInput;
 
     public OsContext Context { get; private set; }
     
@@ -79,13 +79,63 @@ internal partial class BrowserCanvas : OsCanvas
                 var canvasRect = GetBoundingClientRect(_canvas);
                 var canvasPoint = new Point(canvasRect.GetPropertyAsDouble("x"), canvasRect.GetPropertyAsDouble("y"));
                 var position = new Point(e.GetPropertyAsDouble("clientX"), e.GetPropertyAsDouble("clientY")) - canvasPoint;
-                _pointerInput?.Invoke(new PointerEvent(etype, position.ToPoint * _window.DevicePixelRatio));
+                var scale = _window.DevicePixelRatio;
+                _pointerInput?.Invoke(new OsPointerEvent(etype, position.ToPoint * scale)
+                {
+                    Buttons = MapButtons(e.GetPropertyAsDouble("buttons")),
+                    ChangedButton = MapChangedButton(e.GetPropertyAsDouble("button")),
+                    Modifiers = GetModifiers(e),
+                    Device = MapDevice(e.GetPropertyAsString("pointerType")),
+                    ContactId = (int)e.GetPropertyAsDouble("pointerId"),
+                    ContactWidth = e.GetPropertyAsDouble("width") * scale,
+                    ContactHeight = e.GetPropertyAsDouble("height") * scale
+                });
                 break;
             default: 
                 Console.WriteLine($"Un-processed event: {etype}");
                 break;
         };
     }
+
+    static PointerButtons MapButtons(double value)
+    {
+        var buttons = PointerButtons.None;
+        var bits = (int)value;
+        if ((bits & 1) != 0) buttons |= PointerButtons.Left;
+        if ((bits & 2) != 0) buttons |= PointerButtons.Right;
+        if ((bits & 4) != 0) buttons |= PointerButtons.Middle;
+        if ((bits & 8) != 0) buttons |= PointerButtons.Back;
+        if ((bits & 16) != 0) buttons |= PointerButtons.Forward;
+        return buttons;
+    }
+
+    static PointerButtons MapChangedButton(double value) => (int)value switch
+    {
+        0 => PointerButtons.Left,
+        1 => PointerButtons.Middle,
+        2 => PointerButtons.Right,
+        3 => PointerButtons.Back,
+        4 => PointerButtons.Forward,
+        _ => PointerButtons.None
+    };
+
+    static PointerModifiers GetModifiers(JSObject e)
+    {
+        var modifiers = PointerModifiers.None;
+        if (e.GetPropertyAsBoolean("shiftKey")) modifiers |= PointerModifiers.Shift;
+        if (e.GetPropertyAsBoolean("ctrlKey")) modifiers |= PointerModifiers.Control;
+        if (e.GetPropertyAsBoolean("altKey")) modifiers |= PointerModifiers.Alt;
+        if (e.GetPropertyAsBoolean("metaKey")) modifiers |= PointerModifiers.Meta;
+        return modifiers;
+    }
+
+    static PointerDeviceKind MapDevice(string value) => value switch
+    {
+        "mouse" => PointerDeviceKind.Mouse,
+        "touch" => PointerDeviceKind.Touch,
+        "pen" => PointerDeviceKind.Pen,
+        _ => PointerDeviceKind.Unknown
+    };
 
     public bool HasFocus => CanvasHasFocus(_canvas);
 
@@ -139,7 +189,7 @@ internal partial class BrowserCanvas : OsCanvas
         }
     }
 
-    public Action<PointerEvent>? PointerInput 
+    public Action<OsPointerEvent>? PointerInput 
     { 
         get => _pointerInput; 
         set { _pointerInput = value; } 

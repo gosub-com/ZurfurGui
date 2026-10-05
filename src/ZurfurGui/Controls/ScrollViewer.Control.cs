@@ -41,18 +41,16 @@ public sealed partial class ScrollViewer
             _scrollOffset = clamped;
             _contentWindow.View.SetProperty(Panel.Offset, new PointProp(-clamped.X, -clamped.Y));
 
-            if (!_syncingScrollBars)
+            var wasSyncingScrollBars = _syncingScrollBars;
+            _syncingScrollBars = true;
+            try
             {
-                _syncingScrollBars = true;
-                try
-                {
-                    horizontalData.Value = clamped.X;
-                    verticalData.Value = clamped.Y;
-                }
-                finally
-                {
-                    _syncingScrollBars = false;
-                }
+                horizontalData.Value = clamped.X;
+                verticalData.Value = clamped.Y;
+            }
+            finally
+            {
+                _syncingScrollBars = wasSyncingScrollBars;
             }
         }
     }
@@ -72,13 +70,14 @@ public sealed partial class ScrollViewer
             return;
         }
 
-        SyncScrollBars();
+        SyncScrollBars(_contentViewport.View.ContentRect.Size);
     }
 
-    void SyncScrollBars()
+    void SyncScrollBars(Size viewportSize)
     {
-        var viewportSize = _contentViewport.View.ContentRect.Size;
         var contentSize = _contentWindow.View.DesiredContentSize;
+        var verticalData = verticalScrollBar.DataContext;
+        var wasAtVerticalEnd = verticalData.Value >= verticalData.Maximum;
 
         _syncingScrollBars = true;
         try
@@ -86,6 +85,9 @@ public sealed partial class ScrollViewer
             SyncScrollBar(horizontalScrollBar, contentSize.Width, viewportSize.Width);
             SyncScrollBar(verticalScrollBar, contentSize.Height, viewportSize.Height);
             ScrollOffset = _scrollOffset;
+
+            if (View.GetProperty(AutoScrollToEndProperty) && wasAtVerticalEnd)
+                ScrollOffset = new Point(ScrollOffset.X, verticalData.Maximum);
         }
         finally
         {
@@ -119,7 +121,7 @@ public sealed partial class ScrollViewer
 
         if (horizontalVisible)
         {
-            var width = viewport.Size.Width - (verticalVisible ? verticalThickness : 0);
+            var width = viewport.Size.Width;
             horizontalScrollBar.View.Arrange(
                 new Rect(
                     viewport.X,
@@ -131,7 +133,7 @@ public sealed partial class ScrollViewer
 
         if (verticalVisible)
         {
-            var height = viewport.Size.Height - (horizontalVisible ? horizontalThickness : 0);
+            var height = viewport.Size.Height;
             verticalScrollBar.View.Arrange(
                 new Rect(
                     viewport.Right - verticalThickness,
@@ -180,8 +182,8 @@ public sealed partial class ScrollViewer
         public void ArrangeViews(View view, MeasureContext measure)
         {
             var contentRect = view.ContentRect;
+            _owner.SyncScrollBars(contentRect.Size);
             _owner._contentViewport.View.Arrange(contentRect, measure);
-            _owner.SyncScrollBars();
             _owner.ArrangeScrollBars(contentRect, measure);
         }
     }

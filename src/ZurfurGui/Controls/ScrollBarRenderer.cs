@@ -1,5 +1,6 @@
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
+using ZurfurGui.Input;
 
 namespace ZurfurGui.Render;
 
@@ -19,10 +20,11 @@ internal class ScrollBarRenderer : Renderable
         var data = _control.DataContext;
         var trackRect = new Rect(new(), view.Size);
         var orientationValue = view.GetStyle(ScrollBar.OrientationProperty);
-        var isActive = _control.IsExpanded;
+        var isExpanded = _control.IsExpanded;
 
-        if (isActive)
+        if (isExpanded)
         {
+            // Draw background track
             var trackColor = view.GetStyle(ScrollBar.TrackColorProperty);
             context.FillRect(trackColor, trackRect, 1000);
         }
@@ -31,12 +33,12 @@ internal class ScrollBarRenderer : Renderable
         // it is thin and near the outer edge; hover and press make it wider and centered.
         if (data.Maximum > data.Minimum)
         {
-            var thumbRect = _control.CalculateVisualThumbRect(isActive);
+            var thumbRect = _control.CalculateVisualThumbRect(isExpanded);
             var thumbColor = view.GetStyle(ScrollBar.ThumbColorProperty);
             var thumbRadius = view.GetStyle(ScrollBar.ThumbRadiusProperty);
             context.FillRect(thumbColor, thumbRect, thumbRadius);
 
-            if (isActive)
+            if (isExpanded)
             {
                 var startArrowRect = _control.GetStartArrowRect();
                 var startArrowPoints = GetArrowTrianglePoints(startArrowRect, orientationValue, true);
@@ -103,9 +105,9 @@ internal class ScrollBarRenderer : Renderable
         }
     }
 
-    public bool IsHit(View view, Point point)
+    public bool IsHit(View view, HitTestContext context)
     {
-        var p = view.toClient(point);
+        var p = view.toClient(context.Contact.DevicePosition);
         return new Rect(new(), view.Size).Contains(p);
     }
 }
