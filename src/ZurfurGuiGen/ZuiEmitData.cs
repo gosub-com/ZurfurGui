@@ -11,7 +11,7 @@ internal static class ZuiEmitData
 {
     internal static string GenerateDataImplementationSource(ZuiFileInfo data)
     {
-        var bindings = data.Bindings.Where(b => b.BindType != BindType.StyledOnly).ToList();
+        var bindings = data.Bindings.Where(b => b.BindType != BindType.Styled).ToList();
         if (bindings.Count == 0)
             return "";
 
@@ -66,14 +66,6 @@ internal static class ZuiEmitData
             else
                 sb.AppendIndentedLine(2, $"{fieldName} = new {binding.BaseType}();");
         }
-        sb.AppendIndentedLine(1, "}");
-        sb.Append("\r\n");
-
-        var ctorParams = string.Join(", ", bindings.Select(b => $"{ZuiEmit.GetBindingDataType(b, namedControls)} {b.Name}"));
-        sb.AppendIndentedLine(1, $"public {className}({ctorParams})");
-        sb.AppendIndentedLine(1, "{");
-        foreach (var binding in bindings)
-            sb.AppendIndentedLine(2, $"__{binding.Name} = {binding.Name};");
         sb.AppendIndentedLine(1, "}");
         sb.Append("\r\n");
 

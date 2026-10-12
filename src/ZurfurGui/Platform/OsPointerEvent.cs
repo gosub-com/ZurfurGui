@@ -34,7 +34,6 @@ public record class OsPointerEvent(string Type, Point DevicePosition)
         "pointerenter" => PointerEventKind.Enter,
         "pointerleave" => PointerEventKind.Leave,
         "pointercancel" => PointerEventKind.Cancel,
-        "pointerclick" => PointerEventKind.Click,
         _ => PointerEventKind.Unknown
     };
 }

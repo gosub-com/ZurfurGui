@@ -20,7 +20,7 @@ Each `$data` entry specifies `type`, `bind`, and optional `default` and `flags` 
 | Field | Required | Description | Example |
 |---|---|---|---|
 | `type` | Yes | The property type. Prefix with `?` for nullable types and `[]` for collections. | `Color`, `?string`, `[]Item` |
-| `bind` | Yes | Controls whether the value is data-only, style-aware, style-only, or forwarded to a child. | `data`, `styledData`, `styledOnly`, `_child.text` |
+| `bind` | Yes | Controls whether the value is data-only, style-aware, style-only, or forwarded to a child. | `data`, `styledData`, `styled`, `_child.text` |
 | `default` | No | A C# expression used by the generated data constructor. | `100`, `Orientation.horizontal`, `new Color(128, 128, 128)` |
 | `flags` | No | Comma-separated `ViewFlags` used when the property changes. | `draw`, `measure`, `styleThis`, `styleDown` |
 
@@ -39,7 +39,7 @@ $data: {
     },
     thumbColor: {
         type: "Color",
-        bind: "styledOnly",
+        bind: "styled",
         default: "new Color(128, 128, 128)",
         flags: "draw"
     }
@@ -70,7 +70,7 @@ names are camelCase in ZUI and become PascalCase C# properties.
 
 ### 3. Style-only
 
-- **Syntax:** `bind: "styledOnly"`
+- **Syntax:** `bind: "styled"`
 - **Generated output:** A `PropertyKey<T>` only. No property is emitted in the concrete data class or `DataContext`.
 - **Runtime behavior:** The value is controlled by styles or imperative `View.SetProperty` calls, not by data changes.
 - **Use for:** Visual configuration that should not be application data, such as scrollbar thickness or a control's
@@ -110,7 +110,7 @@ $data: {
 Rules:
 
 - Collections cannot be nullable; `?[]Type` is invalid.
-- Collection bindings cannot use `styledData`, `styledOnly`, `attached`, or a forwarded path.
+- Collection bindings cannot use `styledData`, `styled`, `attached`, or a forwarded path.
 - A regular `[]Type` becomes `ObservableCollection<TypeData>` in generated data code.
 - A generic `[]Item` becomes `ObservableCollection<Item>` so a closed `ComboBox<Item>` retains its concrete item type.
 - The generated data constructor creates a live, non-null `ObservableCollection<T>`.

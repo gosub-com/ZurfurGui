@@ -17,7 +17,7 @@ public partial class Panel : Controllable
     
     // NOTE: ThemeTokens are the same for every control of a given type.  TBD: Move them out of the instance
     public static readonly PropertyKey<Dictionary<string, string>> ThemeTokens = new("$themeTokens", typeof(Panel), new(), ViewFlags.None);
-    public static readonly PropertyKey<TextLines> ActiveThemes = new("$activeThemes", typeof(Panel), new(), ViewFlags.StyleDown);
+    public static readonly PropertyKey<TextLines> ActiveThemes = new("$activeThemes", typeof(Panel), new(), ViewFlags.StyleChild);
 
     // NOTE: DataProperties are used only by the loader and are removed after the control is loaded.
     public static readonly PropertyKey<Dictionary<string, System.Text.Json.JsonElement>> DataProperties = new("$dataProperties", typeof(Panel), new(), ViewFlags.None);
@@ -42,8 +42,8 @@ public partial class Panel : Controllable
 
     // Pseudo classes
     public static readonly PropertyKey<bool> IsPointerOver = new("$isPointerOver", typeof(Panel), new(), ViewFlags.Style);
-    public static readonly PropertyKey<bool> IsEnabled = new("$isEnabled", typeof(Panel), new(), ViewFlags.StyleDown);
-    public static readonly PropertyKey<bool> IsWindowActive = new("$isWindowInactive", typeof(Panel), new(), ViewFlags.StyleDown);
+    public static readonly PropertyKey<bool> IsEnabled = new("$isEnabled", typeof(Panel), new(), ViewFlags.StyleChild);
+    public static readonly PropertyKey<bool> IsWindowActive = new("$isWindowInactive", typeof(Panel), new(), ViewFlags.StyleChild);
     public static readonly PropertyKey<bool> IsPressed = new("$isPressed", typeof(Panel), new(), ViewFlags.Style);
     public static readonly PropertyKey<bool> IsFocused = new("$isFocused", typeof(Panel), new(), ViewFlags.Style);
     public static readonly PropertyKey<bool> IsFocusWithin = new("$isFocusWithin", typeof(Panel), new(), ViewFlags.Style);
@@ -53,11 +53,11 @@ public partial class Panel : Controllable
     public static readonly PropertyKey<EventHandler<PointerEvent>> PointerDown = new("$pointerDown", typeof(Panel), static (s, e) => { });
     public static readonly PropertyKey<EventHandler<PointerEvent>> PointerMove = new("$pointerMove", typeof(Panel), static (s, e) => { });
     public static readonly PropertyKey<EventHandler<PointerEvent>> PointerUp = new("$pointerUp", typeof(Panel), static (s, e) => { });
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerClick = new("$pointerClick", typeof(Panel), static (s, e) => { });
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerEntered = new("$pointerEntered", typeof(Panel), static (s, e) => { });
+    public static readonly PropertyKey<EventHandler<PointerEvent>> PointerExited = new("$pointerExited", typeof(Panel), static (s, e) => { });
     public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerDown = new("$previewPointerDown", typeof(Panel), static (s, e) => { });
     public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerMove = new("$previewPointerMove", typeof(Panel), static (s, e) => { });
     public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerUp = new("$previewPointerUp", typeof(Panel), static (s, e) => { });
-    public static readonly PropertyKey<EventHandler<PointerEvent>> PreviewPointerClick = new("$previewPointerClick", typeof(Panel), static (s, e) => { });
     public static readonly PropertyKey<EventHandler> PointerCaptureLost = new("$pointerCaptureLost", typeof(Panel), static (s, e) => { });
 
 

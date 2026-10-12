@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Controls;
+using ZurfurGui.Input;
 using ZurfurGui.Layout;
 using ZurfurGui.Platform;
 using ZurfurGui.Property;
@@ -15,9 +16,10 @@ public enum ViewFlags : short
     Render = 1 << 1,
     Measure = 1 << 3,
     Style = 1 << 4,
-    StyleDown = 1 << 5,
-    Dirty = 1 << 6,
-    DirtyDown = 1 << 7,
+    StyleChild = 1 << 5,
+    Moved = 1 << 6,
+    MovedChild = 1 << 7,
+    ClientClipChanged = 1 << 8,
 }
 
 public sealed class View
@@ -128,8 +130,13 @@ public sealed class View
 
     // TBD: Measure performance and remove if not needed.
     internal MeasureCache _measureCache;
-    internal OsRenderBuffer? _renderUnderBuffer;
-    internal OsRenderBuffer? _renderOverBuffer;
+
+    internal OsRenderBuffer _renderBufferBackground = OsRenderBuffer.Empty;
+    internal OsRenderBuffer _renderBuffer = OsRenderBuffer.Empty;
+    internal OsRenderBuffer _renderBufferOver = OsRenderBuffer.Empty;
+    internal Rect _renderClientClip = new Rect(-1, -1, -1, -1);
+    internal RenderResult _renderResult = RenderResult.Keep;
+    internal RenderResult _renderResultOver = RenderResult.Keep;
 
     internal struct MeasureCache
     {
@@ -244,7 +251,7 @@ public sealed class View
     /// <summary>
     /// Set the view flags (e.g. InvalidateMeasure, InvalidateRender, InvalidateStyle).  
     /// </summary>
-    public void SetFlags(ViewFlags flags)
+    internal void SetFlags(ViewFlags flags)
     {
         if ((flags & Flags) == flags)
         {
@@ -557,7 +564,7 @@ public sealed class View
         }
 
         if (Origin != newOrigin || Scale != newScale)
-            SetFlags(ViewFlags.Dirty);
+            SetFlags(ViewFlags.Moved);
 
         _measureCache.FinalAtArrange = final;
         _measureCache.ScaleAtArrange = newScale;
@@ -612,9 +619,9 @@ public sealed class View
             throw new InvalidOperationException("AddChild: AppWindow cannot be added to the view tree");
         child.Parent = this;
         _children.Add(child);
-        SetFlags(ViewFlags.Render | ViewFlags.Measure | ViewFlags.Dirty);
+        SetFlags(ViewFlags.Render | ViewFlags.Measure | ViewFlags.Moved);
         child.Flags = ViewFlags.None;
-        child.SetFlags(ViewFlags.Render | ViewFlags.Measure | ViewFlags.DirtyDown | ViewFlags.StyleDown);
+        child.SetFlags(ViewFlags.Render | ViewFlags.Measure | ViewFlags.MovedChild | ViewFlags.StyleChild);
         if (AppWindow != null)
             SendAttachMessages(child);
     }
@@ -665,12 +672,12 @@ public sealed class View
     {
         if (view.IsVisible)
         {
-            Renderer.s_removedChildDirtyRectDevice = Renderer.s_removedChildDirtyRectDevice.Union(view.toDevice(view.VisualBounds));
+            Renderer.s_removedChildDirtyRectDevice 
+                = Renderer.s_removedChildDirtyRectDevice.Union(view.toDevice(view.VisualBounds));
             foreach (var child in view.Children)
                 ExpandRemovedChildDirtyRect(child);
 
         }
-        return;
     }
 
     /// <summary>
@@ -700,7 +707,7 @@ public sealed class View
             throw new ArgumentException("BringToFront: Parent does not contain this view");
         parent._children.RemoveAt(i);
         parent._children.Add(this);
-        SetFlags(ViewFlags.DirtyDown);
+        SetFlags(ViewFlags.MovedChild);
     }
 
 

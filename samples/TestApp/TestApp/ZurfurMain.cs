@@ -64,7 +64,7 @@ public static partial class ZurfurMain
             location: new PointProp(450, 165));
 
         app.ShowWindow(new FormTestInput(), "Input Test",
-            location: new PointProp(550, 350),
+            location: new PointProp(260, 180),
             sizeRequst: new SizeProp(700, 600));
 
     }

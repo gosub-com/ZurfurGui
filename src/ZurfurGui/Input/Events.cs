@@ -39,8 +39,7 @@ public enum PointerEventKind
     Up,
     Enter,
     Leave,
-    Cancel,
-    Click
+    Cancel
 }
 
 public readonly record struct PointerContact(
@@ -59,4 +58,25 @@ public readonly record struct PointerContact(
 public record class PointerEvent(PointerEventKind Kind)
 {
     public PointerContact Contact { get; init; }
+
+    /// <summary>
+    /// Gets or sets whether normal routed event processing has handled this event.
+    /// </summary>
+    /// <remarks>
+    /// Handled stops normal routing at the current route boundary. During preview routing it also prevents the
+    /// corresponding bubble route from running. Handling an event does not cancel the control's own interaction;
+    /// for example, a button can handle its pointer-down event and continue tracking the press for a later click.
+    /// </remarks>
+    public bool Handled { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether this pointer interaction has been cancelled.
+    /// </summary>
+    /// <remarks>
+    /// Cancellation stops normal routing for the current event rather than merely marking it handled. Controls should
+    /// also release capture or use the router's subtree-cancellation operation when the underlying interaction is no
+    /// longer valid. The pointer router performs the associated capture and pressed-state cleanup for pointer cancel
+    /// events and explicit subtree cancellation.
+    /// </remarks>
+    public bool Cancelled { get; set; }
 }

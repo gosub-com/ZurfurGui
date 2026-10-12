@@ -21,12 +21,6 @@ namespace ZurfurGui.WinForms.Interop;
 internal class WinContext : OsContext
 {
 
-    /// <summary>
-    /// Fudge factor to make Winforms text offset the same as the browser canvas
-    /// </summary>
-    const double TEXT_OFFSET_SCALE_Y = 0.075;
-    const double TEXT_OFFSET_SCALE_X = 0.175;
-
     static readonly RectangleF LAYOUT_RECT = new(0, 0, float.MaxValue, float.MaxValue);
     StringFormat _stringFormat = new StringFormat(StringFormat.GenericTypographic)
     {
@@ -68,12 +62,8 @@ internal class WinContext : OsContext
 
     double OsContext.MeasureTextWidth(string fontName, double fontSize, string text)
     {
-        // NOTE: Graphics.MeasureString returns too much space (and doesn't measure trailing space)
         if (text == "")
             return 0;
-
-        var characterRanges = new[] { new CharacterRange(0, text.Length) };
-        _stringFormat.SetMeasurableCharacterRanges(characterRanges);
 
         if (fontName != _fontName || fontSize != _fontSize)
         {
@@ -82,12 +72,7 @@ internal class WinContext : OsContext
             _font = null;
         }
 
-        var regions = _graphics.MeasureCharacterRanges(text, GetFont(), LAYOUT_RECT, _stringFormat);
-        var textWidth = regions[0].GetBounds(_graphics).Width;
-        foreach (var r in regions)
-            r.Dispose();
-
-        return textWidth + _fontSize * TEXT_OFFSET_SCALE_X;
+        return _graphics.MeasureString(text, GetFont(), LAYOUT_RECT.Size, _stringFormat).Width;
     }
 
     ZurfurGui.Base.FontMetrics OsContext.GetFontMetrics(string fontName, double fontSize)
@@ -106,9 +91,8 @@ internal class WinContext : OsContext
         // Convert design units to pixels
         var ascent = fontFamily.GetCellAscent(font.Style) * fontSize / emHeight;
         var descent = fontFamily.GetCellDescent(font.Style) * fontSize / emHeight;
-        var lineSpacing = fontFamily.GetLineSpacing(font.Style) * fontSize / emHeight;
-
-        return new ZurfurGui.Base.FontMetrics(ascent, descent, lineSpacing);
+        var lineHeight = ascent + descent;
+        return new ZurfurGui.Base.FontMetrics(ascent, descent, lineHeight);
     }
 
 
@@ -294,10 +278,13 @@ internal class WinContext : OsContext
 
     void FillText(string text, double x, double y)
     {
-        y -= _fontSize;  // Draw at alphabetic base line
-        y += _fontSize * TEXT_OFFSET_SCALE_Y;
-        x -= _fontSize * TEXT_OFFSET_SCALE_X;
-        _graphics.DrawString(text, GetFont(), GetBrush(), (float)x, (float)y);
+        var font = GetFont();
+        var fontFamily = font.FontFamily;
+        var emHeight = fontFamily.GetEmHeight(font.Style);
+        var ascent = fontFamily.GetCellAscent(font.Style) * _fontSize / emHeight;
+
+        y -= ascent;  // DrawString uses a top-origin position; convert the baseline to the font top.
+        _graphics.DrawString(text, font, GetBrush(), (float)x, (float)y, _stringFormat);
     }
 
     static PointF[] ConvertPoints(double[] points, int length)

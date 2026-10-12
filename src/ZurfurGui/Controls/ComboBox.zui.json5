@@ -6,7 +6,7 @@
     $borderRadius: "${radius.corner.medium}",
     $borderColor: "${color.interactive.primary.stroke}",
     $backgroundColor: "${color.interactive.primary.background}",
-    $padding: "${padding.combobox}",
+    $padding: "${padding.combo-box}",
     $layout: "Row",
     $sizeMin: "width:80",
     $data: {
@@ -33,7 +33,7 @@
             $name: "_arrow",
             $controller: "TextView",
             "TextView.color": "${color.text.primary}",
-            $padding: "${padding.combobox.arrow}",
+            $padding: "${padding.combo-box.arrow}",
             $align: "horizontal:right,vertical:center",
             text: [ "▾" ]
         }

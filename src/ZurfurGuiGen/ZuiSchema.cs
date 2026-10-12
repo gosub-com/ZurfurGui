@@ -32,7 +32,7 @@ internal static class ZuiSchema
             {
                 "data" => BindType.Data,
                 "styledData" => BindType.StyledData,
-                "styledOnly" => BindType.StyledOnly,
+                "styled" => BindType.Styled,
                 "attached" => BindType.Attached,
                 "" => throw new Exception($"The JSON '$data.{kvp.Key}' must have an explicit 'bind' value (use 'data', etc.)."),
                 _ => BindType.Forwarded,

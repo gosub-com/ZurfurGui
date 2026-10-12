@@ -25,7 +25,7 @@ internal static class ZuiEmitController
         // For generic controls, keys must live in a non-generic companion static class to avoid
         // per-closed-type duplication (each closed type would try to register the same key name,
         // causing a duplicate-registration exception in PropertyKey's constructor).
-        var newBindings = allBindings.Where(b => (b.BindType == BindType.StyledData || b.BindType == BindType.StyledOnly) && !b.IsCollection).ToList();
+        var newBindings = allBindings.Where(b => (b.BindType == BindType.StyledData || b.BindType == BindType.Styled) && !b.IsCollection).ToList();
         if (data.TypeParam != "")
         {
             sb.Append($"/// <summary>Non-generic companion holding PropertyKey fields for {data.ControllerName}&lt;{data.TypeParam}&gt;.</summary>\r\n");
@@ -111,7 +111,7 @@ internal static class ZuiEmitController
         }
 
         // Generate data property info dictionary (excluding styleOnly properties)
-        GenerateDataPropertyInfoDictionary(allBindings.Where(b => b.BindType != BindType.StyledOnly), sb);
+        GenerateDataPropertyInfoDictionary(allBindings.Where(b => b.BindType != BindType.Styled), sb);
 
         // Data bindings - generate full property with event hookup if there are "new" bindings       
         GenerateDataContextProperty(data, sb);
@@ -156,7 +156,7 @@ internal static class ZuiEmitController
             sb.AppendIndentedLine(2, $"{name} = ({namedControlsDict[name].Type})View.FindByName(\"{name}\").Controller;");
 
         // Initialize DataContext after controls are loaded
-        if (allBindings.Any(b => b.BindType != BindType.StyledOnly))
+        if (allBindings.Any(b => b.BindType != BindType.Styled))
         {
             sb.AppendIndentedLine(2, "// Initialize DataContext");
             sb.AppendIndentedLine(2, "DataContext = CreateDefaultDataContext();");
@@ -165,47 +165,42 @@ internal static class ZuiEmitController
         sb.AppendIndentedLine(1, "}");
 
         // Generate CreateDefaultDataContext factory method
-        var dataBindings = allBindings.Where(b => b.BindType != BindType.StyledOnly).ToList();
+        var dataBindings = allBindings.Where(b => b.BindType != BindType.Styled).ToList();
         if (dataBindings.Count != 0)
         {
             sb.Append("\r\n");
             var genericSuffix = data.TypeParam != "" ? $"<{data.TypeParam}>" : "";
             sb.AppendIndentedLine(1, $"{data.ControllerName}Data{genericSuffix} CreateDefaultDataContext()");
             sb.AppendIndentedLine(1, "{");
-            sb.AppendIndentedLine(2, $"return new {data.ControllerName}Data{genericSuffix}(");
-
-            var args = new List<string>();
+            sb.AppendIndentedLine(2, $"return new {data.ControllerName}Data{genericSuffix}");
+            sb.AppendIndentedLine(2, "{");
             foreach (var binding in dataBindings)
             {
+                string value;
                 if (ZuiEmit.IsNamedControl(binding.Bind, namedControlsDict))
                 {
                     // If this binds directly to a named control, use the data context
-                    args.Add($"{binding.Name}: {binding.Bind}.DataContext");
+                    value = $"{binding.Bind}.DataContext";
                 }
                 else if (binding.IsCollection)
                 {
                     // Collection: initialize with empty ObservableCollection
-                    args.Add($"{binding.Name}: new {ZuiEmit.GetBindingDataType(binding, namedControlsDict)}()");
+                    value = $"new {ZuiEmit.GetBindingDataType(binding, namedControlsDict)}()";
                 }
                 else
                 {
                     // For all other types, initialize with default value or new instance
                     if (!string.IsNullOrWhiteSpace(binding.Default))
-                        args.Add($"{binding.Name}: {ZuiEmit.NormalizeDefaultValue(binding.Default)}");
+                        value = ZuiEmit.NormalizeDefaultValue(binding.Default);
                     else if (binding.IsNullable)
-                        args.Add($"{binding.Name}: null");
+                        value = "null";
                     else
-                        args.Add($"{binding.Name}: new {binding.BaseType}()");
+                        value = $"new {binding.BaseType}()";
                 }
+                sb.AppendIndentedLine(3, $"{binding.PascalName} = {value},");
             }
 
-            for (int i = 0; i < args.Count; i++)
-            {
-                var suffix = i < args.Count - 1 ? "," : "";
-                sb.AppendIndentedLine(3, args[i] + suffix);
-            }
-
-            sb.AppendIndentedLine(2, ");");
+            sb.AppendIndentedLine(2, "};");
             sb.AppendIndentedLine(1, "}");
 
             // Generate event handler for DataContext property changes (only if there are "new" bindings)
@@ -225,7 +220,7 @@ internal static class ZuiEmitController
 
     private static void GenerateDataContextProperty(ZuiFileInfo data, StringBuilder sb)
     {
-        if (data.Bindings.Count == 0 || !data.Bindings.Any(b => b.BindType != BindType.StyledOnly))
+        if (data.Bindings.Count == 0 || !data.Bindings.Any(b => b.BindType != BindType.Styled))
             return;
 
         var genericSuffix = data.TypeParam != "" ? $"<{data.TypeParam}>" : "";
@@ -323,7 +318,7 @@ internal static class ZuiEmitController
                 }
             }
             // Style-only bindings: no DataContext field, controlled via styles or imperative SetProperty
-            else if (binding.BindType == BindType.StyledOnly)
+            else if (binding.BindType == BindType.Styled)
             {
                 sb.AppendIndentedLine(3, $"// '{binding.PascalName}': Style-only binding: no DataContext field, set via stylesheets or view.SetProperty");
             }
@@ -361,7 +356,7 @@ internal static class ZuiEmitController
             }
 
             // Style-only bindings: no DataContext field, skip sync
-            if (binding.BindType == BindType.StyledOnly)
+            if (binding.BindType == BindType.Styled)
             {
                 // No DataContext field to sync from
                 continue;
@@ -418,7 +413,7 @@ internal static class ZuiEmitController
         foreach (var binding in bindings)
         {
             // Skip style-only properties: they have no DataContext field
-            if (binding.BindType == BindType.StyledOnly)
+            if (binding.BindType == BindType.Styled)
                 continue;
 
             var jsonName = binding.Name; // Keep for error messages

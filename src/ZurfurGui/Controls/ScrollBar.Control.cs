@@ -22,7 +22,7 @@ public enum ScrollBarVisibility
     Hidden
 }
 
-public partial class ScrollBar : Controllable
+public partial class ScrollBar : Controllable, Renderable
 {
     internal static readonly PropertyKey<bool> IsExpandedProperty = new(
         "ScrollBar.isExpanded",
@@ -50,7 +50,7 @@ public partial class ScrollBar : Controllable
     public ScrollBar()
     {
         InitializeControl();
-        View.Render = new ScrollBarRenderer(this);
+        View.Render = this;
 
         // Subscribe to pointer events
         View.AddEvent(Panel.PointerDown, OnPointerDown);
@@ -360,5 +360,105 @@ public partial class ScrollBar : Controllable
             View.SetProperty(Panel.IsPointerOver, false);
         }
     }
+
+
+    public RenderResult Render(View view, RenderContext context, Rect clientClip)
+    {
+        var data = DataContext;
+        var trackRect = new Rect(new(), view.Size);
+        var orientationValue = view.GetStyle(ScrollBar.OrientationProperty);
+        var isExpanded = IsExpanded;
+
+        if (isExpanded)
+        {
+            // Draw background track
+            var trackColor = view.GetStyle(ScrollBar.TrackColorProperty);
+            context.FillRect(trackColor, trackRect, 1000);
+        }
+
+        // The thumb keeps the same position and length along the scroll direction in every visual state. At rest
+        // it is thin and near the outer edge; hover and press make it wider and centered.
+        if (data.Maximum > data.Minimum)
+        {
+            var thumbRect = CalculateVisualThumbRect(isExpanded);
+            var thumbColor = view.GetStyle(ScrollBar.ThumbColorProperty);
+            var thumbRadius = view.GetStyle(ScrollBar.ThumbRadiusProperty);
+            context.FillRect(thumbColor, thumbRect, thumbRadius);
+
+            if (isExpanded)
+            {
+                var startArrowRect = GetStartArrowRect();
+                var startArrowPoints = GetArrowTrianglePoints(startArrowRect, orientationValue, true);
+                context.FillPolygon(new Brush(thumbColor), startArrowPoints);
+
+                var endArrowRect = GetEndArrowRect();
+                var endArrowPoints = GetArrowTrianglePoints(endArrowRect, orientationValue, false);
+                context.FillPolygon(new Brush(thumbColor), endArrowPoints);
+            }
+        }
+        return RenderResult.RenderedAll;
+    }
+
+    /// <summary>
+    /// Generate triangle points for an arrow within the given rectangle.
+    /// Triangle is inset by 25% padding from edges.
+    /// </summary>
+    /// <param name="arrowRect">The rectangle containing the arrow</param>
+    /// <param name="orientation">Scrollbar orientation</param>
+    /// <param name="pointsToStart">True for start arrow (up/left), false for end arrow (down/right)</param>
+    /// <returns>Array of triangle points as [x1, y1, x2, y2, x3, y3]</returns>
+    double[] GetArrowTrianglePoints(Rect arrowRect, Orientation orientation, bool pointsToStart)
+    {
+        var padding = 0.25;  // 25% padding on each side
+        var centerX = arrowRect.X + arrowRect.Width / 2;
+        var centerY = arrowRect.Y + arrowRect.Height / 2;
+
+        if (orientation == Orientation.Vertical)
+        {
+            // Vertical scrollbar: up or down arrow
+            var leftX = arrowRect.X + arrowRect.Width * padding;
+            var rightX = arrowRect.X + arrowRect.Width * (1 - padding);
+            var tipY = pointsToStart
+                ? arrowRect.Y + arrowRect.Height * padding          // Points up
+                : arrowRect.Y + arrowRect.Height * (1 - padding);   // Points down
+            var baseY = pointsToStart
+                ? arrowRect.Y + arrowRect.Height * (1 - padding)    // Base at bottom
+                : arrowRect.Y + arrowRect.Height * padding;         // Base at top
+
+            return
+            [
+                centerX, tipY,      // Tip (top or bottom)
+                rightX, baseY,      // Right base
+                leftX, baseY        // Left base
+            ];
+        }
+        else
+        {
+            // Horizontal scrollbar: left or right arrow
+            var topY = arrowRect.Y + arrowRect.Height * padding;
+            var bottomY = arrowRect.Y + arrowRect.Height * (1 - padding);
+            var tipX = pointsToStart
+                ? arrowRect.X + arrowRect.Width * padding           // Points left
+                : arrowRect.X + arrowRect.Width * (1 - padding);    // Points right
+            var baseX = pointsToStart
+                ? arrowRect.X + arrowRect.Width * (1 - padding)     // Base at right
+                : arrowRect.X + arrowRect.Width * padding;          // Base at left
+
+            return
+            [
+                tipX, centerY,      // Tip (left or right)
+                baseX, bottomY,     // Bottom base
+                baseX, topY         // Top base
+            ];
+        }
+    }
+
+    public bool IsHit(View view, HitTestContext context)
+    {
+        var p = view.toClient(context.Contact.DevicePosition);
+        return new Rect(new(), view.Size).Contains(p);
+    }
+
+
 }
 

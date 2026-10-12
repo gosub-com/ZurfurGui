@@ -51,7 +51,7 @@ public class RenderContext
 
     internal void ClearRenderBuffer() => _renderBuffer.Clear();
 
-    internal OsRenderBuffer CloneRenderBuffer() => _renderBuffer.Clone();
+    internal OsRenderBuffer CloneRenderBuffer(OsRenderBuffer? maybeInto) => _renderBuffer.Clone(maybeInto);
 
     internal void SetPointerPosition(Point devicePosition)
     {

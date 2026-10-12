@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net.Http.Headers;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
 using ZurfurGui.Input;
@@ -22,8 +23,6 @@ namespace ZurfurGui.Windows;
 public partial class AppWindow : Controllable, Renderable
 {
     readonly bool DRAW_TEST_PATTERN = false;
-
-    public string RenderType => "AppWindow";
 
     public Renderer? Renderer { get; private set; }
 
@@ -112,10 +111,10 @@ public partial class AppWindow : Controllable, Renderable
         return false;
     }
 
-    public void Render(View view, RenderContext context)
+    public RenderResult Render(View view, RenderContext context, Rect clientClip)
     {
         if (!DRAW_TEST_PATTERN)
-            return;
+            return RenderResult.Discard;
 
         var left = 15;
         var top = 50;
@@ -144,6 +143,7 @@ public partial class AppWindow : Controllable, Renderable
         context.StrokeRect(new Pen(Colors.Blue, 3), 110 + sx, 110, 50, 50);
         context.StrokeRect(new Pen(new Color(255, 255, 0), 8), 160 + sx, 60, 50, 50);
         context.StrokeRect(new Pen(new Color(255, 0, 255), 16), 210 + sx, 10, 50, 50);
+        return RenderResult.RenderedAll;
     }
 
 }

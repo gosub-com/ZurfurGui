@@ -128,9 +128,10 @@ public static class ThemeManager
             return value1;
         if (value1.GetType() != value2.GetType())
             throw new ArgumentException($"Cannot merge values of different types: {value1.GetType()} and {value2.GetType()}");
-        if (value1 as IMergable == null)
+        if (value1 is not IMergable mergable)
             return value1;
-        return ((dynamic)value1).Or((dynamic)value2);
+
+        return mergable.OrObject(value2);
     }
 
     /// <summary>

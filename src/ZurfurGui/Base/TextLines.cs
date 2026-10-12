@@ -22,16 +22,20 @@ public class TextLines : IEquatable<TextLines>, IEnumerable<string>, IReadOnlyLi
 
 
     private readonly string[] _lines;
+    private static readonly char[] NewLineCharacters = ['\r', '\n'];
+    private static readonly string[] NewLineSeparators = ["\r\n", "\n", "\r"];
 
     public TextLines() => _lines = Array.Empty<string>();
 
-    public TextLines(string text) => _lines = [.. text.Split(["\r\n", "\n", "\r"], StringSplitOptions.None)];
+    public TextLines(string text) => _lines = [.. text.Split(NewLineSeparators, StringSplitOptions.None)];
 
     public TextLines(IEnumerable<string> lines)
     {
-        _lines = lines
-            .SelectMany(line => line.Split(["\r\n", "\n", "\r"], StringSplitOptions.None))
-            .ToArray();
+        var capacity = lines is ICollection<string> collection ? collection.Count : 0;
+        var list = new List<string>(capacity);
+        foreach (var line in lines)
+            AddLine(list, line);
+        _lines = list.Count == 0 ? Array.Empty<string>() : list.ToArray();
     }
 
     public TextLines(ReadOnlySpan<string> lines)
@@ -41,10 +45,22 @@ public class TextLines : IEquatable<TextLines>, IEnumerable<string>, IReadOnlyLi
             _lines = Array.Empty<string>();
             return;
         }
-        var list = new List<string>();
+
+        var list = new List<string>(lines.Length);
         foreach (var line in lines)
-            list.AddRange(line.Split(["\r\n", "\n", "\r"], StringSplitOptions.None));
+            AddLine(list, line);
         _lines = list.ToArray();
+    }
+
+    private static void AddLine(List<string> lines, string line)
+    {
+        if (line.IndexOfAny(NewLineCharacters) < 0)
+        {
+            lines.Add(line);
+            return;
+        }
+
+        lines.AddRange(line.Split(NewLineSeparators, StringSplitOptions.None));
     }
 
 

@@ -16,7 +16,7 @@ internal sealed class PointerContactState
 
     public List<View> CurrentPressChain { get; } = new();
 
-    public List<View> CapturedViews { get; } = new();
+    public View? CapturedView { get; private set; }
 
     // Replaces the views pressed by this contact.
     public void SetPressChain(IEnumerable<View> chain)
@@ -45,28 +45,47 @@ internal sealed class PointerContactState
         }
     }
 
-    // Captures a view for this contact and reports whether capture was newly added.
-    public bool Capture(View view)
+    // Cancels the entire press relationship for this contact. Capture cancellation represents cancellation of the
+    // interaction, so leaving unrelated ancestors in the press chain would keep them visually pressed.
+    public List<View> CancelPress()
     {
-        if (CapturedViews.Contains(view))
+        var affectedViews = PressChain
+            .Concat(CurrentPressChain)
+            .Distinct()
+            .ToList();
+
+        PressChain.Clear();
+        CurrentPressChain.Clear();
+        return affectedViews;
+    }
+
+    // Replaces this contact's capture owner and returns whether ownership changed.
+    public bool Capture(View view, out View? previousOwner)
+    {
+        previousOwner = CapturedView;
+        if (CapturedView == view)
             return false;
 
-        CapturedViews.Add(view);
+        CapturedView = view;
         return true;
     }
 
-    // Releases a view for this contact and reports whether it was captured.
+    // Releases capture only when the given view currently owns it.
     public bool Release(View view)
     {
-        return CapturedViews.Remove(view);
+        if (CapturedView != view)
+            return false;
+
+        CapturedView = null;
+        return true;
     }
 
-    // Releases all views captured by this contact and returns the released views.
-    public List<View> ReleaseAllCapture()
+    // Releases and returns this contact's capture owner, if any.
+    public View? ReleaseCapture()
     {
-        var capturedViews = CapturedViews.ToList();
-        CapturedViews.Clear();
-        return capturedViews;
+        var capturedView = CapturedView;
+        CapturedView = null;
+        return capturedView;
     }
 
     // Clears this contact's hover, press, and capture state and returns affected views.
@@ -74,15 +93,16 @@ internal sealed class PointerContactState
     {
         var affectedViews = HoverChain
             .Concat(CurrentPressChain)
-            .Concat(CapturedViews)
             .Distinct()
             .ToList();
+        if (CapturedView is not null && !affectedViews.Contains(CapturedView))
+            affectedViews.Add(CapturedView);
 
         HoverView = null;
         HoverChain.Clear();
         PressChain.Clear();
         CurrentPressChain.Clear();
-        CapturedViews.Clear();
+        CapturedView = null;
         return affectedViews;
     }
 }

@@ -14,6 +14,7 @@ public partial class Window : Controllable
 {
     bool _mouseDown;
     Point _mousePosition;
+    readonly PointerClickRecognizer _closeButtonClickRecognizer;
 
 
     public Window()
@@ -35,7 +36,7 @@ public partial class Window : Controllable
         _resizeHandle.View.AddEvent(Panel.PreviewPointerMove, _resizeHandle_PreviewPointerMove);
         _resizeHandle.View.AddEvent(Panel.PointerCaptureLost, (s, e) => _mouseDown = false);
 
-        _closeButton.View.AddEvent(Panel.PointerClick, (s, e) => View.RemoveFromParent());
+        _closeButtonClickRecognizer = new(_closeButton.View, (s, e) => View.RemoveFromParent());
     }
 
     /// <summary>
@@ -124,6 +125,11 @@ public partial class Window : Controllable
     public void SetTitle(string title)
     {
         _title.View.SetProperty(TextView.TextProperty, new (title));
+    }
+
+    public void OnDetach()
+    {
+        _closeButtonClickRecognizer.Dispose();
     }
 
 }

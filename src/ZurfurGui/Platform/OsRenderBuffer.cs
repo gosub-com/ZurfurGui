@@ -76,11 +76,25 @@ public class OsRenderBuffer
     /// re-use this buffer by cloning into it and returning it, but it won't re-use
     /// the buffer if it is not the correct length.
     /// </summary>
-    public OsRenderBuffer Clone()
+    public OsRenderBuffer Clone(OsRenderBuffer ?maybeInto)
     {
         if (_commandsLength == 0 && _stringsLength == 0)
             return Empty;
 
+        // Only re-use the maybeInto buffer if it is the exact same length as this buffer.
+        // This is the common case and also avoids potentially large unused space.
+        if (maybeInto != null 
+            && maybeInto._commands.Length == _commandsLength 
+            && maybeInto._strings.Length == _stringsLength)
+        {
+            maybeInto._commandsLength = _commandsLength;
+            _commands.AsSpan(0, _commandsLength).CopyTo(maybeInto._commands);
+            maybeInto._stringsLength = _stringsLength;
+            _strings.AsSpan(0, _stringsLength).CopyTo(maybeInto._strings);
+            return maybeInto;
+        }
+
+        // Create a new buffer
         return new OsRenderBuffer
         {
             _commandsLength = _commandsLength,

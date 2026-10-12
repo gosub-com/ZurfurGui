@@ -2,6 +2,11 @@
     $controller: "ScrollViewer",
     $namespace: "ZurfurGui.Controls",
     $data: {
+        scrollSize: {
+            type: "SizeProp",
+            bind: "data",
+            default: "new SizeProp(16, 16)"
+        },
         autoScrollToEnd: {
             type: "bool",
             bind: "styledData",

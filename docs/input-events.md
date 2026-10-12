@@ -5,18 +5,18 @@ platform or browser input has been received; operating-system input processing i
 
 ## Input ingress
 
-Both supported input adapters convert their platform-specific notifications into the same logical pointer events. The
-renderer connects that input callback to the pointer router, which processes each event through the four phases below.
+Supported input adapters convert platform notifications into logical pointer events. The renderer connects the
+input callback to the pointer router, which updates pointer state and dispatches the events described below.
 
-The browser adapter registers listeners on the canvas for pointer enter, move, leave, down, and up notifications. It
-converts the browser client position into canvas device-pixel coordinates and forwards the event through the shared
-`OsCanvas.PointerInput` callback.
+The **browser** adapter listens on the canvas for pointer enter, move, leave, down, and up. It converts browser client
+positions to canvas device pixels and forwards events through `OsCanvas.PointerInput`.
 
-The WinForms adapter listens to the canvas control's mouse move, down, up, and leave notifications and forwards the
+The **WinForms** adapter listens to the canvas control's mouse move, down, up, and leave notifications and forwards the
 control coordinates through that same callback. It also observes native Windows pointer messages so touch and pen
-contacts retain their device kind and contact ID. Mouse events remain the fallback for ordinary mouse input. The
-platform differences end at this boundary; the GUI does not need to know whether an event originated in JavaScript,
-native Windows messages, or C# interop.
+contacts retain their device kind and contact ID. Mouse events remain the fallback for ordinary mouse input. 
+
+The platform differences end at this boundary. The GUI does not need to know whether an event originated in 
+JavaScript, native Windows messages, or C# interop.
 
 The renderer installs `PointerOver` as the callback target. Rendering and input therefore use the same app-window view
 tree and the same device-coordinate space.
@@ -29,32 +29,47 @@ Browser pointer events       WinForms mouse/pointer events
                                    v
                          PointerOver processes event
                                    |
-                 capture handling, if active
+             Route move/down/up events to the capture owner
                                    |
                                    v
               1. Find target and build view chain
                                    |
                                    v
-                 2. Preview: root -> target
-                                   |
-                                   v
-                 3. Bubble: target -> root
-                                   |
-                                   v
-                 4. Action and state update
-                                   |
-                         pointerup may create click
-                                   |
-                         click repeats phases 1-3
+                  Update hover and press state
+                     |                      |
+                     |                      +-> PointerEntered / PointerExited
+                     |                          direct notifications for chain changes
+                     |
+                     +-> If uncaptured, move/down/up:
+                     |      2. Preview: root -> target
+                     |                  |
+                     |                  v
+                     |      3. Bubble: target -> root
+                     |                  |
+                     |      pointer-up may invoke a click recognizer
+                     |                  |
+                     v                  v
+                4. Complete state cleanup
+                     |                  |
+                     +-> pointer-up clears press state
+                     +-> leave/cancel clears hover
 ```
 
-Before Phase 1, the router checks for pointer capture and dispatches the event through the captured route when capture is
-active. See [Pointer state and capture](#pointer-state-and-capture) for the detailed rules.
+The capture owner receives down, move, and up before hit testing. The router still hit-tests during capture to update
+hover state, but does not route those events through the hit chain. A platform cancel releases capture, clears press,
+hover, and contact state, and is not preview/bubble routed. A pointer-up can invoke a click recognizer during its
+bubble route, before the router clears press state. See
+[Pointer state and capture](#pointer-state-and-capture) for details.
 
 ## Phase 1: Find the hit target and build the view chain
 
-This phase searches from the app-window root and produces the view chain used by the following routing phases. The
-chain contains the target and its ancestors up to the root. If no view is hit, the chain is empty.
+This phase searches from the app-window root and produces the hit chain used for uncaptured routing. The chain
+contains the target and its ancestors up to the root. If no view is hit, the chain is empty. Captured input instead
+routes through the capture owner.
+
+For uncaptured input, the hit chain is consumed by the preview and bubble phases. It is also used to update hover and
+pressed state and to notify views when a contact enters or exits the chain. A pointer-down chain is retained for the
+active press relationship.
 
 The search proceeds as follows:
 
@@ -77,77 +92,116 @@ Every view has a `HitTestMode`, which defaults to `Normal`:
 - `Always` selects the view whenever the pointer is inside its arranged bounds. It does not call `IsHit`, because
   the mode explicitly makes the complete bounds interactive. Children are still searched first.
 
-`IsHit` is therefore called only for a visible view in `Normal` mode, after all children have failed to hit and before
-the panel background-alpha fallback. A renderer can define a hit area even when the view has no visible panel
-background, as with text. The alpha fallback applies to ordinary panel surfaces and keeps clear panels from becoming
-input surfaces merely because they occupy layout space.
+`IsHit` runs only for a visible view in `Normal` mode, after children fail and before the panel background-alpha
+fallback. Renderers can define hit areas without a visible panel background, as with text. The alpha fallback keeps
+clear panels from becoming input surfaces solely because they occupy layout space.
 
 The window title drag surface uses `Always` because it is intentionally transparent but must receive events across the
 full title-bar area. This changes which view becomes the hit target; it does not change preview or bubble routing.
 
-Overlay controls should keep their full outer view rectangle as the hit target even when their resting visual is only a
-thin line or partially transparent. Visual geometry and interaction geometry are separate. This lets a scrollbar or
-similar overlay remain easy to target while preserving its compact resting appearance.
-
-**View-chain construction:** this phase builds the current view chain. The chain is consumed by the preview and bubble
-phases. It is also used to update hover and pressed state. A pointer-down chain is retained for the later click decision.
 
 ## Phase 2: Preview event routing
 
-The preview phase dispatches the current pointer event through the view chain from the root toward the hit target. These
-are the `PreviewPointer...` events.
+For uncaptured input, the preview phase dispatches the event through the hit chain from root toward the hit target.
+These are the `PreviewPointer...` events. Ancestors receive preview first.
 
-**View-chain use:** this phase consumes the chain built in Phase 1, traversed in root-to-target order. Ancestors receive
-the preview event before their descendants.
+`PointerEvent.Handled` stops normal routing at the current route boundary. When preview handling sets `Handled`, the
+corresponding bubble route is skipped. `PointerEvent.Cancelled` stops normal routing for the current event. It does
+not by itself release capture; platform pointer-cancel cleanup or explicit capture release performs that state cleanup.
 
 ## Phase 3: Bubble event routing
 
-The bubble phase dispatches the same pointer event from the hit target back toward the root. These are the ordinary
-`Pointer...` events.
+For uncaptured input, the bubble phase uses the same hit chain built in Phase 1 to dispatch the pointer event from the
+hit target back toward the root. These are the ordinary `Pointer...` events. Captured input routes only to its owner.
 
-**View-chain use:** this phase consumes the same current chain built in Phase 1, traversed in target-to-root order.
+This is fixed preview/bubble traversal, not a full WPF-style event system. Handled stops routing between views, but
+combined handlers on one view are still invoked together.
 
-The current implementation does not model the full WPF routed-event system. In particular, this is a fixed preview-then-
-bubble traversal over the views in the chain; the event payload is shared and there is no documented general-purpose
-handled/stopping mechanism in this layer.
+## Common pointer events
+
+| Event | Delivery | When it is raised |
+| --- | --- | --- |
+| `PreviewPointerDown` | Routed, root to target | A pointer-down input is processed. |
+| `PointerDown` | Routed, target to root | After preview unless handled or cancelled. |
+| `PreviewPointerMove` | Routed, root to target | A pointer-move input is processed. |
+| `PointerMove` | Routed, target to root | After preview unless handled or cancelled. |
+| `PreviewPointerUp` | Routed, root to target | A pointer-up input is processed. |
+| `PointerUp` | Routed, target to root | After preview unless handled or cancelled. |
+| `PointerEntered` | Direct to each entering view | Its per-contact hover-chain membership begins. |
+| `PointerExited` | Direct to each exiting view | Its per-contact hover-chain membership ends. |
+| `PointerCaptureLost` | Direct to the released capture owner | Capture is released, replaced, or cancelled. |
+
+For down, move, and up, the hit chain is used unless the contact is captured; then only its capture owner receives
+the event. Captured contacts are still hit-tested for hover. Enter and exit are not routed or redirected by capture.
+
+`Panel.PointerEntered` and `Panel.PointerExited` are direct per-view notifications, not preview/bubble routed events.
+They are raised when the router updates the hover chain and finds changed membership. This normally occurs when the
+hit view changes; down and up also refresh the chain:
+
+- A view receives `PointerEntered` when it joins that contact's hover chain. Entries are notified from ancestor to target.
+- A view receives `PointerExited` when it leaves that contact's hover chain. Exits are notified from target to ancestor.
+- Views shared by the old and new chains receive neither notification.
+- The event's `Kind` is `Enter` or `Leave`, respectively. Both carry the `PointerContact` from the input that caused the
+  chain change.
+- The contact includes device, ID, position, dimensions, buttons, and modifiers. On platform leave, position fields
+  may be outside the canvas or unsuitable as an in-view position.
+- These notifications are independent of capture. A captured contact still updates its hit-tested hover chain.
+- Platform enter and leave are hit-test inputs, not direct control events. Platform enter can cause control enters
+  if the chain gains views. Platform leave exits the chain's current members.
+- The router updates hover state and `IsPointerOver` before invoking enter/exit handlers. Geometry or view-tree changes
+  alone do not trigger a new hit test; a later pointer input is required to discover a changed target.
+
+Register handlers with `View.AddEvent(Panel.PointerEntered, handler)` and
+`View.AddEvent(Panel.PointerExited, handler)`. These direct notifications do not use `Handled` to stop other views from
+being notified. `Handled` and `Cancelled` affect routed down, move, and up dispatch; they do not undo a hover-chain
+change that has already been applied.
 
 ## Phase 4: Action and state updates
 
-The action phase interprets the routed pointer event and updates interaction state. It is not one additional event route;
-it is the event-specific result of processing the previous phases. Pointer-down, pointer-move, and pointer-up each go
-through target discovery and preview/bubble routing before their event-specific action occurs.
+State updates are interleaved with dispatch. The capture owner receives down, move, and up before hit testing; hit
+testing then updates hover. Without capture, hit testing updates hover and press before preview/bubble dispatch. Pointer-up
+clears the press relationship after dispatch. An uncaptured leave clears hover and removes the contact. A platform
+cancel cancels capture and press state, then clears hover and removes the contact even when capture was active. Platform
+enter can start the hover chain.
 
 ### Pointer state and capture
 
 The router tracks the current hover target independently from pointer capture:
 
-- `IsPointerOver` follows the result of the current hit test.
+- `IsPointerOver` is true when at least one tracked contact's hover chain contains the view.
 - `IsPressed` represents the active press relationship.
 - Capture lets a control continue receiving pointer events after the pointer leaves its normal bounds.
 
-Each contact has independent hover, press, and capture state. An uncaptured event routes through its current hit chain.
-When capture is active, the captured route receives the event once; it is not also sent to the current hit route. The
-normal hit test still runs, so `IsPointerOver` can move to another view while the captured view remains pressed.
+Each contact has independent hover, press, and capture state, with at most one capture owner. An uncaptured event
+routes through its current hit chain. When capture is active, only the owner receives the event; it is not also sent
+through the current hit chain. A new capture request replaces the previous owner and raises `PointerCaptureLost` on
+that view. The previous press is cancelled, preventing it from remaining pressed or activating on pointer-up. The
+normal hit test still runs, so `IsPointerOver` can move to another view while the owner remains pressed.
 
 While capture is active:
 
-- Move, up, and cancel events are routed to the captured view chain.
-- The captured view receives the pointer-up event even if the pointer has moved outside its bounds.
+- Down, move, and up events are routed only to the capture owner. Ancestors are not added automatically.
+- The owner receives pointer-up even if the pointer has moved outside its bounds.
 - A pointer leave changes hover state but does not release capture.
-- Capture is released after pointer-up or pointer-cancel, and the captured views receive `PointerCaptureLost`.
+- A platform pointer cancel uses the capture/press cleanup path, not normal preview/bubble routing. The capture owner
+  receives `PointerCaptureLost`, and the contact's hover and state are removed.
 
-Controls that start a drag or similar interaction generally capture during pointer-down and use capture loss to clean
-up. This is important because a release can occur outside the original target, and capture can end without a normal
-pointer-up reaching that control.
+Without capture, `IsPressed` is true only for views shared by the current hover chain and the press chain recorded on
+pointer-down. It clears for a view when the pointer leaves that chain and becomes true again if the pointer returns
+while the press is still active. The capture owner remains pressed while capture is active, even outside that chain.
 
-Hover and pressed pseudo-properties are updated as chains and capture state change. This allows styles and controls to
-react to pointer state without requiring every control to maintain its own hover bookkeeping.
+Controls that start a drag or similar interaction generally capture during pointer-down and use capture loss to
+clean up. This is important because a release can occur outside the original target, and capture can end without a
+normal pointer-up reaching that control.
+
+Hover and pressed pseudo-properties are updated as chains and capture state change. This allows styles and controls
+to react to pointer state without requiring every control to maintain its own hover bookkeeping.
 
 ### Using pointer capture
 
-Pointer capture is for controls that must continue an interaction after the pointer leaves their normal hit area. Typical
-examples are dragging a thumb, resizing a window, or implementing a gesture. A control requests capture by setting its
-view's `CapturePointer` property during its `PointerDown` handler:
+Pointer capture is for controls that must continue an interaction after the pointer leaves their normal hit area.
+Typical examples are dragging a thumb, resizing a window, or implementing a gesture. A control requests capture by
+setting its view's `CapturePointer` property during its `PointerDown` handler:
 
 ```csharp
 void OnPointerDown(object? sender, PointerEvent e)
@@ -163,8 +217,9 @@ View.CapturePointer = false;
 ```
 
 Controls that capture should also handle `Panel.PointerCaptureLost`. Capture can end without a normal pointer-up, for
-example when a contact is cancelled or the control is removed. Use that handler to clear drag and pressed state, and make
-the cleanup safe to run more than once:
+example when a contact is cancelled or another control takes over capture. View removal currently requires the
+control's own detach cleanup; automatic router cleanup is future work. Use the handler to clear drag and pressed state,
+and make the cleanup safe to run more than once:
 
 ```csharp
 View.AddEvent(Panel.PointerCaptureLost, OnPointerCaptureLost);
@@ -184,104 +239,77 @@ processed; do not use it as a general-purpose way to make a button clickable. Bu
 `Click` event. Capture keeps low-level pointer events together for an interaction, but it does not by itself make a click
 valid when the pointer is released outside the original press target.
 
-### Click synthesis
+### Click-like activation (`PointerClickRecognizer`)
 
-When a pointer-down is processed, its view chain is recorded as the press chain. The pointer-up itself goes through
-Phases 1 through 3, producing a new current hit target and view chain. The router then creates a `pointerclick` only
-when the contact has an active press and a valid current press chain, and routes that click through preview and bubble
-dispatch. A captured pointer-up is delivered through the captured route only, so it is not dispatched twice.
+The router does not synthesize or route a generic click event. Controls that need click-like activation use the
+public `PointerClickRecognizer` utility, attached to the view that owns the interaction.
 
-**View-chain use:** the click decision uses the retained press chain and the current chain found during pointer-up. The
-synthesized click uses the resulting click chain for preview and bubble dispatch; it does not perform a separate hit
-test.
+The recognizer handles pointer-down and pointer-up events, captures the pointer while the press is active, and
+invokes the control's callback only when the pointer is released inside the attached view's bounds. Capture loss,
+pointer cancellation cleanup, and release outside the bounds cancel the click.
 
-This means a press that moves away before release does not normally activate the original control. Pointer capture can
-continue delivering low-level interaction events during the move, but capture does not change the router's separate
-hover/press-chain calculation for click eligibility.
-
-Controls usually subscribe to the bubbling pointer-click event and expose a higher-level event. For example, a Button
-turns its view's pointer click into its public `Click` event. Other controls can subscribe directly to the low-level
-pointer events when they need movement, capture, or preview behavior.
+This allows a `Button`, `Scrim`, `ComboBox`, or third-party control to choose its own higher-level action without
+adding another generic routed event to `Panel`. A `Button` uses the recognizer to raise its public `Click` event.
+ComboBox item hosts remain panels and attach a recognizer to each item host.
 
 ## Current scope
 
-This description intentionally focuses on responsibilities and ordering rather than the exact event record, view-chain
-representation, or rendering data structures. The input path is evolving, so those implementation details should not be
-considered part of the GUI input contract yet.
+This description focuses on responsibilities and ordering rather than exact event records, view-chain representation,
+or rendering data structures. The input path is evolving, so those implementation details are not yet part of the GUI
+input contract.
 
-## Recommended architectural improvements
+## Remaining issues
 
-These are follow-up recommendations for the current input system. Keep this section updated as each decision is made.
+The core handled-routing, recognizer-based click, and descendant-capture-cancellation behavior is implemented. The items
+below are unfinished work, deliberate behavior differences from Avalonia, or validation still needed before the input
+system should be considered complete.
 
-### 1. Add descendant capture cancellation
+### 6. Handled-events-too and same-view handler stopping
 
-Capture ownership is already tracked centrally by the pointer router for each contact. The remaining requirement is a
-subtree operation that allows a container to cancel capture held by any descendant.
+Avalonia supports handlers that explicitly request notification even after an event has been handled. ZurfurGui does not
+currently expose an equivalent handled-events-too registration API. This is an API difference, not a defect in ordinary
+routing; normal handlers correctly stop at the handled route boundary.
 
-The future API should support operations equivalent to:
+There is a related implementation limitation. Handlers registered on the same view are currently combined into one
+delegate. If one handler sets `Handled`, later handlers in that combined delegate still run. The current implementation
+can stop routing between views, but not between handlers on one view.
 
-```text
-CapturePointer(view, contact ID)
-ReleasePointerCapture(view, contact ID)
-CancelPointerCaptureInSubtree(container, contact ID)
-```
+Possible future work is to store ordered handler entries instead of combined delegates, then add an explicit
+handled-events-too option. This must preserve handler order and the behavior of `AddEvent` and `RemoveEvent`.
 
-The subtree operation allows a container such as `ScrollViewer` to cancel capture held by a child such as a button
-without knowing which exact child owns it. Cancellation must always raise the existing capture-lost notification so
-the child can clear drag and pressed state.
+### 8. Capture-request phase enforcement
 
-### 2. Add event cancellation deliberately
+`View.CapturePointer` is documented for use during pointer-down processing, but the router does not currently enforce
+that restriction. A capture request made during another phase is accepted if an active contact is available.
 
-The current preview and bubble phases do not provide a general handled or cancelled result. Before adding
-special-case events, consider adding a small event-routing state that can express whether an event was handled or
-cancelled.
+This is looser than the intended control contract and should eventually produce a debug assertion, or a defined failure,
+when a control requests capture outside pointer-down processing. The current behavior is retained for compatibility until
+all existing drag controls have been reviewed.
 
-This would allow a container to prevent a child action or cancel a gesture without inventing a separate event for every
-case. The behavior must be defined carefully: handled should suppress an appropriate higher-level action, while cancel
-should terminate an interaction such as capture or click recognition. Do not add this until the capture ownership rules
-are explicit enough to define what cancellation means.
+### 12. Click and release semantics
 
-### 3. Validate touch and pen input in WinForms
+ZurfurGui no longer synthesizes a generic routed click event. `Button`, `ComboBox`, `Scrim`, and third-party controls use
+the public `PointerClickRecognizer`, which captures on pointer-down and invokes its callback only when pointer-up occurs
+inside the attached view's bounds.
 
-The WinForms adapter now supplements ordinary mouse events with a native `WM_POINTER` hook. It identifies touch and
-pen contacts, preserves their pointer IDs, and emits `OsPointerEvent` values while retaining mouse events as the
-fallback.
+This is broadly aligned with Avalonia's control-owned button activation, but the reusable recognizer is a ZurfurGui API
+rather than an Avalonia routed event. Release validation uses the attached view's bounds instead of repeating the full
+current hit test. That is an intentional simplification and means a release over the view's bounds can click even when
+the view's rendered content has more limited hit-test geometry.
 
-Remaining work is validation on actual touch and pen hardware, including contact dimensions, pointer cancellation,
-mouse-message promotion, handle recreation, and simultaneous contacts. Any platform-specific fixes should remain in
-the WinForms adapter and continue to emit the shared `OsPointerEvent` boundary type.
+Capture loss, pointer cancellation cleanup, and release outside the bounds suppress the recognizer callback. `Handled`
+stops routing but does not cancel the control's own press; `Cancelled` stops the current event, while capture loss or
+platform cancellation terminates the underlying interaction.
 
-### Suggested implementation order
+### Automatic cleanup when views are removed
 
-Implement the changes in this order:
+Removing a captured view from the visual tree does not yet automatically cancel its router capture. Controls with their
+own detach cleanup can release resources, but the router does not centrally detect every removed captured view.
 
-1. Add ancestor or subtree capture cancellation.
-2. Validate touch and pen input on supported WinForms hardware.
-3. Add handled or cancelled event behavior if actual controls require it.
+Future work should release capture, clear press state, and raise `PointerCaptureLost` when a captured view is removed.
 
-## Current handoff status
+### Touch, pen, and multi-contact validation
 
-The pointer-contact model is implemented. The raw platform boundary and normalized framework event are separate, hit
-testing receives a `HitTestContext`, and router state is keyed by contact identity. The remaining recommendations below
-are follow-up architecture work rather than unfinished pointer-contact modeling:
-
-- `src/ZurfurGui/Platform/OsPointerEvent.cs` contains the raw string event and platform metadata.
-- `src/ZurfurGui/Input/Events.cs` contains `PointerEventKind`, `PointerContact`, and normalized `PointerEvent`.
-- `src/ZurfurGui/Platform/OsCanvas.cs` exposes the raw event through the public platform callback.
-- `src/ZurfurGui/Input/PointerOver.cs` converts the raw event before hit testing and routing.
-- `src/ZurfurGui.Browser/Platform/BrowserCanvas.cs` supplies browser pointer metadata.
-- `src/ZurfurGui.WinForms/Platform/WinCanvas.cs` supplies mouse fallback metadata and native touch/pen pointer events.
-- `src/ZurfurGui/Input/HitTestContext.cs` carries the `PointerContact` into hit testing.
-- `src/ZurfurGui/Input/HitTestMode.cs` defines the view hit-test modes.
-- `src/ZurfurGui/Render/Renderable.cs` and `src/ZurfurGui/Render/RenderHelper.cs` accept the context.
-- `src/ZurfurGui/Input/PointerOver.cs` creates and propagates the context during target discovery.
-
-The full solution builds successfully. The next practical step is manual WinForms testing of mouse, touch, pen, and
-multi-contact capture behavior, followed by a dedicated test form when that input path is confirmed.
-
-Known limitations to address later:
-
-- Native WinForms pointer handling still needs runtime verification on touch and pen hardware if touch and pen support
-  is included in the beta scope.
-- Pointer capture and click cleanup still need broader multi-contact runtime testing.
-- Descendant capture cancellation and general event cancellation are not implemented.
+The WinForms adapter preserves device kind, contact ID, and contact dimensions, but this still needs validation on actual
+touch and pen hardware. Testing should cover pointer cancellation, contact promotion to mouse messages, handle recreation,
+simultaneous contacts, capture takeover, and view removal while captured.

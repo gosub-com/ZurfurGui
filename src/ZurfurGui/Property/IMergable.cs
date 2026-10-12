@@ -9,6 +9,8 @@ public interface IMergable<T> : IMergable, IEquatable<T>
     /// Return this value, or the other only if this is null (for each component).
     /// </summary>
     T Or(T other);
+
+    object IMergable.OrObject(object other) => Or((T)other)!;
 }
 
 public interface IMergable
@@ -17,4 +19,6 @@ public interface IMergable
     /// Returns true if all components are non-null.
     /// </summary>
     bool IsComplete { get; }
+
+    object OrObject(object other);
 }

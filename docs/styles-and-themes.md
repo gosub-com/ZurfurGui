@@ -147,6 +147,36 @@ The `|` operator combined with `IMergable` properties enables powerful compositi
 If `font.c1` defines `size:28` and `font.c2` defines `name:Times New Roman`, the
 resolved font has both size and name.
 
+### Providing Defaults for `styled` Properties
+
+For a control property declared with `bind: "styled"`, provide its value through the control's
+theme-token mapping and include a fallback token that is defined by the built-in themes. This lets
+consumers override a control-specific token without requiring every theme to define it. If the
+optional token is absent, the fallback supplies a usable value:
+
+```json5
+{
+    "ScrollBar.thumbEdgeInset": "${size.scrollbar.thumb.edge-inset | spacing.extra-small}",
+    $data: {
+        thumbEdgeInset: {
+            type: "Double",
+            bind: "styled",
+            flags: "render"
+        }
+    }
+}
+```
+
+Here, `size.scrollbar.thumb.edge-inset` is an optional, control-specific token; `spacing.extra-small` is
+the guaranteed fallback defined in `ZurfurBase`. The styled-only data item has no `default`: its
+value comes from the token mapping. For every `styled` property, use this pattern rather than
+putting a `default` on the data item. Choose a fallback with a compatible value type and ensure it
+exists in a built-in theme, so the control works when the optional token is not defined.
+
+This guidance is specific to `styled` properties. Keep `default` values on ordinary data or
+`styledData` properties when they need an initial runtime value, such as a control's default
+orientation.
+
 ## Selecting and Activating Themes
 
 ### Setting Application-Wide Themes
@@ -195,24 +225,26 @@ When a view requests a themed property (e.g., `backgroundColor` mapped to
    `View.SetProperty`), use that value (unless it's an incomplete `IMergable`).
 
 2. **Look up the token expression**: Retrieve the token expression from the view's
-   `ThemeTokens` dictionary. If it contains `|`, split it into multiple fallback tokens.
+   `ThemeTokens` dictionary. If it contains `|`, process the token candidates in order.
 
-3. **Walk up the view hierarchy**: Starting from the current view, walk up the `Parent`
-   chain looking for `ActiveThemes`:
-   - For each theme in `ActiveThemes`, look up the token in that theme's `Variables`
-     dictionary.
-   - If found, deserialize the value. If the value contains conditional expressions
+3. **Resolve each token candidate completely before trying the next**:
+   - Starting from the current view, walk up the `Parent` chain. At each view, check its
+     `ActiveThemes` in order, with the first theme having the highest priority.
+   - If a token is found, deserialize its value. If it contains conditional expressions
      (`isPressed ? ...`), evaluate the condition against the view's state.
-   - If the result is an `IMergable` and incomplete, merge it with any partial value
-     already found.
-   - If the result is complete (fully resolved), return it.
-   - If incomplete, continue to the next theme or parent view.
+   - If the result is an incomplete `IMergable`, merge it with any partial value already
+     found and continue searching themes and parent views.
+   - After the view hierarchy, check `ZurfurDefault` then `ZurfurBase` if the value is
+     still incomplete.
+   - If the value is still missing or incomplete, try the next token candidate.
 
-4. **Fallback to base themes**: After exhausting the view hierarchy, resolve against
-   `ZurfurDefault` then `ZurfurBase` (if the token still isn't complete).
+   **Token candidate order takes precedence over theme priority**: the first candidate is
+   searched through the full hierarchy and built-in fallbacks before the second candidate
+   is considered. Thus, a first candidate found in a built-in theme can take precedence
+   over a later candidate found in an active custom theme.
 
-5. **Return the final value**: If the token was never found or fully resolved, throw an
-   exception. Otherwise, return the resolved (possibly merged) value.
+4. **Return the final value**: If no candidate resolves to a value, throw an exception.
+   Otherwise, return the resolved (possibly merged) value.
 
 
 ## Theme Registration
@@ -275,6 +307,10 @@ appWindow.View.ActiveThemes = ["MyBrandTheme"];
 - **Use `|` for custom tokens**: Always provide a fallback to `ZurfurBase` or
   `ZurfurDefault` tokens so third-party users can use your controls without defining all
   your custom tokens.
+
+- **Do not set `default` on `styled` properties**: Map each styled-only property to an optional
+  control-specific token followed by a compatible token defined in `ZurfurBase` or `ZurfurDefault`.
+  Reserve `default` for data and `styledData` properties that need an initial runtime value.
 
 - **Organize tokens semantically**: Use namespacing like `color.surface.canvas`,
   `spacing.horizontal.medium`, `font.size.base.300`.

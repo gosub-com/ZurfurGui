@@ -8,7 +8,7 @@ internal enum BindType
     Unused,
     Data,
     StyledData,
-    StyledOnly,
+    Styled,
     Attached,
     Forwarded
 }

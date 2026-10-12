@@ -1,4 +1,5 @@
 using ZurfurGui.Base;
+using ZurfurGui.Input;
 using ZurfurGui.Layout;
 using ZurfurGui.Property;
 using ZurfurGui.Render;
@@ -15,8 +16,11 @@ public sealed partial class ScrollViewer
         InitializeControl();
         horizontalScrollBar.View.SetProperty(ScrollBar.ExpandOnHoverProperty, true);
         verticalScrollBar.View.SetProperty(ScrollBar.ExpandOnHoverProperty, true);
+        horizontalScrollBar.View.AddEvent(Panel.PointerEntered, OnScrollBarPointerEntered);
+        verticalScrollBar.View.AddEvent(Panel.PointerEntered, OnScrollBarPointerEntered);
         _contentViewport.View.Layout = new ContentViewportLayout(_contentWindow.View);
         View.Layout = new ScrollViewerLayout(this);
+        DataContext.PropertyChanged += OnScrollViewerDataChanged;
         horizontalScrollBar.DataContext.PropertyChanged += OnScrollBarDataChanged;
         verticalScrollBar.DataContext.PropertyChanged += OnScrollBarDataChanged;
     }
@@ -26,6 +30,15 @@ public sealed partial class ScrollViewer
     /// The default LoadParentContent implementation uses ContentHost, so this control only needs to provide the host.
     /// </summary>
     public View ContentHost => _contentWindow.View;
+
+    /// <summary>
+    /// Raises the scrollbar that received the pointer above its sibling views.
+    /// </summary>
+    void OnScrollBarPointerEntered(object? sender, PointerEvent e)
+    {
+        if (sender is View view)
+            view.BringToFront();
+    }
 
     public Point ScrollOffset
     {
@@ -52,6 +65,25 @@ public sealed partial class ScrollViewer
             {
                 _syncingScrollBars = wasSyncingScrollBars;
             }
+        }
+    }
+
+    void OnScrollViewerDataChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(ScrollViewerData.ScrollSize))
+            return;
+
+        var scrollSize = DataContext.ScrollSize.Or(16);
+        var wasSyncingScrollBars = _syncingScrollBars;
+        _syncingScrollBars = true;
+        try
+        {
+            horizontalScrollBar.DataContext.SmallChange = scrollSize.Width;
+            verticalScrollBar.DataContext.SmallChange = scrollSize.Height;
+        }
+        finally
+        {
+            _syncingScrollBars = wasSyncingScrollBars;
         }
     }
 
@@ -82,8 +114,9 @@ public sealed partial class ScrollViewer
         _syncingScrollBars = true;
         try
         {
-            SyncScrollBar(horizontalScrollBar, contentSize.Width, viewportSize.Width);
-            SyncScrollBar(verticalScrollBar, contentSize.Height, viewportSize.Height);
+            var scrollSize = DataContext.ScrollSize.Or(16);
+            SyncScrollBar(horizontalScrollBar, contentSize.Width, viewportSize.Width, scrollSize.Width);
+            SyncScrollBar(verticalScrollBar, contentSize.Height, viewportSize.Height, scrollSize.Height);
             ScrollOffset = _scrollOffset;
 
             if (View.GetProperty(AutoScrollToEndProperty) && wasAtVerticalEnd)
@@ -95,13 +128,14 @@ public sealed partial class ScrollViewer
         }
     }
 
-    static void SyncScrollBar(ScrollBar scrollBar, double contentExtent, double viewportSize)
+    static void SyncScrollBar(ScrollBar scrollBar, double contentExtent, double viewportSize, double scrollSize)
     {
         var data = scrollBar.DataContext;
         var maximum = Math.Max(0, contentExtent - viewportSize);
         data.Minimum = 0;
         data.Maximum = maximum;
         data.ViewportSize = Math.Max(0, viewportSize);
+        data.SmallChange = scrollSize;
         data.LargeChange = Math.Max(0, viewportSize);
 
         scrollBar.View.IsVisible = data.Visibility switch

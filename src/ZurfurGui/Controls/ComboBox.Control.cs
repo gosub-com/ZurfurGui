@@ -13,11 +13,13 @@ public sealed partial class ComboBox<Item> : Controllable
 
     View? _dropdownView;
     View? _dismissOverlay;
+    readonly PointerClickRecognizer _clickRecognizer;
+    readonly List<PointerClickRecognizer> _itemClickRecognizers = [];
 
     public ComboBox()
     {
         InitializeControl();
-        View.AddEvent(Panel.PointerClick, OnClick);
+        _clickRecognizer = new(View, OnClick);
         DataContext.PropertyChanged += OnDataContextChanged;
     }
 
@@ -88,12 +90,13 @@ public sealed partial class ComboBox<Item> : Controllable
             // Wrap each item in a thin host panel that owns the dropdown-specific class and click
             // handler. 
             var wrapper = new Panel();
-            wrapper.View.AddEvent(Panel.PointerClick, (s, ev) =>
+            var itemClickRecognizer = new PointerClickRecognizer(wrapper.View, (s, ev) =>
             {
                 DataContext.SelectedIndex = index;
                 SyncSelectedItem();
                 CloseDropdown();
             });
+            _itemClickRecognizers.Add(itemClickRecognizer);
             wrapper.View.AddChild(item.View);
             popup.View.AddChild(wrapper.View);
         }
@@ -103,6 +106,10 @@ public sealed partial class ComboBox<Item> : Controllable
 
     void CloseDropdown()
     {
+        foreach (var recognizer in _itemClickRecognizers)
+            recognizer.Dispose();
+        _itemClickRecognizers.Clear();
+
         if (_dismissOverlay != null)
         {
             _dismissOverlay.RemoveFromParent();
@@ -118,6 +125,7 @@ public sealed partial class ComboBox<Item> : Controllable
     public void OnAttach() { }
     public void OnDetach()
     {
+        _clickRecognizer.Dispose();
         CloseDropdown();
     }
 }

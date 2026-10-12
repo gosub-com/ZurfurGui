@@ -114,19 +114,19 @@ Every entry in a `$data` section must declare a `"bind"` field. The valid values
 | `bind` value | `PropertyKey` emitted | data property | Use when |
 |---|---|---|---|
 | `"data"` | No | Yes | State or data-only values. Collections must use this. |
-| `"styledData"` | Yes | Yes | A nullable or non-nullable value can override a style or theme value. |
-| `"styledOnly"` | Yes | No | A style-only value configured by themes or imperative view code. |
+| `"styledData"` | Yes | Yes | A nullable or non-nullable data value that can override a style or theme value. |
+| `"styled"` | Yes | No | A style-only value configured by themes or imperative view code. |
 | `"attached"` | No | Yes | Reserved data-binding category for attached behavior. |
 | `"_child.prop"` | No | Yes | Forwards a generated data property to a named child control property. |
 
+- **`"data"`** stores the value only in the concrete generated data class. No `PropertyKey` is emitted, and the
+  generated controller does not push the value to the view. Code-behind observes changes through
+  `INotifyPropertyChanged`.
 - **`"styledData"`** emits a static `PropertyKey<T>` on the controller (or its non-generic companion class for generic
   controls). When `DataContext` changes, `OnDataContextPropertyChanged` calls `View.SetProperty` or
   `View.RemoveProperty`. Nullable `styledData` properties remove the property when set to `null`, allowing a theme to
   supply a fallback value.
-- **`"data"`** stores the value only in the concrete generated data class. No `PropertyKey` is emitted, and the
-  generated controller does not push the value to the view. Code-behind observes changes through
-  `INotifyPropertyChanged`.
-- **`"styledOnly"`** emits a `PropertyKey<T>` but no data property. It is configured through styles or imperative
+- **`"styled"`** emits a `PropertyKey<T>` but no data property. It is configured through styles or imperative
   `View.SetProperty` calls.
 - **`"attached"`** is parsed as a distinct binding category, but attached properties are normally declared directly in
   C# with `PropertyKey` rather than in a control's data context.

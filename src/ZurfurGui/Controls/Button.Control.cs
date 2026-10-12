@@ -9,16 +9,23 @@ namespace ZurfurGui.Controls;
 /// </summary>
 public partial class Button : Controllable
 {
+    readonly PointerClickRecognizer _clickRecognizer;
+
     public event EventHandler? Click;
 
     public Button()
     {
         InitializeControl();
-        View.AddEvent(Panel.PointerClick, OnPointerClick);
+        _clickRecognizer = new(View, OnPointerClick);
     }
 
     private void OnPointerClick(object? sender, PointerEvent e)
     {
         Click?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void OnDetach()
+    {
+        _clickRecognizer.Dispose();
     }
 }

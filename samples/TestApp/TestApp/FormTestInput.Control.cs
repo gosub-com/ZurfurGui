@@ -8,10 +8,9 @@ namespace TestApp;
 
 public partial class FormTestInput
 {
-    const int MAXIMUM_LOG_ENTRIES = 1000;
+    const int MAXIMUM_LOG_ENTRIES = 10000;
 
-    readonly List<string> _eventLog = [];
-
+    // Initializes the input test surface and attaches handlers for all input events being demonstrated.
     public FormTestInput()
     {
         InitializeControl();
@@ -21,22 +20,35 @@ public partial class FormTestInput
         inputSurface.View.AddEvent(Panel.PreviewPointerDown, (s, e) => Observe("preview", e));
         inputSurface.View.AddEvent(Panel.PreviewPointerMove, (s, e) => Observe("preview", e));
         inputSurface.View.AddEvent(Panel.PreviewPointerUp, (s, e) => Observe("preview", e));
-        inputSurface.View.AddEvent(Panel.PreviewPointerClick, (s, e) => Observe("preview", e));
         inputSurface.View.AddEvent(Panel.PointerDown, OnPointerDown);
         inputSurface.View.AddEvent(Panel.PointerMove, (s, e) => Observe("bubble", e));
         inputSurface.View.AddEvent(Panel.PointerUp, OnPointerUp);
-        inputSurface.View.AddEvent(Panel.PointerClick, (s, e) => Observe("bubble", e));
-        inputSurface.View.AddEvent(Panel.PointerCaptureLost, OnPointerCaptureLost);        
+        inputSurface.View.AddEvent(Panel.PointerEntered, OnPointerEntered);
+        inputSurface.View.AddEvent(Panel.PointerExited, OnPointerExited);
+        inputSurface.View.AddEvent(Panel.PointerCaptureLost, OnPointerCaptureLost);
 
         UpdateState("Waiting for pointer input...");
     }
 
+    // Logs a pointer enter with its per-contact data.
+    void OnPointerEntered(object? sender, PointerEvent e)
+    {
+        Observe("entered", e);
+    }
+
+    // Logs a pointer exit with its per-contact data.
+    void OnPointerExited(object? sender, PointerEvent e)
+    {
+        Observe("exited", e);
+    }
+
+    // Clears the event log when the clear button is clicked.
     void ButtonClearLog_Click(object? sender, EventArgs e)
     {
-        _eventLog.Clear();
         eventLogText.DataContext.Text = new TextLines("No events yet.");
     }
 
+    // Logs pointer-down and captures the contact for the routing demonstration.
     void OnPointerDown(object? sender, PointerEvent e)
     {
         Observe("bubble", e);
@@ -44,6 +56,7 @@ public partial class FormTestInput
         AddLog("capture requested");
     }
 
+    // Logs pointer-up and releases the contact capture.
     void OnPointerUp(object? sender, PointerEvent e)
     {
         Observe("bubble", e);
@@ -51,11 +64,13 @@ public partial class FormTestInput
         inputSurface.View.CapturePointer = false;
     }
 
+    // Logs when the captured contact is released by the router.
     void OnPointerCaptureLost(object? sender, EventArgs e)
     {
         AddLog("pointercapturelost");
     }
 
+    // Formats and logs the contact data for the current pointer event.
     void Observe(string route, PointerEvent e)
     {
         var contact = e.Contact;
@@ -75,15 +90,17 @@ public partial class FormTestInput
         UpdateState(line);
     }
 
+    // Appends an entry to the event log while keeping it within the configured limit.
     void AddLog(string line)
     {
-        _eventLog.Add(line);
-        if (_eventLog.Count > MAXIMUM_LOG_ENTRIES)
-            _eventLog.RemoveAt(0);
-
-        eventLogText.DataContext.Text = new TextLines(_eventLog.ToArray());
+        var log = new List<string>(eventLogText.DataContext.Text ?? []);
+        if (log.Count >= MAXIMUM_LOG_ENTRIES)
+            log.RemoveAt(0);
+        log.Add(line);
+        eventLogText.DataContext.Text = new TextLines(log);
     }
 
+    // Displays the latest event together with the current pointer pseudo-state.
     void UpdateState(string message)
     {
         var builder = new StringBuilder(message);

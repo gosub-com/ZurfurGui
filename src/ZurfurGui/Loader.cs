@@ -113,7 +113,6 @@ public static class Loader
         RegisterLayout("Dock", () => new LayoutDock());
         RegisterLayout("Row", () => new LayoutRow());
         RegisterLayout("Column", () => new LayoutColumn());
-        RegisterLayout("Text", () => new LayoutText());
 
         ZurfurMain.MainApp();
 
