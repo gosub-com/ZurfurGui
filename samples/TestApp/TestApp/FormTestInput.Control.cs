@@ -1,4 +1,5 @@
 using System.Text;
+using System.Linq;
 
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
@@ -9,11 +10,21 @@ namespace TestApp;
 public partial class FormTestInput
 {
     const int MAXIMUM_LOG_ENTRIES = 10000;
+    readonly PointerClickRecognizer _inputSurfaceClickRecognizer;
 
     // Initializes the input test surface and attaches handlers for all input events being demonstrated.
     public FormTestInput()
     {
         InitializeControl();
+
+        _inputSurfaceClickRecognizer = new PointerClickRecognizer(
+            inputSurface.View,
+            (s, e) => AddLog($"***click: {e.Contact.Key}"),
+            (s, e) =>
+            {
+                AddLog($"***longclick: {e.Contact.Key}");
+                e.Handled = true;
+            });
 
         buttonClearLog.Click += ButtonClearLog_Click;
 
@@ -52,7 +63,6 @@ public partial class FormTestInput
     void OnPointerDown(object? sender, PointerEvent e)
     {
         Observe("bubble", e);
-        inputSurface.View.CapturePointer = true;
         AddLog("capture requested");
     }
 
@@ -61,13 +71,12 @@ public partial class FormTestInput
     {
         Observe("bubble", e);
         AddLog("capture release requested");
-        inputSurface.View.CapturePointer = false;
     }
 
     // Logs when the captured contact is released by the router.
-    void OnPointerCaptureLost(object? sender, EventArgs e)
+    void OnPointerCaptureLost(object? sender, PointerContactKey contactKey)
     {
-        AddLog("pointercapturelost");
+        AddLog($"pointercapturelost: {contactKey}");
     }
 
     // Formats and logs the contact data for the current pointer event.
@@ -109,7 +118,9 @@ public partial class FormTestInput
         builder.AppendLine();
         builder.Append($"IsPressed: {inputSurface.View.GetProperty(Panel.IsPressed)}");
         builder.AppendLine();
-        builder.Append($"CapturePointer: {inputSurface.View.CapturePointer}");
+        var hasCapture = inputSurface.View.AppWindow?.CapturedPointerContacts
+            .Any(contact => contact.CapturedView == inputSurface.View) ?? false;
+        builder.Append($"HasCapture: {hasCapture}");
         currentState.DataContext.Text = new TextLines(builder.ToString());
     }
 }

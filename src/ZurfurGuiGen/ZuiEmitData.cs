@@ -11,7 +11,7 @@ internal static class ZuiEmitData
 {
     internal static string GenerateDataImplementationSource(ZuiFileInfo data)
     {
-        var bindings = data.Bindings.Where(b => b.BindType != BindType.Styled).ToList();
+        var bindings = data.Bindings.Where(b => !b.BindType.IsViewOnly()).ToList();
         if (bindings.Count == 0)
             return "";
 
@@ -57,6 +57,8 @@ internal static class ZuiEmitData
             var fieldName = $"__{binding.Name}";
             if (!string.IsNullOrWhiteSpace(binding.Default))
                 sb.AppendIndentedLine(2, $"{fieldName} = {ZuiEmit.NormalizeDefaultValue(binding.Default)};");
+            else if (ZuiEmit.GetImplicitDefaultValue(binding) is { Length: > 0 } implicitDefault)
+                sb.AppendIndentedLine(2, $"{fieldName} = {implicitDefault};");
             else if (ZuiEmit.IsNamedControl(binding.Bind, namedControls))
                 sb.AppendIndentedLine(2, $"{fieldName} = new {binding.BaseType}Data();");
             else if (binding.IsCollection)
@@ -81,6 +83,7 @@ internal static class ZuiEmitData
         {
             var propertyType = ZuiEmit.GetBindingDataType(binding, namedControls);
             var backingField = $"__{binding.Name}";
+            ZuiEmit.AppendXmlDocComment(sb, 1, binding.Comment);
             sb.AppendIndentedLine(1, $"public {propertyType} {binding.PascalName}");
             sb.AppendIndentedLine(1, "{");
             sb.AppendIndentedLine(2, $"get => {backingField};");

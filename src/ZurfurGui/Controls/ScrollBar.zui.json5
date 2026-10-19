@@ -107,6 +107,12 @@
             type: "Double",
             bind: "styled",
             flags: "render"
+        },
+        isExpanded: {
+            type: "Bool",
+            bind: "property",
+            default: false,
+            flags: "style,render"
         }
 
     },

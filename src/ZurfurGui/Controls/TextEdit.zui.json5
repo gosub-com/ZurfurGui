@@ -10,7 +10,7 @@
         text: {
             type: "TextLines",
             flags: "render,measure",
-            bind: "_textContent.text"
+            bind: "data:_textContent.text"
         }
     },
     $content: [

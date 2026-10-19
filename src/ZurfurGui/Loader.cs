@@ -166,7 +166,7 @@ public static class Loader
         var content = properties.Get(Panel.Content);
         properties.Remove(Panel.Content);
         control.View.MergeOverwrite(properties);
-        SetLayout(properties, control.View);
+        SetLayout(properties.Get(Panel.Layout) ?? "", control.View);
         control.LoadTemplateContent(content, context);
     }
 
@@ -175,19 +175,26 @@ public static class Loader
         Properties properties,
         ControlCreationContext context)
     {
-        // The properties become overrides, and the parent's content is handled by the parent-content hook.
         var content = properties.Get(Panel.Content);
+        var layout = properties.Get(Panel.Layout) ?? "";
+
         properties.Remove(Panel.Content);
+        properties.Remove(Panel.Layout);
+
+        // Instance properties describe the control's outer view, including its size, alignment, and appearance.
         control.View.MergeOverwrite(properties);
-        SetLayout(properties, control.View);
+        
+        // The layout arranges parent-supplied content; applying it to the root could replace a control's template layout.
+        SetLayout(layout, control.ContentHost);
+
         control.LoadParentContent(content, context);
     }
 
     /// <summary>
-    /// Apply data properties from JSON to the control's DataContext, recursively processing
-    /// children first, then applying parent properties. This deserializes unknown properties 
-    /// stored in Panel.DataProperties and applies them via the control's SetDataProperty method.
-    /// Converts JSON camelCase names to PascalCase for the C# API.
+    /// Apply JSON properties declared in the control's $data section, recursively processing
+    /// children first, then applying parent properties. Data bindings are applied through
+    /// SetDataProperty; style-only bindings are applied to the view.
+    /// Converts JSON camelCase names to PascalCase for the generated control API.
     /// Children are processed first so parent bindings can override child defaults.
     /// Should be called after DataContext is initialized.
     /// </summary>
@@ -197,7 +204,7 @@ public static class Loader
         foreach (var childView in control.View.Children)
             ApplyDataProperties(childView.Controller);
 
-        // Apply data properties to this control (after children)
+        // Apply JSON properties to this control (after children)
         var dataProperties = control.View._properties.Get(Panel.DataProperties);
 
         // TBD: We should be able to remove these after applying, but we can't because it changes "stuff".
@@ -205,19 +212,19 @@ public static class Loader
 
         if (dataProperties != null && dataProperties.Count > 0)
         {
-            var dataPropertyInfo = control.DataPropertyInfo;
+            var propertyInfoMap = control.ZuiPropertyInfo;
 
             foreach (var (jsonPropertyName, jsonElement) in dataProperties)
             {
                 // Convert JSON camelCase to PascalCase for lookup and API
                 var pascalCaseName = ToPascalCase(jsonPropertyName);
 
-                // Validate property exists in DataPropertyInfo (uses PascalCase keys)
-                if (!dataPropertyInfo.TryGetValue(pascalCaseName, out var propInfo))
+                // Validate property exists in ZuiPropertyInfo (uses PascalCase keys)
+                if (!propertyInfoMap.TryGetValue(pascalCaseName, out var propInfo))
                 {
                     throw new InvalidOperationException(
-                        $"Data property '{jsonPropertyName}' is not declared in control '{control.TypeName}'. " +
-                        $"Available properties: {string.Join(", ", dataPropertyInfo.Keys)}");
+                        $"JSON property '{jsonPropertyName}' is not declared in control '{control.TypeName}'. " +
+                        $"Available properties: {string.Join(", ", propertyInfoMap.Keys)}");
                 }
 
                 // Deserialize JsonElement to the expected type
@@ -229,7 +236,7 @@ public static class Loader
                 catch (Exception ex)
                 {
                     throw new InvalidOperationException(
-                        $"Failed to deserialize data property '{jsonPropertyName}' to type '{propInfo.BaseType.Name}' " +
+                        $"Failed to deserialize JSON property '{jsonPropertyName}' to type '{propInfo.BaseType.Name}' " +
                         $"in control '{control.TypeName}': {ex.Message}", ex);
                 }
 
@@ -237,16 +244,36 @@ public static class Loader
                 if (value == null && !propInfo.IsNullable)
                 {
                     throw new InvalidOperationException(
-                        $"Data property '{jsonPropertyName}' cannot be null (type: {propInfo.BaseType.Name}) " +
+                        $"JSON property '{jsonPropertyName}' cannot be null (type: {propInfo.BaseType.Name}) " +
                         $"in control '{control.TypeName}'");
                 }
 
-                // Apply via SetDataProperty (expects PascalCase)
-                if (!control.SetDataProperty(pascalCaseName, value))
+                switch (propInfo.PropertyType)
                 {
-                    throw new InvalidOperationException(
-                        $"Failed to set data property '{jsonPropertyName}' (as '{pascalCaseName}') on control '{control.TypeName}'. " +
-                        $"SetDataProperty returned false.");
+                    case ZuiPropertyType.Styled:
+                    case ZuiPropertyType.Property:
+                    case ZuiPropertyType.AttachedStyle:
+                    case ZuiPropertyType.AttachedProperty:
+                        var propertyKey = propInfo.PropertyKeyId
+                            ?? throw new InvalidOperationException(
+                                $"View property '{jsonPropertyName}' on control '{control.TypeName}' has no PropertyKeyId.");
+                        if (value is null)
+                            control.View.RemovePropertyById(propertyKey);
+                        else
+                            control.View.SetPropertyById(propertyKey, value);
+                        break;
+                    case ZuiPropertyType.Data:
+                    case ZuiPropertyType.StyledData:
+                        if (!control.SetDataProperty(pascalCaseName, value))
+                        {
+                            throw new InvalidOperationException(
+                                $"Failed to set JSON property '{jsonPropertyName}' (as '{pascalCaseName}') on control '{control.TypeName}'.");
+                        }
+                        break;
+                    default:
+                        throw new InvalidOperationException(
+                            $"Unsupported ZUI property type '{propInfo.PropertyType}' for property '{jsonPropertyName}' "
+                            + $"in control '{control.TypeName}'.");
                 }
             }
         }
@@ -389,9 +416,8 @@ public static class Loader
             + $"{string.Join(",\r\n", s_controllers.Keys)}");
     }
 
-    private static void SetLayout(Properties properties, View view)
+    private static void SetLayout(string layout, View view)
     {
-        var layout = properties.Get(Panel.Layout) ?? "";
         if (layout != "")
         {
             if (s_layouts.TryGetValue(layout, out var createFunc))

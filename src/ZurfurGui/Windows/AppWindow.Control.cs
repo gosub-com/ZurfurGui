@@ -27,6 +27,18 @@ public partial class AppWindow : Controllable, Renderable
     public Renderer? Renderer { get; private set; }
 
     /// <summary>
+    /// Gets the latest data for currently tracked pointer contacts.
+    /// </summary>
+    public IReadOnlyList<PointerContact> PointerContacts =>
+        Renderer?.PointerRouter.GetContacts() ?? Array.Empty<PointerContact>();
+
+    /// <summary>
+    /// Gets currently captured pointer contacts and the views that own their capture.
+    /// </summary>
+    public IReadOnlyList<CapturedPointerContact> CapturedPointerContacts =>
+        Renderer?.PointerRouter.GetCapturedContacts() ?? Array.Empty<CapturedPointerContact>();
+
+    /// <summary>
     /// Triggered before rendering each frame
     /// </summary>
     public event EventHandler? PreRenderFrame;
@@ -93,7 +105,7 @@ public partial class AppWindow : Controllable, Renderable
     public View ShowFloatingPanel(Controllable control, PointProp location)
     {
         control.View.SetProperty(Panel.Align, new(AlignHorizontal.Left, AlignVertical.Top));
-        control.View.SetProperty(Panel.Offset, location);
+        control.View.SetProperty(Panel.VisualOffset, location);
         _floatingWindows.View.AddChild(control.View);
         return control.View;
     }

@@ -84,6 +84,8 @@ internal static class ZuiEmit
     {
         if (string.IsNullOrWhiteSpace(defaultValue))
             return "";
+        if (defaultValue == "true" || defaultValue == "false")
+            return defaultValue;
         if (defaultValue.Contains(" "))
             return defaultValue;
 
@@ -97,6 +99,13 @@ internal static class ZuiEmit
         var result = string.Join(".", parts);
 
         return result;
+    }
+
+    internal static string GetImplicitDefaultValue(DataBinding binding)
+    {
+        if (binding.BaseType == "string")
+            return binding.IsNullable ? "null" : "\"\"";
+        return "";
     }
 
     /// <summary>

@@ -97,7 +97,7 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
             .Select(t => $"        global::ZurfurGui.Loader.RegisterControl(\"{t.NamespaceFileName}\", typeof(global::{t.NamespaceFileName}), () => new global::{t.NamespaceFileName}());"));
 
         var registerDataControllers = string.Join("\r\n", controlList
-            .Where(t => t.TypeParam == "" && t.Bindings.Any(b => b.BindType != BindType.Styled))
+            .Where(t => t.TypeParam == "" && t.Bindings.Any(b => !b.BindType.IsViewOnly()))
             .Select(t => $"        global::ZurfurGui.Loader.RegisterDataController(typeof(global::{t.NamespaceFileName}Data), itemData => {{ var controller = new global::{t.NamespaceFileName}(); controller.DataContext = (global::{t.NamespaceFileName}Data)itemData; return controller; }});"));
 
         // Scan all JSON documents recursively for closed generic controller usages

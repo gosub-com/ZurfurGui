@@ -6,6 +6,9 @@
     // Opacity for disabled elements
     "opacity.disabled": "0.38",
 
+    "input.long-click.duration": "00:00:00.5",
+    "input.long-click.movement-tolerance": "8",
+
     "radius.corner.small": "2", // CheckBox, Radio, etc.
     "radius.corner.medium": "4", // Button, TextEdit, Dropdowns, etc.
     "radius.corner.large.inside": "6.5",

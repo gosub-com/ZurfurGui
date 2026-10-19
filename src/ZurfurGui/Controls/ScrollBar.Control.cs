@@ -24,12 +24,6 @@ public enum ScrollBarVisibility
 
 public partial class ScrollBar : Controllable, Renderable
 {
-    internal static readonly PropertyKey<bool> IsExpandedProperty = new(
-        "ScrollBar.isExpanded",
-        typeof(ScrollBar),
-        false,
-        ViewFlags.Style | ViewFlags.Render);
-
     // Drag state (not in data - pure UI state)
     bool _isDragging;
     bool _isPointerDown;
@@ -38,7 +32,7 @@ public partial class ScrollBar : Controllable, Renderable
 
     internal bool IsDragging => _isDragging;
     internal bool IsPointerDown => _isPointerDown;
-    internal bool IsExpanded => View.GetProperty(IsExpandedProperty);
+    internal bool IsExpanded => Properties.IsExpanded;
 
 
     static ScrollBar()
@@ -74,13 +68,18 @@ public partial class ScrollBar : Controllable, Renderable
     internal void UpdateExpandedState()
     {
         var isPressed = View.GetProperty(Panel.IsPressed) || IsPointerDown || IsDragging;
-        var isExpanded = !View.GetStyle(ExpandOnHoverProperty)
-            || View.GetProperty(Panel.IsPointerOver)
+        var appWindow = View.AppWindow;
+        var hasActivePointerInput = appWindow is not null
+            && (appWindow.PointerContacts.Any(contact => contact.Buttons != PointerButtons.None)
+                || appWindow.CapturedPointerContacts.Count != 0);
+        var isExpanded = !Properties.ExpandOnHover
+            || (View.GetProperty(Panel.IsPointerOver) && !hasActivePointerInput)
             || isPressed;
 
         if (IsExpanded != isExpanded)
         {
-            View.SetProperty(IsExpandedProperty, isExpanded);
+            var properties = Properties;
+            properties.IsExpanded = isExpanded;
             View.InvalidateStyleCacheInternal();
         }
     }
@@ -98,7 +97,7 @@ public partial class ScrollBar : Controllable, Renderable
     /// </summary>
     public Rect GetStartArrowRect()
     {
-        var orientationValue = View.GetStyle(OrientationProperty);
+        var orientationValue = Properties.Orientation;
         var arrowSize = GetArrowSize(orientationValue);
 
         if (orientationValue == Orientation.Vertical)
@@ -112,7 +111,7 @@ public partial class ScrollBar : Controllable, Renderable
     /// </summary>
     public Rect GetEndArrowRect()
     {
-        var orientationValue = View.GetStyle(OrientationProperty);
+        var orientationValue = Properties.Orientation;
         var arrowSize = GetArrowSize(orientationValue);
 
         if (orientationValue == Orientation.Vertical)
@@ -130,7 +129,7 @@ public partial class ScrollBar : Controllable, Renderable
         if (data.Maximum <= data.Minimum)
             return 0;
 
-        var orientationValue = View.GetStyle(OrientationProperty);
+        var orientationValue = Properties.Orientation;
         var arrowSize = GetArrowSize(orientationValue);
         var fullSize = orientationValue == Orientation.Vertical ? View.Size.Height : View.Size.Width;
         var trackSize = fullSize - (2 * arrowSize);  // Subtract both arrows
@@ -150,7 +149,7 @@ public partial class ScrollBar : Controllable, Renderable
         if (data.Maximum <= data.Minimum)
             return data.Minimum;
 
-        var orientationValue = View.GetStyle(OrientationProperty);
+        var orientationValue = Properties.Orientation;
         var arrowSize = GetArrowSize(orientationValue);
         var fullSize = orientationValue == Orientation.Vertical ? View.Size.Height : View.Size.Width;
         var trackSize = fullSize - (2 * arrowSize);  // Subtract both arrows
@@ -171,7 +170,7 @@ public partial class ScrollBar : Controllable, Renderable
     public Rect CalculateThumbRect()
     {
         var data = DataContext;
-        var orientationValue = View.GetStyle(ScrollBar.OrientationProperty);
+        var orientationValue = Properties.Orientation;
         var thumbSize = CalculateThumbSize();
         var thumbPos = ValueToScreen(data.Value);
 
@@ -193,11 +192,10 @@ public partial class ScrollBar : Controllable, Renderable
     public Rect CalculateVisualThumbRect(bool isExpanded)
     {
         var thumbRect = CalculateThumbRect();
-        var thickness = Math.Max(0, View.GetStyle(
-            isExpanded ? ThumbThicknessProperty : ThumbRestingThicknessProperty));
-        var edgeInset = Math.Max(0, View.GetStyle(ThumbEdgeInsetProperty));
+        var thickness = Math.Max(0, isExpanded ? Properties.ThumbThickness : Properties.ThumbRestingThickness);
+        var edgeInset = Math.Max(0, Properties.ThumbEdgeInset);
 
-        if (View.GetStyle(OrientationProperty) == Orientation.Vertical)
+        if (Properties.Orientation == Orientation.Vertical)
         {
             thickness = Math.Min(thickness, View.Size.Width);
             var x = isExpanded
@@ -231,8 +229,8 @@ public partial class ScrollBar : Controllable, Renderable
         if (range <= 0)
             return 0;
 
-        var thumbMinSize = View.GetStyle(ThumbMinSizeProperty);
-        var orientationValue = View.GetStyle(OrientationProperty);
+        var thumbMinSize = Properties.ThumbMinSize;
+        var orientationValue = Properties.Orientation;
         var arrowSize = GetArrowSize(orientationValue);
         var fullSize = orientationValue == Orientation.Vertical ? View.Size.Height : View.Size.Width;
         var trackSize = fullSize - (2 * arrowSize);  // Subtract both arrows
@@ -271,7 +269,7 @@ public partial class ScrollBar : Controllable, Renderable
         // pressed state locally until pointer-up or capture-loss.
         _isPointerDown = true;
         View.SetProperty(Panel.IsPressed, true);
-        View.CapturePointer = true;
+        View.SetCapture(e.Contact.Key, true);
 
         switch (region)
         {
@@ -294,7 +292,7 @@ public partial class ScrollBar : Controllable, Renderable
 
             case ScrollBarHitRegion.Track:
                 // Jump by LargeChange in the direction of click
-                var orientationValue = View.GetStyle(OrientationProperty);
+                var orientationValue = Properties.Orientation;
                 var clickPos = orientationValue == Orientation.Vertical ? viewPos.Y : viewPos.X;
 
                 if (ScreenToValue(clickPos) < data.Value)
@@ -307,6 +305,8 @@ public partial class ScrollBar : Controllable, Renderable
 
     void OnPointerMove(object? sender, PointerEvent e)
     {
+        UpdateExpandedState();
+
         if (_isPointerDown)
             View.SetProperty(Panel.IsPressed, true);
 
@@ -318,7 +318,7 @@ public partial class ScrollBar : Controllable, Renderable
         var viewPos = View.toClient(e.Contact.DevicePosition);
 
         var data = DataContext;
-        var orientationValue = View.GetStyle(OrientationProperty);
+        var orientationValue = Properties.Orientation;
         var delta = orientationValue == Orientation.Vertical 
             ? viewPos.Y - _dragStartPoint.Y 
             : viewPos.X - _dragStartPoint.X;
@@ -344,21 +344,13 @@ public partial class ScrollBar : Controllable, Renderable
     {
         _isDragging = false;
         _isPointerDown = false;
-        View.SetProperty(Panel.IsPressed, false);
-        View.CapturePointer = false;
+        View.SetCapture(e.Contact.Key, false);
     }
 
-    void OnPointerCaptureLost(object? sender, EventArgs e)
+    void OnPointerCaptureLost(object? sender, PointerContactKey _)
     {
         _isDragging = false;
         _isPointerDown = false;
-        View.SetProperty(Panel.IsPressed, false);
-
-        if (View.AppWindow?.Renderer?.PointerHover is { } pointerHover
-            && !View.OriginRect.Contains(pointerHover.PointerDevicePosition))
-        {
-            View.SetProperty(Panel.IsPointerOver, false);
-        }
     }
 
 
@@ -366,13 +358,13 @@ public partial class ScrollBar : Controllable, Renderable
     {
         var data = DataContext;
         var trackRect = new Rect(new(), view.Size);
-        var orientationValue = view.GetStyle(ScrollBar.OrientationProperty);
+        var orientationValue = Properties.Orientation;
         var isExpanded = IsExpanded;
 
         if (isExpanded)
         {
             // Draw background track
-            var trackColor = view.GetStyle(ScrollBar.TrackColorProperty);
+            var trackColor = Properties.TrackColor;
             context.FillRect(trackColor, trackRect, 1000);
         }
 
@@ -381,8 +373,8 @@ public partial class ScrollBar : Controllable, Renderable
         if (data.Maximum > data.Minimum)
         {
             var thumbRect = CalculateVisualThumbRect(isExpanded);
-            var thumbColor = view.GetStyle(ScrollBar.ThumbColorProperty);
-            var thumbRadius = view.GetStyle(ScrollBar.ThumbRadiusProperty);
+            var thumbColor = Properties.ThumbColor;
+            var thumbRadius = Properties.ThumbRadius;
             context.FillRect(thumbColor, thumbRect, thumbRadius);
 
             if (isExpanded)

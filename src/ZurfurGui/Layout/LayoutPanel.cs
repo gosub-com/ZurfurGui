@@ -15,14 +15,15 @@ public static class LayoutPanel
         var windowMeasured = new Size();
         foreach (var child in view.Children)
         {
-            var viewIsVisible = child.GetStyle(Panel.IsVisible);
+            var viewIsVisible = child.IsVisible;
             if (!viewIsVisible)
                 continue;
 
             child.Measure(available, measure);
             var childMeasured = child.DesiredTotalSize;
-            windowMeasured.Width = Math.Max(windowMeasured.Width, childMeasured.Width);
-            windowMeasured.Height = Math.Max(windowMeasured.Height, childMeasured.Height);
+            var offset = child.GetProperty(Panel.Offset).Or(0);
+            windowMeasured.Width = Math.Max(windowMeasured.Width, Math.Max(0, offset.X + childMeasured.Width));
+            windowMeasured.Height = Math.Max(windowMeasured.Height, Math.Max(0, offset.Y + childMeasured.Height));
         }
 
         return windowMeasured;
@@ -36,8 +37,17 @@ public static class LayoutPanel
         // All children get positioned at absolute coordinates in the contentRect
         var contentRect = view.ContentRect;
         foreach (var child in view.Children)
-            if (child.GetStyle(Panel.IsVisible))
-                child.Arrange(contentRect, measure);
+            if (child.IsVisible)
+            {
+                var offset = child.GetProperty(Panel.Offset).Or(0);
+                child.Arrange(
+                    new Rect(
+                        contentRect.X + offset.X,
+                        contentRect.Y + offset.Y,
+                        contentRect.Width,
+                        contentRect.Height),
+                    measure);
+            }
     }
 
 }

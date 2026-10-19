@@ -26,7 +26,7 @@ public class Renderer
     AppWindow _appWindow;
     MeasureContext _measureContext;
     RenderContext _renderContext;
-    PointerOver _pointerHover;
+    PointerRouter _pointerRouter;
     OsRenderBuffer _presentBuffer;
     ObjectCache<string> _stringCache;
 
@@ -77,7 +77,7 @@ public class Renderer
     
     public RendererStats Stats => _stats;
 
-    internal PointerOver PointerHover => _pointerHover;
+    internal PointerRouter PointerRouter => _pointerRouter;
 
 
     public Renderer(OsWindow window, OsCanvas canvas, AppWindow appWindow)
@@ -90,13 +90,13 @@ public class Renderer
 
         _measureContext = new MeasureContext(_canvas.Context);
         _renderContext = new RenderContext(_measureContext);
-        _pointerHover = new PointerOver(_appWindow);
+        _pointerRouter = new PointerRouter(_appWindow);
         _appWindow.SetAppWindowGlobals(this);
 
 
         if (_canvas.PointerInput != null)
             throw new ArgumentException("Pointer input already taken", nameof(_canvas));
-        _canvas.PointerInput = (ev) => _pointerHover.PointerInput(ev);
+        _canvas.PointerInput = (ev) => _pointerRouter.PointerInput(ev);
     }
 
     public void RenderFrame()
@@ -206,7 +206,7 @@ public class Renderer
         if (!view.IsVisible)
             return;
 
-        if (view.GetStyle(Panel.Clip))
+        if (view.GetProperty(Panel.Clip))
             deviceClip = deviceClip.Intersect(view.toDevice(view.ContentRect));
 
         var clientClip = view.toClient(deviceClip);
@@ -251,7 +251,7 @@ public class Renderer
         }
         view._measureCache.VisibleAtLastRender = true;
 
-        if (view.GetStyle(Panel.Clip))
+        if (view.GetProperty(Panel.Clip))
             deviceClip = deviceClip.Intersect(view.toDevice(view.ContentRect));
 
         var needsRender = view.Flags.HasFlag(ViewFlags.Render);
@@ -387,7 +387,7 @@ public class Renderer
 
             // Clip the content rect if requested
             var presentBufferIndex = _presentBuffer.CommandsLength;
-            if (view.GetStyle(Panel.Clip))
+            if (view.GetProperty(Panel.Clip))
             {
                 doClip = true;
                 deviceClip = deviceClip.Intersect(view.toDevice(view.ContentRect));

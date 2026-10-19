@@ -1,10 +1,18 @@
-using ZurfurGui.Base;
+﻿using ZurfurGui.Base;
 using ZurfurGui.Input;
 using ZurfurGui.Layout;
 using ZurfurGui.Property;
 using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
+
+public enum ScrollMode
+{
+    Both,
+    Horizontal,
+    Vertical,
+    None
+}
 
 public sealed partial class ScrollViewer
 {
@@ -18,7 +26,7 @@ public sealed partial class ScrollViewer
         verticalScrollBar.View.SetProperty(ScrollBar.ExpandOnHoverProperty, true);
         horizontalScrollBar.View.AddEvent(Panel.PointerEntered, OnScrollBarPointerEntered);
         verticalScrollBar.View.AddEvent(Panel.PointerEntered, OnScrollBarPointerEntered);
-        _contentViewport.View.Layout = new ContentViewportLayout(_contentWindow.View);
+        _contentViewport.View.Layout = new ContentViewportLayout(this);
         View.Layout = new ScrollViewerLayout(this);
         DataContext.PropertyChanged += OnScrollViewerDataChanged;
         horizontalScrollBar.DataContext.PropertyChanged += OnScrollBarDataChanged;
@@ -30,6 +38,9 @@ public sealed partial class ScrollViewer
     /// The default LoadParentContent implementation uses ContentHost, so this control only needs to provide the host.
     /// </summary>
     public View ContentHost => _contentWindow.View;
+
+    bool CanScrollHorizontally => DataContext.ScrollMode is ScrollMode.Both or ScrollMode.Horizontal;
+    bool CanScrollVertically => DataContext.ScrollMode is ScrollMode.Both or ScrollMode.Vertical;
 
     /// <summary>
     /// Raises the scrollbar that received the pointer above its sibling views.
@@ -52,7 +63,7 @@ public sealed partial class ScrollViewer
                 Math.Clamp(value.Y, verticalData.Minimum, verticalData.Maximum));
 
             _scrollOffset = clamped;
-            _contentWindow.View.SetProperty(Panel.Offset, new PointProp(-clamped.X, -clamped.Y));
+            _contentWindow.View.SetProperty(Panel.VisualOffset, new PointProp(-clamped.X, -clamped.Y));
 
             var wasSyncingScrollBars = _syncingScrollBars;
             _syncingScrollBars = true;
@@ -70,6 +81,14 @@ public sealed partial class ScrollViewer
 
     void OnScrollViewerDataChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(ScrollViewerData.ScrollMode))
+        {
+            _contentViewport.View.InvalidateMeasure();
+            View.InvalidateMeasure();
+            SyncScrollBars(_contentViewport.View.ContentRect.Size);
+            return;
+        }
+
         if (e.PropertyName != nameof(ScrollViewerData.ScrollSize))
             return;
 
@@ -115,11 +134,11 @@ public sealed partial class ScrollViewer
         try
         {
             var scrollSize = DataContext.ScrollSize.Or(16);
-            SyncScrollBar(horizontalScrollBar, contentSize.Width, viewportSize.Width, scrollSize.Width);
-            SyncScrollBar(verticalScrollBar, contentSize.Height, viewportSize.Height, scrollSize.Height);
+            SyncScrollBar(horizontalScrollBar, contentSize.Width, viewportSize.Width, scrollSize.Width, CanScrollHorizontally);
+            SyncScrollBar(verticalScrollBar, contentSize.Height, viewportSize.Height, scrollSize.Height, CanScrollVertically);
             ScrollOffset = _scrollOffset;
 
-            if (View.GetProperty(AutoScrollToEndProperty) && wasAtVerticalEnd)
+            if (Properties.AutoScrollToEnd && wasAtVerticalEnd)
                 ScrollOffset = new Point(ScrollOffset.X, verticalData.Maximum);
         }
         finally
@@ -128,17 +147,22 @@ public sealed partial class ScrollViewer
         }
     }
 
-    static void SyncScrollBar(ScrollBar scrollBar, double contentExtent, double viewportSize, double scrollSize)
+    static void SyncScrollBar(
+        ScrollBar scrollBar,
+        double contentExtent,
+        double viewportSize,
+        double scrollSize,
+        bool canScroll)
     {
         var data = scrollBar.DataContext;
-        var maximum = Math.Max(0, contentExtent - viewportSize);
+        var maximum = canScroll ? Math.Max(0, contentExtent - viewportSize) : 0;
         data.Minimum = 0;
         data.Maximum = maximum;
         data.ViewportSize = Math.Max(0, viewportSize);
         data.SmallChange = scrollSize;
         data.LargeChange = Math.Max(0, viewportSize);
 
-        scrollBar.View.IsVisible = data.Visibility switch
+        scrollBar.View.IsVisible = !canScroll ? false : data.Visibility switch
         {
             ScrollBarVisibility.Visible => true,
             ScrollBarVisibility.Hidden => false,
@@ -223,34 +247,45 @@ public sealed partial class ScrollViewer
     }
 
     /// <summary>
-    /// Measures user content without constraining it to the viewport and arranges it at its natural size inside
-    /// the clipped viewport. It is separate from ScrollViewerLayout because the outer layout controls the
-    /// viewport and overlay scrollbar rectangles, while this layout controls only the scrollable content window.
+    /// Measures user content with constraints determined by ScrollMode and arranges it inside the clipped viewport.
+    /// It is separate from ScrollViewerLayout because the outer layout controls the viewport and overlay scrollbar
+    /// rectangles, while this layout controls only the scrollable content window.
     /// </summary>
     sealed class ContentViewportLayout : Layoutable
     {
-        readonly View _contentWindow;
+        readonly ScrollViewer _owner;
 
-        public ContentViewportLayout(View contentWindow)
+        public ContentViewportLayout(ScrollViewer owner)
         {
-            _contentWindow = contentWindow;
+            _owner = owner;
         }
 
         public string TypeName => "ScrollViewerContentViewport";
 
         public Size MeasureView(View view, MeasureContext measure, Size available)
         {
-            _contentWindow.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity), measure);
-            var contentSize = _contentWindow.DesiredTotalSize;
+            var canScrollHorizontally = _owner.CanScrollHorizontally;
+            var canScrollVertically = _owner.CanScrollVertically;
+            var contentAvailable = new Size(
+                canScrollHorizontally ? double.PositiveInfinity : available.Width,
+                canScrollVertically ? double.PositiveInfinity : available.Height);
+            _owner._contentWindow.View.Measure(contentAvailable, measure);
+            var contentSize = _owner._contentWindow.View.DesiredTotalSize;
             return new Size(
-                Math.Min(contentSize.Width, available.Width),
-                Math.Min(contentSize.Height, available.Height));
+                canScrollHorizontally ? Math.Min(contentSize.Width, available.Width) : contentSize.Width,
+                canScrollVertically ? Math.Min(contentSize.Height, available.Height) : contentSize.Height);
         }
 
         public void ArrangeViews(View view, MeasureContext measure)
         {
             var contentRect = view.ContentRect;
-            _contentWindow.Arrange(new Rect(contentRect.Position, _contentWindow.DesiredTotalSize), measure);
+            var contentSize = _owner._contentWindow.View.DesiredTotalSize;
+            var arrangeSize = new Size(
+                _owner.CanScrollHorizontally ? contentSize.Width : contentRect.Width,
+                _owner.CanScrollVertically ? contentSize.Height : contentRect.Height);
+            _owner._contentWindow.View.Arrange(
+                new Rect(contentRect.Position, arrangeSize),
+                measure);
         }
     }
 }

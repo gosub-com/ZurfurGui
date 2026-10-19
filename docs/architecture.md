@@ -115,24 +115,50 @@ Every entry in a `$data` section must declare a `"bind"` field. The valid values
 |---|---|---|---|
 | `"data"` | No | Yes | State or data-only values. Collections must use this. |
 | `"styledData"` | Yes | Yes | A nullable or non-nullable data value that can override a style or theme value. |
-| `"styled"` | Yes | No | A style-only value configured by themes or imperative view code. |
-| `"attached"` | No | Yes | Reserved data-binding category for attached behavior. |
-| `"_child.prop"` | No | Yes | Forwards a generated data property to a named child control property. |
+| `"styled"` | Yes | No | A style-only value configured by JSON, themes, or imperative view code. |
+| `"property"` | Yes | No | A view-only value read with `GetProperty`, not theme lookup. |
+| `"attachedProperty"` | Yes | No | An attached property binding, currently using the local view-property path. |
+| `"attachedStyle"` | Yes | No | A style-aware attached binding, currently using the local view-property path. |
+| `"data:<target>"` | No | Yes | Forwards a generated data property to a named child control's data property. |
 
-- **`"data"`** stores the value only in the concrete generated data class. No `PropertyKey` is emitted, and the
-  generated controller does not push the value to the view. Code-behind observes changes through
-  `INotifyPropertyChanged`.
+**NOTE:** `View.GetStyle` is now private.  Always use `Control.Properties` to read a property or style when the
+property is not attached and the control is known at compile time.  Use `View.GetProperty` to read a property
+or style when the property is attached or the control is not known at compile time.  This documentation
+will be updated to reflect this note in the future.
+
+- **`"data"`** stores the value only in the concrete generated data class. The generated controller does not push the
+  value to the view. Code-behind observes changes through `INotifyPropertyChanged`; use `DataContext` to read or write it.
 - **`"styledData"`** emits a static `PropertyKey<T>` on the controller (or its non-generic companion class for generic
-  controls). When `DataContext` changes, `OnDataContextPropertyChanged` calls `View.SetProperty` or
-  `View.RemoveProperty`. Nullable `styledData` properties remove the property when set to `null`, allowing a theme to
-  supply a fallback value.
+  controls). `Properties` reads the effective value with `GetStyle` and is read-only for this binding. Always use
+  `Properties` to read a `styledData` value; write it through `DataContext`. When `DataContext` changes,
+  `OnDataContextPropertyChanged` calls `View.SetProperty` or `View.RemoveProperty`. Setting nullable `styledData` to
+  `null` removes the local override, allowing style or theme resolution to supply a fallback value.
 - **`"styled"`** emits a `PropertyKey<T>` but no data property. It is configured through styles or imperative
-  `View.SetProperty` calls.
-- **`"attached"`** is parsed as a distinct binding category, but attached properties are normally declared directly in
-  C# with `PropertyKey` rather than in a control's data context.
-- Any other non-empty `bind` value containing a dot is treated as a forwarded binding. The path must begin with a named
-  child control, such as `"_child.text"`.
+  `View.SetProperty` calls. Its `Properties` accessor reads with `GetStyle` and writes with `View.SetProperty`.
+- **`"property"`** emits a `PropertyKey<T>` but no data property, like `"styled"`. It should be read with
+  `GetProperty`, which reads the view's property or key default without resolving theme values. Its `Properties`
+  accessor writes with `View.SetProperty`.
+- **`"attachedProperty"`** emits a `PropertyKey<T>` and `ZuiPropertyType.AttachedProperty`, with no data property.
+  It currently uses the same local property access path as `"property"`; owner-independent application is deferred.
+- **`"attachedStyle"`** emits a `PropertyKey<T>` and `ZuiPropertyType.AttachedStyle`, with no data property. It
+  currently uses the same local style access path as `"styled"`; attached style resolution is deferred.
+- **`"data:<target>"`** creates a parent data property and forwards its value to a property on the named child's
+  `DataContext`, such as `"data:_child.text"`. Use the parent `DataContext` to read or write the forwarded value. The
+  target may be a child `data` or `styledData` property, but not a child `styled` property. A `styledData` child target
+  mirrors the value to its own view property. The `data` prefix is required; other prefixes and empty targets are errors.
+- Without a colon, only `"data"`, `"styledData"`, `"styled"`, `"property"`, `"attachedProperty"`, and
+  `"attachedStyle"` are valid bind values. Unknown values are generator errors rather than implicit forwarded bindings.
 - Collections (`[]Type`) must use `bind: "data"`. Using any other value is a generator error.
+
+`DataContext` contains `data`, `styledData`, and forwarded values. Use it for application data and for writing
+`styledData`. The generated `Properties` accessor is view-focused and retains a `View`: it exposes `styledData`,
+`styled`, and `attachedStyle` through `GetStyle`, and `property` and `attachedProperty` through `GetProperty`. Data
+and forwarded bindings are not members of `Properties`. Every binding has generated
+`ZuiPropertyInfo`; `styledData`, `styled`, `property`, `attachedProperty`, and `attachedStyle` bindings have a
+`PropertyKeyId`, because data and forwarded values are applied through `DataContext`. Attached kinds are recorded in
+metadata, but owner-independent lookup and application are not implemented yet.
+Nullable `styledData` writes of `null` remove the local view override so the style or theme fallback is visible when
+read later through `Properties`.
 
 #### Collection bindings (`[]Type` syntax)
 
@@ -168,9 +194,14 @@ the current behavior.
   values when a data context is assigned.
 - `"data"` bindings remain in the concrete data object. The generated controller does not push them to the view;
   code-behind observes `PropertyChanged` directly.
-- Forwarded bindings assign the target child data property when the parent data property changes.
-- Data properties written directly in `.zui.json5` are retained in the generated view JSON and applied by
-  `Loader.ApplyDataProperties` after the control tree is built and child data has been initialized.
+- `"data:<target>"` forwarded bindings assign the target child data property when the parent data property changes.
+- The loader continues to switch on `ZuiPropertyType`: `data`, `styledData`, and forwarded values go through generated
+  `SetDataProperty`; `styled`, `property`, `attachedStyle`, and `attachedProperty` values are applied to the view by
+  `PropertyKeyId`. Attached kinds currently follow the same local property path as their non-attached counterparts.
+  The generated
+  `SetDataProperty` validates values and routes data-backed assignments through `Properties`. Child data properties are
+  applied recursively before the parent's properties; generated initialization creates the parent's `DataContext` after
+  `Loader.Load` returns.
 
 ### 3) Per-project registry (`*.zui.json5` + `*.zth.json5` → `ZurfurMain.g.cs`)
 
@@ -279,18 +310,16 @@ Generated `InitializeControl()` runs in this order:
 
 1. **Create View**: `View = new(this)` — attaches controller to view
 2. **Build control tree**: `Loader.Load(this, _zuiJsonContent)`
-   - Deserializes JSON properties
+   - Deserializes the control's own ZUI definition and merges its properties and layout
    - Recursively creates child controls via `Loader.CreateControl()` (which calls child's `InitializeControl()`)
-   - Adds child views via `View.AddChild()`
+   - Loads template content and applies JSON data properties recursively, children before parents
 3. **Cache named controls**: `_title = (TextView)View.FindByName("_title").Controller` — stores references to named children
-4. **Create DataContext tree**: `DataContext = CreateDefaultDataContext()`
+4. **Create DataContext**: `DataContext = CreateDefaultDataContext()`
    - For primitive types: initializes with default values (e.g., `new TextLines()`)
    - For sub-control data (optional): if a `$data` binding targets a named control itself (e.g., `bind: "card1"`), the
      generated initializer uses the child's already-initialized `DataContext` (e.g., `Card1 = card1.DataContext`)
-   - Otherwise, the initializer creates new view-shaped data objects (e.g., `Title = new TextLines()`)
-5. **Apply JSON data properties**: `Loader.ApplyDataProperties(this)` — deserializes any data properties written
-   directly in the `.zui.json5` file (camelCase names without a leading `.`) and pushes them into `DataContext`
-   via `SetDataProperty`. Children are processed before parents.
+    - For forwarded scalar bindings, initializes from the target child data property to preserve template values
+    - Otherwise, the initializer creates new view-shaped data objects (e.g., `Title = new TextLines()`)
 
 **Critical:** Child controls are fully initialized (including their `DataContext`, if any) before the parent's
 `CreateDefaultDataContext()` runs, so parent data can safely reference child data when explicitly declared.
@@ -379,22 +408,26 @@ Loader.CreateControl(child properties, context)
 ```
 
 `Loader.Load` invokes `Controllable.LoadTemplateContent` for the control's own ZUI content. The default implementation
-adds that content to `View`. `Loader.CreateControl` invokes `Controllable.LoadParentContent` after the child has been
-constructed. The default implementation adds parent content to `ContentHost`, which is `View` by default.
+adds that content to `View`. Generated initialization then caches named controls and creates the control's `DataContext`.
+When a parent creates a control from its `$content`, `Loader.CreateControl` first constructs and initializes the child,
+then applies the child's instance properties and invokes `Controllable.LoadParentContent`.
 
 `ContentHost` controls the destination for parent content; it does not change the call order or the ownership of the
 content. `LoadTemplateContent` is for the control-owned structure, while `LoadParentContent` is for content supplied by
-the parent.
+the parent. The default `LoadParentContent` implementation creates the supplied child controls and adds their views to
+`ContentHost`, which is `View` by default.
 
-`ScrollViewer` overrides `LoadTemplateContent` to create its content viewport and overlay scrollbars as direct
-children. It overrides `ContentHost` to identify `_contentWindow` as the destination for parent content. The default
-`LoadParentContent` implementation then keeps user content separate from the overlay scrollbars.
+`ScrollViewer` uses the default template-loading behavior: its own ZUI content defines the clipped viewport, content
+window, and overlay scrollbars. It overrides `ContentHost` so parent content is placed in `_contentWindow`, separate
+from the scrollbars. `Window` uses the same pattern: its template defines the title bar, clipped `_windowContent`, and
+resize handle, while its `ContentHost` routes parent content to `_windowContent`. Its `title` data property forwards to
+the title TextView's `text` property.
 
 This explicit distinction avoids inferring the loading phase from the current child count. It also provides a
 foundation for future controls with templates or named content hosts without adding control-specific phase detection to
 the loader.
 
-For measurement, arrangement, sizing, and content-extent behavior, see [ScrollViewer.md](ScrollViewer.md).
+For measurement, arrangement, sizing, and content-extent behavior, see [ScrollViewer](scroll-viewer.md).
 
 ## Input and interaction architecture
 
@@ -421,7 +454,8 @@ rules apply to interactions such as scrollbar dragging, window movement, and res
 - `ZurfurGuiGen/ZuiSchema.cs`: parses `$data` bindings, named-control discovery, `#comment` injection per binding, and
   control-name-to-C#-type translation (including generic forms).
 - `ZurfurGuiGen/ZuiEmitController.cs`: emits the controller class, `InitializeControl`, `DataContext` property,
-  `OnDataContextPropertyChanged`, `SyncAllPropertiesToView`, and `SetDataProperty`; handles generic class headers and
+  `PropertiesAccessor`, `OnDataContextPropertyChanged`, `SyncAllPropertiesToView`, and `SetDataProperty`; handles generic
+  class headers and
   always emits non-generic companion classes for generic controls.
 - `ZurfurGuiGen/ZuiEmitData.cs`: emits `<ViewName>Data` concrete data classes; handles generic data classes and top-level
   doc comment propagation.

@@ -9,8 +9,19 @@ internal enum BindType
     Data,
     StyledData,
     Styled,
-    Attached,
-    Forwarded
+    Property,
+    Forwarded,
+    AttachedProperty,
+    AttachedStyle
+}
+
+internal static class BindTypeExtensions
+{
+    internal static bool IsViewOnly(this BindType bindType) => bindType is
+        BindType.Styled or BindType.Property or BindType.AttachedProperty or BindType.AttachedStyle;
+
+    internal static bool HasPropertyKey(this BindType bindType) => bindType is
+        BindType.StyledData or BindType.Styled or BindType.Property or BindType.AttachedProperty or BindType.AttachedStyle;
 }
 
 /// <summary>
@@ -47,7 +58,7 @@ internal class DataBinding
 
     /// <summary>
     /// Optional ViewFlags from JSON "flags" field (e.g., "reDraw" becomes "ViewFlags.ReDraw").
-    /// Empty string means ViewFlags.None.
+    /// Empty string means no flags are specified.
     /// </summary>
     public string Flags { get; set; } = "";
 
@@ -60,6 +71,9 @@ internal class DataBinding
     /// PropertyKey field name with "Property" suffix (e.g., "TextProperty", "OrientationProperty").
     /// </summary>
     public string PropertyKeyName { get; set; } = "";
+
+    /// <summary>Optional registered name used by the generated PropertyKey.</summary>
+    public string PropertyKeyRegistrationName { get; set; } = "";
 }
 
 internal class NamedControlInfo

@@ -12,16 +12,25 @@ namespace ZurfurGui.Input;
 /// <summary>
 /// Keep track of the pointer hover target and send pointer events
 /// </summary>
-internal class PointerOver
+internal class PointerRouter
 {
     readonly AppWindow _appWindow;
-    Point _pointerDevicePosition;
     readonly Dictionary<PointerContactKey, PointerContactState> _contactStates = new();
-    PointerContactState? _activeContactState;
 
-    public Point PointerDevicePosition => _pointerDevicePosition;
+    internal IReadOnlyList<PointerContact> GetContacts()
+    {
+        return _contactStates.Values.Select(state => state.Contact).ToArray();
+    }
 
-    public PointerOver(AppWindow appWindow)
+    internal IReadOnlyList<CapturedPointerContact> GetCapturedContacts()
+    {
+        return _contactStates.Values
+            .Where(state => state.CapturedView is not null)
+            .Select(state => new CapturedPointerContact(state.Contact, state.CapturedView!))
+            .ToArray();
+    }
+
+    public PointerRouter(AppWindow appWindow)
     {
         _appWindow = appWindow;
     }
@@ -36,9 +45,7 @@ internal class PointerOver
         if (ev.Kind == PointerEventKind.Unknown)
             return;
 
-        _pointerDevicePosition = ev.Contact.DevicePosition;
         var state = GetContactState(ev.Contact);
-        _activeContactState = state;
         var capturedView = state.CapturedView;
         var wasCaptured = capturedView is not null;
 
@@ -106,7 +113,6 @@ internal class PointerOver
             RemoveContactState(ev.Contact, state);
         }
 
-        _activeContactState = null;
     }
 
     /// <summary>
@@ -117,13 +123,13 @@ internal class PointerOver
         foreach (var view in previousChain.Where(view => !currentChain.Contains(view)))
         {
             var exitedEvent = new PointerEvent(PointerEventKind.Leave) { Contact = ev.Contact };
-            view.GetProperty(Panel.PointerExited)?.Invoke(view, exitedEvent);
+            view.TryGetProperty(Panel.PointerExited)?.Invoke(view, exitedEvent);
         }
 
         foreach (var view in currentChain.Where(view => !previousChain.Contains(view)).Reverse())
         {
             var enteredEvent = new PointerEvent(PointerEventKind.Enter) { Contact = ev.Contact };
-            view.GetProperty(Panel.PointerEntered)?.Invoke(view, enteredEvent);
+            view.TryGetProperty(Panel.PointerEntered)?.Invoke(view, enteredEvent);
         }
     }
 
@@ -175,7 +181,7 @@ internal class PointerOver
         foreach (var view in affectedViews)
             RecomputeViewProperty(view, Panel.IsPressed);
 
-        NotifyPointerCaptureLost(capturedView);
+        NotifyPointerCaptureLost(capturedView, state.Contact.Key);
     }
 
     private bool CancelPointerCapture(PointerContactState state)
@@ -196,13 +202,13 @@ internal class PointerOver
             RecomputeViewProperty(view, Panel.IsPressed);
 
         // Notify only after ownership and pressed state have been updated so handlers observe the final state.
-        NotifyPointerCaptureLost(capturedView);
+        NotifyPointerCaptureLost(capturedView, state.Contact.Key);
         return true;
     }
 
-    private static void NotifyPointerCaptureLost(View? capturedView)
+    private static void NotifyPointerCaptureLost(View? capturedView, PointerContactKey contactKey)
     {
-        capturedView?.GetProperty(Panel.PointerCaptureLost)?.Invoke(capturedView, EventArgs.Empty);
+        capturedView?.TryGetProperty(Panel.PointerCaptureLost)?.Invoke(capturedView, contactKey);
     }
 
     static View? FindHitTarget(View view, HitTestContext context)
@@ -212,7 +218,7 @@ internal class PointerOver
         if (!clip.Contains(context.Contact.DevicePosition))
             return null;
 
-        if (!view.GetStyle(Panel.IsVisible))
+        if (!view.IsVisible)
             return null;
 
         // Check children first
@@ -225,10 +231,10 @@ internal class PointerOver
         }
 
         var hitTest = view.GetProperty(Panel.HitTest);
-        if (hitTest == HitTestMode.Disabled)
+        if (hitTest == HitTesting.Disabled)
             return null;
 
-        if (hitTest == HitTestMode.Always)
+        if (hitTest == HitTesting.Always)
             return view;
 
         // User content hit test
@@ -267,7 +273,7 @@ internal class PointerOver
                 return;
 
             var view = views[i];
-            view.GetProperty(property)?.Invoke(view, ev);
+            view.TryGetProperty(property)?.Invoke(view, ev);
         }
 
         if (ev.Handled || ev.Cancelled)
@@ -287,7 +293,7 @@ internal class PointerOver
             if (ev.Handled || ev.Cancelled)
                 return;
 
-            view.GetProperty(property)?.Invoke(view, ev);
+            view.TryGetProperty(property)?.Invoke(view, ev);
         }
     }
 
@@ -305,20 +311,17 @@ internal class PointerOver
         return views;
     }
 
-    internal bool GetIsPointerCaptured(View view)
+    internal void SetCapture(View view, PointerContactKey contactKey, bool capture)
     {
-        return _contactStates.Values.Any(state => state.CapturedView == view);
-    }
-
-    internal void SetIsPointerCapture(View view, bool capture)
-    {
-        Debug.WriteLine($"Capture {capture}");
-        if (_activeContactState is not PointerContactState state)
+        if (!_contactStates.TryGetValue(contactKey, out var state))
+        {
+            if (capture)
+                throw new InvalidOperationException($"Pointer contact '{contactKey}' is not active.");
             return;
+        }
 
         if (capture)
         {
-            // TBD: Throw if not in pointer down
             if (state.Capture(view, out var previousOwner))
             {
                 if (previousOwner is not null)
@@ -332,16 +335,25 @@ internal class PointerOver
 
                 view.SetProperty(Panel.IsPressed, true);
                 if (previousOwner is not null)
-                    NotifyPointerCaptureLost(previousOwner);
+                    NotifyPointerCaptureLost(previousOwner, state.Contact.Key);
             }
         }
-        if (!capture)
+        else if (state.Release(view))
         {
-            if (state.Release(view))
-            {
-                RecomputeViewProperty(view, Panel.IsPressed);
-                NotifyPointerCaptureLost(view);
-            }
+            RecomputeViewProperty(view, Panel.IsPressed);
+            NotifyPointerCaptureLost(view, state.Contact.Key);
+        }
+    }
+
+    internal void ClearCaptures(View view)
+    {
+        foreach (var state in _contactStates.Values.ToList())
+        {
+            if (!state.Release(view))
+                continue;
+
+            RecomputeViewProperty(view, Panel.IsPressed);
+            NotifyPointerCaptureLost(view, state.Contact.Key);
         }
     }
 
@@ -353,7 +365,7 @@ internal class PointerOver
             return;
 
         RecomputeViewProperty(capturedView, Panel.IsPressed);
-        NotifyPointerCaptureLost(capturedView);
+        NotifyPointerCaptureLost(capturedView, state.Contact.Key);
     }
 
 

@@ -11,12 +11,12 @@
         // Short label shown inside the red-outlined badge pill.
         badge: {
             type: "TextLines",
-            bind: "_badge.text"
+            bind: "data:_badge.text"
         },
         // Main descriptive text shown to the right of the badge.
         text: {
             type: "TextLines",
-            bind: "_text.text"
+            bind: "data:_text.text"
         }
     },
     $layout: "Row",

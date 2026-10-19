@@ -8,7 +8,7 @@
     $data: {
         text: {
             type: "TextLines",
-            bind: "_itemText.text"
+            bind: "data:_itemText.text"
         }
     },
     $content: [

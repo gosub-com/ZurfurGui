@@ -7,9 +7,14 @@
             bind: "data",
             default: "new SizeProp(16, 16)"
         },
+        scrollMode: {
+            type: "ScrollMode",
+            bind: "data",
+            default: "ScrollMode.both"
+        },
         autoScrollToEnd: {
             type: "bool",
-            bind: "styledData",
+            bind: "styled",
             default: false,
             flags: "measure"
         }

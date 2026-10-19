@@ -1,0 +1,35 @@
+{
+    $controller: "WindowInControlTest",
+    $namespace: "TestApp",
+    $use: ["TestApp.Controls", "ZurfurGui.Windows"],
+    $content: [
+        {
+            $controller: "ScrollViewer",
+            $content: [
+                {
+                    $controller: "Window",
+                    title: "MyCard",
+                    "Panel.Offset": "x:20,y:20",
+                    $content: [
+                        {
+                            $controller: "MyCard",
+                            title: "Window content host test",
+                            description: "This card is supplied through the Window template content host.",
+                            byLine: "TestApp"
+                        }
+                    ]
+                },
+                {
+                    $controller: "Window",
+                    "Panel.Offset": "x:100,y:100",
+                    title: "FormSmallWinTest",
+                    $content: [
+                        {
+                            $controller: "FormSmallWinTest"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

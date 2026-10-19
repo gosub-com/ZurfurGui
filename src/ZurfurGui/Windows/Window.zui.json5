@@ -6,6 +6,14 @@
     $borderRadius: "${radius.corner.large}",
     $borderWidth: "${stroke.width.medium}",
     $sizeMin: "${size.window.min}",
+    $align: "vertical:top,horizontal:left",
+    $data: {
+        title: {
+            type: "TextLines",
+            bind: "data:_title.text",
+            default: "new TextLines(\"(not set)\")"
+        }
+    },
     $content: [
         {
             $layout: "Dock",
@@ -55,7 +63,7 @@
                 {
                     $name: "_windowContent",
                     $clip: true,
-                    $margin: "${spacing.window | spacing.large}"
+                    $margin: "${spacing.window | spacing.medium}"
                 }
             ]
         },
@@ -67,7 +75,7 @@
                 {
                     $controller: "TextView",
                     text: "◢",
-                    $offset: "x:-0.5,y:-1",
+                    $visualOffset: "x:-0.5,y:-1",
                     font: "size:32"
                 }
             ]

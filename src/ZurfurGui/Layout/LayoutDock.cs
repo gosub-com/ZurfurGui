@@ -15,7 +15,7 @@ public enum DockEnum
 
 public class LayoutDock : Layoutable
 {
-    public static readonly PropertyKey<DockEnum> Dock = new("dock.align", typeof(Panel), new(), ViewFlags.Measure);
+    public static readonly PropertyKey<DockEnum> Dock = new("dock.align", typeof(Panel), ZuiPropertyType.AttachedStyle, new(), ViewFlags.Measure);
 
 
     int _lastVisibleIndex;
@@ -25,40 +25,40 @@ public class LayoutDock : Layoutable
 
     public Size MeasureView(View view, MeasureContext measure, Size available)
     {
-        if (available.Width >= double.MaxValue || available.Height >= double.MaxValue)
-            throw new InvalidOperationException("DockPanel requires finite available size");
-
         var constraint = available;
         _lastVisibleIndex = -1;
         var minSize = new Size();
+        var consumedSize = new Size();
         var childViews = view.Children;
         for (var i = 0;  i < childViews.Count;  i++)
         {
             // Ignore invisible views
             var childView = childViews[i];
-            if (!childView.GetStyle(Panel.IsVisible))
+            if (!childView.IsVisible)
                 continue;
 
             _lastVisibleIndex = i;
             childView.Measure(constraint, measure);
             var childSize = childView.DesiredTotalSize;
-            var dock = childView.GetStyle(Dock);
+            var dock = childView.GetProperty(Dock);
             switch (dock)
             {
                 case DockEnum.Left:
                 case DockEnum.Right:
                     constraint.Width = Math.Max(0, constraint.Width - childSize.Width);
-                    minSize.Height = Math.Max(minSize.Height, available.Height - constraint.Height + childSize.Height);
+                    minSize.Height = Math.Max(minSize.Height, consumedSize.Height + childSize.Height);
+                    consumedSize.Width += childSize.Width;
                     break;
                 case DockEnum.Top: 
                 case DockEnum.Bottom:
                     constraint.Height = Math.Max(0, constraint.Height - childSize.Height);
-                    minSize.Width = Math.Max(minSize.Width, available.Width - constraint.Width + childSize.Width);
+                    minSize.Width = Math.Max(minSize.Width, consumedSize.Width + childSize.Width);
+                    consumedSize.Height += childSize.Height;
                     break;
             }
         }
 
-        return (available - constraint).ToSize.Max(minSize).Min(available);
+        return consumedSize.Max(minSize).Min(available);
     }
 
     public void ArrangeViews(View view, MeasureContext measure)
@@ -73,7 +73,7 @@ public class LayoutDock : Layoutable
         {
             // Ignore invisible views
             var childView = childViews[i];
-            var viewIsVisible = childView.GetStyle(Panel.IsVisible);
+            var viewIsVisible = childView.IsVisible;
             if (!viewIsVisible)
                 continue;
             
@@ -82,7 +82,7 @@ public class LayoutDock : Layoutable
 
             // Update based on dock (last visible index always takes remaining space)
             var childSize = childView.DesiredTotalSize;
-            var dock = childView.GetStyle(Dock);
+            var dock = childView.GetProperty(Dock);
             if (i < _lastVisibleIndex)
             {
                 switch (dock)

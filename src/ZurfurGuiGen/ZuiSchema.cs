@@ -7,7 +7,7 @@ namespace ZurfurGuiGen;
 
 internal static class ZuiSchema
 {
-    internal static List<DataBinding> GetDataBindings(Dictionary<string, object?> jsonDocument, string typeParam = "", string typeParamConstraint = "")
+    internal static List<DataBinding> GetDataBindings(Dictionary<string, object?> jsonDocument, string typeParam = "", string typeParamConstraint = "", bool allowDollarPropertyNames = false)
     {
         if (!jsonDocument.TryGetValue("$data", out var dataSectionObj) || dataSectionObj == null)
             return new List<DataBinding>();
@@ -18,8 +18,15 @@ internal static class ZuiSchema
         var result = new List<DataBinding>();
         foreach (var kvp in dataSection)
         {
-            if (kvp.Key.StartsWith("$") || kvp.Key.StartsWith("#"))
+            if (kvp.Key.StartsWith("#"))
                 continue; // generator-only metadata (e.g. #comment), not a binding entry
+
+            var isDollarProperty = kvp.Key.StartsWith("$");
+            if (isDollarProperty && !allowDollarPropertyNames)
+                throw new Exception($"The JSON '$data.{kvp.Key}' property name may not start with '$'. "
+                    + "Dollar-prefixed property names are reserved for Panel in namespace 'ZurfurGui.Controls'.");
+            if (isDollarProperty && kvp.Key.Length == 1)
+                throw new Exception($"The JSON '$data.{kvp.Key}' property name must contain a name after '$'.");
 
             if (kvp.Value is not Dictionary<string, object?> entry)
                 throw new Exception($"The JSON '$data.{kvp.Key}' value must be an object");
@@ -27,19 +34,45 @@ internal static class ZuiSchema
             if (!entry.TryGetValue("type", out var typeObj) || typeObj is not string typeName || string.IsNullOrWhiteSpace(typeName))
                 throw new Exception($"The JSON '$data.{kvp.Key}.type' must be a non-empty string");
 
-            var binding = entry.TryGetValue("bind", out var bindingObj) && bindingObj is string bindingStr ? bindingStr : "";
-            var bindingType = binding switch
-            {
-                "data" => BindType.Data,
-                "styledData" => BindType.StyledData,
-                "styled" => BindType.Styled,
-                "attached" => BindType.Attached,
-                "" => throw new Exception($"The JSON '$data.{kvp.Key}' must have an explicit 'bind' value (use 'data', etc.)."),
-                _ => BindType.Forwarded,
-            };
+            var bindValue = entry.TryGetValue("bind", out var bindingObj) && bindingObj is string bindingStr
+                ? bindingStr
+                : "";
+            if (bindValue == "")
+                throw new Exception($"The JSON '$data.{kvp.Key}.bind' must have an explicit value. "
+                    + "Use 'data', 'styled', 'styledData', 'property', 'attachedProperty', 'attachedStyle', or 'data:<target>'.");
 
-            if (bindingType != BindType.Forwarded)
+            var colonIndex = bindValue.IndexOf(':');
+            BindType bindingType;
+            string binding;
+            if (colonIndex < 0)
+            {
+                // Without a colon, the bind value must be a known standalone type.
+                bindingType = bindValue switch
+                {
+                    "data" => BindType.Data,
+                    "styledData" => BindType.StyledData,
+                    "styled" => BindType.Styled,
+                    "property" => BindType.Property,
+                    "attachedProperty" => BindType.AttachedProperty,
+                    "attachedStyle" => BindType.AttachedStyle,
+                    _ => throw new Exception($"The JSON '$data.{kvp.Key}.bind' has unknown bind value '{bindValue}'. "
+                        + "Use 'data', 'styled', 'styledData', 'property', 'attachedProperty', 'attachedStyle', or 'data:<target>'."),
+                };
                 binding = "";
+            }
+            else
+            {
+                // With a colon, parse the prefix and forwarding target.
+                var bindPrefix = bindValue.Substring(0, colonIndex);
+                binding = bindValue.Substring(colonIndex + 1);
+                if (bindPrefix != "data")
+                    throw new Exception($"The JSON '$data.{kvp.Key}.bind' has unsupported bind prefix '{bindPrefix}' "
+                        + $"in '{bindValue}'. Forwarding currently requires 'data:<target>'.");
+                if (binding.Length == 0)
+                    throw new Exception($"The JSON '$data.{kvp.Key}.bind' has an empty forwarding target in '{bindValue}'. "
+                        + "Use 'data:<target>'.");
+                bindingType = BindType.Forwarded;
+            }
 
             // Strip nullable from typename
             var isNullable = typeName.StartsWith("?");
@@ -58,7 +91,8 @@ internal static class ZuiSchema
                 if (isNullable)
                     throw new Exception($"The JSON '$data.{kvp.Key}.type' must not be nullable (\"?[]\") for collection types. Use \"[]Type\" instead.");
                 if (bindingType != BindType.Data)
-                    throw new Exception($"The JSON '$data.{kvp.Key}' is a collection and must use \"bind\": \"data\" (got \"{binding}\").");
+                    throw new Exception($"The JSON '$data.{kvp.Key}' is a collection and must use \"bind\": \"data\" "
+                        + $"(got \"{bindValue}\").");
 
                 // Detect when the element type is the file's declared generic type parameter
                 // (e.g. "[]Item" in "ComboBox<Item> where Item : ComboBoxItem").
@@ -69,12 +103,32 @@ internal static class ZuiSchema
                 }
             }
 
+            if (typeParam != "" && typeName == typeParam && bindingType.HasPropertyKey())
+                throw new Exception($"The JSON '$data.{kvp.Key}' uses generic type parameter '{typeParam}' with bind "
+                    + $"'{bindValue}', which generates a PropertyKey outside the generic controller. Use 'data' or 'data:<target>'.");
+
             var comment = entry.TryGetValue("#comment", out var commentObj) && commentObj is string commentStr ? commentStr : "";
-            var defaultValue = entry.TryGetValue("default", out var defaultObj) && defaultObj is string defaultStr ? defaultStr : "";
+            var defaultValue = entry.TryGetValue("default", out var defaultObj)
+                ? defaultObj switch
+                {
+                    string defaultStr => defaultStr,
+                    bool defaultBool => defaultBool ? "true" : "false",
+                    _ => "",
+                }
+                : "";
             var flags = entry.TryGetValue("flags", out var flagsObj) && flagsObj is string flagsStr ? flagsStr : "";
 
-            var pascalName = ZuiEmit.ToPascalCase(kvp.Key);
-            var propertyKeyName = pascalName + "Property";
+            var pascalName = ZuiEmit.ToPascalCase(isDollarProperty ? kvp.Key.Substring(1) : kvp.Key);
+            var propertyKeyName = isDollarProperty ? pascalName : pascalName + "Property";
+            var propertyKeyRegistrationName = "";
+            if (entry.TryGetValue("keyName", out var keyNameObj))
+            {
+                if (!isDollarProperty)
+                    throw new Exception($"The JSON '$data.{kvp.Key}.keyName' is only valid for dollar-prefixed Panel properties.");
+                if (keyNameObj is not string keyName || string.IsNullOrWhiteSpace(keyName))
+                    throw new Exception($"The JSON '$data.{kvp.Key}.keyName' must be a non-empty string.");
+                propertyKeyRegistrationName = keyName;
+            }
 
             result.Add(new DataBinding
             {
@@ -90,6 +144,7 @@ internal static class ZuiSchema
                 Flags = ConvertFlagsToViewFlags(flags),
                 PascalName = pascalName,
                 PropertyKeyName = propertyKeyName,
+                PropertyKeyRegistrationName = propertyKeyRegistrationName,
             });
         }
 
@@ -119,6 +174,8 @@ internal static class ZuiSchema
             case "String":
             case "string":
                 return "string";
+            case "TimeSpan":
+                return "global::System.TimeSpan";
             default:
                 return typeName;
         }
@@ -200,7 +257,7 @@ internal static class ZuiSchema
 
     /// <summary>
     /// Convert a JSON "flags" field value to C# ViewFlags enum expression.
-    /// Empty string becomes "ViewFlags.None".
+    /// Empty or whitespace-only values become an empty string.
     /// Comma-separated values are converted to PascalCase and joined with " | ".
     /// Example: "reDraw" => "ViewFlags.ReDraw"
     /// Example: "reDraw, reLayout" => "ViewFlags.ReDraw | ViewFlags.ReLayout"
@@ -208,7 +265,7 @@ internal static class ZuiSchema
     internal static string ConvertFlagsToViewFlags(string flagsStr)
     {
         if (string.IsNullOrWhiteSpace(flagsStr))
-            return "ViewFlags.None";
+            return "";
 
         var flags = flagsStr.Split(',')
             .Select(f => f.Trim())
@@ -216,6 +273,6 @@ internal static class ZuiSchema
             .Select(f => $"ViewFlags.{ZuiEmit.ToPascalCase(f)}")
             .ToList();
 
-        return flags.Count == 0 ? "ViewFlags.None" : string.Join(" | ", flags);
+        return flags.Count == 0 ? "" : string.Join(" | ", flags);
     }
 }

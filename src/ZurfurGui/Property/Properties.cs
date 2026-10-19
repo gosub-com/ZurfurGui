@@ -81,6 +81,7 @@ public interface IPropertyKey
     string Name { get; }
     Type Type { get; }
     Type OwnerType { get; }
+    ZuiPropertyType PropertyType { get; }
     ViewFlags Flags { get; }
     string ToString() => Id.ToString();
     internal void RefreshCacheProperty(View view);
@@ -96,12 +97,14 @@ public class PropertyKey<T> : IEquatable<PropertyKey<T>>, IPropertyKey
     public string Name { get; }
     public Type Type { get; }
     public Type OwnerType { get; }
+    public ZuiPropertyType PropertyType { get; }
     public T StyleDefault { get; }
     public ViewFlags Flags { get; }
 
-    public PropertyKey(string name, Type ownerType, T styleDefault, ViewFlags flags = ViewFlags.None)
+    public PropertyKey(string name, Type ownerType, ZuiPropertyType propertyType, T styleDefault, ViewFlags flags = ViewFlags.None)
     {
         Name = name;
+        PropertyType = propertyType;
         Flags = flags;
         Type = typeof(T);
         OwnerType = ownerType;
@@ -213,7 +216,7 @@ public class Properties : IEnumerable<(PropertyKeyId key, object value)>
             // Check type if it's available
             if (info.Type is not null && info.Type.IsAssignableTo(typeof(Delegate)))
                 throw new ArgumentException($"Use AddEvent for delegate types", nameof(property));
-            if (info.Type is not null && info.Type != value.GetType())
+            if (info.Type is not null && !info.Type.IsInstanceOfType(value))
                 throw new ArgumentException($"The property '{info.Name}' must have type '{info.Type}', but has '{value.GetType()}'");
         }
         _properties[property] = value;

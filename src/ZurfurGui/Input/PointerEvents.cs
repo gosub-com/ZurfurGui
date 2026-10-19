@@ -3,7 +3,7 @@
 namespace ZurfurGui.Input;
 
 [Flags]
-public enum PointerButtons
+public enum PointerButtons : byte
 {
     None = 0,
     Left = 1,
@@ -14,7 +14,7 @@ public enum PointerButtons
 }
 
 [Flags]
-public enum PointerModifiers
+public enum PointerModifiers : byte
 {
     None = 0,
     Shift = 1,
@@ -23,7 +23,7 @@ public enum PointerModifiers
     Meta = 8
 }
 
-public enum PointerDeviceKind
+public enum PointerDeviceKind : byte
 {
     Unknown,
     Mouse,
@@ -31,7 +31,7 @@ public enum PointerDeviceKind
     Pen
 }
 
-public enum PointerEventKind
+public enum PointerEventKind : byte
 {
     Unknown,
     Move,
@@ -50,7 +50,35 @@ public readonly record struct PointerContact(
     double Height,
     PointerButtons Buttons,
     PointerButtons ChangedButton,
-    PointerModifiers Modifiers);
+    PointerModifiers Modifiers)
+{
+    public PointerContactKey Key => new(Device, Id);
+}
+
+public readonly record struct PointerContactKey(PointerDeviceKind Device, int Id);
+
+/// <summary>
+/// Provides the latest contact state to a long-click callback.
+/// </summary>
+public sealed class PointerLongClickEventArgs : EventArgs
+{
+    public PointerContact Contact { get; }
+
+    /// <summary>
+    /// Gets or sets whether the long click was handled and the ordinary click should be suppressed.
+    /// </summary>
+    public bool Handled { get; set; }
+
+    public PointerLongClickEventArgs(PointerContact contact)
+    {
+        Contact = contact;
+    }
+}
+
+/// <summary>
+/// A pointer contact together with the view that currently owns its capture.
+/// </summary>
+public sealed record CapturedPointerContact(PointerContact Contact, View CapturedView);
 
 /// <summary>
 /// Use View.ToClinet to convert DevicePosition to view position.

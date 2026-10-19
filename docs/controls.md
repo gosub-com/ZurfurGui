@@ -62,6 +62,61 @@ arrange those controls. Common layouts include `Row`, `Column`, and `Dock`.
 }
 ```
 
+When no `$layout` is specified, `Panel` uses its default layout and arranges each child independently. Set the
+qualified `"Panel.Offset"` property on a child to shift its layout position. Its positive right and bottom edges
+contribute to the Panel's measured extent:
+
+```json5
+{
+    $controller: "Panel",
+    $content: [
+        {
+            $controller: "Window",
+            "Panel.Offset": "x:24,y:32"
+        }
+    ]
+}
+```
+
+Negative offsets do not move the Panel's `(0, 0)` content origin and may place content outside its measured bounds.
+Custom layouts such as `Row`, `Column`, and `Dock` do not use `Panel.Offset`.
+
+### Window
+
+`Window` provides window chrome around parent-supplied content. Its template includes a title bar, close control, and
+resize handle. Parent `$content` is placed in the clipped `_windowContent` area. Set the `title` data property in JSON;
+it defaults to `"(not set)"` when omitted.
+
+```json5
+{
+    $controller: "Window",
+    $namespace: "MyApp",
+    $use: ["ZurfurGui.Windows"],
+    title: "Settings",
+    $content: [
+        {
+            $controller: "Panel",
+            $layout: "Column",
+            $content: [
+                { $controller: "TextView", text: "Settings content" }
+            ]
+        }
+    ]
+}
+```
+
+For a standard floating window, use `AppWindow.ShowWindow` to wrap a control in a `Window` and set its title from C#:
+
+```csharp
+app.ShowWindow(new SettingsView(), "Settings", location: new PointProp(24, 32));
+```
+
+The optional `location` sets the window's `Panel.Offset`. Dragging the window updates the same position. Use
+`$visualOffset` to move a view without changing the measured content extent.
+
+The window content area clips overflow but does not scroll automatically. Put a `ScrollViewer` in the content when the
+window body needs to scroll. The title bar remains outside that content area.
+
 ### Scrim
 
 `Scrim` displays a themed, full-screen overlay for transient UI such as dropdowns, menus, and modal content. Its
@@ -137,7 +192,7 @@ Standalone scrollbars use their expanded appearance by default. Set `expandOnHov
 use its compact appearance until the pointer enters it:
 
 ```csharp
-scrollBar.View.SetProperty(ScrollBar.ExpandOnHoverProperty, true);
+scrollBar.DataContext.ExpandOnHover = true;
 ```
 
 When `expandOnHover` is `true`, the scrollbar expands while hovered, pressed, or dragged. When it is `false`, it

@@ -1,4 +1,216 @@
 {
     $controller: "Panel",
-    $namespace: "ZurfurGui.Controls"
+    $namespace: "ZurfurGui.Controls",
+    $use: ["ZurfurGui.Input"],
+    $data: {
+        $name: {
+            type: "String",
+            bind: "attachedProperty",
+        },
+        $controller: {
+            type: "String",
+            bind: "property",
+        },
+        $data: {
+            type: "Dictionary<string, string>",
+            bind: "property",
+            flags: "measure"
+        },
+        $namespace: {
+            type: "String",
+            bind: "property",
+        },
+        $use: {
+            type: "TextLines",
+            bind: "property"
+        },
+        $implements: {
+            type: "String",
+            bind: "property",
+        },
+        $dataProperties: {
+            type: "Dictionary<string, System.Text.Json.JsonElement>",
+            bind: "property"
+        },
+        $layout: {
+            type: "String",
+            bind: "property",
+            
+        },
+        $content: {
+            type: "ZurfurGui.Property.Properties[]",
+            bind: "property",
+            default: "[]",
+            flags: "measure"
+        },
+        $themeTokens: {
+            type: "Dictionary<string, string>",
+            bind: "attachedProperty"
+        },
+        $activeThemes: {
+            type: "TextLines",
+            bind: "attachedProperty",
+            flags: "styleChild"
+        },
+        $isVisible: {
+            type: "Bool",
+            bind: "attachedProperty",
+            default: "true",
+            flags: "measure"
+        },
+        $align: {
+            type: "AlignProp",
+            bind: "attachedStyle",
+            flags: "measure"
+        },
+        $margin: {
+            type: "ThicknessProp",
+            bind: "attachedStyle",
+            flags: "measure"
+        },
+        $sizeRequest: {
+            type: "SizeProp",
+            bind: "attachedStyle",
+            flags: "measure"
+        },
+        $sizeMax: {
+            type: "SizeProp",
+            bind: "attachedStyle",
+            flags: "measure"
+        },
+        $sizeMin: {
+            type: "SizeProp",
+            bind: "attachedStyle",
+            flags: "measure"
+        },
+        $padding: {
+            type: "ThicknessProp",
+            bind: "attachedStyle",
+            flags: "measure"
+        },
+        $backgroundColor: {
+            type: "Color",
+            bind: "attachedStyle",
+            flags: "render"
+        },
+        $borderColor: {
+            type: "Color",
+            bind: "attachedStyle",
+            flags: "render"
+        },
+        $borderWidth: {
+            type: "Double",
+            bind: "attachedStyle",
+            flags: "measure"
+        },
+        $borderRadius: {
+            type: "Double",
+            bind: "attachedStyle",
+            flags: "render"
+        },
+        $magnification: {
+            type: "Double",
+            bind: "attachedProperty",
+            default: "1",
+            flags: "measure"
+        },
+        $clip: {
+            type: "Bool",
+            bind: "attachedProperty",
+            flags: "measure"
+        },
+        $visualOffset: {
+            type: "PointProp",
+            bind: "attachedProperty",
+            flags: "measure"
+        },
+        $offset: {
+            type: "PointProp",
+            bind: "attachedProperty",
+            keyName: "Panel.Offset",
+            flags: "measure"
+        },
+        $hitTest: {
+            type: "HitTesting",
+            bind: "attachedProperty",
+            default: "HitTesting.Normal"
+        },
+        $isPointerOver: {
+            type: "Bool",
+            bind: "attachedProperty",
+            flags: "style"
+        },
+        $isEnabled: {
+            type: "Bool",
+            bind: "attachedProperty",
+            default: "true",
+            flags: "styleChild"
+        },
+        $isWindowActive: {
+            type: "Bool",
+            bind: "attachedProperty",
+            keyName: "$isWindowInactive",
+            flags: "styleChild"
+        },
+        $isPressed: {
+            type: "Bool",
+            bind: "attachedProperty",
+            flags: "style"
+        },
+        $isFocused: {
+            type: "Bool",
+            bind: "attachedProperty",
+            flags: "style"
+        },
+        $isFocusWithin: {
+            type: "Bool",
+            bind: "attachedProperty",
+            flags: "style"
+        },
+        $pointerDown: {
+            type: "EventHandler<PointerEvent>",
+            bind: "attachedProperty",
+            default: "static (s, e) => { }"
+        },
+        $pointerMove: {
+            type: "EventHandler<PointerEvent>",
+            bind: "attachedProperty",
+            default: "static (s, e) => { }"
+        },
+        $pointerUp: {
+            type: "EventHandler<PointerEvent>",
+            bind: "attachedProperty",
+            default: "static (s, e) => { }"
+        },
+        $pointerEntered: {
+            type: "EventHandler<PointerEvent>",
+            bind: "attachedProperty",
+            default: "static (s, e) => { }"
+        },
+        $pointerExited: {
+            type: "EventHandler<PointerEvent>",
+            bind: "attachedProperty",
+            default: "static (s, e) => { }"
+        },
+        $previewPointerDown: {
+            type: "EventHandler<PointerEvent>",
+            bind: "attachedProperty",
+            default: "static (s, e) => { }"
+        },
+        $previewPointerMove: {
+            type: "EventHandler<PointerEvent>",
+            bind: "attachedProperty",
+            default: "static (s, e) => { }"
+        },
+        $previewPointerUp: {
+            type: "EventHandler<PointerEvent>",
+            bind: "attachedProperty",
+            default: "static (s, e) => { }"
+        },
+        $pointerCaptureLost: {
+            type: "EventHandler<PointerContactKey>",
+            bind: "attachedProperty",
+            default: "static (s, e) => { }"
+        }
+    }
 }

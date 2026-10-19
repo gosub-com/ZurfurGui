@@ -6,19 +6,19 @@
         // Title data for the card
         title: {            
             type: "TextLines",
-            bind: "_bigTitle.text"
+            bind: "data:_bigTitle.text"
         },
         card1: {
             type: "ControlCard",
-            bind: "_card1"
+            bind: "data:_card1"
         },
         description: {
             type: "TextLines",
-            bind: "_card2.description"
+            bind: "data:_card2.description"
         },
         byLine: {
             type: "TextLines",
-            bind: "_card2.byLine"
+            bind: "data:_card2.byLine"
         }
 
     },

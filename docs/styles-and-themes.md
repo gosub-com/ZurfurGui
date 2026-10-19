@@ -63,7 +63,8 @@ For example, scrollbar themes can use the effective expanded state instead of th
 ```
 
 `ScrollBar.isExpanded` is true when the scrollbar is expanded because it is hovered, pressed, or configured not
-to expand only on hover. This allows a theme to style the effective visual state without changing the meaning of
+to expand only on hover. The property is generated from the control's `bind: "property"` declaration and is set
+by the control at runtime, allowing themes to style the effective visual state without changing the meaning of
 `isPointerOver`.
 
 Multiple expressions are separated by semicolons, evaluated in order until a matching
@@ -173,9 +174,12 @@ value comes from the token mapping. For every `styled` property, use this patter
 putting a `default` on the data item. Choose a fallback with a compatible value type and ensure it
 exists in a built-in theme, so the control works when the optional token is not defined.
 
-This guidance is specific to `styled` properties. Keep `default` values on ordinary data or
-`styledData` properties when they need an initial runtime value, such as a control's default
-orientation.
+This guidance is specific to `styled` properties. Keep `default` values on ordinary data, `styledData`, or `property`
+bindings when they need an initial runtime value, such as a control's default orientation.
+
+Use `bind: "property"` for view properties that should not resolve theme values. Controls access their own `property`
+bindings through generated `control.Properties.Name` members; these read from the view property or `PropertyKey` default
+without resolving theme values. Use the same accessor to set a control's own `styled` or `property` binding.
 
 ## Selecting and Activating Themes
 
@@ -310,7 +314,7 @@ appWindow.View.ActiveThemes = ["MyBrandTheme"];
 
 - **Do not set `default` on `styled` properties**: Map each styled-only property to an optional
   control-specific token followed by a compatible token defined in `ZurfurBase` or `ZurfurDefault`.
-  Reserve `default` for data and `styledData` properties that need an initial runtime value.
+  Reserve `default` for data, `styledData`, and `property` bindings that need an initial runtime value.
 
 - **Organize tokens semantically**: Use namespacing like `color.surface.canvas`,
   `spacing.horizontal.medium`, `font.size.base.300`.

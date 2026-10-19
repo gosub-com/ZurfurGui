@@ -2,8 +2,6 @@ using ZurfurGui.Base;
 
 namespace ZurfurGui.Input;
 
-internal readonly record struct PointerContactKey(PointerDeviceKind Device, int Id);
-
 internal sealed class PointerContactState
 {
     public PointerContact Contact { get; set; }

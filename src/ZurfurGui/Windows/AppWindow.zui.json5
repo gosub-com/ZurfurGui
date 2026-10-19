@@ -9,6 +9,40 @@
 	$controller: "AppWindow",
 	$namespace: "ZurfurGui.Windows",
 	$backgroundColor: "${color.surface.canvas}",
+	"AppWindow.longClickDuration": "${input.long-click.duration}",
+	"AppWindow.longClickMovementTolerance": "${input.long-click.movement-tolerance}",
+	$data: {
+		// The duration of a long click (press and hold) before it is recognized as a long click.
+		longClickDuration: {
+			type: "TimeSpan",
+			bind: "styled"
+		},
+		// The maximum movement allowed during a long click before it is canceled.
+		longClickMovementTolerance: {
+			type: "double",
+			bind: "styled"
+		},
+		// This is a styled test
+		styledTest: {
+			type: "double",
+			bind: "styled"
+		},
+		// This is a styledData test
+		styledDataTest: {
+			type: "double",
+			bind: "styledData"
+		},
+		// This is a data test
+		dataTest: {
+			type: "double",
+			bind: "data"
+		},
+		// This is a property test
+		propertyTest: {
+			type: "double",
+			bind: "property"
+		},
+	},
 	$content: [
 		{
 			// Main App Window

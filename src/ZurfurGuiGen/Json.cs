@@ -118,7 +118,6 @@ public static class Json
             if (json[index] == ',')
             {
                 index++; // skip ','
-                SkipWhitespace(json, ref index);
                 continue; // trailing comma allowed: re-check for '}'
             }
             else if (json[index] != '}')

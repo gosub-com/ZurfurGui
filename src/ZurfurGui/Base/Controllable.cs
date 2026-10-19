@@ -25,14 +25,12 @@ public interface Controllable
     /// Data property information for controls with data bindings.
     /// Returns an empty dictionary if the control has no data bindings.
     /// </summary>
-    IReadOnlyDictionary<string, DataPropertyInfo> DataPropertyInfo { get; }
+    IReadOnlyDictionary<string, ZuiPropertyInfo> ZuiPropertyInfo { get; }
 
     /// <summary>
     /// Sets a data property by name.  Returns true if the property was set successfully, false otherwise.
     /// </summary>
     bool SetDataProperty(string name, object? value) { return false; }
-
-
 
     /// <summary>
     /// The main control view.  Each control must have a MainView, that is readonly (i.e. never changes)

@@ -129,7 +129,7 @@ combined handlers on one view are still invoked together.
 | `PointerUp` | Routed, target to root | After preview unless handled or cancelled. |
 | `PointerEntered` | Direct to each entering view | Its per-contact hover-chain membership begins. |
 | `PointerExited` | Direct to each exiting view | Its per-contact hover-chain membership ends. |
-| `PointerCaptureLost` | Direct to the released capture owner | Capture is released, replaced, or cancelled. |
+| `PointerCaptureLost` | Direct to the released capture owner | Capture is released, replaced, or cancelled; carries the `PointerContactKey`. |
 
 For down, move, and up, the hit chain is used unless the contact is captured; then only its capture owner receives
 the event. Captured contacts are still hit-tested for hover. Enter and exit are not routed or redirected by capture.
@@ -201,19 +201,19 @@ to react to pointer state without requiring every control to maintain its own ho
 
 Pointer capture is for controls that must continue an interaction after the pointer leaves their normal hit area.
 Typical examples are dragging a thumb, resizing a window, or implementing a gesture. A control requests capture by
-setting its view's `CapturePointer` property during its `PointerDown` handler:
+calling its view's `SetCapture` method during its `PointerDown` handler, passing the contact key:
 
 ```csharp
 void OnPointerDown(object? sender, PointerEvent e)
 {
-    View.CapturePointer = true;
+    View.SetCapture(e.Contact.Key, true);
 }
 ```
 
-Release capture explicitly by setting the property to `false` when the interaction ends early:
+Release capture explicitly with `SetCapture` when the interaction ends early:
 
 ```csharp
-View.CapturePointer = false;
+View.SetCapture(e.Contact.Key, false);
 ```
 
 Controls that capture should also handle `Panel.PointerCaptureLost`. Capture can end without a normal pointer-up, for
@@ -224,7 +224,7 @@ and make the cleanup safe to run more than once:
 ```csharp
 View.AddEvent(Panel.PointerCaptureLost, OnPointerCaptureLost);
 
-void OnPointerCaptureLost(object? sender, EventArgs e)
+void OnPointerCaptureLost(object? sender, PointerContactKey contactKey)
 {
     isDragging = false;
     View.SetProperty(Panel.IsPressed, false);
@@ -234,10 +234,11 @@ void OnPointerCaptureLost(object? sender, EventArgs e)
 When adding or changing a captured interaction, verify these transitions: press inside and release inside, press and
 drag outside before release, pointer leave while captured, and capture loss without a normal pointer-up event.
 
-The `CapturePointer` property is contact-aware. Request capture during the pointer-down event for the contact being
-processed; do not use it as a general-purpose way to make a button clickable. Buttons should normally use the higher-level
-`Click` event. Capture keeps low-level pointer events together for an interaction, but it does not by itself make a click
-valid when the pointer is released outside the original press target.
+Capture is contact-aware: use `e.Contact.Key` to identify the contact. Setting capture for a key that is not currently
+tracked throws; releasing an untracked key is a no-op. `ClearCaptures()` releases all contacts owned by that view.
+Capture is not a general-purpose way to make a button clickable. Buttons should normally use the higher-level `Click`
+event. Capture keeps low-level pointer events together for an interaction, but it does not by itself make a click valid
+when the pointer is released outside the original press target.
 
 ### Click-like activation (`PointerClickRecognizer`)
 
@@ -247,6 +248,32 @@ public `PointerClickRecognizer` utility, attached to the view that owns the inte
 The recognizer handles pointer-down and pointer-up events, captures the pointer while the press is active, and
 invokes the control's callback only when the pointer is released inside the attached view's bounds. Capture loss,
 pointer cancellation cleanup, and release outside the bounds cancel the click.
+
+The recognizer can also receive an optional long-click callback. Its threshold and movement tolerance are configured on
+`AppWindow` as `LongClickDuration` (`TimeSpan`) and `LongClickMovementTolerance`; defaults are 500 milliseconds and
+8 view-local logical units. The defaults are supplied by the `input.long-click.duration` and
+`input.long-click.movement-tolerance` theme variables. The duration theme value uses the standard JSON `TimeSpan` format;
+for example, `"00:00:00.5"` represents 500 milliseconds.
+The duration starts on pointer-down. Moving farther than the tolerance cancels long-click eligibility, but leaves the
+ordinary click behavior unchanged. The callback receives the latest contact in `PointerLongClickEventArgs`. Setting
+`Handled` suppresses the ordinary click on release; leaving it false allows the normal click if release is inside.
+The duration and tolerance are sampled at pointer-down, so changes apply to the next press.
+This flag controls recognizer behavior only and does not retroactively change routed pointer events already dispatched.
+
+A long-click callback can transfer capture to another view with the contact key. The recognizer then receives
+`PointerCaptureLost` for that key and ends its own press without releasing the new owner's capture:
+
+```csharp
+void OnLongClick(object? sender, PointerLongClickEventArgs e)
+{
+    textView.View.SetCapture(e.Contact.Key, true);
+    e.Handled = true;
+}
+```
+
+`AppWindow.zui.json5` configures the app-wide defaults through theme tokens. Applications can change the settings at
+runtime through `appWindow.Properties.LongClickDuration` and
+`appWindow.Properties.LongClickMovementTolerance`.
 
 This allows a `Button`, `Scrim`, `ComboBox`, or third-party control to choose its own higher-level action without
 adding another generic routed event to `Panel`. A `Button` uses the recognizer to raise its public `Click` event.
@@ -277,14 +304,11 @@ can stop routing between views, but not between handlers on one view.
 Possible future work is to store ordered handler entries instead of combined delegates, then add an explicit
 handled-events-too option. This must preserve handler order and the behavior of `AddEvent` and `RemoveEvent`.
 
-### 8. Capture-request phase enforcement
+### 8. Capture-key lifecycle
 
-`View.CapturePointer` is documented for use during pointer-down processing, but the router does not currently enforce
-that restriction. A capture request made during another phase is accepted if an active contact is available.
-
-This is looser than the intended control contract and should eventually produce a debug assertion, or a defined failure,
-when a control requests capture outside pointer-down processing. The current behavior is retained for compatibility until
-all existing drag controls have been reviewed.
+Capture requests identify a tracked contact by its device kind and contact ID. Requests for keys that are no longer
+tracked fail when acquiring capture and are ignored when releasing capture. Capture state is GUI-thread state; callers
+that trigger capture from a timer or other asynchronous source must marshal the operation to the GUI thread.
 
 ### 12. Click and release semantics
 

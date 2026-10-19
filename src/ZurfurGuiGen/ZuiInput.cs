@@ -83,7 +83,8 @@ internal static class ZuiInput
 
                 controllerName = GetControllerName(fileNameOnly, jsonDocument, out typeParam, out typeParamConstraint);
 
-                dataBindings = ZuiSchema.GetDataBindings(jsonDocument, typeParam, typeParamConstraint)
+                var allowDollarPropertyNames = controllerName == "Panel" && nameSpace == "ZurfurGui.Controls";
+                dataBindings = ZuiSchema.GetDataBindings(jsonDocument, typeParam, typeParamConstraint, allowDollarPropertyNames)
                     .OrderBy(p => p.Name)
                     .ToList();
 

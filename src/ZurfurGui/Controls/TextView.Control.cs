@@ -30,10 +30,10 @@ public partial class TextView : Controllable, Layoutable, Renderable
         if (!view.Flags.HasFlag(ViewFlags.Measure))
             return _lastMeasuredSize;
 
-        var font = view.GetStyle(FontProperty);
+        var font =  view.GetProperty(FontProperty);
         var fontName = font.Name ?? "Arial";
         var fontSize = font.Size.Or(16.0);
-        var text = view.GetStyle(TextProperty);
+        var text = view.GetProperty(TextProperty);
         var metrics = measure.GetFontMetrics(fontName, fontSize);
 
         var maxWidth = text.Count == 0 ? 0 : text.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
@@ -54,8 +54,8 @@ public partial class TextView : Controllable, Layoutable, Renderable
 
     public RenderResult Render(View view, RenderContext context, Rect clientClip)
     {
-        var color = view.GetStyle(ColorProperty);
-        var text = view.GetStyle(TextProperty);
+        var color = view.GetProperty(ColorProperty);
+        var text = view.GetProperty(TextProperty);
 
         if (text.Count == 0 || color.A == 0)
         {
@@ -71,7 +71,7 @@ public partial class TextView : Controllable, Layoutable, Renderable
             return RenderResult.RenderedClip;
         }
 
-        var fontProp = view.GetStyle(FontProperty);
+        var fontProp = view.GetProperty(FontProperty);
         var fontName = fontProp.Name ?? "Arial";
         var fontSize = fontProp.Size.Or(16.0);
         var metrics = context.MeasureContext.GetFontMetrics(fontName, fontSize);

@@ -164,19 +164,19 @@ public sealed class View
 
     public override string ToString()
     {
-        var name = GetProperty(Panel.Name) ?? "";
+        var name = GetProperty(Panel.Name);
         return $"{Controller.TypeName}: {(name == "" ? "(no name)" : name)}";
     }
 
-    public string Name => GetProperty(Panel.Name) ?? "";
+    public string Name => GetProperty(Panel.Name);
 
 
     /// <summary>
-    /// Alias for GetStyle(Panel.IsVisible)
+    /// Alias for GetProperty(Panel.IsVisible)
     /// </summary>
     public bool IsVisible
     {
-        get => GetStyle(Panel.IsVisible);
+        get => GetProperty(Panel.IsVisible);
         set => SetProperty(Panel.IsVisible, value);
     }
 
@@ -204,7 +204,7 @@ public sealed class View
     /// </summary>
     public TextLines? ActiveThemes
     {
-        get => GetProperty(Panel.ActiveThemes);
+        get => TryGetProperty(Panel.ActiveThemes);
         set 
         {
             if (value != null)
@@ -311,15 +311,66 @@ public sealed class View
     }
 
     /// <summary>
-    /// Get a property from the view's property collection, or return the property default when not found.
+    /// Verify that the controller supports this property, or that it is attached.
+    /// Throws on failure.
     /// </summary>
-    public T? GetProperty<T>(PropertyKey<T> key)
+    void VerifyControllerProperty<T>(PropertyKey<T> key)
     {
+        // Fast path
+        if (key.PropertyType.IsAttached || key.OwnerType == Controller.GetType())
+            return;
+
+        VerifyControllerPropertyGeneric(key);
+    }
+
+    void VerifyControllerPropertyGeneric(IPropertyKey key)
+    {
+        if (key.PropertyType.IsAttached
+            || key.OwnerType == Controller.GetType()
+            || IsControllerOwner(key.OwnerType))
+        {
+            return;
+        }
+
+        throw new ArgumentException($"Property '{key.Name}' is not valid for view type '{Controller.TypeName}'", nameof(key));
+    }
+
+    bool IsControllerOwner(Type ownerType)
+    {
+        var controllerType = Controller.GetType();
+        return ownerType.IsAssignableFrom(controllerType)
+            || (ownerType.IsGenericTypeDefinition
+                && controllerType.IsGenericType
+                && ownerType == controllerType.GetGenericTypeDefinition());
+    }
+
+    /// <summary>
+    /// Get a property from the view's property collection, or return null/default if not found.
+    /// Do not resolve styles.
+    /// </summary>
+    public T? TryGetProperty<T>(PropertyKey<T> key)
+    {
+        VerifyControllerProperty(key);
         return _properties.Get(key);
+    }
+
+    /// <summary>
+    /// Get a property or style (depending on property type) from the view's property collection, 
+    /// or return the property default when not found.
+    /// </summary>
+    public T GetProperty<T>(PropertyKey<T> key)
+    {
+        if (!key.PropertyType.IsProperty)
+            return GetStyle(key);
+        VerifyControllerProperty(key);
+        if (_properties.TryGet(key, out var value) && value is not null)
+            return value;
+        return key.StyleDefault;
     }
 
     public void SetProperty<T>(PropertyKey<T> key, T value)
     {
+        VerifyControllerProperty(key);
         if (_properties.TryGet(key, out var oldValueMaybeNull) && oldValueMaybeNull is T oldValue && oldValue.Equals(value))
             return;
 
@@ -329,19 +380,61 @@ public sealed class View
         RaisePropertyChanged(key);
     }
 
+    public void SetPropertyById(PropertyKeyId key, object value)
+    {
+        if (value is null)
+            throw new ArgumentNullException(nameof(value), "Use RemovePropertyById instead of assigning null");
+        var info = key.Info ?? throw new ArgumentException("Unknown property key", nameof(key));
+        VerifyControllerPropertyGeneric(info);
+        if (!info.Type.IsInstanceOfType(value))
+            throw new ArgumentException($"The property '{info.Name}' must have type '{info.Type}', but has '{value.GetType()}'.", nameof(value));
+        if (typeof(Delegate).IsAssignableFrom(info.Type))
+            throw new ArgumentException("Use AddEvent for delegate types", nameof(key));
+        if (_properties.TryGetById(key, out var oldValue) && oldValue.Equals(value))
+            return;
+
+        SetFlags(info.Flags);
+        _properties.SetById(key, value);
+        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN));
+        RaisePropertyChanged(info);
+    }
+
     public bool ContainsProperty<T>(PropertyKey<T> key)
     {
+        if (!key.PropertyType.IsAttached
+            && key.OwnerType != Controller.GetType()
+            && !IsControllerOwner(key.OwnerType))
+        {
+            return false;
+        }
+
         return _properties.ContainsKey(key);
     }
 
     public void RemoveProperty<T>(PropertyKey<T> key)
     {
+        VerifyControllerProperty(key);
         if (!_properties.ContainsKey(key))
             return;
         SetFlags(key.Flags);
         _properties.Remove(key);
         _properties.RemoveById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN));
         RaisePropertyChanged(key);
+    }
+
+    public void RemovePropertyById(PropertyKeyId key)
+    {
+        var info = key.Info ?? throw new ArgumentException("Unknown property key", nameof(key));
+        VerifyControllerPropertyGeneric(info);
+        if (typeof(Delegate).IsAssignableFrom(info.Type))
+            throw new ArgumentException("Use RemoveEvent for delegate types", nameof(key));
+        if (!_properties.TryGetById(key, out _))
+            return;
+
+        SetFlags(info.Flags);
+        _properties.RemoveById(key);
+        _properties.RemoveById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN));
+        RaisePropertyChanged(info);
     }
 
     void RaisePropertyChanged(IPropertyKey property)
@@ -352,8 +445,10 @@ public sealed class View
     /// <summary>
     /// Return the property or style (property overrides style)
     /// </summary>
-    public T GetStyle<T>(PropertyKey<T> key)
+    T GetStyle<T>(PropertyKey<T> key)
     {
+        VerifyControllerProperty(key);
+
         // Properties cached from style lookup below
         if (_properties.TryGetById(new PropertyKeyId(key.IdAsInt + PROPERTY_STYLE_CACHE_BEGIN),
                 out var styledValue) && styledValue is T typedStyledValue)
@@ -371,6 +466,7 @@ public sealed class View
 
     internal void RefreshCacheProperty<T>(PropertyKey<T> key)
     {
+        VerifyControllerProperty(key);
         var styledProperty = ThemeManager.FindStyle(this, key);
 
         // If cache did not change, no need to invalidate
@@ -431,11 +527,11 @@ public sealed class View
         s_measureCount++;
 
         // Include padding and border in the measurement
-        var margin = GetStyle(Panel.Margin).Or(0);
-        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(GetStyle(Panel.BorderWidth));
-        var sizeRequest = GetStyle(Panel.SizeRequest);
-        var sizeMin = GetStyle(Panel.SizeMin).Or(0).MaxZero;
-        var sizeMax = GetStyle(Panel.SizeMax).Or(double.PositiveInfinity);
+        var margin = GetProperty(Panel.Margin).Or(0);
+        var padding = GetProperty(Panel.Padding).Or(0) + new Thickness(GetProperty(Panel.BorderWidth));
+        var sizeRequest = GetProperty(Panel.SizeRequest);
+        var sizeMin = GetProperty(Panel.SizeMin).Or(0).MaxZero;
+        var sizeMax = GetProperty(Panel.SizeMax).Or(double.PositiveInfinity);
         var constrained = sizeRequest.Or(available.Deflate(margin)).Min(sizeMax).Max(sizeMin).Deflate(padding);
 
         // Measure children controls
@@ -477,9 +573,9 @@ public sealed class View
         if (!IsVisible)
             return;
 
-        var margin = GetStyle(Panel.Margin).Or(0);
+        var margin = GetProperty(Panel.Margin).Or(0);
         var availableSize = final.Size.Deflate(margin);
-        var align = GetStyle(Panel.Align);
+        var align = GetProperty(Panel.Align);
         var alignHorizontal = align.Horizontal ?? AlignHorizontal.Stretch;
         var alignVertical = align.Vertical ?? AlignVertical.Stretch;
 
@@ -490,12 +586,12 @@ public sealed class View
             newSize.Height = Math.Min(availableSize.Height, DesiredTotalSize.Height - margin.Top - margin.Bottom);
 
         // Clamp to view size constraints
-        var sizeRequest = GetStyle(Panel.SizeRequest);
-        var sizeMin = GetStyle(Panel.SizeMin).Or(0).MaxZero;
-        var sizeMax = GetStyle(Panel.SizeMax).Or(double.PositiveInfinity);
+        var sizeRequest = GetProperty(Panel.SizeRequest);
+        var sizeMin = GetProperty(Panel.SizeMin).Or(0).MaxZero;
+        var sizeMax = GetProperty(Panel.SizeMax).Or(double.PositiveInfinity);
         newSize = sizeRequest.Or(newSize).Min(sizeMax).Max(sizeMin);
 
-        var padding = GetStyle(Panel.Padding).Or(0) + new Thickness(GetStyle(Panel.BorderWidth));
+        var padding = GetProperty(Panel.Padding).Or(0) + new Thickness(GetProperty(Panel.BorderWidth));
         var newContentRect = new Rect(0, 0, newSize.Width, newSize.Height).Deflate(padding);
 
         // Calculate position offsets based on layout bounds
@@ -537,8 +633,8 @@ public sealed class View
                 break;
         }
 
-        var newPosition = new Vector(x, y) + GetStyle(Panel.Offset).Or(0);
-        var newScale = (Parent?.Scale ?? 1) * GetStyle(Panel.Magnification);
+        var newPosition = new Vector(x, y) + GetProperty(Panel.VisualOffset).Or(0);
+        var newScale = (Parent?.Scale ?? 1) * GetProperty(Panel.Magnification);
         var newOrigin = (Parent?.Origin ?? new()).ToVector + newScale * newPosition;
 
         // Invalidate if the size, scale, or content rect changed.
@@ -730,19 +826,35 @@ public sealed class View
     }
 
     /// <summary>
-    /// True when the pointer is captured.  Automatically reset (and PointerCaptureLost event sent) when the pointer
-    /// is released. There isn't a need to use the PointerUp event if you capture the pointer and use the CaptureLost event.
-    /// Can only be set inside of PointerDown event (can be reset any time)
+    /// Sets or releases pointer capture for the specified contact.
     /// </summary>
-    public bool CapturePointer
+    public void SetCapture(PointerContactKey contactKey, bool capture)
     {
-        get { return AppWindow?.Renderer?.PointerHover?.GetIsPointerCaptured(this) ?? false; }
-        set
+        if (AppWindow is not AppWindow appWindow)
         {
-            if (AppWindow is not AppWindow appWindow)
-                throw new InvalidOperationException("View is not attached to main tree");
-            appWindow?.Renderer?.PointerHover?.SetIsPointerCapture(this, value);
+            if (!capture)
+                return;
+            throw new InvalidOperationException("View is not attached to main tree");
         }
+
+        var pointerRouter = appWindow.Renderer?.PointerRouter;
+        if (pointerRouter is null)
+        {
+            if (capture)
+                throw new InvalidOperationException("Cannot capture a contact when pointer input is not active.");
+            return;
+        }
+
+        pointerRouter.SetCapture(this, contactKey, capture);
+    }
+
+    /// <summary>
+    /// Releases all pointer contacts currently captured by this view.
+    /// </summary>
+    public void ClearCaptures()
+    {
+        if (AppWindow?.Renderer?.PointerRouter is { } pointerRouter)
+            pointerRouter.ClearCaptures(this);
     }
 
 }

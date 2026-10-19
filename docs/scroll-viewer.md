@@ -270,7 +270,8 @@ During measurement:
 
 1. The ScrollViewer measures its direct children using its custom layout.
 2. The content viewport measures `_contentWindow` with positive-infinite width and height.
-3. The content window and descendants report their natural desired extent.
+3. The content window and descendants report their natural desired extent. If it uses the default Panel layout,
+   child `Panel.Offset` values contribute to its measured right and bottom extents.
 4. The viewport reports the smaller of the natural content size and the available parent size.
 5. The scrollbars are measured as overlay children and do not reduce the viewport size.
 
@@ -283,9 +284,13 @@ During arrangement:
 5. The horizontal and vertical scrollbars are arranged as overlay siblings.
 6. Scrollbar ranges are synchronized using the content window's desired content size and the viewport size.
 
-The content window's normal `$offset` is used as the physical translation mechanism. A public
-`ScrollOffset` of `(x, y)` applies a content-window offset of `(-x, -y)`. This moves the entire content
-subtree while leaving the clipped viewport stationary.
+The content window's `$visualOffset` (`Panel.VisualOffset`) provides physical translation.
+`ScrollOffset` of `(x, y)` moves the content window by `(-x, -y)`; the viewport remains fixed.
+`VisualOffset` does not change the content window's measured extent.
+
+The default Panel layout keeps its origin at `(0, 0)`. Negative child `Panel.Offset` values do not extend
+content extent before that origin and may be clipped. Custom layouts must account for `Panel.Offset` themselves if
+positioned children should contribute to their measured extent.
 
 ## Range synchronization
 
@@ -314,8 +319,9 @@ The current implementation includes:
 - A separate clipped content viewport.
 - A content window that hosts all user content.
 - Natural content measurement using unbounded measurement for the content window.
+- Child `Panel.Offset` values included in the default Panel layout's measured content extent.
 - Arrangement of content at its natural desired size.
-- Content translation through the existing `$offset` property.
+- Content translation through the existing `$visualOffset` property.
 - Public `ScrollOffset` access.
 - Horizontal and vertical scrollbar instances exposed by generated names.
 - Scrollbar range synchronization.

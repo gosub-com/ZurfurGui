@@ -14,8 +14,8 @@ namespace ZurfurGui.Layout;
 public class LayoutRow : Layoutable
 {
 
-    public static readonly PropertyKey<bool> Wrap = new("cell.wrap", typeof(LayoutRow), new(), ViewFlags.Measure);
-    public static readonly PropertyKey<SizeProp> Spacing = new("cell.spacing", typeof(LayoutRow), new(), ViewFlags.Measure);
+    public static readonly PropertyKey<bool> Wrap = new("cell.wrap", typeof(LayoutRow), ZuiPropertyType.AttachedStyle, new(), ViewFlags.Measure);
+    public static readonly PropertyKey<SizeProp> Spacing = new("cell.spacing", typeof(LayoutRow), ZuiPropertyType.AttachedStyle, new(), ViewFlags.Measure);
 
     readonly Size DEFAULT_SIZE = new Size(5, 5);
 
@@ -29,18 +29,18 @@ public class LayoutRow : Layoutable
     {
         _measuredRects.Clear();
 
-        var wrap = view.GetStyle(Wrap);
+        var wrap = view.GetProperty(Wrap);
         var rowPosX = 0.0;
         var rowPosY = 0.0;
         var rowHeight = 0.0;
         var viewWidth = 0.0;
         var viewHeight = 0.0;
-        var spacing = view.GetStyle(Spacing).Or(DEFAULT_SIZE);
+        var spacing = view.GetProperty(Spacing).Or(DEFAULT_SIZE);
         int arrangeIndex = 0;
         foreach (var childView in view.Children)
         {
             // Ignore invisible views
-            var viewIsVisible = childView.GetStyle(Panel.IsVisible);
+            var viewIsVisible = childView.IsVisible;
             if (!viewIsVisible)
                 continue;
 
@@ -78,7 +78,7 @@ public class LayoutRow : Layoutable
         var contentRect = view.ContentRect;
         foreach (var childView in view.Children)
         {
-            if (childView.GetStyle(Panel.IsVisible))
+            if (childView.IsVisible)
             {
                
                 var measuredRect = i < _measuredRects.Count ? _measuredRects[i] : new();

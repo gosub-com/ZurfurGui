@@ -60,7 +60,7 @@ public partial class Window : Controllable
     {
         _mouseDown = true;
         _mousePosition = View.Parent?.toClient(e.Contact.DevicePosition) ?? new();
-        _dragWindow.View.CapturePointer = true;
+        _dragWindow.View.SetCapture(e.Contact.Key, true);
     }
 
     void _drawWindpow_PreviewPointerMove(object? s, PointerEvent e)
@@ -72,15 +72,15 @@ public partial class Window : Controllable
         var diff = position - _mousePosition;
         _mousePosition = position;
 
-        // Update window offset
-        View.SetProperty(Panel.Offset, View.GetStyle(Panel.Offset).Or(0) + diff);
+        // Update window position
+        View.SetProperty(Panel.Offset, View.GetProperty(Panel.Offset).Or(0) + diff);
     }
 
     void _resizeHandle_PreviewPointerDown(object? s, PointerEvent e)
     {
         _mouseDown = true;
         _mousePosition = View.Parent?.toClient(e.Contact.DevicePosition) ?? new();
-        _resizeHandle.View.CapturePointer = true;
+        _resizeHandle.View.SetCapture(e.Contact.Key, true);
     }
 
     void _resizeHandle_PreviewPointerMove(object? s, PointerEvent e)
@@ -93,9 +93,9 @@ public partial class Window : Controllable
         _mousePosition = position;
 
         // Update window offset, clamped SizeMin..SizeMaz
-        var size = View.GetStyle(Panel.SizeRequest).Or(View.Size) + diff;
-        var sizeMax = View.GetStyle(Panel.SizeMax).Or(double.PositiveInfinity);
-        var sizeMin = View.GetStyle(Panel.SizeMin).Or(0).MaxZero;
+        var size = View.GetProperty(Panel.SizeRequest).Or(View.Size) + diff;
+        var sizeMax = View.GetProperty(Panel.SizeMax).Or(double.PositiveInfinity);
+        var sizeMin = View.GetProperty(Panel.SizeMin).Or(0).MaxZero;
         View.SetProperty(Panel.SizeRequest, size.Min(sizeMax).Max(sizeMin));
     }
 
@@ -105,11 +105,11 @@ public partial class Window : Controllable
     /// </summary>
     public bool IsWindowWrappingVisible
     {
-        get => _windowTitle.View.GetProperty(Panel.IsVisible);
+        get => _windowTitle.View.IsVisible;
         set
         {
-            _windowTitle.View.SetProperty(Panel.IsVisible, value);
-            _resizeHandle.View.SetProperty(Panel.IsVisible, value);
+            _windowTitle.View.IsVisible = value;
+            _resizeHandle.View.IsVisible = value;
         }
     }
 

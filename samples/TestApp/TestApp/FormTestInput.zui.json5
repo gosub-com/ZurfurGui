@@ -29,7 +29,8 @@
                             text: [
                                 "Input surface",
                                 "Move, press, and drag here.",
-                                "Drag outside while pressed."
+                                "Drag outside while pressed.",
+                                "Hold still for a long click."
                             ],
                             $align: "horizontal:center,vertical:center"
                         },

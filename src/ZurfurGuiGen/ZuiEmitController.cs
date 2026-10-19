@@ -13,6 +13,7 @@ internal static class ZuiEmitController
     internal static string GenerateControllerClassSource(ZuiFileInfo data)
     {
         var allBindings = data.Bindings;
+        var namedControlsDict = ZuiSchema.FindNamedControlsDictionary(data.JsonDocument);
 
         // Add file header, usings, and namespace
         var sb = new StringBuilder();
@@ -21,11 +22,14 @@ internal static class ZuiEmitController
         sb.Append("#nullable enable\r\n\r\n");
         sb.Append($"namespace {data.Namespace};\r\n\r\n");
 
-        // Generated PropertyKey fields for "$data" entries that bind to "styledData" or "styleOnly" (excluding collections).
+        // Generate a PropertyKey for each view-facing property.
         // For generic controls, keys must live in a non-generic companion static class to avoid
         // per-closed-type duplication (each closed type would try to register the same key name,
         // causing a duplicate-registration exception in PropertyKey's constructor).
-        var newBindings = allBindings.Where(b => (b.BindType == BindType.StyledData || b.BindType == BindType.Styled) && !b.IsCollection).ToList();
+        // Data and forwarded bindings remain available through DataContext and do not need view property keys.
+        var newBindings = allBindings
+            .Where(b => b.BindType.HasPropertyKey())
+            .ToList();
         if (data.TypeParam != "")
         {
             sb.Append($"/// <summary>Non-generic companion holding PropertyKey fields for {data.ControllerName}&lt;{data.TypeParam}&gt;.</summary>\r\n");
@@ -36,15 +40,14 @@ internal static class ZuiEmitController
                 foreach (var binding in newBindings)
                 {
                     ZuiEmit.AppendXmlDocComment(sb, 1, binding.Comment);
-                    var defaultValue = string.IsNullOrWhiteSpace(binding.Default)
-                        ? "new()"
-                        : ZuiEmit.NormalizeDefaultValue(binding.Default);
-                    var flagsParam = string.IsNullOrWhiteSpace(binding.Flags) || binding.Flags == "ViewFlags.None"
-                        ? ""
-                        : $", {binding.Flags}";
+                    var defaultValue = GetPropertyKeyDefaultValue(binding);
+                    var flagsParam = GetPropertyKeyFlags(binding);
+                    var keyType = GetPropertyKeyType(binding, namedControlsDict);
+                    var propertyType = GetZuiPropertyTypeName(binding);
+                    var propertyKeyNameLiteral = GetPropertyKeyNameLiteral(binding, data);
                     sb.AppendIndentedLine(1,
-                        $"public static readonly PropertyKey<{binding.BaseType}> {binding.PropertyKeyName}"
-                            + $" = new(\"{data.ControllerName}.{binding.Name}\", typeof({data.ControllerName}<>), {defaultValue}{flagsParam});");
+                        $"public static readonly PropertyKey<{keyType}> {binding.PropertyKeyName}"
+                            + $" = new({propertyKeyNameLiteral}, typeof({data.ControllerName}<>), {propertyType}, {defaultValue}{flagsParam});");
                 }
             }
             sb.Append("}\r\n\r\n");
@@ -69,6 +72,8 @@ internal static class ZuiEmitController
 
         // Add class variables
         sb.AppendIndentedLine(1, "public global::ZurfurGui.Base.View View { get; private set; } = null!; // Set by InitializeControl");
+        if (allBindings.Any(b => b.BindType.HasPropertyKey()))
+            sb.AppendIndentedLine(1, "public PropertiesAccessor Properties => new(View);");
         if (data.TypeParam != "")
             // For generic controls, TypeName is the open base name (e.g. "ComboBox").
             // Closed forms (e.g. "ComboBox<ComboBoxItemTextData>") are registered separately in ZurfurMain.g.cs.
@@ -98,27 +103,26 @@ internal static class ZuiEmitController
             {
                 var openType = data.ControllerName;
                 ZuiEmit.AppendXmlDocComment(sb, 1, binding.Comment);
-                var defaultValue = string.IsNullOrWhiteSpace(binding.Default)
-                    ? "new()"
-                    : ZuiEmit.NormalizeDefaultValue(binding.Default);
-                var flagsParam = string.IsNullOrWhiteSpace(binding.Flags) || binding.Flags == "ViewFlags.None"
+                var defaultValue = GetPropertyKeyDefaultValue(binding);
+                var flagsParam = string.IsNullOrWhiteSpace(binding.Flags)
                     ? ""
                     : $", {binding.Flags}";
+                var propertyType = GetZuiPropertyTypeName(binding);
+                var propertyKeyNameLiteral = GetPropertyKeyNameLiteral(binding, data);
                 sb.AppendIndentedLine(1,
                     $"public static readonly PropertyKey<{binding.BaseType}> {binding.PropertyKeyName}"
-                        + $" = new(\"{data.ControllerName}.{binding.Name}\", typeof({openType}), {defaultValue}{flagsParam});");
+                        + $" = new({propertyKeyNameLiteral}, typeof({openType}), {propertyType}, {defaultValue}{flagsParam});");
             }
         }
 
-        // Generate data property info dictionary (excluding styleOnly properties)
-        GenerateDataPropertyInfoDictionary(allBindings.Where(b => b.BindType != BindType.Styled), sb);
+        // Generate JSON property info for data and style-only properties
+        GenerateZuiPropertyInfoDictionary(allBindings, sb, data);
 
         // Data bindings - generate full property with event hookup if there are "new" bindings       
         GenerateDataContextProperty(data, sb);
         sb.Append("\r\n");
 
         // Create named control variables
-        var namedControlsDict = ZuiSchema.FindNamedControlsDictionary(data.JsonDocument);
         Json.RemoveKeys(data.JsonDocument, new List<string> { "#comment", "$namespace", "$use", "$data" });
         var zuiJsonContent = Json.Serialize(data.JsonDocument).Replace("\"", "\"\"");
         var controlNames = namedControlsDict.Keys.OrderBy(n => n);
@@ -156,7 +160,7 @@ internal static class ZuiEmitController
             sb.AppendIndentedLine(2, $"{name} = ({namedControlsDict[name].Type})View.FindByName(\"{name}\").Controller;");
 
         // Initialize DataContext after controls are loaded
-        if (allBindings.Any(b => b.BindType != BindType.Styled))
+        if (allBindings.Any(b => !b.BindType.IsViewOnly()))
         {
             sb.AppendIndentedLine(2, "// Initialize DataContext");
             sb.AppendIndentedLine(2, "DataContext = CreateDefaultDataContext();");
@@ -165,7 +169,7 @@ internal static class ZuiEmitController
         sb.AppendIndentedLine(1, "}");
 
         // Generate CreateDefaultDataContext factory method
-        var dataBindings = allBindings.Where(b => b.BindType != BindType.Styled).ToList();
+        var dataBindings = allBindings.Where(b => !b.BindType.IsViewOnly()).ToList();
         if (dataBindings.Count != 0)
         {
             sb.Append("\r\n");
@@ -182,6 +186,11 @@ internal static class ZuiEmitController
                     // If this binds directly to a named control, use the data context
                     value = $"{binding.Bind}.DataContext";
                 }
+                else if (binding.BindType == BindType.Forwarded && !binding.IsCollection && binding.Bind.Contains('.'))
+                {
+                    // Forwarded values default to the current value on their target control.
+                    value = TransformBindingPath(binding.Bind);
+                }
                 else if (binding.IsCollection)
                 {
                     // Collection: initialize with empty ObservableCollection
@@ -192,6 +201,8 @@ internal static class ZuiEmitController
                     // For all other types, initialize with default value or new instance
                     if (!string.IsNullOrWhiteSpace(binding.Default))
                         value = ZuiEmit.NormalizeDefaultValue(binding.Default);
+                    else if (ZuiEmit.GetImplicitDefaultValue(binding) is { Length: > 0 } implicitDefault)
+                        value = implicitDefault;
                     else if (binding.IsNullable)
                         value = "null";
                     else
@@ -210,6 +221,9 @@ internal static class ZuiEmitController
 
         }
 
+        if (allBindings.Any(b => b.BindType.HasPropertyKey()))
+            GeneratePropertiesAccessor(allBindings, sb, data);
+
         // Access to JSON content
         sb.Append("\r\n");
         sb.AppendIndentedLine(1, $"static string _zuiJsonContent => @\"{zuiJsonContent}\";");
@@ -218,9 +232,71 @@ internal static class ZuiEmitController
         return sb.ToString();
     }
 
+    private static void GeneratePropertiesAccessor(IEnumerable<DataBinding> bindings, StringBuilder sb, ZuiFileInfo data)
+    {
+        var keyPrefix = data.TypeParam != "" ? $"{data.ControllerName}." : "";
+        var namedControls = ZuiSchema.FindNamedControlsDictionary(data.JsonDocument);
+        var viewBindings = bindings.Where(b => b.BindType.HasPropertyKey());
+        sb.Append("\r\n");
+        sb.AppendIndentedLine(1, "public struct PropertiesAccessor");
+        sb.AppendIndentedLine(1, "{");
+        sb.AppendIndentedLine(2, "readonly global::ZurfurGui.Base.View _view;");
+        sb.AppendIndentedLine(2, "internal PropertiesAccessor(global::ZurfurGui.Base.View view) => _view = view;");
+
+        foreach (var binding in viewBindings)
+        {
+            var key = $"{keyPrefix}{binding.PropertyKeyName}";
+            if (binding.Name.StartsWith("$"))
+                key = $"{data.ControllerName}.{binding.PropertyKeyName}";
+            var propertyType = ZuiEmit.GetBindingDataType(binding, namedControls);
+            sb.Append("\r\n");
+            ZuiEmit.AppendXmlDocComment(sb, 2, binding.Comment);
+            var readMethod = "GetProperty";
+            var accessDescription = binding.BindType == BindType.StyledData
+                ? "read-only; settable from the DataContext only"
+                : "read/write through the view";
+            sb.AppendIndentedLine(2,
+                $"/// <remarks>Binding: {binding.BindType}; reads with {readMethod}; {accessDescription}.</remarks>");
+            sb.AppendIndentedLine(2, $"public {propertyType} {binding.PascalName}");
+            sb.AppendIndentedLine(2, "{");
+            switch (binding.BindType)
+            {
+                case BindType.StyledData:
+                case BindType.Styled:
+                case BindType.AttachedStyle:
+                case BindType.Property:
+                case BindType.AttachedProperty:
+                    sb.AppendIndentedLine(3, $"get => _view.GetProperty({key});");
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unsupported binding type '{binding.BindType}'.");
+            }
+            if (binding.BindType.IsViewOnly())
+            {
+                sb.AppendIndentedLine(3, "set");
+                sb.AppendIndentedLine(3, "{");
+                if (binding.IsNullable)
+                {
+                    sb.AppendIndentedLine(4, $"if (value is {binding.BaseType} nonNullValue)");
+                    sb.AppendIndentedLine(5, $"_view.SetProperty({key}, nonNullValue);");
+                    sb.AppendIndentedLine(4, "else");
+                    sb.AppendIndentedLine(5, $"_view.RemoveProperty({key});");
+                }
+                else
+                {
+                    sb.AppendIndentedLine(4, $"_view.SetProperty({key}, value);");
+                }
+                sb.AppendIndentedLine(3, "}");
+            }
+            sb.AppendIndentedLine(2, "}");
+        }
+
+        sb.AppendIndentedLine(1, "}");
+    }
+
     private static void GenerateDataContextProperty(ZuiFileInfo data, StringBuilder sb)
     {
-        if (data.Bindings.Count == 0 || !data.Bindings.Any(b => b.BindType != BindType.Styled))
+        if (data.Bindings.Count == 0 || !data.Bindings.Any(b => !b.BindType.IsViewOnly()))
             return;
 
         var genericSuffix = data.TypeParam != "" ? $"<{data.TypeParam}>" : "";
@@ -304,7 +380,7 @@ internal static class ZuiEmitController
             else if (binding.BindType == BindType.Data)
             {
                 // Check if this data-only binding has flags
-                if (!string.IsNullOrWhiteSpace(binding.Flags) && binding.Flags != "ViewFlags.None")
+                if (!string.IsNullOrWhiteSpace(binding.Flags))
                 {
                     // Generate a case statement that calls View.SetFlags
                     sb.AppendIndentedLine(3, $"case \"{binding.PascalName}\":");
@@ -317,8 +393,8 @@ internal static class ZuiEmitController
                     sb.AppendIndentedLine(3, $"// '{binding.PascalName}': Data-only binding: stored in DataContext only, no view property to update");
                 }
             }
-            // Style-only bindings: no DataContext field, controlled via styles or imperative SetProperty
-            else if (binding.BindType == BindType.Styled)
+            // View-only bindings: no DataContext field, controlled via styles or imperative SetProperty
+            else if (binding.BindType.IsViewOnly())
             {
                 sb.AppendIndentedLine(3, $"// '{binding.PascalName}': Style-only binding: no DataContext field, set via stylesheets or view.SetProperty");
             }
@@ -355,8 +431,8 @@ internal static class ZuiEmitController
                 continue;
             }
 
-            // Style-only bindings: no DataContext field, skip sync
-            if (binding.BindType == BindType.Styled)
+            // View-only bindings: no DataContext field, skip sync
+            if (binding.BindType.IsViewOnly())
             {
                 // No DataContext field to sync from
                 continue;
@@ -412,8 +488,8 @@ internal static class ZuiEmitController
 
         foreach (var binding in bindings)
         {
-            // Skip style-only properties: they have no DataContext field
-            if (binding.BindType == BindType.Styled)
+            // Skip view-only properties: they have no DataContext field
+            if (binding.BindType.IsViewOnly())
                 continue;
 
             var jsonName = binding.Name; // Keep for error messages
@@ -485,19 +561,96 @@ internal static class ZuiEmitController
         return controlRef + ".DataContext." + string.Join(".", remainingParts);
     }
 
-    private static void GenerateDataPropertyInfoDictionary(IEnumerable<DataBinding> bindings, StringBuilder sb)
+    /// <summary>
+    /// Selects the key's CLR type. Generic type parameters cannot appear in the non-generic companion class, so those
+    /// metadata-only keys use object. Collections and direct named-control bindings use their generated data type.
+    /// </summary>
+    private static string GetPropertyKeyType(DataBinding binding, Dictionary<string, NamedControlInfo> namedControls)
+    {
+        if (binding.IsTypeParam)
+            return "object";
+        if (binding.IsCollection || ZuiEmit.IsNamedControl(binding.Bind, namedControls))
+            return ZuiEmit.GetBindingDataType(binding, namedControls);
+        return binding.BaseType;
+    }
+
+    /// <summary>
+    /// Data and forwarded keys are metadata-only; default! supplies default(T) without constructing an arbitrary data
+    /// type or requiring a public parameterless constructor. View-backed keys use the declared default or new() as
+    /// their style default.
+    /// </summary>
+    private static string GetPropertyKeyDefaultValue(DataBinding binding)
+    {
+        if (binding.BindType is BindType.Data or BindType.Forwarded)
+            return "default!";
+        if (!string.IsNullOrWhiteSpace(binding.Default))
+            return ZuiEmit.NormalizeDefaultValue(binding.Default);
+        var implicitDefault = ZuiEmit.GetImplicitDefaultValue(binding);
+        if (implicitDefault.Length > 0)
+            return implicitDefault;
+        return "new()";
+    }
+
+    /// <summary>
+    /// Omits the optional flags argument when no flags were declared; otherwise passes the binding's ViewFlags through
+    /// to the PropertyKey so normal view invalidation behavior is preserved.
+    /// </summary>
+    private static string GetPropertyKeyFlags(DataBinding binding)
+    {
+        return string.IsNullOrWhiteSpace(binding.Flags)
+            ? ""
+            : $", {binding.Flags}";
+    }
+
+    private static string GetZuiPropertyTypeName(DataBinding binding)
+    {
+        return binding.BindType switch
+        {
+            BindType.Data or BindType.Forwarded => "ZuiPropertyType.Data",
+            BindType.StyledData => "ZuiPropertyType.StyledData",
+            BindType.Styled => "ZuiPropertyType.Styled",
+            BindType.Property => "ZuiPropertyType.Property",
+            BindType.AttachedProperty => "ZuiPropertyType.AttachedProperty",
+            BindType.AttachedStyle => "ZuiPropertyType.AttachedStyle",
+            _ => throw new InvalidOperationException($"Unsupported binding type '{binding.BindType}'.")
+        };
+    }
+
+    // Preserves legacy registered names for ordinary bindings, while dollar-prefixed Panel bindings use their
+    // explicit keyName override or the literal binding name. Escape the value for generated C# source because
+    // keyName accepts arbitrary non-empty strings; quotes, backslashes, and control characters must remain valid.
+    private static string GetPropertyKeyNameLiteral(DataBinding binding, ZuiFileInfo data)
+    {
+        var propertyKeyName = binding.PropertyKeyRegistrationName;
+        if (string.IsNullOrEmpty(propertyKeyName))
+        {
+            propertyKeyName = binding.Name.StartsWith("$")
+                ? binding.Name
+                : $"{data.ControllerName}.{binding.Name}";
+        }
+
+        return "\"" + propertyKeyName
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\r", "\\r")
+            .Replace("\n", "\\n")
+            .Replace("\t", "\\t") + "\"";
+    }
+
+    private static void GenerateZuiPropertyInfoDictionary(IEnumerable<DataBinding> bindings, StringBuilder sb, ZuiFileInfo data)
     {
         sb.Append("\r\n");
 
         var bindingList = bindings.ToList();
+        var namedControls = ZuiSchema.FindNamedControlsDictionary(data.JsonDocument);
         if (bindingList.Count == 0)
         {
             // Generate empty dictionary for controls without data bindings
-            sb.AppendIndentedLine(1, "static readonly Dictionary<string, DataPropertyInfo> s_dataPropertyInfo = new();");
+            sb.AppendIndentedLine(1, "static readonly Dictionary<string, ZuiPropertyInfo> s_zuiPropertyInfo = new();");
         }
         else
         {
-            sb.AppendIndentedLine(1, "static readonly Dictionary<string, DataPropertyInfo> s_dataPropertyInfo = new()");
+            sb.AppendIndentedLine(1, "static readonly Dictionary<string, ZuiPropertyInfo> s_zuiPropertyInfo = new()");
             sb.AppendIndentedLine(1, "{");
 
             for (int i = 0; i < bindingList.Count; i++)
@@ -505,16 +658,21 @@ internal static class ZuiEmitController
                 var binding = bindingList[i];
                 var comma = i < bindingList.Count - 1 ? "," : "";
                 var nullableStr = binding.IsNullable ? "true" : "false";
-                var typeofStr = binding.IsCollection
-                    ? $"typeof({ZuiEmit.GetBindingDataType(binding, new Dictionary<string, NamedControlInfo>())})"
+                var typeofStr = binding.IsCollection || ZuiEmit.IsNamedControl(binding.Bind, namedControls)
+                    ? $"typeof({ZuiEmit.GetBindingDataType(binding, namedControls)})"
                     : $"typeof({binding.BaseType})";
-                sb.AppendIndentedLine(2, $"[\"{binding.PascalName}\"] = new(\"{binding.PascalName}\", {typeofStr}, {nullableStr}){comma}");
+                var propertyTypeStr = GetZuiPropertyTypeName(binding);
+                var keyPrefix = data.TypeParam != "" ? $"{data.ControllerName}." : "";
+                var propertyKeyIdStr = binding.BindType.HasPropertyKey()
+                    ? $"{keyPrefix}{binding.PropertyKeyName}.Id"
+                    : "null";
+                sb.AppendIndentedLine(2, $"[\"{binding.PascalName}\"] = new(\"{binding.PascalName}\", {typeofStr}, {nullableStr}, {propertyTypeStr}, {propertyKeyIdStr}){comma}");
             }
 
             sb.AppendIndentedLine(1, "};");
         }
 
         sb.Append("\r\n");
-        sb.AppendIndentedLine(1, "public IReadOnlyDictionary<string, DataPropertyInfo> DataPropertyInfo => s_dataPropertyInfo;");
+        sb.AppendIndentedLine(1, "public IReadOnlyDictionary<string, ZuiPropertyInfo> ZuiPropertyInfo => s_zuiPropertyInfo;");
     }
 }
