@@ -8,8 +8,10 @@ platform or browser input has been received; operating-system input processing i
 Supported input adapters convert platform notifications into logical pointer events. The renderer connects the
 input callback to the pointer router, which updates pointer state and dispatches the events described below.
 
-The **browser** adapter listens on the canvas for pointer enter, move, leave, down, and up. It converts browser client
-positions to canvas device pixels and forwards events through `OsCanvas.PointerInput`.
+The **browser** adapter listens on the canvas for pointer enter, move, leave, down, up, and cancel. On pointer-down it
+requests DOM pointer capture so subsequent events continue to reach the canvas if the pointer moves outside it. The
+browser releases DOM capture on pointer-up or cancel. The adapter converts browser client positions to canvas device
+pixels using the canvas backing size and client rectangle, then forwards events through `OsCanvas.PointerInput`.
 
 The **WinForms** adapter listens to the canvas control's mouse move, down, up, and leave notifications and forwards the
 control coordinates through that same callback. It also observes native Windows pointer messages so touch and pen
@@ -17,6 +19,10 @@ contacts retain their device kind and contact ID. Mouse events remain the fallba
 
 The platform differences end at this boundary. The GUI does not need to know whether an event originated in 
 JavaScript, native Windows messages, or C# interop.
+
+Browser DOM pointer capture ensures events reach the canvas; it is separate from the GUI's logical capture, which a
+control requests through `View.SetCapture`. Both paths allow the shared router to receive input and update hit-tested
+hover state while routing captured down, move, and up events to the logical capture owner.
 
 The renderer installs `PointerOver` as the callback target. Rendering and input therefore use the same app-window view
 tree and the same device-coordinate space.

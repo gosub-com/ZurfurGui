@@ -28,6 +28,17 @@ globalThis.ZurfurGui.observeCanvasInput = function (canvas, callBack) {
             //      CTRL-mouse wheel through so browser scales the window
             // event.preventDefault();
 
+            // Keep receiving pointer events if the contact moves outside the canvas. The browser automatically
+            // releases this DOM capture on pointerup or pointercancel, so no explicit release is needed here.
+            if (et === "pointerdown") {
+                try {
+                    canvas.setPointerCapture(event.pointerId);
+                }
+                catch (e) {
+                    console.warn(`Unable to capture pointer ${event.pointerId} on canvas`, e);
+                }
+            }
+
             callBack(event);
         });
     }

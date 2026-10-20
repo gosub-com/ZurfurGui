@@ -59,24 +59,22 @@ public partial class FormTestInput
         eventLogText.DataContext.Text = new TextLines("No events yet.");
     }
 
-    // Logs pointer-down and captures the contact for the routing demonstration.
+    // Logs the surface's pointer-down observation after routed handlers have had a chance to capture the contact.
     void OnPointerDown(object? sender, PointerEvent e)
     {
         Observe("bubble", e);
-        AddLog("capture requested");
     }
 
-    // Logs pointer-up and releases the contact capture.
+    // Logs the surface's pointer-up observation; the click recognizer may already have released logical capture.
     void OnPointerUp(object? sender, PointerEvent e)
     {
         Observe("bubble", e);
-        AddLog("capture release requested");
     }
 
-    // Logs when the captured contact is released by the router.
+    // Logs framework logical capture loss; this event does not identify the release cause or platform capture state.
     void OnPointerCaptureLost(object? sender, PointerContactKey contactKey)
     {
-        AddLog($"pointercapturelost: {contactKey}");
+        AddLog($"Framework PointerCaptureLost: {contactKey}; release cause and platform capture state are unknown.");
     }
 
     // Formats and logs the contact data for the current pointer event.
@@ -84,16 +82,16 @@ public partial class FormTestInput
     {
         var contact = e.Contact;
         var position = inputSurface.View.toClient(contact.DevicePosition);
-        var line = $"Route: {route}\n" +
-            $"Event: {e.Kind}\n" +
-            $"Device: {contact.Device}\n" +
-            $"Contact ID: {contact.Id}\n" +
+        var line = $"{contact.Device} {contact.Id}: {e.Kind.ToString().ToUpper()} ({route})\n" +
             $"Device position: ({contact.DevicePosition.X:0.##},{contact.DevicePosition.Y:0.##})\n" +
             $"View position: ({position.X:0.##},{position.Y:0.##})\n" +
             $"Contact size: ({contact.Width:0.##},{contact.Height:0.##})\n" +
             $"Buttons: {contact.Buttons}\n" +
             $"Changed button: {contact.ChangedButton}\n" +
-            $"Modifiers: {contact.Modifiers}";
+            $"Modifiers: {contact.Modifiers}\n" +
+            $"Handled: {e.Handled}\n" +
+            $"Cancelled: {e.Cancelled}\n" +
+            $"Capture owner: {DescribeCaptureOwner(contact.Key)}";
 
         AddLog(line.Replace("\n", ", "));
         UpdateState(line);
@@ -107,6 +105,16 @@ public partial class FormTestInput
             log.RemoveAt(0);
         log.Add(line);
         eventLogText.DataContext.Text = new TextLines(log);
+    }
+
+    string DescribeCaptureOwner(PointerContactKey contactKey)
+    {
+        var capture = inputSurface.View.AppWindow?.CapturedPointerContacts
+            .FirstOrDefault(contact => contact.Contact.Key == contactKey);
+        if (capture is null)
+            return "none";
+
+        return $"{capture.CapturedView.Controller.GetType().Name}; isInputSurface={capture.CapturedView == inputSurface.View}";
     }
 
     // Displays the latest event together with the current pointer pseudo-state.

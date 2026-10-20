@@ -76,9 +76,13 @@ internal partial class BrowserCanvas : OsCanvas
             case "pointerleave":
             case "pointerdown":
             case "pointerup":
+            case "pointercancel":
                 var canvasRect = GetBoundingClientRect(_canvas);
                 var canvasPoint = new Point(canvasRect.GetPropertyAsDouble("x"), canvasRect.GetPropertyAsDouble("y"));
                 var position = new Point(e.GetPropertyAsDouble("clientX"), e.GetPropertyAsDouble("clientY")) - canvasPoint;
+
+                // Client positions are CSS pixels. The renderer lays out using canvas size / DPR and magnifies
+                // by DPR, so input uses that same transform to match rendered device-pixel coordinates.
                 var scale = _window.DevicePixelRatio;
                 _pointerInput?.Invoke(new OsPointerEvent(etype, position.ToPoint * scale)
                 {
