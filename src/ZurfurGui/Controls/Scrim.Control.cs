@@ -15,14 +15,12 @@ namespace ZurfurGui.Controls;
 /// </remarks>
 public sealed partial class Scrim : Controllable
 {
-    readonly PointerClickRecognizer _clickRecognizer;
-
     public event EventHandler<PointerEvent>? Dismissed;
 
     public Scrim()
     {
         InitializeControl();
-        _clickRecognizer = new(View, OnPointerClick);
+        View.AddGestureRecognizer(new ClickRecognizer(OnPointerClick));
     }
 
     /// <summary>
@@ -52,10 +50,5 @@ public sealed partial class Scrim : Controllable
     void OnPointerClick(object? sender, PointerEvent e)
     {
         Dismissed?.Invoke(this, e);
-    }
-
-    public void OnDetach()
-    {
-        _clickRecognizer.Dispose();
     }
 }

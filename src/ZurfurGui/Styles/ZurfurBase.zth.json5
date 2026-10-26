@@ -9,6 +9,9 @@
     "input.long-click.duration": "00:00:00.5",
     "input.long-click.movement-tolerance": "8",
 
+    // Number of scroll steps (ScrollViewer.scrollSize each) moved by one mouse wheel detent
+    "scroll.wheel.steps": "3",
+
     "radius.corner.small": "2", // CheckBox, Radio, etc.
     "radius.corner.medium": "4", // Button, TextEdit, Dropdowns, etc.
     "radius.corner.large.inside": "6.5",

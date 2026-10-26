@@ -10,23 +10,22 @@ namespace TestApp;
 public partial class FormTestInput
 {
     const int MAXIMUM_LOG_ENTRIES = 10000;
-    readonly PointerClickRecognizer _inputSurfaceClickRecognizer;
 
     // Initializes the input test surface and attaches handlers for all input events being demonstrated.
     public FormTestInput()
     {
         InitializeControl();
 
-        _inputSurfaceClickRecognizer = new PointerClickRecognizer(
-            inputSurface.View,
+        inputSurface.View.AddGestureRecognizer(new ClickRecognizer(
             (s, e) => AddLog($"***click: {e.Contact.Key}"),
             (s, e) =>
             {
                 AddLog($"***longclick: {e.Contact.Key}");
                 e.Handled = true;
-            });
+            }));
 
         buttonClearLog.Click += ButtonClearLog_Click;
+        buttonSurface.Click += (s, e) => AddLog("***surface button click");
 
         inputSurface.View.AddEvent(Panel.PreviewPointerDown, (s, e) => Observe("preview", e));
         inputSurface.View.AddEvent(Panel.PreviewPointerMove, (s, e) => Observe("preview", e));
@@ -65,7 +64,7 @@ public partial class FormTestInput
         Observe("bubble", e);
     }
 
-    // Logs the surface's pointer-up observation; the click recognizer may already have released logical capture.
+    // Logs raw pointer-up before the gesture arena resolves click recognition for this contact.
     void OnPointerUp(object? sender, PointerEvent e)
     {
         Observe("bubble", e);

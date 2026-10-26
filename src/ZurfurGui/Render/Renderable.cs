@@ -45,11 +45,6 @@ public interface Renderable
     public RenderResult Render(View view, RenderContext context, Rect clientClip);
 
     /// <summary>
-    /// Render over child views.
-    /// </summary>
-    public RenderResult RenderOver(View view, RenderContext context, Rect clientClip) { return RenderResult.Discard; }
-
-    /// <summary>
     /// Override to determine if the point hits the renderable area of the view.
     /// </summary>
     public bool IsHit(View view, HitTestContext context);

@@ -135,7 +135,7 @@ combined handlers on one view are still invoked together.
 | `PointerUp` | Routed, target to root | After preview unless handled or cancelled. |
 | `PointerEntered` | Direct to each entering view | Its per-contact hover-chain membership begins. |
 | `PointerExited` | Direct to each exiting view | Its per-contact hover-chain membership ends. |
-| `PointerCaptureLost` | Direct to the released capture owner | Capture is released, replaced, or cancelled; carries the `PointerContactKey`. |
+| `PointerCaptureLost` | Direct to affected views | Capture ends or a gesture cancels their press; carries the contact key. |
 
 For down, move, and up, the hit chain is used unless the contact is captured; then only its capture owner receives
 the event. Captured contacts are still hit-tested for hover. Enter and exit are not routed or redirected by capture.
@@ -181,8 +181,9 @@ The router tracks the current hover target independently from pointer capture:
 Each contact has independent hover, press, and capture state, with at most one capture owner. An uncaptured event
 routes through its current hit chain. When capture is active, only the owner receives the event; it is not also sent
 through the current hit chain. A new capture request replaces the previous owner and raises `PointerCaptureLost` on
-that view. The previous press is cancelled, preventing it from remaining pressed or activating on pointer-up. The
-normal hit test still runs, so `IsPointerOver` can move to another view while the owner remains pressed.
+that view. The previous press is cancelled, preventing affected views from remaining pressed or activating on
+pointer-up; `PointerCaptureLost` is also raised on those views, except the new capture owner. The normal hit test still
+runs, so `IsPointerOver` can move to another view while the owner remains pressed.
 
 While capture is active:
 
@@ -199,6 +200,14 @@ while the press is still active. The capture owner remains pressed while capture
 Controls that start a drag or similar interaction generally capture during pointer-down and use capture loss to
 clean up. This is important because a release can occur outside the original target, and capture can end without a
 normal pointer-up reaching that control.
+
+Gesture recognizers use a separate arbitration step. On pointer-down, the router starts a per-contact gesture session
+and collects recognizers attached to the hit view and its ancestors. Pending recognizers receive that contact's input
+even if hit testing later selects a different view. Raw pointer-event handling does not suppress their input.
+Pending recognition is not view capture: no view owns the contact until a recognizer accepts. The winner then
+receives exclusive logical capture if it accepts before the contact ends; a gesture accepted on pointer-up has no
+remaining stream to capture. Losing recognizers are canceled. A direct `SetCapture` request from a raw pointer handler
+preempts and cancels the gesture session before assigning or transferring capture.
 
 Hover and pressed pseudo-properties are updated as chains and capture state change. This allows styles and controls
 to react to pointer state without requiring every control to maintain its own hover bookkeeping.
@@ -246,14 +255,20 @@ Capture is not a general-purpose way to make a button clickable. Buttons should 
 event. Capture keeps low-level pointer events together for an interaction, but it does not by itself make a click valid
 when the pointer is released outside the original press target.
 
-### Click-like activation (`PointerClickRecognizer`)
+### Gesture recognition and click-like activation (`ClickRecognizer`)
 
 The router does not synthesize or route a generic click event. Controls that need click-like activation use the
-public `PointerClickRecognizer` utility, attached to the view that owns the interaction.
+public `ClickRecognizer`, an `IGestureRecognizer` attached to the view that owns the interaction with
+`View.AddGestureRecognizer`. Custom gesture
+types implement `IGestureRecognizer` and create per-contact `IGestureRecognizerSession` instances. The arena supplies a
+`GestureSessionContext` so sessions can accept or reject without exposing the arena; the first accepting session wins
+the contact's arena. `View.RemoveGestureRecognizer` detaches a recognizer and cancels its active sessions.
 
-The recognizer handles pointer-down and pointer-up events, captures the pointer while the press is active, and
-invokes the control's callback only when the pointer is released inside the attached view's bounds. Capture loss,
-pointer cancellation cleanup, and release outside the bounds cancel the click.
+The click recognizer remains a candidate from pointer-down and invokes its callback when the contact is released
+inside the attached view's bounds, provided no competing gesture has won. It does not capture the view while pending
+and does not mark raw pointer events handled. Raw routed events therefore continue independently of click recognition.
+Pointer cancellation, losing the gesture arena, removing the recognizer, and release outside the bounds cancel the
+click.
 
 The recognizer can also receive an optional long-click callback. Its threshold and movement tolerance are configured on
 `AppWindow` as `LongClickDuration` (`TimeSpan`) and `LongClickMovementTolerance`; defaults are 500 milliseconds and
@@ -263,11 +278,12 @@ for example, `"00:00:00.5"` represents 500 milliseconds.
 The duration starts on pointer-down. Moving farther than the tolerance cancels long-click eligibility, but leaves the
 ordinary click behavior unchanged. The callback receives the latest contact in `PointerLongClickEventArgs`. Setting
 `Handled` suppresses the ordinary click on release; leaving it false allows the normal click if release is inside.
-The duration and tolerance are sampled at pointer-down, so changes apply to the next press.
-This flag controls recognizer behavior only and does not retroactively change routed pointer events already dispatched.
+The duration and tolerance are read from the app window while the recognizer is active, so changing them can affect
+the current press. This flag controls recognizer behavior only and does not retroactively change routed pointer events
+already dispatched.
 
-A long-click callback can transfer capture to another view with the contact key. The recognizer then receives
-`PointerCaptureLost` for that key and ends its own press without releasing the new owner's capture:
+A long-click callback can explicitly take capture for another view with the contact key. This preempts and cancels
+the pending gesture session, then transfers exclusive logical capture to the requested view:
 
 ```csharp
 void OnLongClick(object? sender, PointerLongClickEventArgs e)
@@ -285,61 +301,25 @@ This allows a `Button`, `Scrim`, `ComboBox`, or third-party control to choose it
 adding another generic routed event to `Panel`. A `Button` uses the recognizer to raise its public `Click` event.
 ComboBox item hosts remain panels and attach a recognizer to each item host.
 
+## Wheel events
+
+Mouse wheel input is separate from pointer events. Platform adapters report an `OsWheelEvent` through
+`OsCanvas.WheelInput`, and the renderer connects it to `PointerRouter.WheelInput`. Wheel input does not use
+capture, hover, press, or the gesture arena, and has no preview or bubble phase.
+
+The router hit-tests the pointer position, then walks from the hit view toward the root and gives the
+`WheelEvent` to the first view with a `Panel.PointerWheel` handler. That view consumes the wheel and the walk
+stops, so the wheel never reaches a parent handler.
+
+Deltas use the browser's pixel-mode convention. One detent of a typical mouse wheel is 100 units
+(`WheelEvent.UnitsPerNotch`), positive `DeltaY` scrolls down, and positive `DeltaX` scrolls right. The browser
+adapter converts line and page deltas to that unit. The WinForms adapter converts from 120 units per detent
+and flips the vertical sign, and reads horizontal wheel from the native `WM_MOUSEHWHEEL` message. Neither
+adapter forwards Ctrl+wheel, because the browser and the WinForms form use it for magnification.
+
 ## Current scope
 
 This description focuses on responsibilities and ordering rather than exact event records, view-chain representation,
 or rendering data structures. The input path is evolving, so those implementation details are not yet part of the GUI
 input contract.
 
-## Remaining issues
-
-The core handled-routing, recognizer-based click, and descendant-capture-cancellation behavior is implemented. The items
-below are unfinished work, deliberate behavior differences from Avalonia, or validation still needed before the input
-system should be considered complete.
-
-### 6. Handled-events-too and same-view handler stopping
-
-Avalonia supports handlers that explicitly request notification even after an event has been handled. ZurfurGui does not
-currently expose an equivalent handled-events-too registration API. This is an API difference, not a defect in ordinary
-routing; normal handlers correctly stop at the handled route boundary.
-
-There is a related implementation limitation. Handlers registered on the same view are currently combined into one
-delegate. If one handler sets `Handled`, later handlers in that combined delegate still run. The current implementation
-can stop routing between views, but not between handlers on one view.
-
-Possible future work is to store ordered handler entries instead of combined delegates, then add an explicit
-handled-events-too option. This must preserve handler order and the behavior of `AddEvent` and `RemoveEvent`.
-
-### 8. Capture-key lifecycle
-
-Capture requests identify a tracked contact by its device kind and contact ID. Requests for keys that are no longer
-tracked fail when acquiring capture and are ignored when releasing capture. Capture state is GUI-thread state; callers
-that trigger capture from a timer or other asynchronous source must marshal the operation to the GUI thread.
-
-### 12. Click and release semantics
-
-ZurfurGui no longer synthesizes a generic routed click event. `Button`, `ComboBox`, `Scrim`, and third-party controls use
-the public `PointerClickRecognizer`, which captures on pointer-down and invokes its callback only when pointer-up occurs
-inside the attached view's bounds.
-
-This is broadly aligned with Avalonia's control-owned button activation, but the reusable recognizer is a ZurfurGui API
-rather than an Avalonia routed event. Release validation uses the attached view's bounds instead of repeating the full
-current hit test. That is an intentional simplification and means a release over the view's bounds can click even when
-the view's rendered content has more limited hit-test geometry.
-
-Capture loss, pointer cancellation cleanup, and release outside the bounds suppress the recognizer callback. `Handled`
-stops routing but does not cancel the control's own press; `Cancelled` stops the current event, while capture loss or
-platform cancellation terminates the underlying interaction.
-
-### Automatic cleanup when views are removed
-
-Removing a captured view from the visual tree does not yet automatically cancel its router capture. Controls with their
-own detach cleanup can release resources, but the router does not centrally detect every removed captured view.
-
-Future work should release capture, clear press state, and raise `PointerCaptureLost` when a captured view is removed.
-
-### Touch, pen, and multi-contact validation
-
-The WinForms adapter preserves device kind, contact ID, and contact dimensions, but this still needs validation on actual
-touch and pen hardware. Testing should cover pointer cancellation, contact promotion to mouse messages, handle recreation,
-simultaneous contacts, capture takeover, and view removal while captured.

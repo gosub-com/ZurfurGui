@@ -40,4 +40,9 @@ public interface OsCanvas
     /// Observe the pointer input
     /// </summary>
     public Action<OsPointerEvent>? PointerInput { get; set; }
+
+    /// <summary>
+    /// Observe the mouse wheel input. Ctrl+wheel is not reported because the platform uses it for magnification.
+    /// </summary>
+    public Action<OsWheelEvent>? WheelInput { get; set; }
 }

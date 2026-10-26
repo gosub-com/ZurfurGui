@@ -207,6 +207,11 @@
             bind: "attachedProperty",
             default: "static (s, e) => { }"
         },
+        $pointerWheel: {
+            type: "EventHandler<WheelEvent>",
+            bind: "attachedProperty",
+            default: "static (s, e) => { }"
+        },
         $pointerCaptureLost: {
             type: "EventHandler<PointerContactKey>",
             bind: "attachedProperty",

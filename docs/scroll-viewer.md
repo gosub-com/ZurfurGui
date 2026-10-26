@@ -174,6 +174,40 @@ Value   = clamped current offset
 
 When content fits in an axis, that axis has a maximum of zero and no scrollable thumb is rendered.
 
+## Mouse wheel
+
+ScrollViewer handles the mouse wheel. It moves the content by `wheelSteps` scroll steps for each wheel
+detent. One step is `scrollSize` (16 pixels by default), so the default is 3 x 16 = 48 pixels per detent.
+Fractional wheel deltas from precision touchpads scroll proportionally.
+
+`wheelSteps` is a styled property. It comes from the `scroll.wheel.steps` variable in the base theme
+(`ZurfurBase`, default 3) and can be overridden on an individual ScrollViewer:
+
+```json5
+{
+	$controller: "ScrollViewer",
+	wheelSteps: 5
+}
+```
+
+The ScrollViewer subscribes to the `Panel.PointerWheel` event. The wheel is not part of the pointer
+preview and bubble routing. Instead, the router gives the event to the first view with a `PointerWheel`
+handler, starting at the view under the pointer and walking toward the root. See `input-events.md`.
+
+- Wheel over any part of the ScrollViewer works, including its content and its scrollbars.
+- Shift+wheel scrolls horizontally when the device reports only vertical movement.
+- Horizontal wheel events scroll horizontally.
+- Ctrl is ignored by the ScrollViewer. The browser and the WinForms form use Ctrl+wheel for magnification, so
+  the platform adapters do not forward it.
+- An axis disabled by `scrollMode` ignores its wheel movement.
+- The offset is clamped like any other `ScrollOffset` change.
+- The innermost ScrollViewer under the pointer consumes the wheel, even at the end of its range, so it never
+  chains to an outer ScrollViewer.
+
+Wheel deltas follow the browser's pixel-mode convention: one detent is 100 units, positive Y scrolls down
+and positive X scrolls right. Scrolling is therefore `notches * wheelSteps * scrollSize`, added to
+`ScrollOffset`.
+
 ## Sizing and limitations
 
 The ScrollViewer has no default `$sizeRequest` or `$sizeMax`. Its content is measured separately so it can be larger

@@ -36,6 +36,7 @@ internal partial class BrowserCanvas : OsCanvas
     JSObject _canvas { get; set; }
     string _canvasId { get; set; }
     Action<OsPointerEvent>? _pointerInput;
+    Action<OsWheelEvent>? _wheelInput;
 
     public OsContext Context { get; private set; }
     
@@ -95,10 +96,44 @@ internal partial class BrowserCanvas : OsCanvas
                     ContactHeight = e.GetPropertyAsDouble("height") * scale
                 });
                 break;
+            case "wheel":
+                ProcessWheelEvent(e);
+                break;
             default: 
                 Console.WriteLine($"Un-processed event: {etype}");
                 break;
         };
+    }
+
+    // Forwards a DOM wheel event. Browser pixel-mode deltas are the reference unit and pass through unchanged;
+    // line and page mode deltas are converted to the equivalent pixel-mode amount. CTRL-wheel is left to the browser.
+    void ProcessWheelEvent(JSObject e)
+    {
+        var modifiers = GetModifiers(e);
+        if ((modifiers & PointerModifiers.Control) != 0)
+            return;
+
+        var canvasRect = GetBoundingClientRect(_canvas);
+        var canvasPoint = new Point(canvasRect.GetPropertyAsDouble("x"), canvasRect.GetPropertyAsDouble("y"));
+        var position = new Point(e.GetPropertyAsDouble("clientX"), e.GetPropertyAsDouble("clientY")) - canvasPoint;
+
+        // DOM_DELTA_PIXEL = 0, DOM_DELTA_LINE = 1, DOM_DELTA_PAGE = 2
+        var unitsPerDelta = (int)e.GetPropertyAsDouble("deltaMode") switch
+        {
+            1 => WheelEvent.UnitsPerNotch / 3,
+            2 => canvasRect.GetPropertyAsDouble("height"),
+            _ => 1.0
+        };
+
+        var scale = _window.DevicePixelRatio;
+        _wheelInput?.Invoke(new OsWheelEvent(
+            position.ToPoint * scale,
+            e.GetPropertyAsDouble("deltaX") * unitsPerDelta,
+            e.GetPropertyAsDouble("deltaY") * unitsPerDelta)
+        {
+            Buttons = MapButtons(e.GetPropertyAsDouble("buttons")),
+            Modifiers = modifiers
+        });
     }
 
     static PointerButtons MapButtons(double value)
@@ -197,6 +232,12 @@ internal partial class BrowserCanvas : OsCanvas
     { 
         get => _pointerInput; 
         set { _pointerInput = value; } 
+    }
+
+    public Action<OsWheelEvent>? WheelInput
+    {
+        get => _wheelInput;
+        set { _wheelInput = value; }
     }
 }
 

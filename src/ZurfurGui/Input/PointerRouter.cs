@@ -62,10 +62,6 @@ internal class PointerRouter
                 // Phases 2-3: Route captured down/move/up through preview and bubble.
                 SendPointerEvent(ev, [captureTarget]);
             }
-
-            // Phase 4: Pointer-up releases capture after captured routing.
-            if (ev.Kind == PointerEventKind.Up)
-                ClearPointerCapture(state);
         }
 
         // Phase 1: Find the hit target and build its view chain. Leave and cancel have no hit target.
@@ -91,28 +87,75 @@ internal class PointerRouter
             NotifyHoverChainChanges(previousHoverChain, state.HoverChain, ev);
         }
 
+        if (ev.Kind == PointerEventKind.Down && !wasCaptured && state.CapturedView is null)
+            state.GestureArena = GestureArena.Start(this, state, chain, ev);
+
         // A captured control remains pressed until capture is released, even after the pointer leaves its
         // original hover chain. This is required for drag operations and pressed visuals outside the control.
         state.CapturedView?.SetProperty(Panel.IsPressed, true);
 
-        // Phases 2-3: Uncaptured down/move/up route through preview then bubble on the hit chain. Captured input
-        // was already routed above, so it must not also be sent through the hit chain.
+        // Phases 2-3: A down that becomes captured during gesture-arena start routes to its new capture owner.
+        // Other input that was captured on entry was already routed above.
         if (!wasCaptured)
-            SendPointerEvent(ev, chain);
+        {
+            if (state.CapturedView is View currentCaptureTarget)
+                SendPointerEvent(ev, [currentCaptureTarget]);
+            else
+                SendPointerEvent(ev, chain);
+        }
+
+        if (state.GestureArena is GestureArena gestureArena && ev.Kind is PointerEventKind.Move or PointerEventKind.Up)
+            gestureArena.Process(ev);
 
         // Phase 4: Finish state cleanup after routing. Cancel and uncaptured leave also remove the contact state.
         if (ev.Kind == PointerEventKind.Up)
         {
+            if (state.CapturedView is not null)
+                ClearPointerCapture(state);
+
             var previousPressChain = state.CurrentPressChain.ToList();
             state.SetPressChain(Array.Empty<View>());
             state.UpdateCurrentPressChain();
             UpdateViewChain(previousPressChain, state.CurrentPressChain, Panel.IsPressed);
+
+            // A touch or pen contact ceases to exist on up, so do not depend on the platform sending a leave.
+            // A mouse persists (hover) after up.
+            if (ev.Contact.Device != PointerDeviceKind.Mouse)
+            {
+                var previousHoverChain = state.HoverChain.ToList();
+                state.UpdateHover(null, GetViewChain(null));
+                UpdateViewChain(previousHoverChain.ToList(), state.HoverChain, Panel.IsPointerOver);
+                NotifyHoverChainChanges(previousHoverChain, state.HoverChain, ev);
+                RemoveContactState(ev.Contact, state);
+            }
         }
         else if (ev.Kind == PointerEventKind.Cancel || (ev.Kind == PointerEventKind.Leave && !wasCaptured))
         {
+            state.GestureArena?.Cancel(preserveCapture: true);
             RemoveContactState(ev.Contact, state);
         }
 
+    }
+
+    /// <summary>
+    /// Called when wheel input is received. Hit tests the pointer position and gives the event to the first view,
+    /// starting at the hit view and walking toward the root, that has a PointerWheel handler. That view consumes
+    /// the wheel even if it cannot scroll further, so a wheel never escapes to a parent scroller. Wheel input
+    /// ignores pointer capture and does not change hover, press, or gesture state.
+    /// </summary>
+    public void WheelInput(OsWheelEvent rawEvent)
+    {
+        var ev = rawEvent.ToWheelEvent();
+        var hit = FindHitTarget(_appWindow.View, new HitTestContext(ev.Contact));
+        foreach (var view in GetViewChain(hit))
+        {
+            var handler = view.TryGetProperty(Panel.PointerWheel);
+            if (handler != null)
+            {
+                handler.Invoke(view, ev);
+                return;
+            }
+        }
     }
 
     /// <summary>
@@ -172,6 +215,7 @@ internal class PointerRouter
 
     private void RemoveContactState(PointerContact contact, PointerContactState state)
     {
+        state.GestureArena?.Cancel(preserveCapture: true);
         var capturedView = state.CapturedView;
         var affectedViews = state.Reset();
         _contactStates.Remove(new PointerContactKey(contact.Device, contact.Id));
@@ -186,6 +230,7 @@ internal class PointerRouter
 
     private bool CancelPointerCapture(PointerContactState state)
     {
+        state.GestureArena?.Cancel(preserveCapture: true);
         var capturedView = state.CapturedView;
         if (capturedView is null)
             return false;
@@ -322,6 +367,7 @@ internal class PointerRouter
 
         if (capture)
         {
+            state.GestureArena?.Cancel(preserveCapture: true);
             if (state.Capture(view, out var previousOwner))
             {
                 if (previousOwner is not null)
@@ -338,17 +384,50 @@ internal class PointerRouter
                     NotifyPointerCaptureLost(previousOwner, state.Contact.Key);
             }
         }
-        else if (state.Release(view))
+        else if (state.CapturedView == view)
         {
-            RecomputeViewProperty(view, Panel.IsPressed);
-            NotifyPointerCaptureLost(view, state.Contact.Key);
+            state.GestureArena?.Cancel(preserveCapture: true);
+            if (state.Release(view))
+            {
+                RecomputeViewProperty(view, Panel.IsPressed);
+                NotifyPointerCaptureLost(view, state.Contact.Key);
+            }
         }
+    }
+
+    internal void CaptureFromGesture(PointerContactState state, View view)
+    {
+        var cancelledPressViews = state.CancelPress();
+        var affectedViews = cancelledPressViews.Append(view).Distinct();
+        foreach (var affectedView in affectedViews)
+            RecomputeViewProperty(affectedView, Panel.IsPressed);
+
+        if (state.Capture(view, out var previousOwner))
+        {
+            view.SetProperty(Panel.IsPressed, true);
+
+            var notifiedViews = new HashSet<View>(cancelledPressViews.Where(cancelledView => cancelledView != view));
+            if (previousOwner is not null && previousOwner != view)
+                notifiedViews.Add(previousOwner);
+
+            foreach (var notifiedView in notifiedViews)
+                NotifyPointerCaptureLost(notifiedView, state.Contact.Key);
+        }
+    }
+
+    internal void ReleaseGestureCapture(PointerContactState state, View view)
+    {
+        if (state.CapturedView == view)
+            ClearPointerCapture(state);
     }
 
     internal void ClearCaptures(View view)
     {
         foreach (var state in _contactStates.Values.ToList())
         {
+            if (state.CapturedView == view)
+                state.GestureArena?.Cancel(preserveCapture: true);
+
             if (!state.Release(view))
                 continue;
 
@@ -368,5 +447,57 @@ internal class PointerRouter
         NotifyPointerCaptureLost(capturedView, state.Contact.Key);
     }
 
+    /// <summary>
+    /// Cancels all pointer state that refers to a view or its descendants. Called while the view is still attached
+    /// because it is leaving the view tree: gesture candidates, capture, and press and hover membership are dropped.
+    /// </summary>
+    internal void CancelViewTree(View root)
+    {
+        foreach (var state in _contactStates.Values.ToArray())
+        {
+            state.GestureArena?.CancelViewTree(root);
 
+            if (state.CapturedView is View captured && IsInViewTree(captured, root))
+                ClearPointerCapture(state);
+
+            var removed = state.HoverChain.Concat(state.PressChain).Concat(state.CurrentPressChain)
+                .Where(view => IsInViewTree(view, root))
+                .Distinct()
+                .ToList();
+            if (removed.Count == 0)
+                continue;
+
+            state.HoverChain.RemoveAll(view => IsInViewTree(view, root));
+            state.PressChain.RemoveAll(view => IsInViewTree(view, root));
+            state.CurrentPressChain.RemoveAll(view => IsInViewTree(view, root));
+            if (state.HoverView is View hoverView && IsInViewTree(hoverView, root))
+                state.HoverView = null;
+
+            foreach (var view in removed)
+            {
+                RecomputeViewProperty(view, Panel.IsPointerOver);
+                RecomputeViewProperty(view, Panel.IsPressed);
+            }
+        }
+    }
+
+    // Returns true if the view is the root or one of its descendants.
+    internal static bool IsInViewTree(View view, View root)
+    {
+        for (View? current = view; current is not null; current = current.Parent)
+        {
+            if (current == root)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Cancels the live gesture sessions of a recognizer that was removed from a view.
+    /// </summary>
+    internal void CancelRecognizer(IGestureRecognizer recognizer, View view)
+    {
+        foreach (var state in _contactStates.Values.ToArray())
+            state.GestureArena?.CancelRecognizer(recognizer, view);
+    }
 }

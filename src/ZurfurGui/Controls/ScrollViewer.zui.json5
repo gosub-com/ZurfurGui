@@ -1,6 +1,7 @@
 {
     $controller: "ScrollViewer",
     $namespace: "ZurfurGui.Controls",
+    "ScrollViewer.wheelSteps": "${scroll.wheel.steps}",
     $data: {
         scrollSize: {
             type: "SizeProp",
@@ -17,6 +18,11 @@
             bind: "styled",
             default: false,
             flags: "measure"
+        },
+        wheelSteps: {
+            type: "double",
+            bind: "styled",
+            default: 3
         }
     },
     $content: [

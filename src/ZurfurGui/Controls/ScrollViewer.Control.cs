@@ -28,6 +28,7 @@ public sealed partial class ScrollViewer
         verticalScrollBar.View.AddEvent(Panel.PointerEntered, OnScrollBarPointerEntered);
         _contentViewport.View.Layout = new ContentViewportLayout(this);
         View.Layout = new ScrollViewerLayout(this);
+        View.AddEvent(Panel.PointerWheel, OnPointerWheel);
         DataContext.PropertyChanged += OnScrollViewerDataChanged;
         horizontalScrollBar.DataContext.PropertyChanged += OnScrollBarDataChanged;
         verticalScrollBar.DataContext.PropertyChanged += OnScrollBarDataChanged;
@@ -77,6 +78,30 @@ public sealed partial class ScrollViewer
                 _syncingScrollBars = wasSyncingScrollBars;
             }
         }
+    }
+
+    /// <summary>
+    /// Scrolls the content by WheelSteps scroll steps per wheel detent. Shift turns a vertical wheel into a
+    /// horizontal one, and Ctrl is ignored. The router gives this view the wheel even when it cannot scroll further.
+    /// </summary>
+    void OnPointerWheel(object? sender, WheelEvent e)
+    {
+        var modifiers = e.Contact.Modifiers;
+        if ((modifiers & PointerModifiers.Control) != 0)
+            return;
+
+        var notchesX = e.NotchesX;
+        var notchesY = e.NotchesY;
+        if ((modifiers & PointerModifiers.Shift) != 0 && notchesX == 0)
+        {
+            notchesX = notchesY;
+            notchesY = 0;
+        }
+
+        var step = DataContext.ScrollSize.Or(16);
+        var distanceX = CanScrollHorizontally ? notchesX * Properties.WheelSteps * step.Width : 0;
+        var distanceY = CanScrollVertically ? notchesY * Properties.WheelSteps * step.Height : 0;
+        ScrollOffset = new Point(ScrollOffset.X + distanceX, ScrollOffset.Y + distanceY);
     }
 
     void OnScrollViewerDataChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

@@ -28,6 +28,11 @@ globalThis.ZurfurGui.observeCanvasInput = function (canvas, callBack) {
             //      CTRL-mouse wheel through so browser scales the window
             // event.preventDefault();
 
+            // The GUI consumes the wheel (so the page doesn't scroll), except CTRL-wheel which the browser
+            // uses to scale the window.
+            if (et === "wheel" && !event.ctrlKey)
+                event.preventDefault();
+
             // Keep receiving pointer events if the contact moves outside the canvas. The browser automatically
             // releases this DOM capture on pointerup or pointercancel, so no explicit release is needed here.
             if (et === "pointerdown") {

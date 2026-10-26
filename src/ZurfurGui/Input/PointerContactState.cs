@@ -16,6 +16,8 @@ internal sealed class PointerContactState
 
     public View? CapturedView { get; private set; }
 
+    public GestureArena? GestureArena { get; set; }
+
     // Replaces the views pressed by this contact.
     public void SetPressChain(IEnumerable<View> chain)
     {
@@ -101,6 +103,7 @@ internal sealed class PointerContactState
         PressChain.Clear();
         CurrentPressChain.Clear();
         CapturedView = null;
+        GestureArena = null;
         return affectedViews;
     }
 }

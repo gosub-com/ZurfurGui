@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +18,7 @@ internal class WinCanvas : OsCanvas
     PictureBox _pictureBox;
     WinContext _context;
     Action<OsPointerEvent>? _pointerInput;
+    Action<OsWheelEvent>? _wheelInput;
     readonly PointerWindow _pointerWindow;
     bool _nativeContactActive;
     public OsContext Context => _context;
@@ -27,7 +28,8 @@ internal class WinCanvas : OsCanvas
     {
         _pictureBox = pictureBox;
         _context = new WinContext(pictureBox.CreateGraphics());
-        _pointerWindow = new PointerWindow(pictureBox, OnNativePointerMessage);
+        _pointerWindow = new PointerWindow(pictureBox, OnNativePointerMessage,
+            (delta, clientPoint) => SendWheelEvent(clientPoint, delta, 0));
 
         pictureBox.MouseMove += (s, e) =>
         {
@@ -48,6 +50,26 @@ internal class WinCanvas : OsCanvas
         {
             Buttons = MapButtons(Control.MouseButtons),
             Modifiers = MapModifiers(Control.ModifierKeys),
+            Device = PointerDeviceKind.Mouse
+        });
+        pictureBox.MouseWheel += (s, e) => SendWheelEvent(e.Location, 0, -e.Delta);
+    }
+
+    // Forwards a Windows wheel event. Windows reports 120 units per detent with positive meaning wheel forward
+    // (scroll up/left), so convert to the browser's convention: 100 units per detent, positive scrolling down/right.
+    // CTRL-wheel is not forwarded because the form uses it for magnification.
+    void SendWheelEvent(System.Drawing.Point clientPoint, double deltaX, double deltaY)
+    {
+        var modifiers = MapModifiers(Control.ModifierKeys);
+        if ((modifiers & PointerModifiers.Control) != 0)
+            return;
+
+        const double WHEEL_DELTA = 120;
+        const double scale = WheelEvent.UnitsPerNotch / WHEEL_DELTA;
+        _wheelInput?.Invoke(new OsWheelEvent(new(clientPoint.X, clientPoint.Y), deltaX * scale, deltaY * scale)
+        {
+            Buttons = MapButtons(Control.MouseButtons),
+            Modifiers = modifiers,
             Device = PointerDeviceKind.Mouse
         });
     }
@@ -134,6 +156,12 @@ internal class WinCanvas : OsCanvas
         set { _pointerInput = value; }
     }
 
+    public Action<OsWheelEvent>? WheelInput
+    {
+        get => _wheelInput;
+        set { _wheelInput = value; }
+    }
+
     // Intercepts native pointer messages because WinForms mouse events do not preserve touch or pen identity.
     // WinCanvas still uses mouse events as a fallback for ordinary mouse input.
     sealed class PointerWindow : NativeWindow
@@ -142,19 +170,31 @@ internal class WinCanvas : OsCanvas
         const int WM_POINTERUPDATE = 0x0245;
         const int WM_POINTERUP = 0x0247;
         const int WM_POINTERCANCEL = 0x0248;
+        const int WM_MOUSEHWHEEL = 0x020E;
 
         readonly PictureBox _pictureBox;
         readonly Action<OsPointerEvent, bool> _pointerInput;
+        readonly Action<int, System.Drawing.Point> _horizontalWheel;
 
-        public PointerWindow(PictureBox pictureBox, Action<OsPointerEvent, bool> pointerInput)
+        public PointerWindow(PictureBox pictureBox, Action<OsPointerEvent, bool> pointerInput,
+            Action<int, System.Drawing.Point> horizontalWheel)
         {
             _pictureBox = pictureBox;
             _pointerInput = pointerInput;
+            _horizontalWheel = horizontalWheel;
             AssignHandle(pictureBox.Handle);
         }
 
         protected override void WndProc(ref Message m)
         {
+            if (m.Msg == WM_MOUSEHWHEEL)
+            {
+                // WParam high word is the signed delta (positive is right). LParam is the signed screen position.
+                var delta = (short)((m.WParam.ToInt64() >> 16) & 0xffff);
+                var screenX = (short)(m.LParam.ToInt64() & 0xffff);
+                var screenY = (short)((m.LParam.ToInt64() >> 16) & 0xffff);
+                _horizontalWheel(delta, _pictureBox.PointToClient(new System.Drawing.Point(screenX, screenY)));
+            }
             if (m.Msg is WM_POINTERDOWN or WM_POINTERUPDATE or WM_POINTERUP or WM_POINTERCANCEL)
             {
                 var pointerId = (uint)(m.WParam.ToInt64() & 0xffff);

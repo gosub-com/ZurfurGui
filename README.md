@@ -26,8 +26,9 @@ The following docs cover the internals of this project:
 - [Styles and Themes](docs/styles-and-themes.md) — Style and theme system (style sheets, selectors, pseudo-classes, and
   property resolution)
 - [Input and Pointer Events](docs/input-events.md) — Pointer input ingress, hit testing, capture, routing, and clicks
-- [ComboBox](docs/combo-box.md) — ComboBox control: usage, generic item types, styling, and internals
+- [Gesture Recognizer](docs/gesture-recognizer.md) — Gesture recognizer system and gesture events
 - [ScrollViewer](docs/scroll-viewer.md) — ScrollViewer control: usage, styling, and internals
+- [ComboBox](docs/combo-box.md) — ComboBox control: usage, generic item types, styling, and internals
 - [Future Plans and Improvements](docs/future-improvements.md) — Future plans and improvements
 
 ## Design Goals

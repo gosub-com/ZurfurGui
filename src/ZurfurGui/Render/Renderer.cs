@@ -97,6 +97,10 @@ public class Renderer
         if (_canvas.PointerInput != null)
             throw new ArgumentException("Pointer input already taken", nameof(_canvas));
         _canvas.PointerInput = (ev) => _pointerRouter.PointerInput(ev);
+
+        if (_canvas.WheelInput != null)
+            throw new ArgumentException("Wheel input already taken", nameof(_canvas));
+        _canvas.WheelInput = (ev) => _pointerRouter.WheelInput(ev);
     }
 
     public void RenderFrame()
@@ -213,8 +217,7 @@ public class Renderer
         var clipChanged = view._renderClientClip != clientClip;
         if (clipChanged)
         {
-            if (view._renderResult == RenderResult.RenderedClip
-                || view._renderResultOver == RenderResult.RenderedClip)
+            if (view._renderResult == RenderResult.RenderedClip)
             {
                 view.SetFlags(ViewFlags.ClientClipChanged);
             }
@@ -235,7 +238,7 @@ public class Renderer
     }
 
     /// <summary>
-    /// Render the view tree into the internal view's cache buffers (_renderOver, etc.).
+    /// Render the view tree into the internal view's cache buffers.
     /// Calculate the dirtyRect while walking the tree. The dirtyRect is the union of the
     /// old and new visual bounds of all views that were rendered or had a dirty visual rect.
     /// </summary>
@@ -287,18 +290,6 @@ public class Renderer
                 if (renderResult != RenderResult.Keep)
                     view._renderResult = renderResult;
                 newVisualRect = newVisualRect.Union(view._renderBuffer.MeasureBounds(_measureContext));
-
-                // Call user render over children function
-                _renderContext.ClearRenderBuffer();
-                var renderResultOver = renderer.RenderOver(view, _renderContext, clientClip);
-                _renderContext.FlushClips();
-                if (renderResultOver == RenderResult.Discard)
-                    view._renderBufferOver = OsRenderBuffer.Empty;
-                else if (renderResultOver != RenderResult.Keep)
-                    view._renderBufferOver = _renderContext.CloneRenderBuffer(view._renderBufferOver);
-                if (renderResultOver != RenderResult.Keep)
-                    view._renderResultOver = renderResultOver;
-                newVisualRect = newVisualRect.Union(view._renderBufferOver.MeasureBounds(_measureContext));
             }
         }
 
@@ -414,13 +405,6 @@ public class Renderer
             // Composite children
             foreach (var child in view.Children)
                 CompositeView(child, deviceClip, dirtyRect);
-
-            // Composite control rendered content (over children)
-            if (!isFullyClipped && view._renderBufferOver.CommandsLength > 0)
-            {
-                presented = true;
-                _presentBuffer.Composite(view._renderBufferOver, _stringCache, view.Origin, view.Scale);
-            }
 
             if (presented)
                 _stats.CompositeCount++;

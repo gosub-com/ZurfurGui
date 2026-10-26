@@ -35,6 +35,7 @@
                             $align: "horizontal:center,vertical:center"
                         },
                         {
+                            $name: "buttonSurface",
                             $controller: "Button",
                             text: [
                                 "Button on Surface"

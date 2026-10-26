@@ -27,3 +27,9 @@ with matching PascalCase event handler names like `ButtonOffsetPlus_Click` and `
   7. Methods (public closer to the top, private more towards the bottom, caller functions above callee functions
      so the general call flow is downwards)
 - Use spaces everywhere, no tabs anywhere. Use 4 spaces for indentation.
+- Do not use class inheritance, abstract base classes, or virtual/override methods. Prefer composition and
+  interfaces for polymorphic contracts.
+- All classes and functions should have comments above them that say what they do and what they are for.
+  Public classes and comments should have XML documentation comments.  Private classes and functions
+  should have comments, but they don't need to be XML documentation comments. 
+

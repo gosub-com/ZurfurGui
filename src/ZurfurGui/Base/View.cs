@@ -34,6 +34,7 @@ public sealed class View
     /// All child views. 
     /// </summary>
     readonly List<View> _children = new List<View>();
+    readonly List<IGestureRecognizer> _gestureRecognizers = [];
 
     /// <summary>
     /// View properties
@@ -55,6 +56,8 @@ public sealed class View
     /// Iterate and find child views.  Use AddChild (and friends) to modify the children
     /// </summary>
     public RoList<View> Children => new RoList<View>(_children);
+
+    internal IReadOnlyList<IGestureRecognizer> GestureRecognizers => _gestureRecognizers;
 
     /// <summary>
     /// Parent view
@@ -133,10 +136,8 @@ public sealed class View
 
     internal OsRenderBuffer _renderBufferBackground = OsRenderBuffer.Empty;
     internal OsRenderBuffer _renderBuffer = OsRenderBuffer.Empty;
-    internal OsRenderBuffer _renderBufferOver = OsRenderBuffer.Empty;
     internal Rect _renderClientClip = new Rect(-1, -1, -1, -1);
     internal RenderResult _renderResult = RenderResult.Keep;
-    internal RenderResult _renderResultOver = RenderResult.Keep;
 
     internal struct MeasureCache
     {
@@ -439,6 +440,11 @@ public sealed class View
 
     void RaisePropertyChanged(IPropertyKey property)
     {
+        // A view that becomes hidden (directly or through an ancestor) can no longer be a gesture or capture target.
+        // The router cancels this view and all of its descendants before listeners see the change.
+        if (property.Id == Panel.IsVisible.Id && !IsVisible && AppWindow is AppWindow appWindow)
+            appWindow.Renderer?.PointerRouter.CancelViewTree(this);
+
         PropertyChanged?.Invoke(property);
     }
 
@@ -754,8 +760,10 @@ public sealed class View
     {
         var child = _children[index];
         Debug.Assert(child.Parent == this);
-        if (child.AppWindow != null)
+        if (child.AppWindow is AppWindow appWindow)
         {
+            // Cancel gestures and capture while the child is still attached, so the router can reach it
+            appWindow.Renderer?.PointerRouter.CancelViewTree(child);
             if (child.IsEffectivelyVisible)
                 ExpandRemovedChildDirtyRect(child);
             SendDetachMessages(child);
@@ -827,6 +835,7 @@ public sealed class View
 
     /// <summary>
     /// Sets or releases pointer capture for the specified contact.
+    /// Calling this from a raw pointer handler takes precedence over pending gesture recognizers for that contact.
     /// </summary>
     public void SetCapture(PointerContactKey contactKey, bool capture)
     {
@@ -846,6 +855,29 @@ public sealed class View
         }
 
         pointerRouter.SetCapture(this, contactKey, capture);
+    }
+
+    /// <summary>
+    /// Attaches a gesture recognizer to this view and returns it. The recognizer is considered for every contact
+    /// whose hit path includes this view. Adding a recognizer that is already attached has no effect.
+    /// </summary>
+    public T AddGestureRecognizer<T>(T recognizer) where T : IGestureRecognizer
+    {
+        ArgumentNullException.ThrowIfNull(recognizer);
+        if (!_gestureRecognizers.Contains(recognizer))
+            _gestureRecognizers.Add(recognizer);
+        return recognizer;
+    }
+
+    /// <summary>
+    /// Detaches a gesture recognizer from this view and cancels any of its sessions that are still active.
+    /// </summary>
+    public void RemoveGestureRecognizer(IGestureRecognizer recognizer)
+    {
+        if (!_gestureRecognizers.Remove(recognizer))
+            return;
+
+        AppWindow?.Renderer?.PointerRouter?.CancelRecognizer(recognizer, this);
     }
 
     /// <summary>
