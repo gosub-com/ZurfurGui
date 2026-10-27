@@ -6,7 +6,7 @@
     $content: [
         {
             $layout: "Row",
-            "dock.align": "top",
+            dock.align: "top",
             $margin: "bottom:8",
             $content: [
                 {

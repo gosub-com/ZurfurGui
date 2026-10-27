@@ -5,12 +5,12 @@
     $padding: "left:12,top:12,right:12,bottom:12",
     $content: [
         {
-            "dock.align": "top",
+            dock.align: "top",
             $controller: "TextView",
             text: "Pointer Input Test"
         },
         {
-            "dock.align": "top",
+            dock.align: "top",
             $layout: "Row",
             $content: [
                 {
@@ -60,7 +60,7 @@
             ]
         },
         {
-            "dock.align": "top",
+            dock.align: "top",
             $layout: "Row",
             $margin: "top:12,bottom:4",
             $content: [

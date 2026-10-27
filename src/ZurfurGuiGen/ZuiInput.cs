@@ -14,21 +14,20 @@ namespace ZurfurGuiGen;
 internal static class ZuiInput
 {
     /// <summary>
-    /// Collect FileInfo from a .json file.
+    /// Collect FileInfo from a direct-extension ZUI or ZTH file.
     /// If a corresponding .cs file exists, collect the namespace from it.
     /// </summary>
     internal static ZuiFileInfo CollectJsonFiles(AdditionalText text, SyntaxTree[] syntax, CancellationToken cancellationToken)
     {
         var zuiPath = text.Path;
-        var jsonNameWithoutJsonExt = Path.GetFileNameWithoutExtension(zuiPath); // removes .json
-        var jsonNameWithoutAnyExt = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui or .zth
+        var fileName = Path.GetFileName(zuiPath);
+        var fileNameOnly = Path.GetFileNameWithoutExtension(fileName);
 
         // Parse the json file (errors are collected into diagnostic)
         Diagnostic? diagnostic = null;
         Dictionary<string, object?> jsonDocument = new();
         var controllerName = "";
         var nameSpace = "";
-        var fileNameOnly = Path.GetFileNameWithoutExtension(jsonNameWithoutJsonExt); // removes .zui or .zth
         var userSuppliedControllerClass = false;
         var userSuppliedDataClass = false;
         var use = new List<string>();
@@ -40,7 +39,7 @@ internal static class ZuiInput
         {
             // Parse the JSON content, find the controller or style name
             jsonDocument = Json.Parse(text.GetText(cancellationToken)?.ToString() ?? "");
-            var extension = Path.GetExtension(jsonNameWithoutJsonExt).ToLower();
+            var extension = Path.GetExtension(fileName).ToLowerInvariant();
             if (extension == ".zth")
             {
                 controllerName = GetMatchingJsonFileName(fileNameOnly, jsonDocument);
@@ -56,13 +55,13 @@ internal static class ZuiInput
                 var csTree = syntax.FirstOrDefault(tree =>
                 {
                     var csFileName = Path.GetFileNameWithoutExtension(tree.FilePath);
-                    return csFileName == $"{jsonNameWithoutAnyExt}.Control";
+                    return csFileName == $"{fileNameOnly}.Control";
                 });
 
                 var csDataTree = syntax.FirstOrDefault(tree =>
                 {
                     var csFileName = Path.GetFileNameWithoutExtension(tree.FilePath);
-                    return csFileName == $"{jsonNameWithoutAnyExt}.Data";
+                    return csFileName == $"{fileNameOnly}.Data";
                 });
 
                 var csFileNamespace = GetNameSpace(csTree) ?? "";

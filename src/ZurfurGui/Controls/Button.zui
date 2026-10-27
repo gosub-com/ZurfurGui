@@ -16,7 +16,7 @@
         {
             $name: "_buttonText",
             $controller: "TextView",
-            "TextView.color": "${color.text.on-primary}"
+            TextView.color: "${color.text.on-primary}"
         }
     ]
 }

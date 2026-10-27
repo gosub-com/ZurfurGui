@@ -1,17 +1,18 @@
 # Controls
 
-This guide gives a short introduction to the controls provided by ZurfurGui. Controls are declared in ZUI JSON5
-files and loaded into generated C# controller classes. A view with named controls gets fields for those controls in
-its generated controller, and application behavior can be added in the matching `.Control.cs` partial class.
+This guide gives a short introduction to the controls provided by ZurfurGui. Controls are declared in
+ZUI JSON5 files and loaded into generated C# controller classes. A view with named controls gets fields
+for those controls in its generated controller, and application behavior can be added in the matching
+`.Control.cs` partial class.
 
 For the generated data model, property binding categories, and initialization details, see
 [Architecture](architecture.md) and [Property Binding](property-binding.md).
 
 ## Application setup
 
-Each application provides a partial `ZurfurMain` class with a `MainApp` method. Call `InitializeControls` before
-creating controls. Use `SetMainappWindow` to set the main application content, and `ShowWindow` to display an
-additional window.
+Each application provides a partial `ZurfurMain` class with a `MainApp` method. Call
+`InitializeControls` before creating controls. Use `SetMainappWindow` to set the main application
+content, and `ShowWindow` to display an additional window.
 
 ```csharp
 public static void MainApp(AppWindow app)
@@ -23,8 +24,8 @@ public static void MainApp(AppWindow app)
 }
 ```
 
-The main view and the window content are ordinary generated controls. For example, a simple main view can be
-written as follows:
+The main view and the window content are ordinary generated controls. For example, a simple main view
+can be written as follows:
 
 ```json5
 {
@@ -40,16 +41,16 @@ written as follows:
 }
 ```
 
-`SetMainappWindow` places the control in the application's main window. `ShowWindow` wraps a control in a window
-with optional title, position, size, and alignment settings. See [Initialization](initialization.md) for more about
-application startup.
+`SetMainappWindow` places the control in the application's main window. `ShowWindow` wraps a control in
+a window with optional title, position, size, and alignment settings. See
+[Initialization](initialization.md) for more about application startup.
 
 ## ZUI controls
 
 ### Panel
 
-`Panel` is a general-purpose container. Use its `$content` section to contain other controls and use `$layout` to
-arrange those controls. Common layouts include `Row`, `Column`, and `Dock`.
+`Panel` is a general-purpose container. Use its `$content` section to contain other controls and use
+`$layout` to arrange those controls. Common layouts include `Row`, `Column`, and `Dock`.
 
 ```json5
 {
@@ -62,9 +63,9 @@ arrange those controls. Common layouts include `Row`, `Column`, and `Dock`.
 }
 ```
 
-When no `$layout` is specified, `Panel` uses its default layout and arranges each child independently. Set the
-qualified `"Panel.Offset"` property on a child to shift its layout position. Its positive right and bottom edges
-contribute to the Panel's measured extent:
+When no `$layout` is specified, `Panel` uses its default layout and arranges each child independently.
+Set the qualified `"Panel.Offset"` property on a child to shift its layout position. Its positive right
+and bottom edges contribute to the Panel's measured extent:
 
 ```json5
 {
@@ -72,20 +73,21 @@ contribute to the Panel's measured extent:
     $content: [
         {
             $controller: "Window",
-            "Panel.Offset": "x:24,y:32"
+            Panel.Offset: "x:24,y:32"
         }
     ]
 }
 ```
 
-Negative offsets do not move the Panel's `(0, 0)` content origin and may place content outside its measured bounds.
+Negative offsets do not move the Panel's `(0, 0)` content origin and may place content outside its
+measured bounds.
 Custom layouts such as `Row`, `Column`, and `Dock` do not use `Panel.Offset`.
 
 ### Window
 
-`Window` provides window chrome around parent-supplied content. Its template includes a title bar, close control, and
-resize handle. Parent `$content` is placed in the clipped `_windowContent` area. Set the `title` data property in JSON;
-it defaults to `"(not set)"` when omitted.
+`Window` provides window chrome around parent-supplied content. Its template includes a title bar, close
+control, and resize handle. Parent `$content` is placed in the clipped `_windowContent` area. Set the
+`title` data property in JSON; it defaults to `"(not set)"` when omitted.
 
 ```json5
 {
@@ -105,7 +107,8 @@ it defaults to `"(not set)"` when omitted.
 }
 ```
 
-For a standard floating window, use `AppWindow.ShowWindow` to wrap a control in a `Window` and set its title from C#:
+For a standard floating window, use `AppWindow.ShowWindow` to wrap a control in a `Window` and set its
+title from C#:
 
 ```csharp
 app.ShowWindow(new SettingsView(), "Settings", location: new PointProp(24, 32));
@@ -114,16 +117,17 @@ app.ShowWindow(new SettingsView(), "Settings", location: new PointProp(24, 32));
 The optional `location` sets the window's `Panel.Offset`. Dragging the window updates the same position. Use
 `$visualOffset` to move a view without changing the measured content extent.
 
-The window content area clips overflow but does not scroll automatically. Put a `ScrollViewer` in the content when the
-window body needs to scroll. The title bar remains outside that content area.
+The window content area clips overflow but does not scroll automatically. Put a `ScrollViewer` in the
+content when the window body needs to scroll. The title bar remains outside that content area.
 
 ### Scrim
 
-`Scrim` displays a themed, full-screen overlay for transient UI such as dropdowns, menus, and modal content. Its
-background uses the active theme's `color.surface.overlay.scrim` token.
+`Scrim` displays a themed, full-screen overlay for transient UI such as dropdowns, menus, and modal
+content. Its background uses the active theme's `color.surface.overlay.scrim` token.
 
-Call `Show` with the current `AppWindow` to display the Scrim. It returns the `View` added to the floating-window
-layer. Subscribe to `Dismissed` to close the transient UI, then remove the returned view from its parent:
+Call `Show` with the current `AppWindow` to display the Scrim. It returns the `View` added to the
+floating-window layer. Subscribe to `Dismissed` to close the transient UI, then remove the returned view
+from its parent:
 
 ```csharp
 View? scrimView = null;
@@ -132,14 +136,14 @@ scrim.Dismissed += (_, _) => scrimView?.RemoveFromParent();
 scrimView = scrim.Show(appWindow);
 ```
 
-The caller owns the Scrim's lifetime. Remove its returned view when the transient UI closes. Also remove it when the
-owning control is detached. Content displayed above the Scrim should be added as a separate floating panel rather than
-as a child of the Scrim, so clicks on that content do not dismiss the Scrim.
+The caller owns the Scrim's lifetime. Remove its returned view when the transient UI closes. Also remove
+it when the owning control is detached. Content displayed above the Scrim should be added as a separate
+floating panel rather than as a child of the Scrim, so clicks on that content do not dismiss the Scrim.
 
 ### TextView
 
-`TextView` displays text. Its `text` property can be a string or an array of lines. Use styles and layout properties
-to control its appearance and position.
+`TextView` displays text. Its `text` property can be a string or an array of lines. Use styles and layout
+properties to control its appearance and position.
 
 ```json5
 {
@@ -150,8 +154,8 @@ to control its appearance and position.
 
 ### Button
 
-`Button` displays a clickable button. Set its `text` property in ZUI. Give it a `$name` when application code needs
-to access it from the generated controller.
+`Button` displays a clickable button. Set its `text` property in ZUI. Give it a `$name` when application
+code needs to access it from the generated controller.
 
 ```json5
 {
@@ -161,8 +165,8 @@ to access it from the generated controller.
 }
 ```
 
-Subscribe to the button's `Click` event in the view's `.Control.cs` partial class. Use the public `Click` event
-instead of low-level pointer events:
+Subscribe to the button's `Click` event in the view's `.Control.cs` partial class. Use the public
+`Click` event instead of low-level pointer events:
 
 ```csharp
 public partial class MainView
@@ -182,11 +186,11 @@ public partial class MainView
 
 ### ScrollBar
 
-`ScrollBar` displays and changes a numeric scroll value between its `minimum` and `maximum` values. Its `value`
-property is data, so application code can read or change it through the generated `DataContext`.
+`ScrollBar` displays and changes a numeric scroll value between its `minimum` and `maximum` values. Its
+`value` property is data, so application code can read or change it through the generated `DataContext`.
 
-Scrollbars are commonly managed by `ScrollViewer` rather than created directly. Direct scrollbar usage is useful when
-an application needs to provide its own scrolling behavior.
+Scrollbars are commonly managed by `ScrollViewer` rather than created directly. Direct scrollbar usage
+is useful when an application needs to provide its own scrolling behavior.
 
 Standalone scrollbars use their expanded appearance by default. Set `expandOnHover` to `true` to make the scrollbar
 use its compact appearance until the pointer enters it:
@@ -195,19 +199,23 @@ use its compact appearance until the pointer enters it:
 scrollBar.DataContext.ExpandOnHover = true;
 ```
 
-When `expandOnHover` is `true`, the scrollbar expands while hovered, pressed, or dragged. When it is `false`, it
-remains expanded regardless of the pointer position. Pressed and dragging behavior is independent of the property.
+When `expandOnHover` is `true`, the scrollbar expands while hovered, pressed, or dragged. When it is
+`false`, it remains expanded regardless of the pointer position. Pressed and dragging behavior is
+independent of the property.
 
-The `thumbThickness` property controls the expanded thumb thickness. `thumbRestingThickness` controls the compact
-thumb thickness, and `thumbEdgeInset` controls the compact thumb's distance from the outer edge.
+The `thumbThickness` property controls the expanded thumb thickness. `thumbRestingThickness` controls
+the compact thumb thickness, and `thumbEdgeInset` controls the compact thumb's distance from the outer
+edge.
 
-Themes can use the runtime `ScrollBar.isExpanded` condition to select colors for the effective visual state. This
-condition reflects hover, press, drag, and `expandOnHover` behavior rather than only the physical pointer position.
+Themes can use the runtime `ScrollBar.isExpanded` condition to select colors for the effective visual
+state. This condition reflects hover, press, drag, and `expandOnHover` behavior rather than only the
+physical pointer position.
 
 ### ScrollViewer
 
-`ScrollViewer` displays content through a clipped viewport and provides horizontal and vertical scrolling. Put the
-content to scroll in its `$content` section. The combined visible offset is available through `ScrollOffset`.
+`ScrollViewer` displays content through a clipped viewport and provides horizontal and vertical
+scrolling. Put the content to scroll in its `$content` section. The combined visible offset is available
+through `ScrollOffset`.
 
 ```csharp
 var offset = scrollViewer.ScrollOffset;
@@ -227,8 +235,8 @@ _themeComboBox.DataContext.Items.Add(
 _themeComboBox.DataContext.SelectedIndex = 0;
 ```
 
-Selection changes are reported through `DataContext.PropertyChanged` for the `SelectedIndex` property. For generic item
-requirements, item renderers, and detailed usage, see [ComboBox](combo-box.md).
+Selection changes are reported through `DataContext.PropertyChanged` for the `SelectedIndex` property.
+For generic item requirements, item renderers, and detailed usage, see [ComboBox](combo-box.md).
 
 ### TextEdit
 
@@ -236,9 +244,10 @@ requirements, item renderers, and detailed usage, see [ComboBox](combo-box.md).
 
 ## Generated controller access
 
-A `$name` in a ZUI file creates a named control field on the generated controller. User code can use that field from
-the matching `.Control.cs` partial class. Data declared in `$data` is available through the control's generated
-`DataContext` and reports changes through `INotifyPropertyChanged`.
+A `$name` in a ZUI file creates a named control field on the generated controller. User code can use that
+field from the matching `.Control.cs` partial class. Data declared in `$data` is available through the
+control's generated `DataContext` and reports changes through `INotifyPropertyChanged`.
 
-For example, a named ComboBox can be populated from its containing view's code-behind, while a named Button can be
-handled through its `Click` event. This keeps control layout in ZUI and application behavior in C#.
+For example, a named ComboBox can be populated from its containing view's code-behind, while a named
+Button can be handled through its `Click` event. This keeps control layout in ZUI and application
+behavior in C#.

@@ -8,7 +8,7 @@
             // Show theme name using the StyleTestSkinHoverTextStyleTestSkinHoverText style
             $controller: "TextView",
             $name: "debugLabel",
-            "TextView.text": "${style.test.text.hover-nothover}",
+            TextView.text: "${style.test.text.hover-nothover}",
 
             $borderWidth: 2,
             $borderColor: "Gray"
@@ -22,7 +22,7 @@
         {
             $controller: "TextView",
             $sizeRequest: "${style.test.sizeRequest.c1}",
-            "TextView.font": "${style.test.font.c1}",
+            TextView.font: "${style.test.font.c1}",
             $borderWidth: 2,
             $borderColor: "Gray",
             text: "Style C1"
@@ -30,7 +30,7 @@
         {
             $controller: "TextView",
             $sizeRequest: "${style.test.sizeRequest.c2}",
-            "TextView.font": "${style.test.font.c2}",
+            TextView.font: "${style.test.font.c2}",
             $borderWidth: 2,
             $borderColor: "Gray",
             text: "Style C2"
@@ -38,7 +38,7 @@
         {
             $controller: "TextView",
             $sizeRequest: "${style.test.sizeRequest.c1 | style.test.sizeRequest.c2}",
-            "TextView.font": "${style.test.font.c1 | style.test.font.c2}",
+            TextView.font: "${style.test.font.c1 | style.test.font.c2}",
             $borderWidth: 2,
             $borderColor: "Gray",
             text: "Style C1 & C2"

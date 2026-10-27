@@ -1,0 +1,50 @@
+// Fluent 2 starter token palette for ZurfurGui
+{
+    name: "ZurfurCherry",
+
+    variables: {
+
+        // Windows, Panels, Cards, etc.
+        color.surface.canvas: "#FAF2F5", // Main app window
+        color.surface.card: "#FCF8FA", // Panels, cards, etc. on top of main app window
+        color.surface.overlay: "#FEF9FB", // Windows and dialogs
+        color.surface.overlay.stroke: "#8B3058",
+        color.surface.overlay.scrim: "#00000050",
+
+        // Window decorations
+        color.window.title.background: "#7A1035",
+        color.window.title.foreground: "White",
+        color.window.close: "isPointerOver ? Pink",
+
+        // Text
+        color.text.primary: "Black",
+        color.text.on-primary: "#3D1020",
+
+        // Buttons, checkboxes, radio buttons, toggles, etc.
+        color.interactive.primary.stroke: "isPressed ? #7A1035; isPointerOver ? #B0304A; #C090A0",
+        color.interactive.primary.background: "isPressed ? #E8B8C8;  isPointerOver ? #F5E8EC; #F8D8E0",
+
+        // Items in a listbox, combobox, etc.
+        color.interactive.item.background: "isPressed ? #E8B8C8;  isPointerOver ? #F5E8EC; #00000000",
+
+        // Text box, etc.
+        color.input.background: "#FFFFFF",
+        color.input.stroke: "#8B3058",
+
+        // ScrollBar
+        color.scrollbar.track.background: "isPressed ? #E0C0CCD0; isPointerOver ? #E5CAD4C4; ScrollBar.isExpanded ? #EAD4DCB8; #00000000",
+        color.scrollbar.thumb.background: "isPressed ? #9A5070; isPointerOver ? #A36480; ScrollBar.isExpanded ? #AD7890; #D0B8C080",
+
+        color.status.success.background: "#DFF6DD",
+        color.status.warning.background: "#FFF4CE",
+        color.status.danger.background: "#FDE7E9",
+        color.status.success.foreground: "#107C10",
+        color.status.warning.foreground: "#797775",
+        color.status.danger.foreground: "#A80000",
+        color.status.info.background: "#DCE0F8",
+        color.status.info.foreground: "#3840A0",
+        color.status.danger.stroke: "#A80000",
+        color.status.success.stroke: "#107C10",
+        color.status.warning.stroke: "#797775"
+    }
+}

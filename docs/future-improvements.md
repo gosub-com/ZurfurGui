@@ -1,7 +1,8 @@
 # Future Improvements
 
-This document tracks architectural improvements for the MDV implementation. The current direction is viable, but the
-items below should be addressed before the library’s public contracts become difficult to change.
+This document tracks architectural improvements for the MDV implementation. The current direction is
+viable, but the items below should be addressed before the library’s public contracts become difficult
+to change.
 
 ## MDV principles to preserve
 
@@ -14,13 +15,14 @@ These principles are intentional and should remain part of the architecture:
 - Domain models should map to and from view data outside the control implementation.
 - Generic controls may use strongly typed data collections and item factories.
 
-The generated controller and generated data type do not need to be completely independent. Their relationship is an
-intentional part of MDV. The important boundary is that the data object remains independent of the control tree.
+The generated controller and generated data type do not need to be completely independent. Their
+relationship is an intentional part of MDV. The important boundary is that the data object remains
+independent of the control tree.
 
 ## Priority 1: Collection synchronization contract
 
-Collection behavior is currently delegated to handwritten controls. This should become a defined and reusable framework
-contract rather than a separate implementation in every items control.
+Collection behavior is currently delegated to handwritten controls. This should become a defined and
+reusable framework contract rather than a separate implementation in every items control.
 
 Define behavior for:
 
@@ -35,50 +37,55 @@ Define behavior for:
 - Updating collections while a control is rendering.
 - Batching multiple collection changes into one view update.
 
-`ObservableCollection<T>` handles collection-level notifications, but it does not automatically propagate item-level
-property changes. The framework should explicitly define whether item data implements `INotifyPropertyChanged` and how
-item controllers respond to those changes.
+`ObservableCollection<T>` handles collection-level notifications, but it does not automatically
+propagate item-level property changes. The framework should explicitly define whether item data
+implements `INotifyPropertyChanged` and how item controllers respond to those changes.
 
 Add integration tests for every supported collection operation before standardizing the public API.
 
 ### Collection update strategies
 
-The framework should support more than one update strategy. The simplest strategy is reset and rebuild: when a new
-collection is received, discard the existing item controllers and recreate the visible items. This does not require
-item identity and is reasonable for small collections or controls such as the current `ComboBox`, whose drop-down is
-created from the current collection each time it opens. The current implementation is therefore effectively doing a
-full replacement of the drop-down, but it does not synchronize an already-open drop-down or the selected-item view.
+The framework should support more than one update strategy. The simplest strategy is reset and rebuild:
+when a new collection is received, discard the existing item controllers and recreate the visible items.
+This does not require item identity and is reasonable for small collections or controls such as the
+current `ComboBox`, whose drop-down is created from the current collection each time it opens. The
+current implementation is therefore effectively doing a full replacement of the drop-down, but it does
+not synchronize an already-open drop-down or the selected-item view.
 
-Another strategy is to replace the collection and reconcile the old and new sequences. A diff can identify insertions,
-removals, replacements, and moves, allowing a list control to update its existing item controllers instead of
-rebuilding the entire list. This is especially useful for a visible `ListBox` and may also be useful for tree nodes.
-The application should be able to replace a collection populated from server JSON without manually issuing an
-`Insert` or `Remove` for every change. Without stable item keys, the reconciler can use positional comparison or fall
-back to a reset; stable identity is needed when per-item controller state must follow a logical item through a move.
+Another strategy is to replace the collection and reconcile the old and new sequences. A diff can
+identify insertions, removals, replacements, and moves, allowing a list control to update its existing
+item controllers instead of rebuilding the entire list. This is especially useful for a visible
+`ListBox` and may also be useful for tree nodes. The application should be able to replace a collection
+populated from server JSON without manually issuing an `Insert` or `Remove` for every change. Without
+stable item keys, the reconciler can use positional comparison or fall back to a reset; stable identity
+is needed when per-item controller state must follow a logical item through a move.
 
-The reusable synchronizer described as option #4 is a framework-level mechanism for both paths, not necessarily one
-specific diff algorithm. It should normalize collection notifications and collection replacement into operations such
-as add, remove, replace, move, and reset. Controls would retain their own visual policies: a `ComboBox` may rebuild its
-drop-down, a `ListBox` may apply incremental changes, and a tree control may maintain a synchronizer for each node's
-child collection. Item-controller creation and ownership can be a separate layer so that the basic collection watcher
-does not prematurely define templates, virtualization, or rendering behavior.
+The reusable synchronizer described as option #4 is a framework-level mechanism for both paths, not
+necessarily one specific diff algorithm. It should normalize collection notifications and collection
+replacement into operations such as add, remove, replace, move, and reset. Controls would retain their
+own visual policies: a `ComboBox` may rebuild its drop-down, a `ListBox` may apply incremental changes,
+and a tree control may maintain a synchronizer for each node's child collection. Item-controller
+creation and ownership can be a separate layer so that the basic collection watcher does not prematurely
+define templates, virtualization, or rendering behavior.
 
-Selection must be an explicit part of the contract. Preserving only an integer selected index is incorrect when an item
-is inserted before the selection. A control may preserve the selected item's stable identity and calculate its new
-index, or use a documented positional policy when identity is unavailable. If the selected item is removed, the
-contract should define whether selection moves to the next item, the previous item, or becomes empty. The framework
-should not require a single policy for every control, but it should provide the collection changes needed for each
-control to implement its policy consistently.
+Selection must be an explicit part of the contract. Preserving only an integer selected index is
+incorrect when an item is inserted before the selection. A control may preserve the selected item's
+stable identity and calculate its new index, or use a documented positional policy when identity is
+unavailable. If the selected item is removed, the contract should define whether selection moves to the
+next item, the previous item, or becomes empty. The framework should not require a single policy for
+every control, but it should provide the collection changes needed for each control to implement its
+policy consistently.
 
-The preferred direction remains undecided between reset/rebuild and replacement with diffing. Before standardizing a
-public API, compare both approaches with integration tests covering server refreshes, insertion before the selected
-item, removal of the selected item, reordering, item property changes, collection replacement, and updates while a
-control is visible. A full rebuild is a valid fallback when identity or an efficient diff is unavailable.
+The preferred direction remains undecided between reset/rebuild and replacement with diffing. Before
+standardizing a public API, compare both approaches with integration tests covering server refreshes,
+insertion before the selected item, removal of the selected item, reordering, item property changes,
+collection replacement, and updates while a control is visible. A full rebuild is a valid fallback when
+identity or an efficient diff is unavailable.
 
 ## Priority 2: Item controller and template creation
 
-The current data-controller registry maps an exact concrete data `Type` to a controller factory. This is convenient for
-generated controls, but it should not be the only public abstraction.
+The current data-controller registry maps an exact concrete data `Type` to a controller factory. This
+is convenient for generated controls, but it should not be the only public abstraction.
 
 Exact runtime-type lookup has several limitations:
 
@@ -93,8 +100,8 @@ Introduce a control-facing item factory or template abstraction, conceptually:
 Func<TItem, Controllable> ItemFactory
 ```
 
-The generated registry can supply the default factory, while application code can replace or override it. The desired
-relationship is:
+The generated registry can supply the default factory, while application code can replace or override
+it. The desired relationship is:
 
 ```text
 ObservableCollection<TItemData>
@@ -128,8 +135,9 @@ All generated and handwritten subscription paths should follow the same lifecycl
 
 ## Priority 4: UI-thread and batching policy
 
-`INotifyPropertyChanged` does not define which thread may modify data. The library should establish a policy before controls
-are widely used with asynchronous operations, timers, network callbacks, or WebAssembly interop.
+`INotifyPropertyChanged` does not define which thread may modify data. The library should establish a
+policy before controls are widely used with asynchronous operations, timers, network callbacks, or
+WebAssembly interop.
 
 Decide whether:
 
@@ -140,12 +148,13 @@ Decide whether:
 - `PropertyChanged(null)` and `PropertyChanged("")` mean refresh-all.
 - Collection notifications follow the same dispatch and batching rules.
 
-The current generated code treats a null or empty property name as a full synchronization request. If that behavior is
-kept, it should be documented and tested as part of the data contract.
+The current generated code treats a null or empty property name as a full synchronization request. If
+that behavior is kept, it should be documented and tested as part of the data contract.
 
 ## Priority 5: Domain model and view data boundary
 
-Generated data classes should remain view-specific. They should not become the application’s domain model by convention.
+Generated data classes should remain view-specific. They should not become the application’s domain
+model by convention.
 
 For example:
 
@@ -162,13 +171,13 @@ Customer -> CustomerItemData
 CustomerItemData changes -> Customer
 ```
 
-Partial data classes are useful for small mappings. Larger applications may need explicit adapters or presenters so that
-view changes do not become domain-model changes.
+Partial data classes are useful for small mappings. Larger applications may need explicit adapters or
+presenters so that view changes do not become domain-model changes.
 
 ## Priority 6: Registration scope
 
-Control, data-controller, and theme registration is currently process-global. This is simple for generated startup code,
-but it creates future problems for:
+Control, data-controller, and theme registration is currently process-global. This is simple for
+generated startup code, but it creates future problems for:
 
 - Multiple application instances in one process.
 - Unit tests with different registrations.
@@ -177,8 +186,9 @@ but it creates future problems for:
 - Registration order.
 - Conflicting control versions.
 
-Consider introducing an application or runtime registration context, such as a `GuiRuntime` or `AppContext`. Static
-registration may remain as a convenience layer, but the underlying APIs should eventually support scoped registrations.
+Consider introducing an application or runtime registration context, such as a `GuiRuntime` or
+`AppContext`. Static registration may remain as a convenience layer, but the underlying APIs should
+eventually support scoped registrations.
 
 ## Priority 7: Generated contract diagnostics
 
@@ -195,7 +205,8 @@ Important validation areas include:
 - Duplicate or ambiguous generated registrations.
 - Data classes whose generated and handwritten declarations disagree.
 
-Runtime string-based failures should be minimized when the generator can validate the same relationship at compile time.
+Runtime string-based failures should be minimized when the generator can validate the same relationship
+at compile time.
 
 ## Priority 8: Template and content-host contract
 
@@ -222,8 +233,8 @@ Document and test:
 - Whether content hosts remain valid when a control is detached and reattached.
 - Whether content changes require layout, rendering, or both to be invalidated.
 
-The current `ContentHost` represents one content destination. Future controls may need multiple named content slots,
-such as:
+The current `ContentHost` represents one content destination. Future controls may need multiple named
+content slots, such as:
 
 ```text
 Content       -> main content host
@@ -233,8 +244,9 @@ Overlay       -> overlay host
 Items         -> items host
 ```
 
-A future template system could declare these slots and allow parent content to target a named slot. This would be a
-natural extension of `ContentHost`, rather than requiring each control to add another specialized loading method.
+A future template system could declare these slots and allow parent content to target a named slot. This
+would be a natural extension of `ContentHost`, rather than requiring each control to add another
+specialized loading method.
 
 Possible future abstractions include:
 
@@ -244,9 +256,9 @@ Possible future abstractions include:
 - A presenter-like object that maps content data to a host view.
 - Template diagnostics for missing, duplicate, or incompatible content slots.
 
-`ScrollViewer` is the current motivating example: its internal template creates the viewport, content window, and
-scrollbars, while parent content is directed to the content window. A future multi-slot system could express that
-relationship declaratively as `Content -> _contentWindow`.
+`ScrollViewer` is the current motivating example: its internal template creates the viewport, content
+window, and scrollbars, while parent content is directed to the content window. A future multi-slot
+system could express that relationship declaratively as `Content -> _contentWindow`.
 
 ## Priority 9: Generated data API stability
 

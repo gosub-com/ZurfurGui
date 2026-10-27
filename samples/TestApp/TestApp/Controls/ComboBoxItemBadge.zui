@@ -32,14 +32,14 @@
                 {
                     $name: "_badge",
                     $controller: "TextView",
-                    "TextView.color": "${color.status.danger.stroke}"
+                    TextView.color: "${color.status.danger.stroke}"
                 }
             ]
         },
         {
             $name: "_text",
             $controller: "TextView",
-            "TextView.color": "${color.text.primary}",
+            TextView.color: "${color.text.primary}",
             $padding: "${spacing.left.small | spacing.zero}",
             $align: "vertical:center"
         }

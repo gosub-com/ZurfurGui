@@ -15,7 +15,7 @@
         {
             $name: "_itemText",
             $controller: "TextView",
-            "TextView.color": "${color.text.primary}"
+            TextView.color: "${color.text.primary}"
         }
     ]
 }

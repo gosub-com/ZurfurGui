@@ -19,17 +19,20 @@ and [Architecture](docs/architecture.md) first.
 The following docs cover the internals of this project:
 
 - [Controls](docs/controls.md) — basic application setup and control usage
-- [Architecture](docs/architecture.md) — MDV architecture, code generation, and system internals
+- [Architecture](docs/architecture.md) — MDV architecture, code generation, and system
+  internals
 - [Initialization](docs/initialization.md) — Startup and initialization procedure for applications using
   ZurfurGui
 - [Property Binding](docs/property-binding.md) — Property binding system
 - [Styles and Themes](docs/styles-and-themes.md) — Style and theme system (style sheets, selectors, pseudo-classes, and
   property resolution)
-- [Input and Pointer Events](docs/input-events.md) — Pointer input ingress, hit testing, capture, routing, and clicks
+- [Input and Pointer Events](docs/input-events.md) — Pointer input ingress, hit testing, capture,
+  routing, and clicks
 - [Gesture Recognizer](docs/gesture-recognizer.md) — Gesture recognizer system and gesture events
 - [ScrollViewer](docs/scroll-viewer.md) — ScrollViewer control: usage, styling, and internals
 - [ComboBox](docs/combo-box.md) — ComboBox control: usage, generic item types, styling, and internals
-- [Future Plans and Improvements](docs/future-improvements.md) — Future plans and improvements
+- [Future Plans and Improvements](docs/future-improvements.md) — Future plans and
+  improvements
 
 ## Design Goals
 

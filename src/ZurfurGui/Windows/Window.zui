@@ -25,23 +25,23 @@
                     $borderRadius: "${radius.corner.large.inside}",
                     $layout: "Dock",
                     $align: "vertical:top",
-                    "dock.align": "top",
+                    dock.align: "top",
                     $content: [
                         {
                             $controller: "TextView",
                             $name: "_menuButton",
-                            "dock.align": "left",
+                            dock.align: "left",
                             text: "≡",
-                            "TextView.font": "${font.size.window.title}",
-                            "TextView.color": "${color.window.menu | color.window.title.foreground}"
+                            TextView.font: "${font.size.window.title}",
+                            TextView.color: "${color.window.menu | color.window.title.foreground}"
                         },
                         {
                             $name: "_closeButton",
                             $controller: "TextView",
-                            "dock.align": "right",
+                            dock.align: "right",
                             text: "X",
-                            "TextView.font": "${font.size.window.title}",
-                            "TextView.color": "${color.window.close | color.window.title.foreground}"
+                            TextView.font: "${font.size.window.title}",
+                            TextView.color: "${color.window.close | color.window.title.foreground}"
                         },
                         {
                             $controller: "Panel",
@@ -53,8 +53,8 @@
                                     $name: "_title",
                                     $align: "horizontal:center,vertical:center",
                                     text: "(not set)",
-                                    "TextView.color": "${color.window.menu | color.window.title.foreground}",
-                                    "TextView.font": "${font.size.window.title}"
+                                    TextView.color: "${color.window.menu | color.window.title.foreground}",
+                                    TextView.font: "${font.size.window.title}"
                                 }
                             ],
                         }

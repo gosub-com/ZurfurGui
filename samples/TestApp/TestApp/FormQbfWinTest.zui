@@ -5,7 +5,7 @@
     $content: [
         {
             $layout: "Row",
-            "cell.wrap": true,
+            cell.wrap: true,
             $content: [
                 {
                     $controller: "TextView",
@@ -53,7 +53,7 @@
         },
         {
             $layout: "Row",
-            "cell.wrap": true,
+            cell.wrap: true,
             $content: [
                 {
                     $controller: "Button",
@@ -213,7 +213,7 @@
         },
         {
             $layout: "Row",
-            "cell.wrap": true,
+            cell.wrap: true,
             $content: [
                 {
                     $controller: "TextView",
@@ -255,7 +255,7 @@
         },
         {
             $layout: "Row",
-            "cell.wrap": true,
+            cell.wrap: true,
             $content: [
                 {
                     $controller: "TextView",

@@ -9,7 +9,7 @@ namespace ZurfurGuiGen;
 /// <summary>
 /// We can't use System.Text.Json in the source generator, so use this small JSON5-subset parser instead.
 /// Supported JSON5 additions are // and /* */ comments, trailing commas, single-quoted strings,
-/// ASCII identifier keys without quotes, and +, .5, and 5. decimal numbers.
+/// ASCII identifier keys without quotes, including dots and hyphens, and +, .5, and 5. decimal numbers.
 /// JSON5 features intentionally not supported are NaN, Infinity, hexadecimal numbers, the full
 /// Unicode identifier grammar, and uncommon JSON5 escape forms.
 /// Never allow NULL in the JSON file.
@@ -328,7 +328,7 @@ public static class Json
 
     private static bool IsIdentifierPart(char c)
     {
-        return IsIdentifierStart(c) || (c >= '0' && c <= '9');
+        return IsIdentifierStart(c) || (c >= '0' && c <= '9') || c == '.' || c == '-';
     }
 
     private static bool IsAsciiDigit(char c)

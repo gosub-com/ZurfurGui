@@ -1,0 +1,50 @@
+// Fluent 2 starter token palette for ZurfurGui
+{
+    name: "ZurfurDefault",
+
+    variables: {
+
+        // App, Dialogs, Panels, Cards, etc.
+        color.surface.canvas: "#EAF4FB", // Main app window
+        color.surface.card: "#FCFCFF", // Panels, cards, etc. on top of main app window
+        color.surface.overlay: "#F5FAFD", // Modless windows and dialogs
+        color.surface.overlay.stroke: "#5068A0",
+        color.surface.overlay.scrim: "#00000050",
+
+        // Window decorations
+        color.window.title.background: "#4A7BB5",
+        color.window.title.foreground: "White",
+        color.window.close: "isPointerOver ? #D8DEFF",
+
+        // Text
+        color.text.primary: "#1F1F1F",
+        color.text.on-primary: "#1F1F1F",
+
+        // Buttons, checkboxes, radio buttons, toggles, etc.
+        color.interactive.primary.stroke: "isPressed ? #005A9E; isPointerOver ? #0078D4; #909090",
+        color.interactive.primary.background: "isPressed ? #A6D2F2;  isPointerOver ? #D2E8FA; #C6E0F7",
+
+        // Items in a listbox, combobox, etc.
+        color.interactive.item.background: "isPressed ? #A6D2F2;  isPointerOver ? #D2E8FA; #00000000",
+
+        // Text box, etc.
+        color.input.background: "#FFFFFF",
+        color.input.stroke: "#7070B0",
+
+        // ScrollBar
+        color.scrollbar.track.background: "isPressed ? #B8D8F0D0; isPointerOver ? #C2DEF3C4; ScrollBar.isExpanded ? #CCE4F5B8; #00000000",
+        color.scrollbar.thumb.background: "isPressed ? #005A9E; isPointerOver ? #1B6CAB; ScrollBar.isExpanded ? #357DB7; #8BB4DC80",
+
+        color.status.success.background: "#DFF6DD",
+        color.status.warning.background: "#FFF4CE",
+        color.status.danger.background: "#FDE7E9",
+        color.status.success.foreground: "#107C10",
+        color.status.warning.foreground: "#797775",
+        color.status.danger.foreground: "#A80000",
+        color.status.info.background: "#CFE2FF",
+        color.status.info.foreground: "#004085",
+        color.status.danger.stroke: "#A80000",
+        color.status.success.stroke: "#107C10",
+        color.status.warning.stroke: "#797775"
+    }
+}

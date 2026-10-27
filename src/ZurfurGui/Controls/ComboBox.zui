@@ -26,13 +26,13 @@
         {
             $name: "_selectedItem",
             $controller: "Panel",
-            "TextView.color": "${color.text.primary}",
+            TextView.color: "${color.text.primary}",
             $align: "horizontal:stretch,vertical:center"
         },
         {
             $name: "_arrow",
             $controller: "TextView",
-            "TextView.color": "${color.text.primary}",
+            TextView.color: "${color.text.primary}",
             $padding: "${padding.combo-box.arrow}",
             $align: "horizontal:right,vertical:center",
             text: [ "▾" ]

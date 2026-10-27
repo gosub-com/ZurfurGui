@@ -43,7 +43,7 @@ remaining area:
     $content: [
         {
             $layout: "Row",
-            "dock.align": "top",
+            dock.align: "top",
             $content: [
                 {
                     $controller: "TextView",
@@ -126,43 +126,46 @@ Each scrollbar has the following range-related data:
 - `Hidden` does not display the scrollbar, but the range and value can still be used programmatically.
 - `Auto` displays the scrollbar only when its calculated maximum is greater than its minimum.
 
-The current default is `Auto`, so scrollbars are hidden when their content fits and shown when their content
-overflows. Applications can set a different policy through the scrollbar data when needed.
+The current default is `Auto`, so scrollbars are hidden when their content fits and shown when their
+content overflows. Applications can set a different policy through the scrollbar data when needed.
 
 ## Overlay scrollbar behavior
 
-ScrollViewer uses overlay scrollbars. The scrollbars are drawn above the clipped content and do not consume
-viewport space. Showing or hiding either scrollbar therefore does not change the content width, content height,
-or the content extent used to calculate the scroll range.
+ScrollViewer uses overlay scrollbars. The scrollbars are drawn above the clipped content and do not
+consume viewport space. Showing or hiding either scrollbar therefore does not change the content width,
+content height, or the content extent used to calculate the scroll range.
 
 The intended visibility behavior is:
 
-- `Auto` hides a scrollbar when its content fits and shows it when its maximum range is greater than zero.
-- `Visible` shows the scrollbar even when its range is zero. In that state it has no scrollable thumb movement.
+- `Auto` hides a scrollbar when its content fits and shows it when its maximum range is greater than
+  zero.
+- `Visible` shows the scrollbar even when its range is zero. In that state it has no scrollable thumb
+  movement.
 - `Hidden` does not render the scrollbar, but its range and value remain available to application code.
 
-When only one scrollbar is visible, it uses the full corresponding edge of the viewport. When both are visible,
-the horizontal scrollbar is shortened by the vertical scrollbar's thickness and the vertical scrollbar is
-shortened by the horizontal scrollbar's thickness. This leaves an empty, non-scrollable corner where the two
-bars meet. No corner control or gutter is added yet.
+When only one scrollbar is visible, it uses the full corresponding edge of the viewport. When both are
+visible, the horizontal scrollbar is shortened by the vertical scrollbar's thickness and the vertical
+scrollbar is shortened by the horizontal scrollbar's thickness. This leaves an empty, non-scrollable
+corner where the two bars meet. No corner control or gutter is added yet.
 
-Scrollbar visibility is evaluated from the content extent and the unchanged viewport size. The appearance of a
-scrollbar does not reduce the size used to measure content, so visibility does not require the iterative
-two-axis measurement used by traditional scrollbars that consume layout space.
+Scrollbar visibility is evaluated from the content extent and the unchanged viewport size. The
+appearance of a scrollbar does not reduce the size used to measure content, so visibility does not
+require the iterative two-axis measurement used by traditional scrollbars that consume layout space.
 
-ScrollViewer configures its internal scrollbars with `expandOnHover: true`. When an overflowing scrollbar is not
-hovered, it renders only a thin translucent thumb near the outer edge. The thumb keeps its normal calculated
-position and length along the scroll direction, so it indicates the portion of content currently visible without
-covering the full content edge. The scrollbar's full outer rectangle remains available as an invisible pointer
-target.
+ScrollViewer configures its internal scrollbars with `expandOnHover: true`. When an overflowing
+scrollbar is not hovered, it renders only a thin translucent thumb near the outer edge. The thumb keeps
+its normal calculated position and length along the scroll direction, so it indicates the portion of
+content currently visible without covering the full content edge. The scrollbar's full outer rectangle
+remains available as an invisible pointer target.
 
-When the pointer enters that outer rectangle, the scrollbar renders its partially opaque track, opaque thumb, and
-arrow indicators. The thumb becomes thicker and moves toward the center of the scrollbar. Pressing or dragging also
-uses the expanded appearance. Arrow space remains reserved even while the arrow indicators are not drawn, so the
-scroll range and layout do not change between visual states.
+When the pointer enters that outer rectangle, the scrollbar renders its partially opaque track, opaque
+thumb, and arrow indicators. The thumb becomes thicker and moves toward the center of the scrollbar.
+Pressing or dragging also uses the expanded appearance. Arrow space remains reserved even while the
+arrow indicators are not drawn, so the scroll range and layout do not change between visual states.
 
 Scrollbar theme colors use the effective `ScrollBar.isExpanded` condition rather than relying only on
-`isPointerOver`. This keeps colors synchronized with the expanded geometry during hover, press, and drag states.
+`isPointerOver`. This keeps colors synchronized with the expanded geometry during hover, press, and drag
+states.
 
 The standard range model is:
 
@@ -177,7 +180,8 @@ When content fits in an axis, that axis has a maximum of zero and no scrollable 
 ## Mouse wheel
 
 ScrollViewer handles the mouse wheel. It moves the content by `wheelSteps` scroll steps for each wheel
-detent. One step is `scrollSize` (16 pixels by default), so the default is 3 x 16 = 48 pixels per detent.
+detent. One step is `scrollSize` (16 pixels by default), so the default is 3 x 16 = 48 pixels per
+detent.
 Fractional wheel deltas from precision touchpads scroll proportionally.
 
 `wheelSteps` is a styled property. It comes from the `scroll.wheel.steps` variable in the base theme
@@ -197,26 +201,28 @@ handler, starting at the view under the pointer and walking toward the root. See
 - Wheel over any part of the ScrollViewer works, including its content and its scrollbars.
 - Shift+wheel scrolls horizontally when the device reports only vertical movement.
 - Horizontal wheel events scroll horizontally.
-- Ctrl is ignored by the ScrollViewer. The browser and the WinForms form use Ctrl+wheel for magnification, so
-  the platform adapters do not forward it.
+- Ctrl is ignored by the ScrollViewer. The browser and the WinForms form use Ctrl+wheel for
+  magnification, so the platform adapters do not forward it.
 - An axis disabled by `scrollMode` ignores its wheel movement.
 - The offset is clamped like any other `ScrollOffset` change.
-- The innermost ScrollViewer under the pointer consumes the wheel, even at the end of its range, so it never
-  chains to an outer ScrollViewer.
+- The innermost ScrollViewer under the pointer consumes the wheel, even at the end of its range, so it
+  never chains to an outer ScrollViewer.
 
-Wheel deltas follow the browser's pixel-mode convention: one detent is 100 units, positive Y scrolls down
-and positive X scrolls right. Scrolling is therefore `notches * wheelSteps * scrollSize`, added to
+Wheel deltas follow the browser's pixel-mode convention: one detent is 100 units, positive Y scrolls
+down and positive X scrolls right. Scrolling is therefore `notches * wheelSteps * scrollSize`, added to
 `ScrollOffset`.
 
 ## Sizing and limitations
 
-The ScrollViewer has no default `$sizeRequest` or `$sizeMax`. Its content is measured separately so it can be larger
-than the viewport. The viewer reports the smaller of the content's natural size and the available parent size.
+The ScrollViewer has no default `$sizeRequest` or `$sizeMax`. Its content is measured separately so it
+can be larger than the viewport. The viewer reports the smaller of the content's natural size and the
+available parent size.
 
-When content is smaller than the available parent size, the ScrollViewer sizes to the content. When content is larger,
-the viewer uses the available size as its finite viewport and scrollbars represent the overflow. If a parent measures
-with unconstrained space, the ScrollViewer may grow toward its content because no finite viewport has been established.
-Applications should provide a finite constraint through the viewer's parent when a bounded viewport is required.
+When content is smaller than the available parent size, the ScrollViewer sizes to the content. When
+content is larger, the viewer uses the available size as its finite viewport and scrollbars represent
+the overflow. If a parent measures with unconstrained space, the ScrollViewer may grow toward its content
+because no finite viewport has been established. Applications should provide a finite constraint
+through the viewer's parent when a bounded viewport is required.
 
 Other current limitations include:
 
@@ -252,8 +258,8 @@ ScrollViewer's parent `$content` is placed in this host rather than directly bes
 
 ## Content loading implementation
 
-The loader distinguishes between a control's own template content and content supplied by its parent. The calls occur
-in this order:
+The loader distinguishes between a control's own template content and content supplied by its parent.
+The calls occur in this order:
 
 ```text
 ScrollViewer constructor
@@ -281,24 +287,26 @@ Parent creates the ScrollViewer from its $content
                         +--> default implementation adds user content there
 ```
 
-`Loader.Load` invokes `LoadTemplateContent` for the ScrollViewer's own ZUI children. These children create the content
-viewport, content window, and scrollbars directly on the ScrollViewer. Later, `Loader.CreateControl` invokes the
-default `LoadParentContent` implementation for the parent's content. ScrollViewer's `ContentHost` points to
-`_contentWindow`, so application content is added inside the clipped content subtree.
+`Loader.Load` invokes `LoadTemplateContent` for the ScrollViewer's own ZUI children. These children
+create the content viewport, content window, and scrollbars directly on the ScrollViewer. Later,
+`Loader.CreateControl` invokes the default `LoadParentContent` implementation for the parent's content.
+ScrollViewer's `ContentHost` points to `_contentWindow`, so application content is added inside the
+clipped content subtree.
 
-`LoadTemplateContent` and `LoadParentContent` both have default implementations. The former adds internal content to
-the main view, while the latter adds parent content to `ContentHost`, which is the main view by default. ScrollViewer
-only needs to override the template hook and content host; it no longer infers the loading phase from
-`View.Children.Count`.
+`LoadTemplateContent` and `LoadParentContent` both have default implementations. The former adds
+internal content to the main view, while the latter adds parent content to `ContentHost`, which is the
+main view by default. ScrollViewer only needs to override the template hook and content host; it no
+longer infers the loading phase from `View.Children.Count`.
 
-The separate lifecycle is also useful for future controls with templates or named content hosts. Those controls can
-build their internal structure through `LoadTemplateContent` and direct ordinary parent content through an appropriate
-content host without adding special cases to the loader.
+The separate lifecycle is also useful for future controls with templates or named content hosts. Those
+controls can build their internal structure through `LoadTemplateContent` and direct ordinary parent
+content through an appropriate content host without adding special cases to the loader.
 
 ## Measurement and arrangement
 
-The ScrollViewer uses a dedicated layout implementation. The content viewport also uses a dedicated layout
-implementation because ordinary panel measurement would constrain the content window to the viewport.
+The ScrollViewer uses a dedicated layout implementation. The content viewport also uses a dedicated
+layout implementation because ordinary panel measurement would constrain the content window to the
+viewport.
 
 During measurement:
 
@@ -322,9 +330,9 @@ The content window's `$visualOffset` (`Panel.VisualOffset`) provides physical tr
 `ScrollOffset` of `(x, y)` moves the content window by `(-x, -y)`; the viewport remains fixed.
 `VisualOffset` does not change the content window's measured extent.
 
-The default Panel layout keeps its origin at `(0, 0)`. Negative child `Panel.Offset` values do not extend
-content extent before that origin and may be clipped. Custom layouts must account for `Panel.Offset` themselves if
-positioned children should contribute to their measured extent.
+The default Panel layout keeps its origin at `(0, 0)`. Negative child `Panel.Offset` values do not
+extend content extent before that origin and may be clipped. Custom layouts must account for
+`Panel.Offset` themselves if positioned children should contribute to their measured extent.
 
 ## Range synchronization
 
@@ -340,9 +348,10 @@ It then updates `Minimum`, `Maximum`, `ViewportSize`, and `LargeChange`. The cur
 after the range is updated. This ensures that shrinking content cannot leave the content window displaced
 past its new maximum.
 
-Range synchronization also applies the scrollbar visibility policy. With the default `Auto` policy, a bar is
-hidden when its measured range is zero. An explicitly `Visible` bar remains displayed in that state, while the
-renderer omits its thumb and arrow indicators because there is no scrollable range in that axis.
+Range synchronization also applies the scrollbar visibility policy. With the default `Auto` policy, a
+bar is hidden when its measured range is zero. An explicitly `Visible` bar remains displayed in that
+state, while the renderer omits its thumb and arrow indicators because there is no scrollable range in
+that axis.
 
 ## What has been implemented
 

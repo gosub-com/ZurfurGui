@@ -1,13 +1,13 @@
 {
     $controller: "ScrollBar",
     $namespace: "ZurfurGui.Controls",
-    "ScrollBar.trackColor": "${color.scrollbar.track.background}",
-    "ScrollBar.thumbColor": "${color.scrollbar.thumb.background}",
-    "ScrollBar.thumbRadius": "${radius.scrollbar.thumb | spacing.extra-large}",
-    "ScrollBar.thumbMinSize": "${size.scrollbar.thumb.min | spacing.extra-large}",
-    "ScrollBar.thumbThickness": "${size.scrollbar.thumb.thickness | spacing.small}",
-    "ScrollBar.thumbRestingThickness": "${size.scrollbar.thumb.resting-thickness | spacing.small}",
-    "ScrollBar.thumbEdgeInset": "${size.scrollbar.thumb.edge-inset | spacing.extra-small}",
+    ScrollBar.trackColor: "${color.scrollbar.track.background}",
+    ScrollBar.thumbColor: "${color.scrollbar.thumb.background}",
+    ScrollBar.thumbRadius: "${radius.scrollbar.thumb | spacing.extra-large}",
+    ScrollBar.thumbMinSize: "${size.scrollbar.thumb.min | spacing.extra-large}",
+    ScrollBar.thumbThickness: "${size.scrollbar.thumb.thickness | spacing.small}",
+    ScrollBar.thumbRestingThickness: "${size.scrollbar.thumb.resting-thickness | spacing.small}",
+    ScrollBar.thumbEdgeInset: "${size.scrollbar.thumb.edge-inset | spacing.extra-small}",
     $data: {
         // Current scroll position (ranges from Minimum to Maximum)
         value: {

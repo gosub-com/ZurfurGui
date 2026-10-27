@@ -1,7 +1,7 @@
 {
     $controller: "TextView",
     $namespace: "ZurfurGui.Controls",
-    "TextView.color": "${color.text.primary}",
+    TextView.color: "${color.text.primary}",
     $data: {
         text: {
             type: "?TextLines",

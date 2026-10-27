@@ -9,7 +9,7 @@
                 {
                     $controller: "Window",
                     title: "MyCard",
-                    "Panel.Offset": "x:20,y:20",
+                    Panel.Offset: "x:20,y:20",
                     $content: [
                         {
                             $controller: "MyCard",
@@ -21,7 +21,7 @@
                 },
                 {
                     $controller: "Window",
-                    "Panel.Offset": "x:100,y:100",
+                    Panel.Offset: "x:100,y:100",
                     title: "FormSmallWinTest",
                     $content: [
                         {

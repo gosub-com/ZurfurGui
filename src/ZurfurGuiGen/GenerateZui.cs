@@ -21,10 +21,9 @@ public class GenerateZui : IIncrementalGenerator
         var syntaxTrees = context.CompilationProvider.Select((compilation, _) => compilation.SyntaxTrees.ToArray());
 
 
-        // Collect zuiData for all ZUI JSON5 files
+        // Collect zuiData for all ZUI files
         var zuiData = context.AdditionalTextsProvider
-            .Where(file => file.Path.EndsWith(".zui.json", StringComparison.OrdinalIgnoreCase)
-                || file.Path.EndsWith(".zui.json5", StringComparison.OrdinalIgnoreCase))
+            .Where(file => file.Path.EndsWith(".zui", StringComparison.OrdinalIgnoreCase))
             .Combine(syntaxTrees)
             .Select((combined, cancellationToken) =>
         {
@@ -33,10 +32,9 @@ public class GenerateZui : IIncrementalGenerator
             return ZuiInput.CollectJsonFiles(text, syntax, cancellationToken);
         });
 
-        // Collect zthData for all ZTH JSON5 files (theme tokens)
+        // Collect zthData for all ZTH files (theme tokens)
         var zthData = context.AdditionalTextsProvider
-            .Where(file => file.Path.EndsWith(".zth.json", StringComparison.OrdinalIgnoreCase)
-                || file.Path.EndsWith(".zth.json5", StringComparison.OrdinalIgnoreCase))
+            .Where(file => file.Path.EndsWith(".zth", StringComparison.OrdinalIgnoreCase))
             .Combine(syntaxTrees)
             .Select((combined, cancellationToken) =>
             {

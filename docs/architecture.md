@@ -9,14 +9,14 @@ Goal: replace **MVVM** style runtime bindings with **generated, compile-time vie
 
 - The **View (V)** declares the **data (D)** it needs (in ZUI JSON `data` section).
 - Code generation produces:
-  - Code-behind partial controller class (`*.zui.json5` → `<ViewName>.Control.g.cs`)
-  - A strongly typed data class (`*.zui.json5` → `<ViewName>.Data.g.cs`)
-  - Library initialization `ZurfurMain.cs` partial class, constructed from `*.zui.json5` and `*.zth.json5` files.
+  - Code-behind partial controller class (`*.zui` → `<ViewName>.Control.g.cs`)
+  - A strongly typed data class (`*.zui` → `<ViewName>.Data.g.cs`)
+  - Library initialization `ZurfurMain.cs` partial class, constructed from `*.zui` and `*.zth` files.
 - You can:
   - use the generated data class as-is (for example, deserialize or populate it directly), or
   - extend it as a `partial` class to map to/from the domain **model (M)**.
-- Avoid runtime reflection for MDV/data propagation and bindings. Prefer code generation (or other compile-time
-  mechanisms) so updates are strongly typed, AOT-friendly, and trimming-safe.
+- Avoid runtime reflection for MDV/data propagation and bindings. Prefer code generation (or other
+  compile-time mechanisms) so updates are strongly typed, AOT-friendly, and trimming-safe.
 
 ## Terminology
 
@@ -39,29 +39,34 @@ MDV creates **two parallel, independent graphs**:
    - May include references to sub-control `DataContext` objects, but only when explicitly declared by the view's
      `$data` section
 
-**Key principle:** Controls reference data; data may reference other data objects—but **data never references
-controls**. The control tree and data graph are independent; the data graph shape is determined by what the view
-declares in `$data`.
+**Key principle:** Controls reference data; data may reference other data objects—but **data never
+references controls**. The control tree and data graph are independent; the data graph shape is
+determined by what the view declares in `$data`.
 
 ### Relation to MVVM
 
-This resembles MVVM's visual tree plus ViewModel graph, but MDV does not assume a 1:1 tree shape. The data side
-should not reach into controls; integration should happen through declared bindings.
+This resembles MVVM's visual tree plus ViewModel graph, but MDV does not assume a 1:1 tree shape. The
+data side should not reach into controls; integration should happen through declared bindings.
 
-## JSON coding standards (ZUI)
+## ZUI and ZTH configuration syntax
 
-The `.zui.json5` and `.zth.json5` files use JSON5 syntax parsed by `ZurfurGuiGen/Json.cs`. The legacy
-`.zui.json` and `.zth.json` extensions remain supported for compatibility. In addition to standard JSON,
-the parser supports these JSON5 features:
+`.zui` files are Zurfur UI configuration files, and `.zth` files are Zurfur Theme configuration files.
+Both use a small modified JSON5 format parsed by `ZurfurGuiGen/Json.cs`. They are essentially JSON
+with comments and dictionary keys do not need quotes. In addition to standard JSON, the parser
+supports these JSON5 features:
 
 - **`// line comments`** — a `//` outside a string value starts a comment that runs to the end of the line.
-- **Trailing commas** — a comma after the last property in an object or the last element in an array is silently
-  accepted. This matches the JSONC convention used by `tsconfig.json`, VS Code `settings.json`, etc.
-- **Unquoted identifier keys** — valid identifier keys, including keys beginning with `$`, do not need quotes.
+- **Trailing commas** — a comma after the last property in an object or the last element in an array is
+  silently accepted. This matches the JSONC convention used by `tsconfig.json`, VS Code `settings.json`,
+  etc.
+- **Unquoted dictionary keys** — valid keys, including keys beginning with `$` and containing `.` or `-`,
+  do not need quotes.
+- Keys beginning with `$` are global symbols reserved by ZurfurGUI, such as `$controller`, `$name`, `$margin`, and
+  `$width`.
 - Type names are PascalCase (including built-in aliases like `Int`, `Bool`, `String`, etc.).
 - Field names are camelCase.
-- The source generator converts from JSON style to C# style when generating code (field/property names become
-  PascalCase in C#, and built-in type aliases are normalized to the corresponding C# keywords).
+- The source generator converts from JSON style to C# style when generating code (field/property names
+  become PascalCase in C#, and built-in type aliases are normalized to the corresponding C# keywords).
 - Comments are collected by the generator and emitted into generated code as XML doc comments where appropriate.
 
 Naming notes:
@@ -71,41 +76,46 @@ Naming notes:
 - If `$data` is present, the generator emits a data class `<ViewName>Data` in
   `<ViewName>.Data.g.cs` (generated as `partial` if you provide `<ViewName>.Data.cs`).
 - For data code-behind/extensibility, use a partial class in `<ViewName>.Data.cs`.
-- All generated and user-authored partials for a view are in the same namespace (the namespace comes from the JSON `$namespace`).
-- For generic controls (for example, `ComboBox<Item>`), the same conventions apply with the type parameter appended:
-  the controller is `ComboBox<Item>`, and the data class is `ComboBoxData<Item>`.
+- All generated and user-authored partials for a view are in the same namespace (the namespace comes
+  from the JSON `$namespace`).
+- For generic controls (for example, `ComboBox<Item>`), the same conventions apply with the type
+  parameter appended: the controller is `ComboBox<Item>`, and the data class is `ComboBoxData<Item>`.
 - `ComboBox<Item>` uses the handwritten empty `IComboBoxItem` marker as its generic constraint. An item view declares
   that its generated data class implements the marker with `$implements: "IComboBoxItem"`.
-- `//` line comments immediately preceding a `$data` property or the top-level JSON object are captured by the generator
-  and emitted as `<summary>` XML doc comments in generated files (controller and data class).
+- `//` line comments immediately preceding a `$data` property or the top-level JSON object are
+  captured by the generator and emitted as `<summary>` XML doc comments in generated files (controller
+  and data class).
 
 Detection rules (important for maintaining conventions):
 
-- A view is identified by a `*.zui.json5` filename (legacy `*.zui.json` is also accepted; e.g. `Button.zui.json5` → `<ViewName>` is `Button`).
+- A view is identified by a `*.zui` filename (for example, `Button.zui` → `<ViewName>` is `Button`).
 - Controller code-behind is detected **by filename**: `<ViewName>.Control.cs`.
 - Data code-behind is detected **by filename**: `<ViewName>.Data.cs`.
-- The generator also validates that the namespace declared in these `.cs` files matches the JSON `$namespace`.
+- The generator also validates that the namespace declared in these `.cs` files matches the JSON
+  `$namespace`.
 
 ## Code generation overview (`ZurfurGuiGen.GenerateZui`)
 
-This repo uses a Roslyn incremental source generator (`ZurfurGuiGen/GenerateZui.cs`) to turn UI JSON files into C#.
+This repo uses a Roslyn incremental source generator (`ZurfurGuiGen/GenerateZui.cs`) to turn UI JSON
+files into C#.
 It generates these outputs:
 
-### 1) Per-view controller (`*.zui.json5` → `<ViewName>.Control.g.cs`)
+### 1) Per-view controller (`*.zui` → `<ViewName>.Control.g.cs`)
 
-- Each `*.zui.json5` file describes a view/control.
-- The generator emits a controller class named after the file (for example, `MyView.zui.json5` → `MyView.Control.g.cs`).
-- The generated controller embeds the JSON, calls `Loader.Load(...)` to build the view tree, and exposes named child
-	controls as fields (based on `$name` in the JSON).
+- Each `*.zui` file describes a view/control.
+- The generator emits a controller class named after the file (for example,
+  `MyView.zui` → `MyView.Control.g.cs`).
+- The generated controller embeds the JSON, calls `Loader.Load(...)` to build the view tree, and
+  exposes named child controls as fields (based on `$name` in the JSON).
 - If you provide a matching hand-written `<ViewName>.Control.cs`, the generated class becomes `partial` so you can add
   code-behind without editing generated code.
 
 
-### 2) Per-view data class (`*.zui.json5` → `<ViewName>.Data.g.cs`)
+### 2) Per-view data class (`*.zui` → `<ViewName>.Data.g.cs`)
 
 - If a view declares a `$data` section, the generator emits the concrete `<ViewName>Data` class.
-- If you provide a matching hand-written `<ViewName>.Data.cs`, the generated data class is emitted as `partial` so you can
-  extend it.
+- If you provide a matching hand-written `<ViewName>.Data.cs`, the generated data class is emitted as
+  `partial` so you can extend it.
 
 #### `$data` bind keywords
 
@@ -121,44 +131,51 @@ Every entry in a `$data` section must declare a `"bind"` field. The valid values
 | `"attachedStyle"` | Yes | No | A style-aware attached binding, currently using the local view-property path. |
 | `"data:<target>"` | No | Yes | Forwards a generated data property to a named child control's data property. |
 
-**NOTE:** `View.GetStyle` is now private.  Always use `Control.Properties` to read a property or style when the
-property is not attached and the control is known at compile time.  Use `View.GetProperty` to read a property
-or style when the property is attached or the control is not known at compile time.  This documentation
-will be updated to reflect this note in the future.
+**NOTE:** `View.GetStyle` is now private.  Always use `Control.Properties` to read a property or style
+when the property is not attached and the control is known at compile time.  Use `View.GetProperty` to
+read a property or style when the property is attached or the control is not known at compile time.  This
+documentation will be updated to reflect this note in the future.
 
-- **`"data"`** stores the value only in the concrete generated data class. The generated controller does not push the
-  value to the view. Code-behind observes changes through `INotifyPropertyChanged`; use `DataContext` to read or write it.
-- **`"styledData"`** emits a static `PropertyKey<T>` on the controller (or its non-generic companion class for generic
-  controls). `Properties` reads the effective value with `GetStyle` and is read-only for this binding. Always use
-  `Properties` to read a `styledData` value; write it through `DataContext`. When `DataContext` changes,
-  `OnDataContextPropertyChanged` calls `View.SetProperty` or `View.RemoveProperty`. Setting nullable `styledData` to
-  `null` removes the local override, allowing style or theme resolution to supply a fallback value.
-- **`"styled"`** emits a `PropertyKey<T>` but no data property. It is configured through styles or imperative
-  `View.SetProperty` calls. Its `Properties` accessor reads with `GetStyle` and writes with `View.SetProperty`.
-- **`"property"`** emits a `PropertyKey<T>` but no data property, like `"styled"`. It should be read with
-  `GetProperty`, which reads the view's property or key default without resolving theme values. Its `Properties`
-  accessor writes with `View.SetProperty`.
-- **`"attachedProperty"`** emits a `PropertyKey<T>` and `ZuiPropertyType.AttachedProperty`, with no data property.
-  It currently uses the same local property access path as `"property"`; owner-independent application is deferred.
-- **`"attachedStyle"`** emits a `PropertyKey<T>` and `ZuiPropertyType.AttachedStyle`, with no data property. It
-  currently uses the same local style access path as `"styled"`; attached style resolution is deferred.
-- **`"data:<target>"`** creates a parent data property and forwards its value to a property on the named child's
-  `DataContext`, such as `"data:_child.text"`. Use the parent `DataContext` to read or write the forwarded value. The
-  target may be a child `data` or `styledData` property, but not a child `styled` property. A `styledData` child target
-  mirrors the value to its own view property. The `data` prefix is required; other prefixes and empty targets are errors.
-- Without a colon, only `"data"`, `"styledData"`, `"styled"`, `"property"`, `"attachedProperty"`, and
-  `"attachedStyle"` are valid bind values. Unknown values are generator errors rather than implicit forwarded bindings.
+- **`"data"`** stores the value only in the concrete generated data class. The generated controller does
+  not push the value to the view. Code-behind observes changes through `INotifyPropertyChanged`; use
+  `DataContext` to read or write it.
+- **`"styledData"`** emits a static `PropertyKey<T>` on the controller (or its non-generic companion
+  class for generic controls). `Properties` reads the effective value with `GetStyle` and is read-only
+  for this binding. Always use `Properties` to read a `styledData` value; write it through `DataContext`.
+  When `DataContext` changes, `OnDataContextPropertyChanged` calls `View.SetProperty` or
+  `View.RemoveProperty`. Setting nullable `styledData` to `null` removes the local override, allowing
+  style or theme resolution to supply a fallback value.
+- **`"styled"`** emits a `PropertyKey<T>` but no data property. It is configured through styles or
+  imperative `View.SetProperty` calls. Its `Properties` accessor reads with `GetStyle` and writes with
+  `View.SetProperty`.
+- **`"property"`** emits a `PropertyKey<T>` but no data property, like `"styled"`. It should be read
+  with `GetProperty`, which reads the view's property or key default without resolving theme values. Its
+  `Properties` accessor writes with `View.SetProperty`.
+- **`"attachedProperty"`** emits a `PropertyKey<T>` and `ZuiPropertyType.AttachedProperty`, with no
+  data property. It currently uses the same local property access path as `"property"`;
+  owner-independent application is deferred.
+- **`"attachedStyle"`** emits a `PropertyKey<T>` and `ZuiPropertyType.AttachedStyle`, with no data
+  property. It currently uses the same local style access path as `"styled"`; attached style resolution
+  is deferred.
+- **`"data:<target>"`** creates a parent data property and forwards its value to a property on the named
+  child's `DataContext`, such as `"data:_child.text"`. Use the parent `DataContext` to read or write the
+  forwarded value. The target may be a child `data` or `styledData` property, but not a child `styled`
+  property. A `styledData` child target mirrors the value to its own view property. The `data` prefix is
+  required; other prefixes and empty targets are errors.
+- Without a colon, only `"data"`, `"styledData"`, `"styled"`, `"property"`, `"attachedProperty"`,
+  and `"attachedStyle"` are valid bind values. Unknown values are generator errors rather than implicit
+  forwarded bindings.
 - Collections (`[]Type`) must use `bind: "data"`. Using any other value is a generator error.
 
-`DataContext` contains `data`, `styledData`, and forwarded values. Use it for application data and for writing
-`styledData`. The generated `Properties` accessor is view-focused and retains a `View`: it exposes `styledData`,
-`styled`, and `attachedStyle` through `GetStyle`, and `property` and `attachedProperty` through `GetProperty`. Data
-and forwarded bindings are not members of `Properties`. Every binding has generated
-`ZuiPropertyInfo`; `styledData`, `styled`, `property`, `attachedProperty`, and `attachedStyle` bindings have a
-`PropertyKeyId`, because data and forwarded values are applied through `DataContext`. Attached kinds are recorded in
-metadata, but owner-independent lookup and application are not implemented yet.
-Nullable `styledData` writes of `null` remove the local view override so the style or theme fallback is visible when
-read later through `Properties`.
+`DataContext` contains `data`, `styledData`, and forwarded values. Use it for application data and for
+writing `styledData`. The generated `Properties` accessor is view-focused and retains a `View`: it
+exposes `styledData`, `styled`, and `attachedStyle` through `GetStyle`, and `property` and
+`attachedProperty` through `GetProperty`. Data and forwarded bindings are not members of `Properties`.
+Every binding has generated `ZuiPropertyInfo`; `styledData`, `styled`, `property`, `attachedProperty`,
+and `attachedStyle` bindings have a `PropertyKeyId`, because data and forwarded values are applied
+through `DataContext`. Attached kinds are recorded in metadata, but owner-independent lookup and
+application are not implemented yet. Nullable `styledData` writes of `null` remove the local view
+override so the style or theme fallback is visible when read later through `Properties`.
 
 #### Collection bindings (`[]Type` syntax)
 
@@ -203,10 +220,9 @@ the current behavior.
   applied recursively before the parent's properties; generated initialization creates the parent's `DataContext` after
   `Loader.Load` returns.
 
-### 3) Per-project registry (`*.zui.json5` + `*.zth.json5` → `ZurfurMain.g.cs`)
+### 3) Per-project registry (`*.zui` + `*.zth` → `ZurfurMain.g.cs`)
 
-- The generator collects all views (`*.zui.json5`) and themes (`*.zth.json5`) in the project. Legacy `.zui.json` and
-  `.zth.json` files are also accepted.
+- The generator collects all views (`*.zui`) and themes (`*.zth`) in the project.
 - It emits a `static partial class ZurfurMain` with an `InitializeControls()` method that:
   - runs static constructors for control property registration, including open and discovered closed generic
     controls
@@ -351,16 +367,14 @@ is built. Item data-controller lookup occurs afterward when a data-driven contro
 
 ### File discovery: AdditionalFiles
 
-For the generator to automatically process your `.zui.json5` or `.zth.json5` files, they should be
+For the generator to automatically process your `.zui` or `.zth` files, they should be
 included as **AdditionalFiles** in your project. This is controlled by the file's build action in Visual Studio
 or by an `<ItemGroup>` in your `.csproj`:
 
 ```xml
 <ItemGroup>
-	<AdditionalFiles Include="**\*.zui.json" />
-  <AdditionalFiles Include="**\*.zui.json5" />
-  <AdditionalFiles Include="**\*.zth.json" />
-  <AdditionalFiles Include="**\*.zth.json5" />
+  <AdditionalFiles Include="**\*.zui" />
+  <AdditionalFiles Include="**\*.zth" />
 </ItemGroup>
 ```
 
@@ -449,8 +463,8 @@ rules apply to interactions such as scrollbar dragging, window movement, and res
 ## Where to look first (for AI agents)
 
 - `ZurfurGuiGen/GenerateZui.cs`: source generator entry point; wires up ZUI and ZTH pipelines.
-- `ZurfurGuiGen/ZuiInput.cs`: collects data from `.zui.json5` / `.zth.json5` files into `FileInfo`; parses generic `$controller`
-  syntax, `where` constraints, and top-level `#comment` into metadata fields. Legacy `.json` extensions remain supported.
+- `ZurfurGuiGen/ZuiInput.cs`: collects data from `.zui` / `.zth` files into `FileInfo`; parses generic `$controller`
+  syntax, `where` constraints, and top-level `#comment` into metadata fields.
 - `ZurfurGuiGen/ZuiSchema.cs`: parses `$data` bindings, named-control discovery, `#comment` injection per binding, and
   control-name-to-C#-type translation (including generic forms).
 - `ZurfurGuiGen/ZuiEmitController.cs`: emits the controller class, `InitializeControl`, `DataContext` property,
@@ -470,5 +484,5 @@ rules apply to interactions such as scrollbar dragging, window movement, and res
   registration, and runtime concrete-data factory lookup.
 - `ZurfurGui/Styles`: Style and theme property resolution and caching
 - `ZurfurGui/Controls/Panel.Control.cs`: all Panel `PropertyKey` definitions (attached properties).
-- `ZurfurGui/Controls/*.zui.json5`: view/control definitions and `$data` declarations.
+- `ZurfurGui/Controls/*.zui`: view/control definitions and `$data` declarations.
 - `docs/combo-box.md`: how the ComboBox control works, how to use it, and how to create custom item renderers.

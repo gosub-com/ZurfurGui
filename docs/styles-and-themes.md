@@ -12,26 +12,27 @@ individual controls.
 
 The key components are:
 
-- **Theme files** (`.zth.json5`) define named tokens (color, spacing, fonts, etc.)
-- **View files** (`.zui.json5`) reference tokens using `"${token.name}"` syntax
+- **Theme files** (`.zth`) define named tokens (color, spacing, fonts, etc.)
+- **View files** (`.zui`) reference tokens using `"${token.name}"` syntax
 - **Theme resolution** walks up the view chain searching for active themes
 - **Token fallbacks** using the `|` operator enable third-party controls to gracefully
   degrade
 
-## Theme Files (`.zth.json5`)
+## Theme Files (`.zth`)
 
-Theme files use JSON5 and define reusable design tokens. Each theme has a name and a dictionary of
-variables. Legacy `.zth.json` files remain supported:
+`.zth` means Zurfur Theme. Theme files use the modified JSON5 configuration format described in the
+architecture documentation: they are essentially JSON with comments and dictionary keys do not need
+quotes. Each theme has a name and a dictionary of variables.
 
 ```json5
 {
     name: "ZurfurDefault",
     variables: {
-        "color.surface.canvas": "#EAF4FB",
-        "color.text.primary": "#1F1F1F",
-        "spacing.medium": "8",
-        "radius.corner.medium": "4",
-        "color.interactive.primary.stroke": "isPressed ? #005A9E; isPointerOver ? #0078D4; #909090"
+        color.surface.canvas: "#EAF4FB",
+        color.text.primary: "#1F1F1F",
+        spacing.medium: "8",
+        radius.corner.medium: "4",
+        color.interactive.primary.stroke: "isPressed ? #005A9E; isPointerOver ? #0078D4; #909090"
     }
 }
 ```
@@ -42,7 +43,7 @@ variables. Legacy `.zth.json` files remain supported:
 `condition ? value; alternativeValue` syntax:
 
 ```json5
-"color.interactive.primary.background": "isPressed ? #A6D2F2; isPointerOver ? #D2E8FA; #C6E0F7"
+color.interactive.primary.background: "isPressed ? #A6D2F2; isPointerOver ? #D2E8FA; #C6E0F7"
 ```
 
 Supported conditions:
@@ -51,21 +52,21 @@ Supported conditions:
 - Any registered boolean property using its exact name, such as `ScrollBar.isExpanded`
 - A leading `!` negates any supported condition
 
-Registered boolean property conditions read the control's current runtime value rather than resolving the
-property as a style. Conditions must name a property exactly; unknown properties and non-boolean properties
-are invalid conditions.
+Registered boolean property conditions read the control's current runtime value rather than resolving
+the property as a style. Conditions must name a property exactly; unknown properties and non-boolean
+properties are invalid conditions.
 
 For example, scrollbar themes can use the effective expanded state instead of the physical pointer state:
 
 ```json5
-"color.scroll.thumb.background":
+color.scroll.thumb.background:
     "isPressed ? #005A9E; ScrollBar.isExpanded ? #6A9FD0; #8BB4DC80"
 ```
 
-`ScrollBar.isExpanded` is true when the scrollbar is expanded because it is hovered, pressed, or configured not
-to expand only on hover. The property is generated from the control's `bind: "property"` declaration and is set
-by the control at runtime, allowing themes to style the effective visual state without changing the meaning of
-`isPointerOver`.
+`ScrollBar.isExpanded` is true when the scrollbar is expanded because it is hovered, pressed, or
+configured not to expand only on hover. The property is generated from the control's
+`bind: "property"` declaration and is set by the control at runtime, allowing themes to style the
+effective visual state without changing the meaning of `isPointerOver`.
 
 Multiple expressions are separated by semicolons, evaluated in order until a matching
 condition is found. The last value (without a condition) serves as the default.
@@ -75,11 +76,12 @@ together using the `IMergable` interface. For example, spacing tokens can define
 individual edges:
 
 ```json5
-"spacing.horizontal.medium": "left:8,right:8",
-"spacing.vertical.small": "top:4,bottom:4"
+spacing.horizontal.medium: "left:8,right:8",
+spacing.vertical.small: "top:4,bottom:4"
 ```
 
-These merge when both are referenced via `|`, creating `"left:8,right:8,top:4,bottom:4"`.
+These merge when both are referenced via `|`, creating
+`"left:8,right:8,top:4,bottom:4"`.
 
 ### Built-in Themes
 
@@ -97,7 +99,7 @@ below).
 
 ## Using Theme Tokens in Views
 
-In `.zui.json5` files, wrap token names with `${}` to reference theme tokens. Legacy `.zui.json` files
+In `.zui` files, wrap token names with `${}` to reference theme tokens.
 remain supported:
 
 ```json5
@@ -133,7 +135,7 @@ token fully resolves the property, the rest are ignored.
 **Example from Window title text color**:
 
 ```json5
-"TextView.color": "${color.window.menu | color.window.title.foreground}"
+TextView.color: "${color.window.menu | color.window.title.foreground}"
 ```
 
 This tries `color.window.menu` first (custom token), then falls back to
@@ -142,7 +144,7 @@ This tries `color.window.menu` first (custom token), then falls back to
 The `|` operator combined with `IMergable` properties enables powerful composition:
 
 ```json5
-"TextView.font": "${style.test.font.c1 | style.test.font.c2}"
+TextView.font: "${style.test.font.c1 | style.test.font.c2}"
 ```
 
 If `font.c1` defines `size:28` and `font.c2` defines `name:Times New Roman`, the
@@ -150,14 +152,14 @@ resolved font has both size and name.
 
 ### Providing Defaults for `styled` Properties
 
-For a control property declared with `bind: "styled"`, provide its value through the control's
-theme-token mapping and include a fallback token that is defined by the built-in themes. This lets
+For a control property declared with `bind: "styled"`, provide its value through the control's theme-token
+mapping and include a fallback token that is defined by the built-in themes. This lets
 consumers override a control-specific token without requiring every theme to define it. If the
 optional token is absent, the fallback supplies a usable value:
 
 ```json5
 {
-    "ScrollBar.thumbEdgeInset": "${size.scrollbar.thumb.edge-inset | spacing.extra-small}",
+    ScrollBar.thumbEdgeInset: "${size.scrollbar.thumb.edge-inset | spacing.extra-small}",
     $data: {
         thumbEdgeInset: {
             type: "Double",
@@ -174,12 +176,13 @@ value comes from the token mapping. For every `styled` property, use this patter
 putting a `default` on the data item. Choose a fallback with a compatible value type and ensure it
 exists in a built-in theme, so the control works when the optional token is not defined.
 
-This guidance is specific to `styled` properties. Keep `default` values on ordinary data, `styledData`, or `property`
-bindings when they need an initial runtime value, such as a control's default orientation.
+This guidance is specific to `styled` properties. Keep `default` values on ordinary data, `styledData`,
+or `property` bindings when they need an initial runtime value, such as a control's default orientation.
 
-Use `bind: "property"` for view properties that should not resolve theme values. Controls access their own `property`
-bindings through generated `control.Properties.Name` members; these read from the view property or `PropertyKey` default
-without resolving theme values. Use the same accessor to set a control's own `styled` or `property` binding.
+Use `bind: "property"` for view properties that should not resolve theme values. Controls access their
+own `property` bindings through generated `control.Properties.Name` members; these read from the view
+property or `PropertyKey` default without resolving theme values. Use the same accessor to set a control's
+own `styled` or `property` binding.
 
 ## Selecting and Activating Themes
 
@@ -254,21 +257,19 @@ When a view requests a themed property (e.g., `backgroundColor` mapped to
 ## Theme Registration
 
 Themes are registered at application startup via the generated
-`ZurfurMain.InitializeControls()` method. The source generator scans all `.zth.json5`
-files in the project (and continues to accept legacy `.zth.json` files) and emits:
+`ZurfurMain.InitializeControls()` method. The source generator scans all `.zth`
+files in the project and emits:
 
 ```csharp
 ThemeManager.RegisterTheme(/* embedded JSON string */);
 ```
 
-This happens automatically—developers just need to ensure both `.zth.json5` files and any legacy
-`.zth.json` files are marked as
+This happens automatically—developers just need to ensure `.zth` files are marked as
 `AdditionalFiles` in the project:
 
 ```xml
 <ItemGroup>
-  <AdditionalFiles Include="**\*.zth.json" />
-  <AdditionalFiles Include="**\*.zth.json5" />
+  <AdditionalFiles Include="**\*.zth" />
 </ItemGroup>
 ```
 
@@ -276,7 +277,7 @@ This happens automatically—developers just need to ensure both `.zth.json5` fi
 
 To create a custom theme:
 
-1. **Create a `.zth.json5` file** in your project (mark as AdditionalFiles).
+1. **Create a `.zth` file** in your project (mark as AdditionalFiles).
 
 2. **Define a unique name and variables**:
 
@@ -284,14 +285,14 @@ To create a custom theme:
 {
     name: "MyBrandTheme",
     variables: {
-        "color.surface.canvas": "#F0F0FF",
-        "color.text.primary": "#000033",
-        "my.custom.accent": "#FF6600"
+        color.surface.canvas: "#F0F0FF",
+        color.text.primary: "#000033",
+        my.custom.accent: "#FF6600"
     }
 }
 ```
 
-3. **Reference your tokens in `.zui.json5` files**:
+3. **Reference your tokens in `.zui` files**:
 
 ```json5
 $backgroundColor: "${my.custom.accent | color.interactive.primary.background}"
@@ -314,7 +315,8 @@ appWindow.View.ActiveThemes = ["MyBrandTheme"];
 
 - **Do not set `default` on `styled` properties**: Map each styled-only property to an optional
   control-specific token followed by a compatible token defined in `ZurfurBase` or `ZurfurDefault`.
-  Reserve `default` for data, `styledData`, and `property` bindings that need an initial runtime value.
+  Reserve `default` for data, `styledData`, and `property` bindings that need an initial runtime
+  value.
 
 - **Organize tokens semantically**: Use namespacing like `color.surface.canvas`,
   `spacing.horizontal.medium`, `font.size.base.300`.
@@ -327,8 +329,7 @@ appWindow.View.ActiveThemes = ["MyBrandTheme"];
   interactive states rather than hard-coding them in code-behind.
 
 - **Set themes at the appropriate level**: Application-wide themes go on
-  `AppWindow.View.ActiveThemes`, but you can override at any level for special panels or
-  dialogs.
+  `AppWindow.View.ActiveThemes`, but you can override at any level for special panels or dialogs.
 
 - **Theme inheritance**: Child views automatically inherit themes from parent views, so
   you rarely need to set themes more than once.
@@ -359,7 +360,7 @@ void ThemeComboBox_PropertyChanged(object? sender, PropertyChangedEventArgs e)
 
 The ZurfurGui theme system provides:
 
-- **Centralized design tokens** in `.zth.json5` files (with `.zth.json` retained for compatibility)
+- **Centralized design tokens** in `.zth` files
 - **Flexible activation** via `View.ActiveThemes` at any hierarchy level
 - **Graceful fallbacks** using `|` for third-party control compatibility
 - **State-driven styling** with conditional expressions
