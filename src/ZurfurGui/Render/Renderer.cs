@@ -122,6 +122,11 @@ public class Renderer
         var renderStartTime = timer.Elapsed.TotalMilliseconds;
         var dirtyRect = s_removedChildDirtyRectDevice;
         s_removedChildDirtyRectDevice = Rect.Empty;
+
+        // Work around a Chrome bug where the first drawn frames are sometimes ignored.
+        if (_stats.FrameCount < 3)
+            dirtyRect = new Rect(new Point(0, 0), _canvas.DeviceSize);
+
         InvalidateClipChanges(appView, appView.toDevice(appView.ContentRect));
         RenderView(appView, appView.toDevice(appView.ContentRect), ref dirtyRect);
 
