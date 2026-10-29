@@ -138,9 +138,10 @@ internal class PointerRouter
     }
 
     /// <summary>
-    /// Called when wheel input is received. Hit tests the pointer position and gives the event to the first view,
-    /// starting at the hit view and walking toward the root, that has a PointerWheel handler. That view consumes
-    /// the wheel even if it cannot scroll further, so a wheel never escapes to a parent scroller. Wheel input
+    /// Called when wheel input is received. Hit tests the pointer position and offers the event to each view
+    /// with a PointerWheel handler, starting at the hit view and walking toward the root, until a handler
+    /// sets WheelEvent.Handled. A ScrollViewer always sets it, so a wheel never escapes to a parent
+    /// scroller. Wheel input
     /// ignores pointer capture and does not change hover, press, or gesture state.
     /// </summary>
     public void WheelInput(OsWheelEvent rawEvent)
@@ -153,7 +154,8 @@ internal class PointerRouter
             if (handler != null)
             {
                 handler.Invoke(view, ev);
-                return;
+                if (ev.Handled)
+                    return;
             }
         }
     }

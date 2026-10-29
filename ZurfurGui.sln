@@ -34,6 +34,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{364462A5-2DD0-4477-BB03-D6466DBAC47F}"
 	ProjectSection(SolutionItems) = preProject
 		docs\architecture.md = docs\architecture.md
+		docs\code-generation.md = docs\code-generation.md
 		docs\combo-box.md = docs\combo-box.md
 		docs\controls.md = docs\controls.md
 		docs\future-improvements.md = docs\future-improvements.md
@@ -43,6 +44,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{364462A5-2
 		docs\property-binding.md = docs\property-binding.md
 		docs\scroll-viewer.md = docs\scroll-viewer.md
 		docs\styles-and-themes.md = docs\styles-and-themes.md
+		docs\zui-format.md = docs\zui-format.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{1953B885-4C35-463A-8EB7-248AB2F519ED}"

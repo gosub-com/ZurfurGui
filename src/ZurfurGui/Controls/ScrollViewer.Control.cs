@@ -82,10 +82,12 @@ public sealed partial class ScrollViewer
 
     /// <summary>
     /// Scrolls the content by WheelSteps scroll steps per wheel detent. Shift turns a vertical wheel into a
-    /// horizontal one, and Ctrl is ignored. The router gives this view the wheel even when it cannot scroll further.
+    /// horizontal one, and Ctrl is ignored. The wheel is always marked handled, even when it cannot
+    /// scroll further, so it never reaches a parent handler.
     /// </summary>
     void OnPointerWheel(object? sender, WheelEvent e)
     {
+        e.Handled = true;
         var modifiers = e.Contact.Modifiers;
         if ((modifiers & PointerModifiers.Control) != 0)
             return;

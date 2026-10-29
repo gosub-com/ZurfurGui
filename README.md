@@ -18,9 +18,10 @@ and [Architecture](docs/architecture.md) first.
 
 The following docs cover the internals of this project:
 
+- [Architecture](docs/architecture.md) — MDV architecture overview and documentation map
 - [Controls](docs/controls.md) — basic application setup and control usage
-- [Architecture](docs/architecture.md) — MDV architecture, code generation, and system
-  internals
+- [ZUI Format](docs/zui-format.md) — ZUI/ZTH file syntax and naming conventions
+- [Code Generation](docs/code-generation.md) — Source generator behavior, outputs, and diagnostics
 - [Initialization](docs/initialization.md) — Startup and initialization procedure for applications using
   ZurfurGui
 - [Property Binding](docs/property-binding.md) — Property binding system

@@ -328,8 +328,10 @@ Mouse wheel input is separate from pointer events. Platform adapters report an `
 use capture, hover, press, or the gesture arena, and has no preview or bubble phase.
 
 The router hit-tests the pointer position, then walks from the hit view toward the root and gives the
-`WheelEvent` to the first view with a `Panel.PointerWheel` handler. That view consumes the wheel and the
-walk stops, so the wheel never reaches a parent handler.
+`WheelEvent` to each view with a `Panel.PointerWheel` handler in turn. A handler consumes the wheel by
+setting `WheelEvent.Handled`, which stops the walk. If it leaves `Handled` false, the event continues
+to the next handler toward the root. `ScrollViewer` always sets `Handled`, so a wheel never reaches a
+parent scroller.
 
 Deltas use the browser's pixel-mode convention. One detent of a typical mouse wheel is 100 units
 (`WheelEvent.UnitsPerNotch`), positive `DeltaY` scrolls down, and positive `DeltaX` scrolls right. The

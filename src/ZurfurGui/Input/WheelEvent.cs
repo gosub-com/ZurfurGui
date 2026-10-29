@@ -17,6 +17,12 @@ public sealed record WheelEvent(PointerContact Contact, double DeltaX, double De
     public const double UnitsPerNotch = 100;
 
     /// <summary>
+    /// Set by a handler to consume the wheel. Until a handler sets this, the router continues
+    /// offering the event to views closer to the root.
+    /// </summary>
+    public bool Handled { get; set; }
+
+    /// <summary>
     /// Gets the horizontal delta in detents.
     /// </summary>
     public double NotchesX => DeltaX / UnitsPerNotch;

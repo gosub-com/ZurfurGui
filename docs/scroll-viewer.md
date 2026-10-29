@@ -196,17 +196,23 @@ Fractional wheel deltas from precision touchpads scroll proportionally.
 
 The ScrollViewer subscribes to the `Panel.PointerWheel` event. The wheel is not part of the pointer
 preview and bubble routing. Instead, the router gives the event to the first view with a `PointerWheel`
-handler, starting at the view under the pointer and walking toward the root. See `input-events.md`.
+handler, starting at the view under the pointer and walking toward the root, until a handler sets
+`WheelEvent.Handled`. See `input-events.md`.
 
-- Wheel over any part of the ScrollViewer works, including its content and its scrollbars.
+The ScrollViewer sets `HitTest` to `Always`, so it is the hit target for any point in its viewport
+that no child claims. This includes empty space and gaps between transparent children.
+
+- Wheel over any part of the ScrollViewer works, including its content, empty space, and its
+  scrollbars.
 - Shift+wheel scrolls horizontally when the device reports only vertical movement.
 - Horizontal wheel events scroll horizontally.
 - Ctrl is ignored by the ScrollViewer. The browser and the WinForms form use Ctrl+wheel for
   magnification, so the platform adapters do not forward it.
 - An axis disabled by `scrollMode` ignores its wheel movement.
 - The offset is clamped like any other `ScrollOffset` change.
-- The innermost ScrollViewer under the pointer consumes the wheel, even at the end of its range, so it
-  never chains to an outer ScrollViewer.
+- The ScrollViewer always sets `Handled`, even at the end of its range or when Ctrl is held, so a
+  ScrollViewer inside another ScrollViewer never lets the parent see the wheel. Controls inside the
+  viewer can handle the wheel first by setting `Handled` themselves.
 
 Wheel deltas follow the browser's pixel-mode convention: one detent is 100 units, positive Y scrolls
 down and positive X scrolls right. Scrolling is therefore `notches * wheelSteps * scrollSize`, added to

@@ -5,6 +5,8 @@
   in JSON and deterministic rules (e.g., deriving interface name by prefixing `I`).
 - Do not add horizontal rules between sections in Markdown documentation files in this repo. Follow the
   style of existing docs (e.g., architecture.md) which do not use them.
+- Prefer setting view properties (e.g. `$hitTest`) in the `*.zui` file rather than in code-behind
+  when possible. Keep code-behind for behavior such as events and layout logic.
 
 ## Markdown Formatting Guidelines
 - Wrap Markdown prose and list items at 100 characters or fewer 

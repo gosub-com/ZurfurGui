@@ -287,6 +287,38 @@ styles, and literals that genuinely need runtime interpretation.
 This is lower priority than collection and lifecycle contracts, but it should be considered before the JSON data-property
 behavior becomes a permanent public API.
 
+## Known gaps and deferred behavior
+
+These items describe behavior that is incomplete, deferred, or inconsistent with its own comments.
+Other documents link here instead of describing them, so they do not become stale.
+
+- **DataContext ordering.** `Loader.Load` calls `ApplyDataProperties` before the generated
+  `InitializeControl()` assigns the control's default `DataContext`. The `ApplyDataProperties` source
+  comment says it should run after `DataContext` initialization. Data-backed JSON assignments on the
+  control's own top-level JSON may encounter an uninitialized context until this is resolved.
+- **Attached properties and styles.** `attachedProperty` and `attachedStyle` bindings currently use
+  the same local property path as `property` and `styled`. Owner-independent application and
+  attached style resolution are deferred; the key may be used on non-owner views, but the value is
+  only stored on and read from the specific `View` used.
+- **Forwarded bindings without a child path.** `bind: "data:<target>"` where the target has no `.`
+  is accepted by the generator but emits only a `TBD` comment, so nothing is forwarded. It should
+  be a generator diagnostic.
+- **Forwarded target validation.** Invalid child members or types are reported by the C# compiler
+  on the generated code rather than by a generator diagnostic.
+- **Numeric `default` values.** In `$data`, a `default` that is a bare JSON number is silently
+  ignored; only strings and booleans are used. This should be accepted or diagnosed.
+- **Closed generic registration scope.** Closed generic usages discovered in ZUI files are always
+  registered under the `ZurfurGui.Controls.` namespace key, regardless of the declaring namespace.
+- **Detach lifecycle.** `Controllable.OnDetach` is documented as not actually called yet. See
+  Priority 3.
+- **Stale source comments.** The `Loader.CreateControl` summary says the context is not yet used for
+  controller resolution, but `FindControllerEntry` uses it. The `$use` parser comment says the value
+  may be a string or an array, but the parser accepts only an array of strings.
+- **Collection synchronization.** The generated controller does not synchronize `[]Type` bindings
+  with the view. See Priority 1.
+- **Pointer capture cleanup.** Automatic router cleanup of capture when a control detaches is future
+  work; see [Input and pointer events](input-events.md).
+
 ## Suggested implementation order
 
 1. Specify and test collection synchronization.
