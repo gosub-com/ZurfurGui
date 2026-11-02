@@ -34,6 +34,7 @@ The following docs cover the internals of this project:
 - [ComboBox](docs/combo-box.md) — ComboBox control: usage, generic item types, styling, and internals
 - [Future Plans and Improvements](docs/future-improvements.md) — Future plans and
   improvements
+- [Cleanup](docs/cleanup.md) — Bug list and cleanup tasks (instead of Jira)
 
 ## Design Goals
 

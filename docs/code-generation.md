@@ -51,7 +51,8 @@ items. Generated files are placed under the build-generated source directory (fo
 - Each `*.zui` file describes a view/control.
 - The generator emits a sealed controller class named after the file (for example,
   `MyView.zui` → `MyView.Control.g.cs`).
-- The generated controller embeds the JSON, calls `Loader.Load(...)` to build the view tree, and
+- The generated controller implements `ZuiControllable` (see [Generated-code surface](#generated-code-surface)),
+  embeds the JSON, calls `ZuiRuntime.Load(...)` to build the view tree, and
   exposes named child controls as fields (based on `$name` in the JSON).
 - If you provide a matching hand-written `<ViewName>.Control.cs`, the generated class becomes
   `partial` so you can add code-behind without editing generated code.
@@ -76,8 +77,8 @@ The generator collects all views (`*.zui`) and themes (`*.zth`) in the project. 
 
 - runs static constructors for control property registration, including open and discovered closed
   generic controls, and the non-generic companion class of each generic control;
-- registers ordinary controls with `Loader.RegisterControl(...)` using their namespace/name string;
-- registers each concrete data-bearing control with `Loader.RegisterDataController(...)`, mapping its
+- registers ordinary controls with `ZuiRuntime.RegisterControl(...)` using their namespace/name string;
+- registers each concrete data-bearing control with `ZuiRuntime.RegisterDataController(...)`, mapping its
   generated data type to a factory that assigns the same data instance to the new controller's
   `DataContext`;
 - registers closed generic control usages discovered in ZUI files; and
@@ -177,6 +178,49 @@ The companion is generated even when the generic control has no generated proper
 Hand-written static members can be added through a matching partial companion when a generic control
 needs them. The generated `InitializeControls()` runs the static constructor of both the open
 generic type and its companion so keys are registered before style sheets are parsed.
+
+## Generated-code surface
+
+Generated code is compiled into the application's assembly, so the library members it uses must be
+public. They are isolated in the `ZurfurGui.Generated` namespace and marked
+`[EditorBrowsable(Never)]`, so application code does not see them in IntelliSense:
+
+- `ZuiControllable` extends the application-facing `Controllable` with the members only generated
+  code implements: `TypeName`, `TypeNamespace`, `TypeUses`, and `ZuiPropertyInfo`. Every generated
+  controller implements it.
+- `ZuiRuntime` has the only loader calls that generated code makes: `Load`, `RegisterControl`, and
+  `RegisterDataController`.
+
+These are not an application API. The generator and library ship in the same package, so an
+application always gets matching versions. Members may change before 1.0. `Loader` itself keeps only
+the JSON serialization members public, and its other members are internal.
+
+### Compatibility policy
+
+A third-party control library is compiled with the generator, so its generated code is baked into its
+DLL and may run against a newer ZurfurGui than it was built with. After 1.0, the types below are
+additive-only: never remove members or change signatures, add new overloads or members instead.
+
+| Type | What generated code uses | Compatibility rule |
+|---|---|---|
+| `ZuiRuntime` | `Load`, `RegisterControl`, `RegisterDataController` | Never remove or change signatures. Add new methods or overloads only. |
+| `ZuiControllable` | `TypeName`, `TypeNamespace`, `TypeUses`, `ZuiPropertyInfo` | Never remove members. New members need default interface implementations. |
+| `Controllable` | `View`, `ContentHost`, `SetDataProperty`, `OnAttach`, `OnDetach` | Same rule; it is also implemented by handwritten controls. |
+| `ZuiPropertyInfo` | Constructed in the generated property dictionary | Keep the constructor and shape stable. |
+| `TextLines` | Constructed for `TypeUses` | Keep the constructor stable. |
+| `PropertyKey<T>`, `Properties`, `View`, and other `Base`, `Property`, and `Controls` types named by generated code | Property key declarations and `PropertiesAccessor` | Keep the members used by the emitters stable. Check the emitter output when changing them. |
+| `ThemeManager.RegisterTheme` | Emitted in `InitializeControls` | Keep the signature stable. |
+
+Everything else is internal and can change freely.
+
+### Planned version check
+
+Not implemented yet; planned before 1.0. `ZuiRuntime.Version` is a constant that is bumped whenever
+generated-code surface is added. The generator emits an assembly attribute with the minimum runtime
+version the generated code needs. `ZuiRuntime` checks once per assembly that the minimum is not
+greater than `ZuiRuntime.Version`, and otherwise throws an error telling the user to upgrade
+ZurfurGui. Older generated code on a newer library is allowed because the surface is additive-only.
+This turns a `MissingMethodException` in the middle of loading into one clear message at startup.
 
 ## Diagnostics
 

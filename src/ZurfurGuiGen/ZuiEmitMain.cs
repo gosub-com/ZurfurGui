@@ -94,11 +94,11 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
         // Register non-generic controls by name, type, and factory.
         var registerControls = string.Join("\r\n", controlList
             .Where(t => t.TypeParam == "")
-            .Select(t => $"        global::ZurfurGui.Loader.RegisterControl(\"{t.NamespaceFileName}\", typeof(global::{t.NamespaceFileName}), () => new global::{t.NamespaceFileName}());"));
+            .Select(t => $"        global::ZurfurGui.Generated.ZuiRuntime.RegisterControl(\"{t.NamespaceFileName}\", typeof(global::{t.NamespaceFileName}), () => new global::{t.NamespaceFileName}());"));
 
         var registerDataControllers = string.Join("\r\n", controlList
             .Where(t => t.TypeParam == "" && t.Bindings.Any(b => !b.BindType.IsViewOnly()))
-            .Select(t => $"        global::ZurfurGui.Loader.RegisterDataController(typeof(global::{t.NamespaceFileName}Data), itemData => {{ var controller = new global::{t.NamespaceFileName}(); controller.DataContext = (global::{t.NamespaceFileName}Data)itemData; return controller; }});"));
+            .Select(t => $"        global::ZurfurGui.Generated.ZuiRuntime.RegisterDataController(typeof(global::{t.NamespaceFileName}Data), itemData => {{ var controller = new global::{t.NamespaceFileName}(); controller.DataContext = (global::{t.NamespaceFileName}Data)itemData; return controller; }});"));
 
         // Scan all JSON documents recursively for closed generic controller usages
         // (e.g. "$controller": "ComboBox<ComboBoxItemText>" at a usage site).
@@ -117,10 +117,10 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
             {
                 var jsonName = kvp.Key;   // e.g. "ComboBox<ComboBoxItemText>"
                 var csName = kvp.Value;   // e.g. "ComboBox<ComboBoxItemTextData>"
-                // Registration key uses namespace + json name so Loader.FindControllerEntry resolves it
+                // Registration key uses namespace + json name so the loader resolves it
                 var loaderKey = $"ZurfurGui.Controls.{jsonName}";
                 return $"        // Closed generic: registered from usage site, not from the generic definition.\r\n"
-                    + $"        global::ZurfurGui.Loader.RegisterControl(\"{loaderKey}\", typeof(global::ZurfurGui.Controls.{csName}), () => new global::ZurfurGui.Controls.{csName}());";
+                    + $"        global::ZurfurGui.Generated.ZuiRuntime.RegisterControl(\"{loaderKey}\", typeof(global::ZurfurGui.Controls.{csName}), () => new global::ZurfurGui.Controls.{csName}());";
             }));
 
         var registerThemes = string.Join("\r\n", generatedThemes.Select(t =>

@@ -88,6 +88,13 @@ public record class PointerEvent(PointerEventKind Kind)
     public PointerContact Contact { get; init; }
 
     /// <summary>
+    /// The event time in milliseconds from a monotonic clock.  The platform supplies it when it can,
+    /// otherwise the router stamps it on arrival.  Only differences between events of the same
+    /// contact are meaningful.
+    /// </summary>
+    public double Timestamp { get; init; }
+
+    /// <summary>
     /// Gets or sets whether normal routed event processing has handled this event.
     /// </summary>
     /// <remarks>

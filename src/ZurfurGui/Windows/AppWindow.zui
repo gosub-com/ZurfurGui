@@ -10,15 +10,22 @@
 	$namespace: "ZurfurGui.Windows",
 	$backgroundColor: "${color.surface.canvas}",
 	AppWindow.longClickDuration: "${input.long-click.duration}",
-	AppWindow.longClickMovementTolerance: "${input.long-click.movement-tolerance}",
+	AppWindow.movementSlopMouse: "${input.slop.mouse}",
+	AppWindow.movementSlopTouch: "${input.slop.touch}",
 	$data: {
 		// The duration of a long click (press and hold) before it is recognized as a long click.
 		longClickDuration: {
 			type: "TimeSpan",
 			bind: "styled"
 		},
-		// The maximum movement allowed during a long click before it is canceled.
-		longClickMovementTolerance: {
+		// The distance (device pixels) a mouse or pen contact may move from where it went down before it
+		// is no longer a stationary press.  Shared by long click and pan.  TBD: Not scaled by DPI yet.
+		movementSlopMouse: {
+			type: "double",
+			bind: "styled"
+		},
+		// Same as movementSlopMouse, but for touch contacts, which are less precise.
+		movementSlopTouch: {
 			type: "double",
 			bind: "styled"
 		},

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using ZurfurGui.Base;
@@ -8,7 +8,7 @@ namespace ZurfurGui.Platform;
 /// <summary>
 /// Platform independent window.  All platofrms must implement this interface.
 /// </summary>
-public interface OsWindow
+internal interface OsWindow
 {
     /// <summary>
     /// Best guess as to how big a pixel should be on our device

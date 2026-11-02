@@ -213,6 +213,7 @@ internal sealed class GestureArena
         var gestureEvent = new PointerEvent(pointerEvent.Kind)
         {
             Contact = pointerEvent.Contact,
+            Timestamp = pointerEvent.Timestamp,
             Cancelled = pointerEvent.Cancelled
         };
 

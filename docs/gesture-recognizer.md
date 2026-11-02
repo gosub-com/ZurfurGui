@@ -4,7 +4,8 @@
 
 ZurfurGui now has a shared gesture-recognition layer over the raw pointer router. The first gesture using
 it is `ClickRecognizer`, including its optional long-click callback. The layer is intended to arbitrate
-competing gestures per pointer contact; pan and flick recognition have not been implemented.
+competing gestures per pointer contact; `PanRecognizer` adds dragging with an optional release velocity for
+flick (see below).
 
 This document describes the current implementation and records the proposed next phase. Implemented
 behavior and future design are called out separately so proposals are not mistaken for existing API.
@@ -73,7 +74,7 @@ For move and up, raw routing happens first, then the arena. A raw handler can th
 before a pending recognizer sees that move or release.
 
 Known gaps (tracked in `src/ZurfurGui/Input/gestures-cleanup.md`): the arena is single-contact, so no
-recognizer can use two contacts; there is no shared clock or event timestamp; and there is no wheel event.
+recognizer can use two contacts.
 
 ## Public API
 
@@ -172,10 +173,55 @@ events handled while pending. Thus raw pointer handlers, including handlers on a
 receive events unless they handle them or request direct capture. A click callback runs after the raw
 pointer-up route for that input.
 
+By default a mouse click requires the left button. Pass a `mouseButtons` argument to change it, for
+example `new ClickRecognizer(OnClick, null, PointerButtons.Right)`, or `PointerButtons.None` to prevent
+the mouse from clicking. A mouse button that does not match never becomes a candidate. Touch and pen
+are not affected.
+
 The optional long-click callback uses `AppWindow.Properties.LongClickDuration` and
 `LongClickMovementTolerance`. Moving farther than the tolerance stops long-click eligibility but does
 not by itself reject the ordinary click. If the long-click callback sets
 `PointerLongClickEventArgs.Handled`, the session accepts and captures its view and suppresses the click
 on release. If the callback calls `SetCapture` on another view, that direct capture preempts the arena
 and cancels the click session.
+
+### `PanRecognizer`
+
+In short: attach a `PanRecognizer` to a view, subscribe to `PanMoved` and apply each `Delta` to your
+content. The recognizer waits until the contact moves past the slop, then wins the arena and captures the
+contact. On release, `PanEnded` reports the finger's final velocity. The recognizer only measures that
+velocity; it does not move anything after release. To make a flick, the owner starts its own animation
+from that velocity, and owns the deceleration, the stop speed, and stopping at the content limits.
+`ScrollViewer` does exactly this (see `scroll-viewer.md`).
+
+```csharp
+var pan = view.AddGestureRecognizer(new PanRecognizer());
+pan.PanMoved += (s, e) => content.Offset += e.Delta;       // Device pixels
+pan.PanEnded += (s, e) => StartMyFlick(e.Velocity);        // Zero unless a touch/pen flicked
+```
+
+`PanRecognizer` recognizes dragging.
+owner applies the movement and decides what to do after release. `ScrollViewer` uses it, and other
+controls can attach it with `View.AddGestureRecognizer(new PanRecognizer(options))`.
+
+The session stays pending until the contact moves farther than the slop from the down point along an
+enabled axis, then accepts, which cancels competing candidates (such as a child's click) and captures the
+contact. A release before that rejects, so a click can still win.
+
+- `PanStarted` reports `SlopDelta`, the movement from the down point to where the pan started. Moves after
+  that arrive in `PanMoved` as `Delta`, relative to the start, so the content does not jump unless the
+  owner chooses to apply `SlopDelta`. All distances are device pixels.
+- `PanEnded` reports the release `Velocity` (device pixels per second), or `Cancelled`. Velocity is
+  estimated by a least-squares fit over the last 100 ms of positions from a ring buffer, using event
+  timestamps. It is zero for a contact that was stationary before release, for the mouse, when `Flick` is
+  off, or below `MinFlickVelocity`, and is limited to `MaxFlickVelocity`.
+- `PanOptions`: `Axes`, `Slop` (null uses the app window's per-device movement slop; zero or one pans
+  almost immediately), `TouchPans`, `PenPans`, `MouseButtons` (default right button), `Flick`,
+  `MinFlickVelocity`, `MaxFlickVelocity`.
+- With `Axes` of `None` the recognizer creates no session, so an ancestor can pan. Being at the owner's
+  scroll limit does not matter to the recognizer.
+- `CatchOnDown` lets the owner say that earlier motion (a flick) is still running. The pan then accepts
+  immediately on pointer-down, so the touch stops the motion and does not also click.
+
+Slop is not yet scaled by DPI (to be corrected later). Axis locking for diagonal drags is also future work.
 

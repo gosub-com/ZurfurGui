@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using ZurfurGui.Controls;
+using ZurfurGui.Generated;
 using ZurfurGui.Input;
 using ZurfurGui.Layout;
 using ZurfurGui.Platform;
@@ -166,8 +167,11 @@ public sealed class View
     public override string ToString()
     {
         var name = GetProperty(Panel.Name);
-        return $"{Controller.TypeName}: {(name == "" ? "(no name)" : name)}";
+        return $"{ControllerTypeName}: {(name == "" ? "(no name)" : name)}";
     }
+
+    // The controller's generated type name, or its CLR type name for a hand-written controller
+    string ControllerTypeName => (Controller as ZuiControllable)?.TypeName ?? Controller.GetType().Name;
 
     public string Name => GetProperty(Panel.Name);
 
@@ -333,7 +337,7 @@ public sealed class View
             return;
         }
 
-        throw new ArgumentException($"Property '{key.Name}' is not valid for view type '{Controller.TypeName}'", nameof(key));
+        throw new ArgumentException($"Property '{key.Name}' is not valid for view type '{ControllerTypeName}'", nameof(key));
     }
 
     bool IsControllerOwner(Type ownerType)

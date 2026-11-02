@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using ZurfurGui.Base;
@@ -10,7 +10,7 @@ namespace ZurfurGui.Platform;
 /// <summary>
 /// Platform independent canvas.  All platforms must implement this interface.
 /// </summary>
-public interface OsCanvas
+internal interface OsCanvas
 {
     public OsContext Context { get; }
 

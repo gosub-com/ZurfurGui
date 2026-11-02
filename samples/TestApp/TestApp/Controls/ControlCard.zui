@@ -21,7 +21,7 @@
             $controller: "TextView",
             $name: "_title",
             text: "Default control card title",
-            font: "size:18"
+            font: "size:24"
         },
         {
             $controller: "TextView",
@@ -31,7 +31,8 @@
         {
             $controller: "TextView",
             $name: "_byline",
-            text: "Default control card title"
+            text: "Default control card byline",
+            font: "size:12"
         }
     ]
 }

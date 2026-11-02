@@ -16,24 +16,44 @@ public sealed class ClickRecognizer : IGestureRecognizer
 {
     readonly EventHandler<PointerEvent> _clicked;
     readonly EventHandler<PointerLongClickEventArgs>? _longClicked;
+    readonly PointerButtons _mouseButtons;
 
     /// <summary>
     /// Creates a click recognizer. The attached view's bounds define the activation area.
     /// </summary>
     /// <param name="clicked">The callback invoked after a valid release inside the view's bounds.</param>
     /// <param name="longClicked">Optional callback invoked after the configured long-click duration.</param>
+    /// <param name="mouseButtons">
+    /// The mouse buttons that click (default is left).  Touch and pen are not affected.
+    /// Use <see cref="PointerButtons.None"/> to prevent the mouse from clicking.
+    /// </param>
     public ClickRecognizer(
         EventHandler<PointerEvent> clicked,
-        EventHandler<PointerLongClickEventArgs>? longClicked = null)
+        EventHandler<PointerLongClickEventArgs>? longClicked = null,
+        PointerButtons mouseButtons = PointerButtons.Left)
     {
         ArgumentNullException.ThrowIfNull(clicked);
         _clicked = clicked;
         _longClicked = longClicked;
+        _mouseButtons = mouseButtons;
     }
 
-    /// <summary>Creates the click state for one contact.</summary>
+    /// <summary>
+    /// Creates the click state for one contact, or null if the contact is a mouse button that
+    /// does not click.
+    /// </summary>
     public IGestureRecognizerSession? CreateSession(GestureSessionContext context) =>
-        new ClickSession(context, _clicked, _longClicked);
+        AcceptsContact(context.Contact) ? new ClickSession(context, _clicked, _longClicked) : null;
+
+    // Returns true if the device and button of the contact are allowed to click.
+    // Note: PanRecognizer.AcceptsContact has similar code.
+    bool AcceptsContact(PointerContact contact)
+    {
+        if (contact.Device == PointerDeviceKind.Touch || contact.Device == PointerDeviceKind.Pen)
+            return true;
+        var button = contact.ChangedButton != PointerButtons.None ? contact.ChangedButton : contact.Buttons;
+        return (button & _mouseButtons) != 0;
+    }
 
     // Tracks one contact: click on release inside the view, or long-click after a hold.
     sealed class ClickSession : IGestureRecognizerSession
@@ -56,7 +76,7 @@ public sealed class ClickRecognizer : IGestureRecognizer
             _clicked = clicked;
             _longClicked = longClicked;
             _currentContact = context.Contact;
-            _pressPosition = context.CandidateView.toClient(context.Contact.DevicePosition);
+            _pressPosition = context.Contact.DevicePosition;
         }
 
         public void OnPointerDown(PointerEvent e)
@@ -75,10 +95,10 @@ public sealed class ClickRecognizer : IGestureRecognizer
             if (_longClickAppWindow is null)
                 return;
 
-            var position = _context.CandidateView.toClient(e.Contact.DevicePosition);
+            var position = e.Contact.DevicePosition;
             var dx = position.X - _pressPosition.X;
             var dy = position.Y - _pressPosition.Y;
-            var tolerance = _longClickAppWindow.Properties.LongClickMovementTolerance;
+            var tolerance = _longClickAppWindow.GetMovementSlop(e.Contact.Device);
             if (dx * dx + dy * dy > tolerance * tolerance)
                 StopLongClickTimer();
         }

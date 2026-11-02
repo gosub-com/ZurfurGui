@@ -210,13 +210,55 @@ that no child claims. This includes empty space and gaps between transparent chi
   magnification, so the platform adapters do not forward it.
 - An axis disabled by `scrollMode` ignores its wheel movement.
 - The offset is clamped like any other `ScrollOffset` change.
-- The ScrollViewer always sets `Handled`, even at the end of its range or when Ctrl is held, so a
-  ScrollViewer inside another ScrollViewer never lets the parent see the wheel. Controls inside the
-  viewer can handle the wheel first by setting `Handled` themselves.
+- The ScrollViewer sets `Handled` whenever it can scroll in the wheel's direction according to
+  `scrollMode`, even at the end of its range, so a ScrollViewer inside another ScrollViewer does not let
+  the parent see that wheel. If it cannot scroll in the wheel's direction (for example a vertical wheel
+  over a horizontal-only viewer), it leaves the event unhandled so a parent can scroll. Ctrl is always
+  marked handled. Controls inside the viewer can handle the wheel first by setting `Handled` themselves.
 
 Wheel deltas follow the browser's pixel-mode convention: one detent is 100 units, positive Y scrolls
 down and positive X scrolls right. Scrolling is therefore `notches * wheelSteps * scrollSize`, added to
 `ScrollOffset`.
+
+## Panning and flick
+
+The ScrollViewer owns a `PanRecognizer` (see `gesture-recognizer.md`) that takes part in the gesture
+arena, so buttons and other controls inside the viewer still receive clicks. A click wins if the contact
+is released before it moves past the slop; the pan wins if it moves past the slop first, which cancels
+the child's click and captures the contact for the viewer.
+
+- Touch and pen pan with any contact. The mouse pans only with the right button by default.
+- Panning moves `ScrollOffset`, clamped to the scrollbar ranges. The content does not jump when the pan
+  starts; the slop distance is ignored.
+- On release, a touch or pen contact flicks: the content keeps moving and slows down. The mouse never
+  flicks. The viewer stops the flick at the scroll limit on each axis, and touching the viewer during a
+  flick stops it without clicking the content under the finger. The wheel, scrollbar changes, and a new
+  pan also stop it.
+- The viewer pans only on axes it can scroll according to `scrollMode`. A viewer that cannot scroll at
+  all does not take part, so an ancestor viewer pans instead. A viewer that can scroll an axis takes the
+  pan when movement along that axis passes the slop, even when it is at its limit.
+
+The ScrollViewer, not the `PanRecognizer`, owns the flick. The recognizer only reports the release
+velocity (measured from the last 100 ms of finger movement) and applies no motion after release. The
+viewer converts that velocity to scroll units and animates it on each frame (`PreRenderFrame`): the speed
+decays exponentially (friction of 3 per second), the frame time is capped at 50 ms so a stalled frame
+does not jump, the flick ends when the speed drops below 10 units per second, and an axis stops as soon
+as the offset reaches its minimum or maximum. These values are constants in the viewer and are not yet
+configurable. `PanOptions.Flick`, `MinFlickVelocity`, and `MaxFlickVelocity` only control whether and how
+fast a release reports a velocity.
+
+Configure it through `ScrollViewer.PanOptions`:
+
+```csharp
+scrollViewer.PanOptions.Slop = 1;                              // Pan almost immediately
+scrollViewer.PanOptions.MouseButtons = PointerButtons.Left;    // Left button pans with the mouse
+scrollViewer.PanOptions.Flick = false;                         // Stop when released
+```
+
+`Slop` is in device pixels and defaults to the app window's movement slop for the device (it is not yet
+scaled by DPI). The viewer manages `PanOptions.Axes` itself. Future work: axis locking for diagonal drags,
+overscroll, a delayed pressed visual for children inside a scrolling viewer, and rejecting a touch click
+that moved past the slop.
 
 ## Sizing and limitations
 
@@ -270,9 +312,9 @@ The calls occur in this order:
 ```text
 ScrollViewer constructor
         |
-        +--> Loader.Load(ScrollViewer, ScrollViewer's own ZUI JSON)
+        +--> ZuiRuntime.Load(ScrollViewer, ScrollViewer's own ZUI JSON)
         |       |
-        |       +--> LoadTemplateContent(template content)
+        |       +--> add template content
         |               |
         |               +--> add _contentViewport to ScrollViewer.View
         |               +--> add horizontalScrollBar to ScrollViewer.View
@@ -287,26 +329,25 @@ Parent creates the ScrollViewer from its $content
         +--> Loader.CreateControl(ScrollViewer properties, context)
                 |
                 +--> construct ScrollViewer and complete the sequence above
-                +--> LoadParentContent(parent content)
+                +--> add parent content
                         |
                         +--> ContentHost returns _contentWindow.View
-                        +--> default implementation adds user content there
+                        +--> the loader adds user content there
 ```
 
-`Loader.Load` invokes `LoadTemplateContent` for the ScrollViewer's own ZUI children. These children
+`Loader.Load` adds the ScrollViewer's own ZUI children to its main view as template content. These children
 create the content viewport, content window, and scrollbars directly on the ScrollViewer. Later,
-`Loader.CreateControl` invokes the default `LoadParentContent` implementation for the parent's content.
+`Loader.CreateControl` adds the parent's content to the control's `ContentHost`.
 ScrollViewer's `ContentHost` points to `_contentWindow`, so application content is added inside the
 clipped content subtree.
 
-`LoadTemplateContent` and `LoadParentContent` both have default implementations. The former adds
-internal content to the main view, while the latter adds parent content to `ContentHost`, which is the
-main view by default. ScrollViewer only needs to override the template hook and content host; it no
+Template content is always added to the main view, while parent content is added to `ContentHost`, which is the
+main view by default. ScrollViewer only needs to provide the content host; it no
 longer infers the loading phase from `View.Children.Count`.
 
-The separate lifecycle is also useful for future controls with templates or named content hosts. Those
-controls can build their internal structure through `LoadTemplateContent` and direct ordinary parent
-content through an appropriate content host without adding special cases to the loader.
+The separate phases are also useful for future controls with templates or named content hosts. Those
+controls can direct ordinary parent content through an appropriate content host without adding special
+cases to the loader.
 
 ## Measurement and arrangement
 

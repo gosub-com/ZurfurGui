@@ -184,6 +184,20 @@ state; they must be revisited together with this item.
 
 ### 6. No auto-win and no configurable slop (design gap)
 
+Status: ***done for pan*** Slop is now `AppWindow.Properties.MovementSlopMouse` and `MovementSlopTouch`
+(theme `input.slop.mouse` and `input.slop.touch`), shared by long click and `PanRecognizer`. Remaining:
+
+- Slop is in device pixels and is not scaled by DPI. Scale it when DPI is available.
+- Pen uses the mouse slop. Revisit if pen needs its own value.
+- Click does not reject a touch that moved past the slop when no pan wins (for example a drag along an
+  axis the viewer cannot scroll). Consider rejecting past the slop for touch.
+- Children inside a scrolling viewer show their pressed state immediately. Consider a short delay so a
+  button does not flash when a pan starts.
+- Axis locking (a mostly vertical drag in a two-axis viewer locks to vertical) and overscroll are not
+  implemented.
+
+**original description**
+
 **necessary before pan/zoom**
 
 A last remaining candidate does not win when the others reject. That is fine for click, but pan/zoom
@@ -194,6 +208,13 @@ needs an explicit rule and a slop distance.
   from the pan recognizer. Do not hard-code it. Consider separate values for touch and mouse.
 
 ### 7. Pan, flick, and zoom need timestamps and a shared clock (design gap)
+
+Status: ***partly done*** `PointerEvent.Timestamp` is supplied by the browser and WinForms touch/pen
+adapters, with a router stamp otherwise. `ClickSession` long-click movement now uses device positions.
+The click release test still uses `OriginRect`. `PreRenderFrame` still passes no elapsed time (the
+ScrollViewer flick keeps its own `Stopwatch`).
+
+**original description**
 
 **necessary before pan/zoom**
 
@@ -536,3 +557,261 @@ framework/version documentation if implementation details become important.
 9. Before starting, finish the cleanup items marked necessary before pan/zoom in `gestures-cleanup.md`.
 10. Add automated gesture tests
 
+
+# Public API cleanup recommendations for 10/31/2026
+
+This section lists public API risks to resolve before a 1.0 release, to reduce breaking changes
+after release. It is based on a source survey; verify each type's current accessibility and usage
+before changing it. Making a type internal now can be reversed later without breaking consumers;
+removing a released public type is a breaking change.
+
+Ratings:
+
+- **Difficulty**: trivial, easy, medium, hard, or very hard.
+- **Importance**: critical, high, medium, or low.
+
+### A1. Platform host contracts are public and unversioned
+
+Status: ***Done (visibility)***: `OsCanvas`, `OsContext`, and `OsWindow` are now internal and
+the host projects see them through `InternalsVisibleTo`. Reshaping the members (callbacks,
+setters, `MarshalString`) is still open.
+
+Difficulty: hard. Importance: critical.
+
+`OsCanvas`, `OsContext`, and `OsWindow` in `Platform/` are implemented by host projects. Their
+contracts include single-subscriber `PointerInput` and `WheelInput` callbacks, mutable size
+properties, a default `DevicePixelSize` implementation, and `OsContext.MarshalString`, a low-level
+interop detail. Fonts are identified by string names.
+
+Fix: decide which members hosts need. Replace single-subscriber callbacks with events or an explicit
+registration method; restrict setters that hosts should not control; remove interop helpers from the
+public host contract; and document `Platform` as a separately versioned host API. Provide defaults
+for future interface members where appropriate.
+
+### A2. OsPointerEvent and OsWheelEvent are public wire formats
+
+Status: ***Done (visibility)***: both types are now internal and sealed. The string `Type` is kept
+because it matches the platform event names. Constants for the names are still open.
+
+Difficulty: medium. Importance: critical.
+
+These positional records include a string `Type`. Adding a field breaks constructor call sites, and
+the string value can be misspelled.
+
+Fix: replace `Type` with a defined event kind, and use sealed types with init-only properties instead
+of positional records. Update the platform adapters and avoid making deconstruction part of the
+contract.
+
+### A3. OsRenderBuffer and OsRenderCommand expose the render encoding
+
+Status: ***Done***: both types are internal and visible only to the host projects.
+
+Difficulty: easy. Importance: high.
+
+These public types expose low-level render command plumbing. `OsRenderBuffer` also has a note about
+removing heap allocation, suggesting its representation may change.
+
+Fix: make both types internal if host projects do not need them. If a host needs rendering access,
+expose only the stable operations it requires through a narrow contract.
+
+### A4. Generated-code contract is public (`Controllable`, `Loader`)
+
+Status: ***Partly done***: the generator hooks are split from the application-facing API.
+`Controllable` now has only `View`, `ContentHost`, `SetDataProperty`, `OnAttach`, and `OnDetach`.
+The generated-only members moved to `ZurfurGui.Generated.ZuiControllable`, and the generated calls
+go through `ZurfurGui.Generated.ZuiRuntime`; both are hidden from IntelliSense. `Loader` keeps only
+`JsonSerializerOptions` and `RegisterJsonTypeInfoResolver` public. Template and parent content loading is now done by the
+loader itself, so `LoadTemplateContent`, `LoadParentContent`, and the public `ControlCreationContext`
+are gone. `ZurfurJsonContext` is now internal; applications use `Loader.JsonSerializerOptions`, which
+adds the custom converters, and `RegisterJsonTypeInfoResolver` for their own types. Still open: add a
+minimum-version check (below).
+
+Difficulty: hard. Importance: critical.
+
+Generated code is compiled into the application, so it cannot use `InternalsVisibleTo`. The
+generated-only members (`ZuiControllable`, `ZuiRuntime`) are therefore still public, but isolated
+in `ZurfurGui.Generated` and hidden from IntelliSense.
+
+Applications get the generator and library together from one package, so they cannot drift apart.
+The risk is a third-party control library compiled against a newer ZurfurGui than the application
+runs. Its generated code then fails with a `MissingMethodException` in the middle of a load.
+
+Remaining fix, before 1.0:
+
+- Make the generated-code surface additive-only after 1.0 (see the compatibility table in
+  `code-generation.md`). New `ZuiControllable` members need default implementations.
+- Add a minimum-version check. `ZuiRuntime.Version` is bumped when generated-code surface is added.
+  The generator emits an assembly attribute with the lowest version the generated code needs, and
+  `ZuiRuntime` checks once per assembly that it is not greater than `ZuiRuntime.Version`, with a
+  clear "upgrade ZurfurGui" error. Older generated code on a newer library is allowed.
+
+### A5. `.zui` directives and property names are a language contract
+
+Difficulty: medium. Importance: high.
+
+Directives and property names such as `$offset`, `$visualOffset`, `$hitTest`, and
+`keyName: "Panel.Offset"` are consumed by `.zui` files. Renaming them can break every application
+using those files.
+
+Fix: document the supported directives and built-in property names, review them for consistency,
+and treat them as compatibility-sensitive after 1.0. Add an explicit migration/deprecation path for
+any future rename.
+
+### A6. `Controllable.OnDetach` is public and now documented
+
+Status: ***fixed***. `OnDetach` was already invoked; only the source comment claimed otherwise.
+
+Difficulty: easy. Importance: high.
+
+`View.RemoveChild` (and therefore `RemoveFromParent` and `ClearChildren`) calls `OnDetach` on the
+removed view and its descendants, children first, while they are still attached to the `AppWindow`.
+It does not run for views that were never attached to an `AppWindow`. The `Controllable` comment now
+documents exactly when it runs.
+
+### A7. Gesture interfaces may need new members
+
+Difficulty: medium. Importance: high.
+
+`IGestureRecognizer` and `IGestureRecognizerSession` are interfaces implemented by consumers.
+Multi-contact gestures, priority, wheel, or keyboard support may require new callbacks, which would
+break existing implementations. `Layoutable`, `Renderable`, and `Controllable` have the same
+interface evolution risk.
+
+Fix: settle expected gesture input and multi-contact needs before release. Prefer sealed context or
+options objects for extensible data, or default interface implementations when supported by all
+target frameworks. Avoid adding required interface members in a compatible release.
+
+### A8. `PointerContact` is a positional record
+
+Difficulty: medium. Importance: high.
+
+`PointerContact` has eight positional parameters and may need more input data, such as pressure or
+tilt. Constructor calls and deconstruction are part of the public API.
+
+Fix: replace positional construction with a stable type using named init-only properties, and avoid
+public deconstruction. Update all platform adapters and callers. Review `WheelEvent`,
+`PointerContactKey`, and `CapturedPointerContact` for the same positional-shape risk.
+
+### A9. Pointer event records expose inheritance and value semantics
+
+Difficulty: easy. Importance: medium.
+
+`PointerEvent` and `WheelEvent` expose record behavior, including equality, `with`, and deconstruction;
+their mutable flags are part of the API. `PointerEvent.Timestamp` also needs a stable definition of
+whether the platform or router supplies it.
+
+Fix: seal the event types or use sealed classes, retain only the mutation required for routing, and
+document timestamp source and units. Do this before consumers depend on record equality or
+subclassing.
+
+### A10. `CapturedPointerContact` may expose the view tree
+
+Difficulty: easy. Importance: medium.
+
+The public type contains a `View` reference, exposing an internal tree relationship through a
+contact-state API.
+
+Fix: check all consumers. Make the type internal if only router implementation code needs it;
+otherwise expose only the stable contact key and the minimum necessary public information.
+
+### A11. Public enums will likely grow
+
+Difficulty: trivial. Importance: medium.
+
+`PointerDeviceKind`, `PointerEventKind`, `DockEnum`, `HitTesting`, `PanAxes`, and `RenderResult` may
+gain values. `PointerButtons` and `PointerModifiers` are byte-backed flags with at most eight bits.
+`ViewFlags` is also explicitly sized.
+
+Fix: decide whether the backing types leave room for expected values. Document that consumers should
+handle unknown enum values with a default case. Widen flag enums before 1.0 if more bits are
+plausible, and audit serialization or interop uses before changing their underlying types.
+
+### A12. Mutable public structs
+
+Difficulty: easy. Importance: high.
+
+`Vector`, `Size`, and `Thickness` have settable properties on structs. Mutating a copy may not mutate
+the original, and changing the members to immutable after release is source-breaking.
+
+Fix: make these readonly value types with constructor-only or init-only properties, then update
+callers that mutate fields. Check `Color` and `Point` for the same issue before deciding their
+public shape.
+
+### A13. Pan options expose unstable tuning and units
+
+Difficulty: medium. Importance: high.
+
+`PanOptions` exposes mutable settings including `Slop`, `MinFlickVelocity`, and `MaxFlickVelocity`.
+Their units are device pixels, and source comments say slop is not DPI-scaled. Changing units later
+would silently alter gesture behavior.
+
+Fix: choose and document device or logical units before 1.0. If logical units are intended, apply DPI
+conversion consistently and test on each platform. Keep future settings in an options type rather
+than extending recognizer constructors positionally.
+
+### A14. Control event signatures may be hard to extend
+
+Difficulty: easy. Importance: medium.
+
+`Button.Click` uses `EventHandler?`, while `Scrim.Dismissed` uses `EventHandler<PointerEvent>`. The
+event signatures cannot carry additional event data later without a breaking change.
+
+Fix: decide whether consumers need click or dismissal details. If so, define dedicated event-args
+types now and use them consistently. Otherwise document the intentionally minimal event contract.
+
+### A15. Public implementation and helper types
+
+Difficulty: easy. Importance: high.
+
+The API review identified `Renderer`, `RenderContext`, `MeasureContext`, stats types, `ObjectCache`,
+`LruDictionary`, `TextLinesBuilder`, `TextLines.Enumerator`, `Hasher`, and some `ThemeManager`
+helpers as possible implementation details. Public non-sealed classes also allow consumers to
+subclass types that may not be designed for extension.
+
+Fix: verify usage by application and host code. Make implementation-only types internal, seal
+remaining public classes that are not extension points, and document intended inheritance contracts
+for types that remain extensible. Check whether `TextLines` should be sealed. Keep `ThemeManager`
+helpers public only if consumers need them and their parameter types are stable.
+
+### A16. Unfinished or duplicate public API
+
+Difficulty: easy. Importance: high.
+
+The API review found `LayoutColumn` described as replaceable by `LayoutRow`, `LayoutRow` with a TBD
+about supporting columns, `Window.IsWindowWrappingVisible` described as needing a real property,
+`AppWindow` settings described as temporary, and `View` component lookup described as needing
+substantial improvement. `AppWindow` also appears to include a test-only `DataTest` binding.
+
+Fix: decide the final names and semantics before release. Remove unfinished public members or mark
+them obsolete with a migration path. Move test-only bindings into TestApp and verify they are not in
+the shipped control.
+
+### A17. Public features and data contracts with known gaps
+
+Difficulty: medium. Importance: medium.
+
+The review noted clipping documented as disabled, generated properties with unimplemented data
+binding, and a TBD about `Color` channel order on the browser canvas.
+
+Fix: implement each advertised feature or remove it from the public surface until ready. Confirm and
+document color channel order across platforms. Do not promise behavior that is currently disabled
+or inconsistent.
+
+### A18. Track the public API automatically
+
+Difficulty: easy. Importance: high.
+
+Without an API baseline, accidental public changes can pass unnoticed in review.
+
+Fix: add `Microsoft.CodeAnalysis.PublicApiAnalyzers` to the library project, generate shipped and
+unshipped API baselines, and require baseline changes to be reviewed alongside API changes. First
+verify target-framework and analyzer compatibility with both .NET 10 and .NET Standard 2.0.
+
+### Suggested order
+
+1. Establish the exact API inventory and baseline (A18), then hide confirmed implementation details
+   (A3, A10, A15).
+2. Resolve small, source-breaking type decisions before release (A9, A11, A12, A14).
+3. Settle extensible input and record shapes (A2, A7, A8, A13).
+4. Stabilize host and generated-code contracts (A1, A4, A6).
+5. Document and finalize `.zui` and unfinished feature contracts (A5, A16, A17).

@@ -1,8 +1,10 @@
-﻿using ZurfurGui.Base;
+﻿using System.Diagnostics;
+using ZurfurGui.Base;
 using ZurfurGui.Input;
 using ZurfurGui.Layout;
 using ZurfurGui.Property;
 using ZurfurGui.Render;
+using ZurfurGui.Windows;
 
 namespace ZurfurGui.Controls;
 
@@ -16,8 +18,22 @@ public enum ScrollMode
 
 public sealed partial class ScrollViewer
 {
+    // Flick deceleration: the velocity decays exponentially at this rate (per second).
+    const double FLICK_FRICTION = 3.0;
+
+    // A flick stops when its speed (view units per second) falls below this.
+    const double FLICK_STOP_SPEED = 10;
+
+    // A long frame is treated as this long (seconds) so a stalled frame does not make the content jump.
+    const double FLICK_MAX_FRAME_TIME = 0.05;
+
     Point _scrollOffset;
     bool _syncingScrollBars;
+    readonly PanRecognizer _panRecognizer;
+    readonly Stopwatch _flickClock = new();
+    AppWindow? _flickAppWindow;
+    TimeSpan _lastFlickTime;
+    Point _flickVelocity;
 
     public ScrollViewer()
     {
@@ -32,11 +48,27 @@ public sealed partial class ScrollViewer
         DataContext.PropertyChanged += OnScrollViewerDataChanged;
         horizontalScrollBar.DataContext.PropertyChanged += OnScrollBarDataChanged;
         verticalScrollBar.DataContext.PropertyChanged += OnScrollBarDataChanged;
+
+        _panRecognizer = View.AddGestureRecognizer(new PanRecognizer());
+        _panRecognizer.CatchOnDown = () => _flickAppWindow != null;
+        _panRecognizer.PanStarted += OnPanStarted;
+        _panRecognizer.PanMoved += OnPanMoved;
+        _panRecognizer.PanEnded += OnPanEnded;
+        UpdatePanAxes();
     }
 
     /// <summary>
+    /// Options for panning with touch, pen, or mouse.  By default touch and pen pan and flick, and the
+    /// mouse pans only with the right button.  Set <see cref="PanOptions.Slop"/> to zero (or one) to pan
+    /// without a start threshold, set <see cref="PanOptions.MouseButtons"/> to <see cref="PointerButtons.Left"/>
+    /// to pan with the left button, or turn off <see cref="PanOptions.Flick"/> to stop the content on release.
+    /// The viewer controls <see cref="PanOptions.Axes"/> itself, from its scroll mode.
+    /// </summary>
+    public PanOptions PanOptions => _panRecognizer.Options;
+
+    /// <summary>
     /// Receives parent-supplied content in the content window rather than beside the overlay scrollbars.
-    /// The default LoadParentContent implementation uses ContentHost, so this control only needs to provide the host.
+    /// The loader adds parent-supplied content to ContentHost, so this control only needs to provide the host.
     /// </summary>
     public View ContentHost => _contentWindow.View;
 
@@ -82,15 +114,18 @@ public sealed partial class ScrollViewer
 
     /// <summary>
     /// Scrolls the content by WheelSteps scroll steps per wheel detent. Shift turns a vertical wheel into a
-    /// horizontal one, and Ctrl is ignored. The wheel is always marked handled, even when it cannot
-    /// scroll further, so it never reaches a parent handler.
+    /// horizontal one, and Ctrl is ignored. The wheel is marked handled when the viewer can scroll in the
+    /// direction of the wheel, even when already at the limit, so it does not reach a parent scroller. A
+    /// viewer that cannot scroll in that direction leaves the event unhandled so a parent can scroll.
     /// </summary>
     void OnPointerWheel(object? sender, WheelEvent e)
     {
-        e.Handled = true;
         var modifiers = e.Contact.Modifiers;
         if ((modifiers & PointerModifiers.Control) != 0)
+        {
+            e.Handled = true;
             return;
+        }
 
         var notchesX = e.NotchesX;
         var notchesY = e.NotchesY;
@@ -100,16 +135,96 @@ public sealed partial class ScrollViewer
             notchesY = 0;
         }
 
+        if (!(CanScrollHorizontally && notchesX != 0) && !(CanScrollVertically && notchesY != 0))
+            return;
+
+        e.Handled = true;
+        StopFlick();
         var step = DataContext.ScrollSize.Or(16);
         var distanceX = CanScrollHorizontally ? notchesX * Properties.WheelSteps * step.Width : 0;
         var distanceY = CanScrollVertically ? notchesY * Properties.WheelSteps * step.Height : 0;
         ScrollOffset = new Point(ScrollOffset.X + distanceX, ScrollOffset.Y + distanceY);
     }
 
+    // Stops a pan from a previous contact and starts moving the content with the new one.  The slop
+    // displacement is ignored so the content does not jump when the pan starts.
+    void OnPanStarted(object? sender, PanEventArgs e)
+    {
+        StopFlick();
+    }
+
+    // Moves the content with the contact.  Content follows the finger, so the offset moves the opposite way.
+    void OnPanMoved(object? sender, PanEventArgs e)
+    {
+        var delta = e.Delta / View.Scale;
+        ScrollOffset = new Point(ScrollOffset.X - delta.X, ScrollOffset.Y - delta.Y);
+    }
+
+    // Starts a flick if the contact was released with velocity.
+    void OnPanEnded(object? sender, PanEventArgs e)
+    {
+        if (e.Cancelled || (e.Velocity.X == 0 && e.Velocity.Y == 0) || View.AppWindow is not AppWindow appWindow)
+            return;
+
+        var velocity = e.Velocity / View.Scale;
+        _flickVelocity = new Point(-velocity.X, -velocity.Y);
+        _lastFlickTime = TimeSpan.Zero;
+        _flickClock.Restart();
+        _flickAppWindow = appWindow;
+        appWindow.PreRenderFrame += OnFlickFrame;
+    }
+
+    // Continues the pan after release.  The recognizer knows nothing about the scroll range, so the flick
+    // on an axis stops here when the offset reaches its limit.
+    void OnFlickFrame(object? sender, EventArgs e)
+    {
+        var now = _flickClock.Elapsed;
+        var dt = Math.Min((now - _lastFlickTime).TotalSeconds, FLICK_MAX_FRAME_TIME);
+        _lastFlickTime = now;
+        if (dt <= 0)
+            return;
+
+        var decay = Math.Exp(-FLICK_FRICTION * dt);
+        var distanceFactor = (1 - decay) / FLICK_FRICTION;
+        var target = new Point(
+            _scrollOffset.X + _flickVelocity.X * distanceFactor,
+            _scrollOffset.Y + _flickVelocity.Y * distanceFactor);
+        ScrollOffset = target;
+
+        var velocityX = ScrollOffset.X != target.X ? 0 : _flickVelocity.X * decay;
+        var velocityY = ScrollOffset.Y != target.Y ? 0 : _flickVelocity.Y * decay;
+        _flickVelocity = new Point(velocityX, velocityY);
+        if (Math.Sqrt(velocityX * velocityX + velocityY * velocityY) < FLICK_STOP_SPEED)
+            StopFlick();
+    }
+
+    // Stops the flick, if there is one.
+    void StopFlick()
+    {
+        if (_flickAppWindow is AppWindow appWindow)
+            appWindow.PreRenderFrame -= OnFlickFrame;
+
+        _flickAppWindow = null;
+        _flickVelocity = default;
+    }
+
+    // The viewer pans only in the directions it can scroll, so a viewer that cannot scroll in a direction
+    // lets an ancestor pan.  Being at the scroll limit does not change this.
+    void UpdatePanAxes()
+    {
+        var axes = PanAxes.None;
+        if (CanScrollHorizontally)
+            axes |= PanAxes.Horizontal;
+        if (CanScrollVertically)
+            axes |= PanAxes.Vertical;
+        _panRecognizer.Options.Axes = axes;
+    }
+
     void OnScrollViewerDataChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ScrollViewerData.ScrollMode))
         {
+            UpdatePanAxes();
             _contentViewport.View.InvalidateMeasure();
             View.InvalidateMeasure();
             SyncScrollBars(_contentViewport.View.ContentRect.Size);
@@ -142,6 +257,7 @@ public sealed partial class ScrollViewer
 
         if (e.PropertyName == nameof(ScrollBarData.Value))
         {
+            StopFlick();
             ScrollOffset = new Point(
                 horizontalScrollBar.DataContext.Value,
                 verticalScrollBar.DataContext.Value);
@@ -153,6 +269,7 @@ public sealed partial class ScrollViewer
 
     void SyncScrollBars(Size viewportSize)
     {
+        UpdatePanAxes();
         var contentSize = _contentWindow.View.DesiredContentSize;
         var verticalData = verticalScrollBar.DataContext;
         var wasAtVerticalEnd = verticalData.Value >= verticalData.Maximum;

@@ -96,7 +96,7 @@ For each non-generic data-bearing control, generated initialization contains a r
 equivalent to:
 
 ```csharp
-Loader.RegisterDataController(
+ZuiRuntime.RegisterDataController(
     typeof(ComboBoxItemTextData),
     itemData =>
     {
@@ -121,7 +121,7 @@ caches named child controls and creates the default `DataContext` when the contr
 bindings:
 
 1. `View = new(this)` attaches the controller to its view.
-2. `Loader.Load(this, _zuiJsonContent)` builds the control's template and applies its JSON
+2. `ZuiRuntime.Load(this, _zuiJsonContent)` (which forwards to `Loader.Load`) builds
    properties.
 3. Generated fields for named controls are assigned using `View.FindByName(...)`.
 4. `DataContext = CreateDefaultDataContext()` creates the data object.
@@ -151,7 +151,7 @@ known ordering gap.
   instance to the controller's `DataContext`.
 
 `Loader.Init` calls `ZurfurMain.MainApp()`, which must perform generated and required third-party
-registration before controls are created. A generated controller then calls `Loader.Load`; child
+A generated controller then calls `ZuiRuntime.Load`;
 controllers are resolved through the control registry. Data-item controller lookup occurs later,
 when a data-driven control such as `ComboBox` creates an item controller.
 
@@ -174,13 +174,11 @@ Generated InitializeControl()
         |
         +--> View = new(this)
         |
-        +--> Loader.Load(control, control's own ZUI JSON)
+        +--> ZuiRuntime.Load(control, control's own ZUI JSON)
                 |
                 +--> merge template properties and apply template layout to View
                 |
-                +--> LoadTemplateContent(template content)
-                |       default: create children and add their Views to View
-                |       custom:  add or organize control-owned children
+                +--> add template content: create children and add their Views to View
                 |
                 +--> ApplyDataProperties recursively, children before parent
         |
@@ -200,19 +198,17 @@ Loader.CreateControl(child properties, context)
         |
         +--> apply parent-supplied layout to the child's ContentHost
         |
-        +--> LoadParentContent(parent content)
-                default: create children and add their Views to ContentHost
-                custom:  handle parent content specially
+        +--> add parent content: create children and add their Views to ContentHost
 ```
 
-`Loader.Load` invokes `Controllable.LoadTemplateContent` for the control's own ZUI content. Its
-default implementation creates each child and adds that child's view to the control's `View`.
+`Loader.Load` adds the control's own ZUI content (the template content) by creating each child and
+adding that child's view to the control's `View`.
 `Loader.CreateControl` first constructs and initializes the child; it then applies the parent's
-instance properties and layout and invokes `Controllable.LoadParentContent`.
+instance properties and layout and adds the parent's content to the child's `ContentHost`.
 
 `ContentHost` determines where parent-supplied content is placed, not the call order or content
-ownership. It is `View` by default. `LoadTemplateContent` handles the control-owned structure, while
-`LoadParentContent` handles content supplied by the parent.
+ownership. It is `View` by default. Template content is control-owned structure, while parent content
+is supplied by the parent.
 
 `ScrollViewer` uses the default template-loading behavior: its own ZUI content defines the clipped
 viewport, content window, and overlay scrollbars. Its `ContentHost` is `_contentWindow`, so parent

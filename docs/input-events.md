@@ -290,10 +290,12 @@ independently of click recognition. Pointer cancellation, losing the gesture are
 recognizer, and release outside the bounds cancel the click.
 
 The recognizer can also receive an optional long-click callback. Its threshold and movement tolerance
-are configured on `AppWindow` as `LongClickDuration` (`TimeSpan`) and
-`LongClickMovementTolerance`; defaults are 500 milliseconds and 8 view-local logical units. The
-defaults are supplied by the `input.long-click.duration` and `input.long-click.movement-tolerance` theme
-variables. The duration theme value uses the standard JSON `TimeSpan` format; for example,
+are configured on `AppWindow` as `LongClickDuration` (`TimeSpan`) and the shared movement slop,
+`MovementSlopMouse` and `MovementSlopTouch`, which pan also uses; the long click uses the touch value for
+touch contacts and the mouse value otherwise. Defaults are 500 milliseconds, 4 device pixels for mouse and
+pen, and 8 device pixels for touch, supplied by the `input.long-click.duration`, `input.slop.mouse`, and
+`input.slop.touch` theme variables. Slop is measured in device pixels and is not yet scaled by DPI (to be
+corrected later). The duration theme value uses the standard JSON `TimeSpan` format; for example,
 `"00:00:00.5"` represents 500 milliseconds.
 The duration starts on pointer-down. Moving farther than the tolerance cancels long-click eligibility,
 but leaves the ordinary click behavior unchanged. The callback receives the latest contact in
@@ -314,8 +316,8 @@ void OnLongClick(object? sender, PointerLongClickEventArgs e)
 ```
 
 `AppWindow.zui` configures the app-wide defaults through theme tokens. Applications can change the
-settings at runtime through `appWindow.Properties.LongClickDuration` and
-`appWindow.Properties.LongClickMovementTolerance`.
+settings at runtime through `appWindow.Properties.LongClickDuration`,
+`appWindow.Properties.MovementSlopMouse`, and `appWindow.Properties.MovementSlopTouch`.
 
 This allows a `Button`, `Scrim`, `ComboBox`, or third-party control to choose its own higher-level action
 without adding another generic routed event to `Panel`. A `Button` uses the recognizer to raise its
@@ -330,8 +332,9 @@ use capture, hover, press, or the gesture arena, and has no preview or bubble ph
 The router hit-tests the pointer position, then walks from the hit view toward the root and gives the
 `WheelEvent` to each view with a `Panel.PointerWheel` handler in turn. A handler consumes the wheel by
 setting `WheelEvent.Handled`, which stops the walk. If it leaves `Handled` false, the event continues
-to the next handler toward the root. `ScrollViewer` always sets `Handled`, so a wheel never reaches a
-parent scroller.
+to the next handler toward the root. `ScrollViewer` sets `Handled` whenever it can scroll in the wheel's
+direction (even at the end of its range), so a wheel only reaches a parent scroller when the child cannot
+scroll that way.
 
 Deltas use the browser's pixel-mode convention. One detent of a typical mouse wheel is 100 units
 (`WheelEvent.UnitsPerNotch`), positive `DeltaY` scrolls down, and positive `DeltaX` scrolls right. The
@@ -340,9 +343,20 @@ per detent and flips the vertical sign, and reads horizontal wheel from the nati
 message. Neither adapter forwards Ctrl+wheel, because the browser and the WinForms form use it for
 magnification.
 
+## Timestamps
+
+`PointerEvent.Timestamp` is the event time in milliseconds from a monotonic clock. The browser adapter
+forwards the DOM event's `timeStamp` and the WinForms touch and pen adapter forwards the native pointer
+message time. Where a platform supplies none (WinForms mouse), the router stamps the event on arrival.
+Only differences between events of one contact are meaningful. Recognizers use it to measure velocity.
+
+The browser canvas sets `touch-action: none` so touch drags are delivered to the GUI instead of becoming
+native browser scrolling (which would end the contact with a pointer cancel), and it suppresses the
+browser context menu so the right mouse button can be used by the GUI, for example to pan.
+
 ## Current scope
 
-This description focuses on responsibilities and ordering rather than exact event records, view-chain
+This description
 representation, or rendering data structures. The input path is evolving, so those implementation details
 are not yet part of the GUI input contract.
 

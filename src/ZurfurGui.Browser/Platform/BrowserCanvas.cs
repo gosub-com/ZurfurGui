@@ -87,6 +87,7 @@ internal partial class BrowserCanvas : OsCanvas
                 var scale = _window.DevicePixelRatio;
                 _pointerInput?.Invoke(new OsPointerEvent(etype, position.ToPoint * scale)
                 {
+                    Timestamp = e.GetPropertyAsDouble("timeStamp"),
                     Buttons = MapButtons(e.GetPropertyAsDouble("buttons")),
                     ChangedButton = MapChangedButton(e.GetPropertyAsDouble("button")),
                     Modifiers = GetModifiers(e),

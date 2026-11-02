@@ -233,6 +233,7 @@ internal class WinCanvas : OsCanvas
             pointerEvent = new OsPointerEvent(kind, new Point(clientPoint.X, clientPoint.Y))
             {
                 Device = device,
+                Timestamp = info.Time,
                 ContactId = (int)pointerId,
                 Buttons = MapPointerButtons(info.Flags),
                 ChangedButton = PointerButtons.None,

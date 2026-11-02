@@ -12,7 +12,6 @@ namespace ZurfurGui.Windows;
 /// </summary>
 public partial class Window : Controllable
 {
-    bool _mouseDown;
     Point _mousePosition;
 
 
@@ -27,13 +26,13 @@ public partial class Window : Controllable
         });
 
         // Drag window events
-        _dragWindow.View.AddEvent(Panel.PreviewPointerDown, _drawWindow_PreviewPointerDown);
-        _dragWindow.View.AddEvent(Panel.PreviewPointerMove, _drawWindpow_PreviewPointerMove);
-        _dragWindow.View.AddEvent(Panel.PointerCaptureLost, (s, e) =>_mouseDown = false);
+        var dragPan = _dragWindow.View.AddGestureRecognizer(new PanRecognizer(NewPanOptions()));
+        dragPan.PanStarted += PanStarted;
+        dragPan.PanMoved += _dragWindow_PanMoved;
 
-        _resizeHandle.View.AddEvent(Panel.PreviewPointerDown, _resizeHandle_PreviewPointerDown);
-        _resizeHandle.View.AddEvent(Panel.PreviewPointerMove, _resizeHandle_PreviewPointerMove);
-        _resizeHandle.View.AddEvent(Panel.PointerCaptureLost, (s, e) => _mouseDown = false);
+        var resizePan = _resizeHandle.View.AddGestureRecognizer(new PanRecognizer(NewPanOptions()));
+        resizePan.PanStarted += PanStarted;
+        resizePan.PanMoved += _resizeHandle_PanMoved;
 
         _closeButton.View.AddGestureRecognizer(
             new ClickRecognizer((s, e) => View.RemoveFromParent()));
@@ -41,7 +40,7 @@ public partial class Window : Controllable
 
     /// <summary>
     /// Receives parent-supplied content in the _windowContent.
-    /// The default LoadParentContent implementation uses ContentHost, so this control only needs to provide the host.
+    /// The loader adds parent-supplied content to ContentHost, so this control only needs to provide the host.
     /// </summary>
     public View ContentHost => _windowContent.View;
 
@@ -56,18 +55,21 @@ public partial class Window : Controllable
     }
 
 
-    void _drawWindow_PreviewPointerDown(object? s, PointerEvent e)
+    // Pan options for window drag and resize: left mouse button, no flick, immediate start
+    static PanOptions NewPanOptions()
     {
-        _mouseDown = true;
-        _mousePosition = View.Parent?.toClient(e.Contact.DevicePosition) ?? new();
-        _dragWindow.View.SetCapture(e.Contact.Key, true);
+        return new PanOptions { MouseButtons = PointerButtons.Left, Flick = false, Slop = 0 };
     }
 
-    void _drawWindpow_PreviewPointerMove(object? s, PointerEvent e)
+    // Remember where the pan started, in parent coordinates
+    void PanStarted(object? s, PanEventArgs e)
     {
-        if (!_mouseDown)
-            return;
+        _mousePosition = View.Parent?.toClient(e.Contact.DevicePosition) ?? new();
+    }
 
+    // Move the window as the title bar is panned
+    void _dragWindow_PanMoved(object? s, PanEventArgs e)
+    {
         var position = View.Parent?.toClient(e.Contact.DevicePosition) ?? new();
         var diff = position - _mousePosition;
         _mousePosition = position;
@@ -76,23 +78,14 @@ public partial class Window : Controllable
         View.SetProperty(Panel.Offset, View.GetProperty(Panel.Offset).Or(0) + diff);
     }
 
-    void _resizeHandle_PreviewPointerDown(object? s, PointerEvent e)
+    // Resize the window as the handle is panned
+    void _resizeHandle_PanMoved(object? s, PanEventArgs e)
     {
-        _mouseDown = true;
-        _mousePosition = View.Parent?.toClient(e.Contact.DevicePosition) ?? new();
-        _resizeHandle.View.SetCapture(e.Contact.Key, true);
-    }
-
-    void _resizeHandle_PreviewPointerMove(object? s, PointerEvent e)
-    {
-        if (!_mouseDown)
-            return;
-
         var position = View.Parent?.toClient(e.Contact.DevicePosition) ?? new();
         var diff = position - _mousePosition;
         _mousePosition = position;
 
-        // Update window offset, clamped SizeMin..SizeMaz
+        // Update window offset
         var size = View.GetProperty(Panel.SizeRequest).Or(View.Size) + diff;
         var sizeMax = View.GetProperty(Panel.SizeMax).Or(double.PositiveInfinity);
         var sizeMin = View.GetProperty(Panel.SizeMin).Or(0).MaxZero;

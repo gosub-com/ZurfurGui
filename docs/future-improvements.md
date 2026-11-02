@@ -213,21 +213,22 @@ at compile time.
 The current loader explicitly separates control-owned template content from content supplied by a parent:
 
 ```text
-LoadTemplateContent
-    -> builds the control's internal ZUI-defined structure
+template content
+    -> the control's internal ZUI-defined structure, added to the main view
 
-LoadParentContent
-    -> adds parent-supplied content to ContentHost
+parent content
+    -> content supplied by the parent, added to ContentHost
 ```
 
-This is similar in concept to template and content-presenter systems in other GUI frameworks. The current API is a
-good minimal contract for generated controls, but it should be formalized before more template-aware controls are added.
+This is similar in concept to template and content-presenter systems in other GUI frameworks. The loader
+performs both steps itself, and `ContentHost` is the only control-facing hook. If a control ever needs to
+customize either step, add a public hook with a default implementation at that time, and formalize this
+contract before more template-aware controls are added.
 
 Document and test:
 
-- The ordering of `LoadTemplateContent` and `LoadParentContent`.
+- The ordering of template content and parent content loading.
 - The ownership distinction between template content and parent content.
-- The default behavior of both lifecycle methods.
 - The role of `ContentHost` as the destination for parent content.
 - Whether parent content can be replaced after initial construction.
 - Whether content hosts remain valid when a control is detached and reattached.

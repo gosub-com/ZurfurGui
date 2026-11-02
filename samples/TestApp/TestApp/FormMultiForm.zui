@@ -13,21 +13,27 @@
             $content: [
                 {
                     $controller: "ControlCard",
-                    title: "Attack of the PogaÄar",
-                    description: "A story about PogaÄar, the champion bicyclist!",
-                    byLine: "The Crowd"
+                    title: "Attack of the Pogačar",
+                    description: "A story about Pogačar, the champion bicyclist!",
+                    byLine: "By the Pogačar crowd"
                 },
                 {
                     $controller: "ControlCard",
                     title: "Attack of the Vingegaard",
                     description: "A story about Vingegaard, the champion bicyclist!",
-                    byLine: "The Crowd"
+                    byLine: "By the Vingegaard crowd"
                 },
                 {
                     $controller: "MyCard",
-                    title: "Attack of the Vingegaard",
-                    description: "A story about Vingegaard, the champion bicyclist!",
-                    byLine: "The Crowd"
+                    title: "Attack of the Cavendish",
+                    description: "A story about Cavendish, the champion bicyclist!",
+                    byLine: "By the Cavendish crowd",
+
+                    // TBD: This does not work
+                    card1: {
+                        description: "Card 1 description!",
+                        byLine: "Card 1 byline!"
+                    }
                 },
                 {
                     $controller: "Panel",

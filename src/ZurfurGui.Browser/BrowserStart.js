@@ -20,6 +20,14 @@ globalThis.ZurfurGui.canvasHasFocus = function (canvas) {
 }
 
 globalThis.ZurfurGui.observeCanvasInput = function (canvas, callBack) {
+    // The GUI does its own touch panning, so stop the browser from turning touch drags into native
+    // scrolling or zooming (which would end the contact with a pointercancel).  Mouse wheel and
+    // CTRL-wheel are not affected.
+    canvas.style.touchAction = "none";
+
+    // The GUI uses the right mouse button (for example to pan), so don't pop up the browser menu.
+    canvas.addEventListener("contextmenu", function (event) { event.preventDefault(); });
+
     for (const et of ["pointerenter", "pointermove", "pointerleave", "pointerdown", "pointerup",
         "pointercancel", "wheel", "keydown", "keyup", "keypress"]) {
         canvas.addEventListener(et, function (event) {

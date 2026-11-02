@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -12,7 +12,7 @@ namespace ZurfurGui.Platform;
 /// <summary>
 /// Low level render commands used by OsRenderBuffer.
 /// </summary>
-public enum OsRenderCommand : ushort
+internal enum OsRenderCommand : ushort
 {
     SetStrokeColorWidth = 3,
     SetFillColor = 4,
@@ -36,7 +36,7 @@ public enum OsRenderCommand : ushort
 /// for long periods of time.  Later, when Composite is called, they are marshaled to the platform
 /// and stored as LRU indices.
 /// </summary>
-public class OsRenderBuffer
+internal class OsRenderBuffer
 {
     int _commandsLength = 0;
     double[] _commands = Array.Empty<double>();

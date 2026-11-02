@@ -22,7 +22,7 @@ public class MeasureContext
     record struct FontKey(string FontName, double FontSize, string Text);
     record struct MetricsKey(string FontName, double FontSize);
 
-    public MeasureContext(OsContext context)
+    internal MeasureContext(OsContext context)
     {
         _context = context; 
     }

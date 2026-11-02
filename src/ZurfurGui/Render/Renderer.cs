@@ -9,7 +9,7 @@ using ZurfurGui.Windows;
 
 namespace ZurfurGui.Render;
 
-public class Renderer
+internal class Renderer
 {
     private static readonly bool DRAW_DIRTY_RECT = false;
     private static readonly bool DIRTY_RECT_ENABLE = true;

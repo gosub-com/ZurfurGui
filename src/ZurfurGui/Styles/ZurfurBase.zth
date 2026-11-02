@@ -7,7 +7,9 @@
     opacity.disabled: "0.38",
 
     input.long-click.duration: "00:00:00.5",
-    input.long-click.movement-tolerance: "8",
+    // Movement slop (device pixels) shared by long click and pan.  TBD: Scale by DPI.
+    input.slop.mouse: "4",
+    input.slop.touch: "8",
 
     // Number of scroll steps (ScrollViewer.scrollSize each) moved by one mouse wheel detent
     scroll.wheel.steps: "3",

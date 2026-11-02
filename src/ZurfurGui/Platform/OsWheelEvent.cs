@@ -7,7 +7,7 @@ namespace ZurfurGui.Platform;
 /// A platform wheel event. Deltas must already be converted to the browser's pixel-mode convention
 /// (see <see cref="WheelEvent"/>), with positive Y scrolling down and positive X scrolling right.
 /// </summary>
-public record class OsWheelEvent(Point DevicePosition, double DeltaX, double DeltaY)
+internal sealed record class OsWheelEvent(Point DevicePosition, double DeltaX, double DeltaY)
 {
     public PointerButtons Buttons { get; init; }
     public PointerModifiers Modifiers { get; init; }

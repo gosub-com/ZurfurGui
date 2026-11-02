@@ -1,10 +1,11 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using ZurfurGui.Base;
 using ZurfurGui.Controls;
+using ZurfurGui.Generated;
 using ZurfurGui.Layout;
 using ZurfurGui.Property;
 using ZurfurGui.Property.Serializers;
@@ -31,30 +32,26 @@ namespace ZurfurGui;
 [JsonSerializable(typeof(DockEnum))]
 [JsonSerializable(typeof(Color))]
 [JsonSerializable(typeof(Orientation))]
-public partial class ZurfurJsonContext : JsonSerializerContext { }
+internal partial class ZurfurJsonContext : JsonSerializerContext { }
 
 
 /// <summary>
-/// Load and build controls from JSON
+/// Load and build controls from JSON.
+///
+/// Only the JSON serialization members are public, because applications need them to serialize
+/// their own data.  Everything else is internal.  Generated code in other assemblies reaches the
+/// loader through the public, generated-code-only <see cref="ZuiRuntime"/>, and the platform hosts
+/// reach <see cref="Init"/> through InternalsVisibleTo.
 /// </summary>
 public static class Loader
 {
-    public readonly record struct ControlCreationContext(
-        string TypeName,
-        string TypeNamespace,
-        TextLines TypeUses)
-    {
-        public static ControlCreationContext From(Controllable control)
-            => new(control.TypeName, control.TypeNamespace, control.TypeUses);
-    }
-
-    record struct ControlEntry(Type Type, Func<Controllable> Factory);
+    record struct ControlEntry(Type Type, Func<ZuiControllable> Factory);
 
     static Dictionary<string, ControlEntry> s_controllers = new();
     static Dictionary<string, Func<Layoutable?>> s_layouts = new();
 
-    // Maps concrete generated data type → item controller factory.
-    static Dictionary<Type, Func<object, Controllable>> s_dataControllers = new();
+    // Maps concrete generated data type ? item controller factory.
+    static Dictionary<Type, Func<object, ZuiControllable>> s_dataControllers = new();
 
     static readonly List<IJsonTypeInfoResolver> s_jsonTypeInfoResolvers = new();
     static JsonSerializerOptions? s_jsonSerializerOptions;
@@ -104,7 +101,7 @@ public static class Loader
     /// <summary>
     /// Initialize the library with the built in controls, etc.
     /// </summary>
-    public static AppWindow Init(Action<AppWindow> mainAppEntry)
+    internal static AppWindow Init(Action<AppWindow> mainAppEntry)
     {
         RuntimeHelpers.RunClassConstructor(typeof(LayoutRow).TypeHandle);
         RuntimeHelpers.RunClassConstructor(typeof(LayoutDock).TypeHandle);
@@ -126,7 +123,7 @@ public static class Loader
     /// Load a JSON file into the target object. This is the function that gets
     /// called from the InitializeControl function in the generated code.
     /// </summary>
-    public static void Load(Controllable target, string json)
+    internal static void Load(ZuiControllable target, string json)
     {
         RuntimeHelpers.RunClassConstructor(typeof(Panel).TypeHandle);
 
@@ -158,20 +155,20 @@ public static class Loader
     }
 
     private static void BuildTemplateContent(
-        Controllable control,
+        ZuiControllable control,
         Properties properties,
         ControlCreationContext context)
     {
-        // The properties become overrides, but the control's own content is handled by the template hook.
+        // The properties become overrides, and the control's own content is added to its main view.
         var content = properties.Get(Panel.Content);
         properties.Remove(Panel.Content);
         control.View.MergeOverwrite(properties);
         SetLayout(properties.Get(Panel.Layout) ?? "", control.View);
-        control.LoadTemplateContent(content, context);
+        AddChildren(control.View, content, context);
     }
 
     private static void BuildParentContent(
-        Controllable control,
+        ZuiControllable control,
         Properties properties,
         ControlCreationContext context)
     {
@@ -187,7 +184,16 @@ public static class Loader
         // The layout arranges parent-supplied content; applying it to the root could replace a control's template layout.
         SetLayout(layout, control.ContentHost);
 
-        control.LoadParentContent(content, context);
+        // Content supplied by the parent goes to the control's content host (the main view by default)
+        AddChildren(control.ContentHost, content, context);
+    }
+
+    // Creates a control for each property set and adds its view to the host
+    private static void AddChildren(View host, Properties[]? contents, ControlCreationContext context)
+    {
+        if (contents != null)
+            foreach (var property in contents)
+                host.AddChild(CreateControl(property, context).View);
     }
 
     /// <summary>
@@ -198,11 +204,12 @@ public static class Loader
     /// Children are processed first so parent bindings can override child defaults.
     /// Should be called after DataContext is initialized.
     /// </summary>
-    private static void ApplyDataProperties(Controllable control)
+    private static void ApplyDataProperties(ZuiControllable control)
     {
         // Recursively apply to all child controls
         foreach (var childView in control.View.Children)
-            ApplyDataProperties(childView.Controller);
+            if (childView.Controller is ZuiControllable childControl)
+                ApplyDataProperties(childControl);
 
         // Apply JSON properties to this control (after children)
         var dataProperties = control.View._properties.Get(Panel.DataProperties);
@@ -295,7 +302,7 @@ public static class Loader
     /// Register a control by name with its type and factory.
     /// The factory is used by CreateControl.
     /// </summary>
-    public static void RegisterControl(string name, Type type, Func<Controllable> factory)
+    internal static void RegisterControl(string name, Type type, Func<ZuiControllable> factory)
     {
         if (s_controllers.TryGetValue(name, out var existing))
         {
@@ -303,8 +310,8 @@ public static class Loader
                 return; // Already registered
             throw new ArgumentException($"Control '{name}' is already registered for type '{existing.Type.Name}'");
         }
-        if (!typeof(Controllable).IsAssignableFrom(type))
-            throw new ArgumentException($"Type '{type.Name}' does not implement the Controllable interface.");
+        if (!typeof(ZuiControllable).IsAssignableFrom(type))
+            throw new ArgumentException($"Type '{type.Name}' does not implement the ZuiControllable interface.");
 
         s_controllers[name] = new ControlEntry(type, factory);
     }
@@ -321,9 +328,9 @@ public static class Loader
     /// <param name="dataType">The concrete data-item type used as the registry key.</param>
     /// <param name="factory">
     /// A mapping from the data item instance to its controller. The lambda receives the data item as
-    /// <see cref="object"/> and returns the corresponding <see cref="Controllable"/>.
+    /// <see cref="object"/> and returns the corresponding <see cref="ZuiControllable"/>.
     /// </param>
-    public static void RegisterDataController(Type dataType, Func<object, Controllable> factory)
+    internal static void RegisterDataController(Type dataType, Func<object, ZuiControllable> factory)
     {
         if (s_dataControllers.ContainsKey(dataType))
             throw new ArgumentException($"Data controller for '{dataType.Name}' is already registered");
@@ -333,7 +340,7 @@ public static class Loader
     /// <summary>
     /// Get the factory for the item controller that handles the given concrete item data type.
     /// </summary>
-    public static Func<object, Controllable> GetDataControllerFactory(Type dataType)
+    internal static Func<object, ZuiControllable> GetDataControllerFactory(Type dataType)
     {
         if (s_dataControllers.TryGetValue(dataType, out var factory))
             return factory;
@@ -345,7 +352,7 @@ public static class Loader
     /// Creates the controller registered for a concrete data-item instance.
     /// This method is intended to be called by controls such as <c>ComboBox&lt;Item&gt;</c> when they need to render
     /// an item. The loader uses the runtime type of <paramref name="itemData"/> to find the factory previously
-    /// registered by <see cref="RegisterDataController(Type, Func{object, Controllable})"/>, passes the same data
+    /// registered by <see cref="RegisterDataController(Type, Func{object, ZuiControllable})"/>, passes the same data
     /// item to that factory, and returns the resulting controller.
     /// </summary>
     /// <param name="itemData">
@@ -353,12 +360,12 @@ public static class Loader
     /// values are preserved when the factory assigns it to the controller's <c>DataContext</c>.
     /// </param>
     /// <returns>A controller configured to render <paramref name="itemData"/>.</returns>
-    public static Controllable CreateDataController(object itemData)
+    internal static ZuiControllable CreateDataController(object itemData)
     {
         return GetDataControllerFactory(itemData.GetType())(itemData);
     }
 
-    public static void RegisterLayout(string name, Func<Layoutable?> layoutFactory)
+    internal static void RegisterLayout(string name, Func<Layoutable?> layoutFactory)
     {
         if (s_layouts.ContainsKey(name))
             throw new ArgumentException($"Layout '{name}' is already registered");
@@ -369,12 +376,12 @@ public static class Loader
     /// Create a control from the given properties with a parent/type context.
     /// (Context is not yet used for controller resolution; it is threaded through for future use.)
     /// </summary>
-    public static Controllable CreateControl(Properties properties, ControlCreationContext context)
+    internal static ZuiControllable CreateControl(Properties properties, ControlCreationContext context)
     {
         // Create the control
         var controller = properties.Get(Panel.Controller) ?? "";
         var entry = FindControllerEntry(controller, context);
-        Controllable control;
+        ZuiControllable control;
         try
         {
             control = entry.Factory();

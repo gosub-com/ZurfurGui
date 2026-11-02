@@ -61,13 +61,13 @@ internal static class ZuiEmitController
             // Generic controllers use a concrete data type parameter with a handwritten constraint.
             var constraintInterface = ZuiEmit.GetConstraintType(data.TypeParamConstraint);
             sb.Append($"public sealed {partialKeyword}class {data.FileName}<{data.TypeParam}>"
-                + " : global::ZurfurGui.Base.Controllable\r\n");
+                + " : global::ZurfurGui.Generated.ZuiControllable\r\n");
             sb.Append($"    where {data.TypeParam} : {constraintInterface}\r\n{{\r\n");
         }
         else
         {
             sb.Append($"public sealed {partialKeyword}class {data.FileName}"
-                + " : global::ZurfurGui.Base.Controllable\r\n{\r\n");
+                + " : global::ZurfurGui.Generated.ZuiControllable\r\n{\r\n");
         }
 
         // Add class variables
@@ -150,7 +150,7 @@ internal static class ZuiEmitController
         sb.AppendIndentedLine(1, "void InitializeControl()");
         sb.AppendIndentedLine(1, "{");
         sb.AppendIndentedLine(2, "View = new(this);");
-        sb.AppendIndentedLine(2, "global::ZurfurGui.Loader.Load(this, _zuiJsonContent);");
+        sb.AppendIndentedLine(2, "global::ZurfurGui.Generated.ZuiRuntime.Load(this, _zuiJsonContent);");
         sb.Append("\r\n");
 
         // Add InitializeControl code to initialize named controls

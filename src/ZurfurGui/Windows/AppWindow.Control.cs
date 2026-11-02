@@ -24,7 +24,7 @@ public partial class AppWindow : Controllable, Renderable
 {
     readonly bool DRAW_TEST_PATTERN = false;
 
-    public Renderer? Renderer { get; private set; }
+    internal Renderer? Renderer { get; private set; }
 
     /// <summary>
     /// Gets the latest data for currently tracked pointer contacts.
@@ -43,6 +43,14 @@ public partial class AppWindow : Controllable, Renderable
     /// </summary>
     public event EventHandler? PreRenderFrame;
     internal void CallPreRenderFrame() => PreRenderFrame?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>
+    /// Gets the movement slop in device pixels for a pointer device: how far a contact may move from
+    /// where it went down and still be a stationary press.  Touch uses a larger value than mouse and
+    /// pen.  TBD: This is not scaled by DPI yet.
+    /// </summary>
+    public double GetMovementSlop(PointerDeviceKind device) =>
+        device == PointerDeviceKind.Touch ? Properties.MovementSlopTouch : Properties.MovementSlopMouse;
 
     public AppWindow()
     {

@@ -13,4 +13,9 @@
     <AdditionalFiles Include="**\*.zth" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="ZurfurGui.WinForms" />
+    <InternalsVisibleTo Include="ZurfurGui.Browser" />
+  </ItemGroup>
+
 </Project>

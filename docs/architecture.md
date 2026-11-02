@@ -53,6 +53,74 @@ between data and controls, not between a controller and the data contract it ren
 This resembles MVVM's visual tree plus ViewModel graph, but MDV does not assume a 1:1 tree shape. The
 data side should not reach into controls; integration should happen through declared bindings.
 
+## Visibility and the platform boundary
+
+Application code (for example `TestApp`) should see only the GUI API: controls, views, properties,
+input events, and the loader entry points. The pieces that connect the library to an operating
+system or browser are an implementation detail shared by the library and its platform hosts.
+
+Hosts are the platform projects: `ZurfurGui.WinForms` and `ZurfurGui.Browser`. Each is referenced
+only by the platform stub of an application (for example `TestApp.Windows` and `TestApp.Browser`),
+never by the shared application project (`TestApp`).
+
+### What is hidden
+
+These types are `internal` to `ZurfurGui` and are not part of the public API:
+
+- `Renderer`, including its constructor, `RenderFrame`, and statistics. `AppWindow.Renderer` is
+  internal too.
+- `OsWindow`, `OsCanvas`, and `OsContext`, the interfaces a host implements.
+- `OsPointerEvent` and `OsWheelEvent`, the raw input events a host sends to the library. Their
+  `Type` is a string that matches the platform's own event names, so a new platform can pass its
+  names straight through. They are converted to the public `PointerEvent` and `WheelEvent` inside
+  the library.
+- `OsRenderBuffer` and `OsRenderCommand`, the encoded drawing commands a host plays back in
+  `OsContext.Present`.
+- The `MeasureContext` constructor. The `MeasureContext` class itself is public because any
+  control may measure text, but only the renderer creates one.
+
+### What is visible
+
+Everything a control or application uses stays public: `View`, `Controllable`, `AppWindow`,
+`MeasureContext` (its members), `RenderContext`, the pointer, wheel, and gesture types, and the
+base types such as `Point`, `Size`, `Rect`, and `Color`.
+
+### How it works
+
+- `ZurfurGui.csproj` declares `InternalsVisibleTo` for `ZurfurGui.WinForms` and
+  `ZurfurGui.Browser`. Those two assemblies can use the internal types. No other assembly can.
+- The host classes that implement the `Os*` interfaces (for example `WinCanvas` and
+  `BrowserCanvas`) must be `internal`, because a public type cannot implement an internal
+  interface.
+- A public member must never expose an internal type. The compiler enforces this (CS0051 and
+  related errors), so the build catches any leak.
+- Hosts start the library by creating a `Renderer` and calling `RenderFrame` from the platform's
+  frame timer. See `ZurfurGui.WinForms/FormZurfurGui.cs` and `ZurfurGui.Browser/BrowserStart.cs`.
+
+### Generated-code contract
+
+Generated code is compiled into the application's assembly, so it cannot use `InternalsVisibleTo`.
+Its hooks are public but isolated and hidden from IntelliSense:
+
+- `Controllable` is the application-facing interface: `View`, `ContentHost`, `SetDataProperty`,
+  `OnAttach`, and `OnDetach`.
+- `ZurfurGui.Generated.ZuiControllable` extends `Controllable` with the members only generated code
+  implements (`TypeName`, `TypeNamespace`, `TypeUses`, `ZuiPropertyInfo`).
+- `ZurfurGui.Generated.ZuiRuntime` has the loader calls generated code makes (`Load`,
+  `RegisterControl`, `RegisterDataController`).
+- `Loader` keeps only the JSON serialization members public (`JsonSerializerOptions` and
+  `RegisterJsonTypeInfoResolver`). `Init`, `CreateControl`, and the rest are internal; the platform
+  hosts reach `Init` through `InternalsVisibleTo`.
+
+The generator and library are versioned together. See [Code generation](code-generation.md).
+
+### Adding a platform
+
+A new platform must be added to the `InternalsVisibleTo` list in `ZurfurGui.csproj` and must
+implement `OsWindow`, `OsCanvas`, and `OsContext`. Third-party platforms outside this repo are not
+supported yet. Supporting them would need a separate public platform project. See the A1 to A3
+items in [cleanup.md](cleanup.md) and [Future improvements](future-improvements.md).
+
 ## Documentation map
 
 Each fact has one owning document. Other documents link to it rather than repeating it.
@@ -105,8 +173,8 @@ Paths are relative to `src/`. For the generator source files, see the source map
 
 - `ZurfurGui/Loader.cs`: runtime loader, `RegisterControl`, `Load`, `ApplyDataProperties`, concrete
   data-controller registration, and runtime concrete-data factory lookup.
-- `ZurfurGui/Base/Controllable.cs`: the controller interface, including `ContentHost`,
-  `LoadTemplateContent`, and `LoadParentContent`.
+- `ZurfurGui/Base/Controllable.cs`: the application-facing controller interface, including
+  `ContentHost`. `ZurfurGui/Generated` has the generated-code-only `ZuiControllable` and `ZuiRuntime`.
 - `ZurfurGui/Base/View.cs`: the view, property storage, style lookup, and property-key owner checks.
 - `ZurfurGui/Styles`: Style and theme property resolution and caching, plus the built-in `.zth`
   themes.

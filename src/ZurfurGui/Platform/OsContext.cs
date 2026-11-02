@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using ZurfurGui.Base;
@@ -8,7 +8,7 @@ namespace ZurfurGui.Platform;
 /// <summary>
 /// Platform independent drawing context.  
 /// </summary>
-public interface OsContext
+internal interface OsContext
 {
     /// <summary>
     /// Presents the render buffer to the screen.
