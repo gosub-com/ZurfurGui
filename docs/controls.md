@@ -190,26 +190,9 @@ public partial class MainView
 `value` property is data, so application code can read or change it through the generated `DataContext`.
 
 Scrollbars are commonly managed by `ScrollViewer` rather than created directly. Direct scrollbar usage
-is useful when an application needs to provide its own scrolling behavior.
-
-Standalone scrollbars use their expanded appearance by default. Set `expandOnHover` to `true` to make the scrollbar
-use its compact appearance until the pointer enters it:
-
-```csharp
-scrollBar.DataContext.ExpandOnHover = true;
-```
-
-When `expandOnHover` is `true`, the scrollbar expands while hovered, pressed, or dragged. When it is
-`false`, it remains expanded regardless of the pointer position. Pressed and dragging behavior is
-independent of the property.
-
-The `thumbThickness` property controls the expanded thumb thickness. `thumbRestingThickness` controls
-the compact thumb thickness, and `thumbEdgeInset` controls the compact thumb's distance from the outer
-edge.
-
-Themes can use the runtime `ScrollBar.isExpanded` condition to select colors for the effective visual
-state. This condition reflects hover, press, drag, and `expandOnHover` behavior rather than only the
-physical pointer position.
+is useful when an application needs to provide its own scrolling behavior. Set `expandOnHover` to
+`true` to use the compact appearance until the scrollbar is hovered, pressed, or dragged. For automatic
+scrollbar behavior, see [ScrollViewer](scroll-viewer.md).
 
 ### ScrollViewer
 
@@ -222,12 +205,19 @@ var offset = scrollViewer.ScrollOffset;
 scrollViewer.ScrollOffset = new Point(offset.X, offset.Y + 8);
 ```
 
-For layout, scrollbar visibility, range behavior, and detailed usage, see [ScrollViewer](scroll-viewer.md).
+For layout, scrollbar visibility, range behavior, and detailed usage, see
+[ScrollViewer](scroll-viewer.md).
+
+### ListBox
+
+`ListBox<Item>` displays a vertically scrolling list with optional single or multiple selection. Its
+items are data objects, and `SelectionChanged` reports changes to the selected items. For item types,
+selection APIs, runtime collection updates, and custom items, see [ListBox](list-box.md).
 
 ### ComboBox
 
-`ComboBox<Item>` displays a single-selection dropdown. Populate its generated `DataContext.Items` collection with
-item data objects and set `DataContext.SelectedIndex` to select an item.
+`ComboBox<Item>` displays a single-selection dropdown. Populate its generated `DataContext.Items`
+collection with item data objects and set `DataContext.SelectedIndex` to select an item.
 
 ```csharp
 _themeComboBox.DataContext.Items.Add(
@@ -244,10 +234,7 @@ For generic item requirements, item renderers, and detailed usage, see [ComboBox
 
 ## Generated controller access
 
-A `$name` in a ZUI file creates a named control field on the generated controller. User code can use that
-field from the matching `.Control.cs` partial class. Data declared in `$data` is available through the
-control's generated `DataContext` and reports changes through `INotifyPropertyChanged`.
-
-For example, a named ComboBox can be populated from its containing view's code-behind, while a named
-Button can be handled through its `Click` event. This keeps control layout in ZUI and application
-behavior in C#.
+A `$name` in a ZUI file creates a named control field on the generated controller, available to the
+matching `.Control.cs` partial class. Data declared in `$data` is available through the generated
+`DataContext`. See [Architecture](architecture.md) and [Property Binding](property-binding.md) for the
+generated data model and change notifications.

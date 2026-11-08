@@ -66,6 +66,10 @@ internal class Renderer
     int _second;
 
     double _devicePixelRatio = 0;
+
+    // The device pixel ratio last applied to the app window (zero before the first frame)
+    internal double DevicePixelRatio => _devicePixelRatio;
+
     Size _mainWindowSize = new();
 
 
@@ -127,8 +131,9 @@ internal class Renderer
         if (_stats.FrameCount < 3)
             dirtyRect = new Rect(new Point(0, 0), _canvas.DeviceSize);
 
-        InvalidateClipChanges(appView, appView.toDevice(appView.ContentRect));
+        InvalidateClientClipChanges(appView, appView.toDevice(appView.ContentRect));
         RenderView(appView, appView.toDevice(appView.ContentRect), ref dirtyRect);
+        ClearFlagsTree(appView);
 
         // Composite
         var compositeStartTime = timer.Elapsed.TotalMilliseconds;
@@ -210,7 +215,7 @@ internal class Renderer
                 InvalidateFlagsDown(child, nukeFlags);
     }
 
-    void InvalidateClipChanges(View view, Rect deviceClip)
+    void InvalidateClientClipChanges(View view, Rect deviceClip)
     {
         if (!view.IsVisible)
             return;
@@ -239,8 +244,26 @@ internal class Renderer
         }
 
         foreach (var child in view.Children)
-            InvalidateClipChanges(child, deviceClip);
+            InvalidateClientClipChanges(child, deviceClip);
     }
+
+
+    // Clear the ViewFlags tree.  Leave invisible views unchanged, which effectively
+    // cancels future invalidations of invisible views and their subtrees.
+    void ClearFlagsTree(View view)
+    {
+        if (!view.IsVisible)
+            return;
+
+        view.Flags = ViewFlags.None;
+        if (view.FlagsChild == ViewFlags.None)
+            return;
+
+        view.FlagsChild = ViewFlags.None;
+        foreach (var child in view.Children)
+            ClearFlagsTree(child);
+    }
+
 
     /// <summary>
     /// Render the view tree into the internal view's cache buffers.
@@ -339,18 +362,18 @@ internal class Renderer
     /// </summary>
     void CompositeAppWindow(Rect dirtyRect)
     {
+        if (!DIRTY_RECT_ENABLE)
+            dirtyRect = new Rect(new Point(0, 0), _canvas.DeviceSize);
+
         if (dirtyRect.IsEmpty)
             return;
 
         _presentBuffer.Clear();
 
-        if (DIRTY_RECT_ENABLE)
-        {
-            dirtyRect = dirtyRect.Inflate(1);
-            dirtyRect = new Rect(Math.Floor(dirtyRect.X), Math.Floor(dirtyRect.Y),
-                Math.Ceiling(dirtyRect.Width), Math.Ceiling(dirtyRect.Height));
-            _presentBuffer.Clip(dirtyRect);
-        }
+        dirtyRect = dirtyRect.Inflate(1);
+        dirtyRect = new Rect(Math.Floor(dirtyRect.X), Math.Floor(dirtyRect.Y),
+            Math.Ceiling(dirtyRect.Width), Math.Ceiling(dirtyRect.Height));
+        _presentBuffer.Clip(dirtyRect);
 
         try
         {
@@ -359,8 +382,7 @@ internal class Renderer
         }
         finally
         {
-            if (DIRTY_RECT_ENABLE)
-                _presentBuffer.PopClip();
+            _presentBuffer.PopClip();
         }
     }
 
@@ -378,28 +400,24 @@ internal class Renderer
         bool doClip = false;
         try
         {
-            view.Flags = ViewFlags.None;
-            view.FlagsChild = ViewFlags.None;
-
             // Clip the content rect if requested
             var presentBufferIndex = _presentBuffer.CommandsLength;
             if (view.GetProperty(Panel.Clip))
             {
-                doClip = true;
+                // Quick exit if the view clipping region does not intersect the dirty rect
                 deviceClip = deviceClip.Intersect(view.toDevice(view.ContentRect));
+                if (deviceClip.Intersect(dirtyRect).IsEmpty)
+                    return;
+
+                doClip = true;
                 _presentBuffer.Clip(deviceClip);
             }
 
             // Do not composite if outside clipping region
-            bool isFullyClipped = false;
-            var drawDeviceRect = deviceClip.Intersect(view.toDevice(view.VisualBounds));
-            if (drawDeviceRect.IsEmpty
-                    || DIRTY_RECT_ENABLE && drawDeviceRect.Intersect(dirtyRect).IsEmpty)
-                isFullyClipped = true;
-
             // Composite background and control rendered content
+            var fullyClipped = deviceClip.Intersect(view.toDevice(view.VisualBounds)).Intersect(dirtyRect).IsEmpty;
             var presented = false;
-            if (!isFullyClipped 
+            if (!fullyClipped 
                 && (view._renderBuffer.CommandsLength > 0 || view._renderBufferBackground.CommandsLength > 0))
             {
                 presented = true;
@@ -407,7 +425,7 @@ internal class Renderer
                 _presentBuffer.Composite(view._renderBuffer, _stringCache, view.Origin, view.Scale);
             }
 
-            // Composite children
+            // Composite children            
             foreach (var child in view.Children)
                 CompositeView(child, deviceClip, dirtyRect);
 

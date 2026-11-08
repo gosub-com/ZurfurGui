@@ -255,8 +255,8 @@ scrollViewer.PanOptions.MouseButtons = PointerButtons.Left;    // Left button pa
 scrollViewer.PanOptions.Flick = false;                         // Stop when released
 ```
 
-`Slop` is in device pixels and defaults to the app window's movement slop for the device (it is not yet
-scaled by DPI). The viewer manages `PanOptions.Axes` itself. Future work: axis locking for diagonal drags,
+`Slop` is in layout units (scaled by the DPR) and defaults to the app window's movement slop for the
+device.
 overscroll, a delayed pressed visual for children inside a scrolling viewer, and rejecting a touch click
 that moved past the slop.
 

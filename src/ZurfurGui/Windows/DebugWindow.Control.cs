@@ -85,7 +85,7 @@ public partial class DebugWindow : Controllable
         TextLines text = [
             $"{stats.FrameCount}: {_fps}, ms={_totalMs:F1} ({_measureMs:F2}, {_renderMs:F2}, {_compositeMs:F2}, {_presentMs:F2})",
             $"Measures={rStatsDiff.MeasureCount}, Renders={rStatsDiff.RenderCount}, Composites={rStatsDiff.CompositeCount}", 
-            $"Buffer={stats.PresentBufferLength}",
+            $"Buffer={stats.PresentBufferLength}, DPR={_window.DevicePixelRatio:F2}",
             //$"DPR={_window.DevicePixelRatio:F2}, CDS={canvasDeviceSize:F2}, CSS={canvasStyleSize:F2}",
             //$"WIS={_window.InnerSize}, DPS={_canvas.DevicePixelSize?.ToString() ?? "?"}",
             //$"Screen size: ({_window.ScreenSize}), focus={_canvas.HasFocus}",

@@ -210,7 +210,7 @@ contact. A release before that rejects, so a click can still win.
 
 - `PanStarted` reports `SlopDelta`, the movement from the down point to where the pan started. Moves after
   that arrive in `PanMoved` as `Delta`, relative to the start, so the content does not jump unless the
-  owner chooses to apply `SlopDelta`. All distances are device pixels.
+  All distances are device pixels except slop, which is in layout units scaled by the DPR.
 - `PanEnded` reports the release `Velocity` (device pixels per second), or `Cancelled`. Velocity is
   estimated by a least-squares fit over the last 100 ms of positions from a ring buffer, using event
   timestamps. It is zero for a contact that was stationary before release, for the mouse, when `Flick` is
@@ -223,5 +223,5 @@ contact. A release before that rejects, so a click can still win.
 - `CatchOnDown` lets the owner say that earlier motion (a flick) is still running. The pan then accepts
   immediately on pointer-down, so the touch stops the motion and does not also click.
 
-Slop is not yet scaled by DPI (to be corrected later). Axis locking for diagonal drags is also future work.
+Slop is in layout units and scaled by the DPR. Axis
 

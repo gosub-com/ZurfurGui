@@ -1,0 +1,18 @@
+// A row inside a ListBox.  It hosts one item control and draws the hover, pressed, and selected
+// background.  The ListBox creates these, they are not meant to be used directly.
+{
+    $controller: "ListBoxRow",
+    $namespace: "ZurfurGui.Controls",
+    $backgroundColor: "${color.listbox.item.background}",
+    $hitTest: "Always",
+    $data: {
+        // True when the row is selected.  The theme uses it as the condition ListBoxRow.isSelected.
+        isSelected: {
+            type: "Bool",
+            bind: "property",
+            default: false,
+            flags: "style,render"
+        }
+    },
+    $content: []
+}

@@ -292,10 +292,10 @@ recognizer, and release outside the bounds cancel the click.
 The recognizer can also receive an optional long-click callback. Its threshold and movement tolerance
 are configured on `AppWindow` as `LongClickDuration` (`TimeSpan`) and the shared movement slop,
 `MovementSlopMouse` and `MovementSlopTouch`, which pan also uses; the long click uses the touch value for
-touch contacts and the mouse value otherwise. Defaults are 500 milliseconds, 4 device pixels for mouse and
-pen, and 8 device pixels for touch, supplied by the `input.long-click.duration`, `input.slop.mouse`, and
-`input.slop.touch` theme variables. Slop is measured in device pixels and is not yet scaled by DPI (to be
-corrected later). The duration theme value uses the standard JSON `TimeSpan` format; for example,
+4 layout units for mouse and
+pen, and 8 layout units for touch,
+Slop is measured in layout units and is multiplied by the
+window's device pixel ratio (which includes zoom) to get device pixels.
 `"00:00:00.5"` represents 500 milliseconds.
 The duration starts on pointer-down. Moving farther than the tolerance cancels long-click eligibility,
 but leaves the ordinary click behavior unchanged. The callback receives the latest contact in

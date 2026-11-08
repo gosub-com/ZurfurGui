@@ -1,0 +1,20 @@
+// This is a list box item that shows simple text.
+{
+    $controller: "ListBoxItemText",
+    $namespace: "ZurfurGui.Controls",
+    $implements: "IListBoxItem",
+    $padding: "${spacing.horizontal.medium | spacing.vertical.small}",
+    $data: {
+        text: {
+            type: "TextLines",
+            bind: "data:_itemText.text"
+        }
+    },
+    $content: [
+        {
+            $name: "_itemText",
+            $controller: "TextView",
+            TextView.color: "${color.text.primary}"
+        }
+    ]
+}

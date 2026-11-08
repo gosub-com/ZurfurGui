@@ -1,0 +1,91 @@
+// Manual test form for ListBox: one list per selection mode plus a list with a custom item.
+{
+    $controller: "FormTestListBox",
+    $namespace: "TestApp.Test",
+    $use: [ "TestApp.Test.Controls" ],
+    $layout: "Column",
+    $padding: "left:16,top:16,right:16,bottom:16",
+    $content: [
+        {
+            $layout: "Row",
+            $content: [
+                {
+                    $name: "buttonAddStart",
+                    $controller: "Button",
+                    text: [ "Add at start" ]
+                },
+                {
+                    $name: "buttonAddEnd",
+                    $controller: "Button",
+                    text: [ "Add at end" ]
+                },
+                {
+                    $name: "buttonDeleteSelected",
+                    $controller: "Button",
+                    text: [ "Delete selected" ]
+                }
+            ]
+        },
+        {
+            $layout: "Row",
+            $padding: "left:0,top:12,right:0,bottom:0",
+            $content: [
+                {
+                    $layout: "Column",
+                    $padding: "left:0,top:0,right:12,bottom:0",
+                    $content: [
+                        { $controller: "TextView", text: [ "None" ] },
+                        {
+                            $name: "_listNone",
+                            $controller: "ListBox<ListBoxItemText>",
+                            $sizeRequest: "width:160,height:300",
+                            selectionMode: "none"
+                        },
+                        { $name: "_labelNone", $controller: "TextView", text: [ "Selected: " ] }
+                    ]
+                },
+                {
+                    $layout: "Column",
+                    $padding: "left:0,top:0,right:12,bottom:0",
+                    $content: [
+                        { $controller: "TextView", text: [ "Single" ] },
+                        {
+                            $name: "_listSingle",
+                            $controller: "ListBox<ListBoxItemText>",
+                            $sizeRequest: "width:160,height:300",
+                            selectionMode: "single"
+                        },
+                        { $name: "_labelSingle", $controller: "TextView", text: [ "Selected: " ] }
+                    ]
+                },
+                {
+                    $layout: "Column",
+                    $padding: "left:0,top:0,right:12,bottom:0",
+                    $content: [
+                        { $controller: "TextView", text: [ "Multiple" ] },
+                        {
+                            $name: "_listMultiple",
+                            $controller: "ListBox<ListBoxItemText>",
+                            $sizeRequest: "width:160,height:300",
+                            selectionMode: "multiple"
+                        },
+                        { $name: "_labelMultiple", $controller: "TextView", text: [ "Selected: " ] }
+                    ]
+                },
+                {
+                    $layout: "Column",
+                    $content: [
+                        { $controller: "TextView", text: [ "Custom item, Multiple" ] },
+                        {
+                            $name: "_listBadge",
+                            $controller: "ListBox<ListBoxItemBadge>",
+                            $sizeRequest: "width:200,height:300",
+                            selectionMode: "multiple"
+                        },
+                        { $name: "_labelBadge", $controller: "TextView", text: [ "Selected: " ] }
+                    ]
+                }
+            ]
+        }
+    ]
+}

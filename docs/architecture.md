@@ -135,7 +135,7 @@ Each fact has one owning document. Other documents link to it rather than repeat
 | [Gesture recognizer](gesture-recognizer.md) | Gesture recognition details. |
 | [Styles and themes](styles-and-themes.md) | `.zth` tokens, theme activation and resolution. |
 | [Controls](controls.md) | The built-in control set and how to use it. |
-| [ComboBox](combo-box.md), [ScrollViewer](scroll-viewer.md) | Control-specific behavior. |
+| [ComboBox](combo-box.md), [ListBox](list-box.md), [ScrollViewer](scroll-viewer.md) | Control-specific behavior. |
 | [Future improvements](future-improvements.md) | Everything not yet implemented, deferred, or likely to change. |
 
 ## Subsystem summary
@@ -186,3 +186,4 @@ Paths are relative to `src/`. For the generator source files, see the source map
 - `ZurfurGui.WinForms/WinStart.cs` and `ZurfurGui.Browser/BrowserStart.cs`: platform entry points.
 - `docs/combo-box.md`: how the ComboBox control works, how to use it, and how to create custom item
   renderers.
+- `docs/list-box.md`: how the ListBox control works, how to use it, and how to create custom items.

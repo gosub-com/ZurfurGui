@@ -59,6 +59,10 @@ public static partial class ZurfurMain
             location: new PointProp(30, 165)
             );
 
+        app.ShowWindow(new FormTestListBox(), "ListBox Test",
+            location: new PointProp(60, 60),
+            sizeRequst: new SizeProp(780, 480));
+
         app.ShowWindow(new FormTestScrollViewer(), "ScrollViewer Test",
             location: new PointProp(450, 165));
 

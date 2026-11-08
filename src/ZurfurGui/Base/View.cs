@@ -258,11 +258,9 @@ public sealed class View
     /// </summary>
     internal void SetFlags(ViewFlags flags)
     {
-        if ((flags & Flags) == flags)
-        {
-            return;
-        }
-
+        // Always propagate to ancestors, even if this view already has the flags.  An invisible
+        // view keeps stale flags (they are not cleared), so its parents may have been cleared
+        // while it still has the flag set.
         Flags |= flags;
         var view = Parent;
         while (view != null && (view.FlagsChild & flags) != flags)

@@ -187,7 +187,7 @@ state; they must be revisited together with this item.
 Status: ***done for pan*** Slop is now `AppWindow.Properties.MovementSlopMouse` and `MovementSlopTouch`
 (theme `input.slop.mouse` and `input.slop.touch`), shared by long click and `PanRecognizer`. Remaining:
 
-- Slop is in device pixels and is not scaled by DPI. Scale it when DPI is available.
+- Slop is in layout units and is scaled by the DPR to get device pixels.
 - Pen uses the mouse slop. Revisit if pen needs its own value.
 - Click does not reject a touch that moved past the slop when no pan wins (for example a drag along an
   axis the viewer cannot scroll). Consider rejecting past the slop for touch.
@@ -742,7 +742,7 @@ public shape.
 Difficulty: medium. Importance: high.
 
 `PanOptions` exposes mutable settings including `Slop`, `MinFlickVelocity`, and `MaxFlickVelocity`.
-Their units are device pixels, and source comments say slop is not DPI-scaled. Changing units later
+Slop is in layout units scaled by the DPR; the others are device pixels. Changing units later
 would silently alter gesture behavior.
 
 Fix: choose and document device or logical units before 1.0. If logical units are intended, apply DPI

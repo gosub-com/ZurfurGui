@@ -1,0 +1,37 @@
+// A scrolling list of items with optional selection
+{
+    $controller: "ListBox<Item> where Item : IListBoxItem",
+    $namespace: "ZurfurGui.Controls",
+    $borderWidth: "${stroke.width.default}",
+    $borderRadius: "${radius.corner.medium}",
+    $borderColor: "${color.input.stroke}",
+    $backgroundColor: "${color.input.background}",
+    $data: {
+        // The list of data items in the list box.
+        // For ListBox<ListBoxItemText> the data type is ListBoxItemTextData.
+        items: {
+            type: "[]Item",
+            bind: "data"
+        },
+        // None, Single, or Multiple.  Defaults to Single.
+        selectionMode: {
+            type: "SelectionMode",
+            bind: "data",
+            default: "SelectionMode.Single"
+        }
+    },
+    $content: [
+        {
+            $controller: "ScrollViewer",
+            $align: "horizontal:stretch,vertical:stretch",
+            scrollMode: "vertical",
+            $content: [
+                {
+                    $name: "_rows",
+                    $controller: "Panel",
+                    $layout: "Column"
+                }
+            ]
+        }
+    ]
+}

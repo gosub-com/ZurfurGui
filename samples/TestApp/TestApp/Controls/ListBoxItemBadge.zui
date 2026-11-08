@@ -1,0 +1,45 @@
+// List box item that shows a badge label and a text label side by side.
+// This is an example of a custom item.  It implements IListBoxItem through $implements and is
+// used as ListBox<ListBoxItemBadge>.
+{
+    $controller: "ListBoxItemBadge",
+    $namespace: "TestApp.Test.Controls",
+    $implements: "IListBoxItem",
+    $padding: "${spacing.horizontal.small | spacing.vertical.extra-small}",
+    $layout: "Row",
+    $data: {
+        // Short label shown inside the red-outlined badge pill.
+        badge: {
+            type: "TextLines",
+            bind: "data:_badge.text"
+        },
+        // Main descriptive text shown to the right of the badge.
+        text: {
+            type: "TextLines",
+            bind: "data:_text.text"
+        }
+    },
+    $content: [
+        {
+            $borderWidth: "${stroke.width.medium}",
+            $borderColor: "${color.status.danger.stroke}",
+            $borderRadius: "${radius.corner.small}",
+            $padding: "${spacing.vertical.extra-small | spacing.horizontal.small}",
+            $align: "vertical:center",
+            $content: [
+                {
+                    $name: "_badge",
+                    $controller: "TextView",
+                    TextView.color: "${color.status.danger.stroke}"
+                }
+            ]
+        },
+        {
+            $name: "_text",
+            $controller: "TextView",
+            TextView.color: "${color.text.primary}",
+            $padding: "${spacing.left.small | spacing.zero}",
+            $align: "vertical:center"
+        }
+    ]
+}

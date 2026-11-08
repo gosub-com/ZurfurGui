@@ -45,12 +45,26 @@ public partial class AppWindow : Controllable, Renderable
     internal void CallPreRenderFrame() => PreRenderFrame?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
+    /// Gets the device pixel ratio (DPR) of the window, which includes the user's zoom.  Layout units
+    /// are magnified by this to get device pixels.  Returns 1 before the first frame.
+    /// </summary>
+    public double DevicePixelRatio
+    {
+        get
+        {
+            var dpr = Renderer?.DevicePixelRatio ?? 0;
+            return dpr > 0 ? dpr : 1;
+        }
+    }
+
+    /// <summary>
     /// Gets the movement slop in device pixels for a pointer device: how far a contact may move from
     /// where it went down and still be a stationary press.  Touch uses a larger value than mouse and
-    /// pen.  TBD: This is not scaled by DPI yet.
+    /// pen.  The theme values are in layout units and are scaled by the DPR.
     /// </summary>
     public double GetMovementSlop(PointerDeviceKind device) =>
-        device == PointerDeviceKind.Touch ? Properties.MovementSlopTouch : Properties.MovementSlopMouse;
+        (device == PointerDeviceKind.Touch ? Properties.MovementSlopTouch : Properties.MovementSlopMouse)
+        * DevicePixelRatio;
 
     public AppWindow()
     {

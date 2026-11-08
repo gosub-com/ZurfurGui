@@ -7,7 +7,7 @@
     opacity.disabled: "0.38",
 
     input.long-click.duration: "00:00:00.5",
-    // Movement slop (device pixels) shared by long click and pan.  TBD: Scale by DPI.
+    // Movement slop (layout units, scaled by DPR) shared by long click and pan.
     input.slop.mouse: "4",
     input.slop.touch: "8",
 

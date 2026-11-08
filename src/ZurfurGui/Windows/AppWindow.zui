@@ -18,8 +18,8 @@
 			type: "TimeSpan",
 			bind: "styled"
 		},
-		// The distance (device pixels) a mouse or pen contact may move from where it went down before it
-		// is no longer a stationary press.  Shared by long click and pan.  TBD: Not scaled by DPI yet.
+		// The distance (layout units, scaled by DPR) a mouse or pen contact may move from where it went
+		// down before it is no longer a stationary press.  Shared by long click and pan.
 		movementSlopMouse: {
 			type: "double",
 			bind: "styled"

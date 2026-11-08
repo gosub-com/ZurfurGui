@@ -42,9 +42,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{364462A5-2
 		docs\gesture-recognizer.md = docs\gesture-recognizer.md
 		docs\initialization.md = docs\initialization.md
 		docs\input-events.md = docs\input-events.md
+		docs\list-box.md = docs\list-box.md
 		docs\property-binding.md = docs\property-binding.md
 		docs\scroll-viewer.md = docs\scroll-viewer.md
 		docs\styles-and-themes.md = docs\styles-and-themes.md
+		docs\tree-node-plan.md = docs\tree-node-plan.md
 		docs\zui-format.md = docs\zui-format.md
 	EndProjectSection
 EndProject

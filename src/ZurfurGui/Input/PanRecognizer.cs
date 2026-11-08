@@ -29,9 +29,9 @@ public sealed class PanOptions
     public PanAxes Axes { get; set; } = PanAxes.Both;
 
     /// <summary>
-    /// Distance in device pixels a contact must move from where it went down before the pan starts.
-    /// Null uses the app window's movement slop for the device.  Use zero (or about one) for controls
-    /// that should pan immediately.  TBD: This is not scaled by DPI yet.
+    /// Distance in layout units (scaled by the DPR) a contact must move from where it went down before
+    /// the pan starts.  Null uses the app window's movement slop for the device.  Use zero (or about
+    /// one) for controls that should pan immediately.
     /// </summary>
     public double? Slop { get; set; }
 
@@ -300,7 +300,7 @@ public sealed class PanRecognizer : IGestureRecognizer
         double GetSlop(PointerDeviceKind device)
         {
             if (_owner.Options.Slop is double slop)
-                return Math.Max(0, slop);
+                return Math.Max(0, slop) * (_context.CandidateView.AppWindow?.DevicePixelRatio ?? 1);
 
             var appWindow = _context.CandidateView.AppWindow;
             return appWindow?.GetMovementSlop(device) ?? 0;
