@@ -3,8 +3,13 @@ using ZurfurGui.Controls;
 using ZurfurGui.Property;
 using ZurfurGui.Render;
 
+
+
 namespace ZurfurGui.Layout;
 
+/// <summary>
+/// Specifies the edge of a dock layout where a child view is placed.
+/// </summary>
 public enum DockEnum
 {
     Left,
@@ -13,17 +18,24 @@ public enum DockEnum
     Top
 }
 
+/// <summary>
+/// Measures and arranges child views against the edges of a view, leaving the remaining space to
+/// the last visible child.
+/// </summary>
 public class LayoutDock : Layoutable
 {
+    /// <summary>
+    /// Dock setting for a dock panel.
+    /// </summary>
     public static readonly PropertyKey<DockEnum> Dock = new("dock.align", typeof(Panel), ZuiPropertyType.AttachedStyle, new(), ViewFlags.Measure);
 
 
     int _lastVisibleIndex;
 
-    public string TypeName => "DockPanel";
+    string Layoutable.TypeName => "DockPanel";
 
 
-    public Size MeasureView(View view, MeasureContext measure, Size available)
+    Size Layoutable.MeasureView(View view, MeasureContext measure, Size available)
     {
         var constraint = available;
         _lastVisibleIndex = -1;
@@ -61,7 +73,7 @@ public class LayoutDock : Layoutable
         return consumedSize.Max(minSize).Min(available);
     }
 
-    public void ArrangeViews(View view, MeasureContext measure)
+    void Layoutable.ArrangeViews(View view, MeasureContext measure)
     {
         var contentRect = view.ContentRect;
         var left = contentRect.X;

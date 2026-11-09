@@ -8,6 +8,9 @@ using ZurfurGui.Render;
 
 namespace ZurfurGui.Layout;
 
+/// <summary>
+/// Defines how a view measures and arranges its child views.
+/// </summary>
 public interface Layoutable
 {
     /// <summary>

@@ -13,6 +13,9 @@ public interface IMergable<T> : IMergable, IEquatable<T>
     object IMergable.OrObject(object other) => Or((T)other)!;
 }
 
+/// <summary>
+/// Provides non-generic access to completeness checks and merging for property values.
+/// </summary>
 public interface IMergable
 {
     /// <summary>
@@ -20,5 +23,8 @@ public interface IMergable
     /// </summary>
     bool IsComplete { get; }
 
+    /// <summary>
+    /// Combines this value with another value of the same type.
+    /// </summary>
     object OrObject(object other);
 }

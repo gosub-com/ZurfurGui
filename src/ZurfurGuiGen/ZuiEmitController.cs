@@ -174,6 +174,8 @@ internal static class ZuiEmitController
         {
             sb.Append("\r\n");
             var genericSuffix = data.TypeParam != "" ? $"<{data.TypeParam}>" : "";
+            sb.AppendIndentedLine(1,
+                "// Null warnings suppressed because named controls have been initialized before this factory is called.");
             sb.AppendIndentedLine(1, $"{data.ControllerName}Data{genericSuffix} CreateDefaultDataContext()");
             sb.AppendIndentedLine(1, "{");
             sb.AppendIndentedLine(2, $"return new {data.ControllerName}Data{genericSuffix}");
@@ -184,7 +186,7 @@ internal static class ZuiEmitController
                 if (ZuiEmit.IsNamedControl(binding.Bind, namedControlsDict))
                 {
                     // If this binds directly to a named control, use the data context
-                    value = $"{binding.Bind}.DataContext";
+                    value = $"{binding.Bind}!.DataContext";
                 }
                 else if (binding.BindType == BindType.Forwarded && !binding.IsCollection && binding.Bind.Contains('.'))
                 {
@@ -558,7 +560,7 @@ internal static class ZuiEmitController
 
         var controlRef = parts[0];
         var remainingParts = parts.Skip(1).Select(ZuiEmit.ToPascalCase);
-        return controlRef + ".DataContext." + string.Join(".", remainingParts);
+        return controlRef + "!.DataContext." + string.Join(".", remainingParts);
     }
 
     /// <summary>

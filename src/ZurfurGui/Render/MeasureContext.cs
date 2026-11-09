@@ -11,6 +11,9 @@ using ZurfurGui.Collections;
 
 namespace ZurfurGui.Render;
 
+/// <summary>
+/// Provides cached text measurements and font metrics during layout and rendering.
+/// </summary>
 public class MeasureContext
 {
     OsContext _context;
@@ -27,6 +30,9 @@ public class MeasureContext
         _context = context; 
     }
 
+    /// <summary>
+    /// Measures the width of the specified text using the given font.
+    /// </summary>
     public double MeasureTextWidth(string fontName, double fontSize, string text)
     {
         _prevFontCacheTotal++;
@@ -39,6 +45,9 @@ public class MeasureContext
         return width;
     }
 
+    /// <summary>
+    /// Gets the metrics for the specified font, using the cache when available.
+    /// </summary>
     public FontMetrics GetFontMetrics(string fontName, double fontSize)
     {
         _prevMetricsCacheTotal++;

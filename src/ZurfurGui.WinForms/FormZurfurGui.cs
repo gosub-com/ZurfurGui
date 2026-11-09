@@ -6,6 +6,10 @@ using ZurfurGui.WinForms.Interop;
 
 namespace ZurfurGui.WinForms;
 
+/// <summary>
+/// Hosts a ZurfurGui application in a Windows Forms window. See
+/// <see href="../../docs/architecture.md">docs/architecture.md</see> for platform architecture details.
+/// </summary>
 public partial class FormZurfurGui : Form
 {
     WinWindow _window;
@@ -17,6 +21,10 @@ public partial class FormZurfurGui : Form
     double[] _mag = [0.25, 0.33, 0.5, 0.66, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5];
     int _magIndex = 7;
 
+    /// <summary>
+    /// Initializes the Windows Forms host and its ZurfurGui application window.
+    /// </summary>
+    /// <param name="mainAppEntry">The callback used to initialize the application window.</param>
     public FormZurfurGui(Action<AppWindow> mainAppEntry)
     {
         InitializeComponent();

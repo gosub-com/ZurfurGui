@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -96,6 +96,13 @@ public static class Loader
         };
     }
 
+    /// <summary>
+    /// Gets the shared JSON serializer options configured with ZurfurGui converters and type metadata.
+    /// </summary>
+    /// <remarks>
+    /// Register application type-info resolvers with <see cref="RegisterJsonTypeInfoResolver"/>
+    /// before accessing this property. Applications can use these options to serialize their own data.
+    /// </remarks>
     public static JsonSerializerOptions JsonSerializerOptions => s_jsonSerializerOptions ??= CreateJsonSerializerOptions();
 
     /// <summary>
@@ -298,7 +305,6 @@ public static class Loader
 
 
     /// <summary>
-    /// <summary>
     /// Register a control by name with its type and factory.
     /// The factory is used by CreateControl.
     /// </summary>
@@ -325,11 +331,6 @@ public static class Loader
     /// loader stores factories for different data types in one registry. The lambda returns the controller that
     /// renders the item and should assign that same data item to the controller's <c>DataContext</c>.
     /// </summary>
-    /// <param name="dataType">The concrete data-item type used as the registry key.</param>
-    /// <param name="factory">
-    /// A mapping from the data item instance to its controller. The lambda receives the data item as
-    /// <see cref="object"/> and returns the corresponding <see cref="ZuiControllable"/>.
-    /// </param>
     internal static void RegisterDataController(Type dataType, Func<object, ZuiControllable> factory)
     {
         if (s_dataControllers.ContainsKey(dataType))
@@ -359,7 +360,6 @@ public static class Loader
     /// The concrete data object to render. Its runtime type selects the registered controller factory, and its
     /// values are preserved when the factory assigns it to the controller's <c>DataContext</c>.
     /// </param>
-    /// <returns>A controller configured to render <paramref name="itemData"/>.</returns>
     internal static ZuiControllable CreateDataController(object itemData)
     {
         return GetDataControllerFactory(itemData.GetType())(itemData);

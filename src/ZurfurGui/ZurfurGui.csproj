@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
 	<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
@@ -11,6 +12,15 @@
     <ProjectReference Include="..\ZurfurGuiGen\ZurfurGuiGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <AdditionalFiles Include="**\*.zui" />
     <AdditionalFiles Include="**\*.zth" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\docs\**\*.md">
+      <Pack>true</Pack>
+      <PackagePath>contentFiles\any\any\docs\</PackagePath>
+      <PackageCopyToOutput>false</PackageCopyToOutput>
+      <BuildAction>None</BuildAction>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

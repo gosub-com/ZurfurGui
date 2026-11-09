@@ -4,6 +4,9 @@ namespace ZurfurGui.Base;
 /// The application-facing contract of a control.  Every control has a <see cref="View"/> and may
 /// react to being attached to the visual tree.  The members used only by the ZUI source generator
 /// live in <see cref="Generated.ZuiControllable"/>, which the generated code implements.
+/// It is one of the library's main components.
+/// See <see href="../../../docs/architecture.md">docs/architecture.md</see> for more about the control
+/// tree and the library architecture.
 /// </summary>
 public interface Controllable
 {

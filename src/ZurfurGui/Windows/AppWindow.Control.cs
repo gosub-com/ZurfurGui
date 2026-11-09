@@ -66,6 +66,10 @@ public partial class AppWindow : Controllable, Renderable
         (device == PointerDeviceKind.Touch ? Properties.MovementSlopTouch : Properties.MovementSlopMouse)
         * DevicePixelRatio;
 
+
+    /// <summary>
+    /// Create main AppWindow
+    /// </summary>
     public AppWindow()
     {
         InitializeControl();
@@ -140,12 +144,12 @@ public partial class AppWindow : Controllable, Renderable
         Renderer = renderer;
     }
 
-    public bool IsHit(View view, HitTestContext context)
+    bool Renderable.IsHit(View view, HitTestContext context)
     {
         return false;
     }
 
-    public RenderResult Render(View view, RenderContext context, Rect clientClip)
+    RenderResult Renderable.Render(View view, RenderContext context, Rect clientClip)
     {
         if (!DRAW_TEST_PATTERN)
             return RenderResult.Discard;

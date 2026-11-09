@@ -4,6 +4,9 @@ using ZurfurGui.Render;
 
 namespace ZurfurGui.Layout;
 
+/// <summary>
+/// Provides measure and arrange operations for panels whose children are positioned by offsets.
+/// </summary>
 public static class LayoutPanel
 {
 

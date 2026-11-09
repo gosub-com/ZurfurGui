@@ -169,7 +169,7 @@ internal partial class BrowserCanvas : OsCanvas
         return modifiers;
     }
 
-    static PointerDeviceKind MapDevice(string value) => value switch
+    static PointerDeviceKind MapDevice(string? value) => value switch
     {
         "mouse" => PointerDeviceKind.Mouse,
         "touch" => PointerDeviceKind.Touch,

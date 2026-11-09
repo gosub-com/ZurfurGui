@@ -11,11 +11,18 @@ using ZurfurGuiGen.ZuiTypes;
 namespace ZurfurGuiGen;
 
 
+/// <summary>
+/// Generates C# controllers, data implementations, and initialization code from ZUI and ZTH files.
+/// </summary>
 [Generator]
 public class GenerateZui : IIncrementalGenerator
 {
 
 
+    /// <summary>
+    /// Registers the source-generation pipelines for ZUI controls and project initialization.
+    /// </summary>
+    /// <inheritdoc cref="IIncrementalGenerator.Initialize" />
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var syntaxTrees = context.CompilationProvider.Select((compilation, _) => compilation.SyntaxTrees.ToArray());
@@ -85,6 +92,11 @@ public class GenerateZui : IIncrementalGenerator
 
             try
             {
+                // Generate errors for forwarded bindings where a nullable source property is
+                // bound to a non-nullable data property (see ZuiBindingValidator for details)
+                foreach (var nullableDiagnostic in ZuiBindingValidator.GetNullableBindingDiagnostics(data, zuiData))
+                    spc.ReportDiagnostic(nullableDiagnostic);
+
                 var source = ZuiEmitController.GenerateControllerClassSource(data);
                 if (source != "")
                     spc.AddSource($"{data.FileName}.Control.g.cs", SourceText.From(source, Encoding.UTF8));

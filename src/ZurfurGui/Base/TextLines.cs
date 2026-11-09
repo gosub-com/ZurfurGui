@@ -4,6 +4,8 @@ using System.Text;
 using ZurfurGui.Base.Helpers;
 using ZurfurGui.Property;
 
+
+
 namespace ZurfurGui.Base;
 
 
@@ -17,7 +19,10 @@ namespace ZurfurGui.Base;
 [CollectionBuilder(typeof(TextLinesBuilder), nameof(TextLinesBuilder.Create))]
 public class TextLines : IEquatable<TextLines>, IEnumerable<string>, IReadOnlyList<string>
 {
+    /// <summary>Gets an instance containing no lines.</summary>
     public static readonly TextLines Empty = new();
+
+    /// <summary>Gets an instance containing the unknown-text replacement character.</summary>
     public static readonly TextLines Unknown = new("�");
 
 
@@ -25,10 +30,13 @@ public class TextLines : IEquatable<TextLines>, IEnumerable<string>, IReadOnlyLi
     private static readonly char[] NewLineCharacters = ['\r', '\n'];
     private static readonly string[] NewLineSeparators = ["\r\n", "\n", "\r"];
 
+    /// <summary>Initializes an empty collection of text lines.</summary>
     public TextLines() => _lines = Array.Empty<string>();
 
+    /// <summary>Initializes text lines by splitting the text at CR and LF line endings.</summary>
     public TextLines(string text) => _lines = [.. text.Split(NewLineSeparators, StringSplitOptions.None)];
 
+    /// <summary>Initializes text lines from a sequence, splitting any entries containing newlines.</summary>
     public TextLines(IEnumerable<string> lines)
     {
         var capacity = lines is ICollection<string> collection ? collection.Count : 0;
@@ -38,6 +46,7 @@ public class TextLines : IEquatable<TextLines>, IEnumerable<string>, IReadOnlyLi
         _lines = list.Count == 0 ? Array.Empty<string>() : list.ToArray();
     }
 
+    /// <summary>Initializes text lines from a span, splitting any entries containing newlines.</summary>
     public TextLines(ReadOnlySpan<string> lines)
     {
         if (lines.Length == 0)
@@ -85,6 +94,7 @@ public class TextLines : IEquatable<TextLines>, IEnumerable<string>, IReadOnlyLi
         return sb.ToString();
     }
 
+    /// <summary>Determines whether any line in another collection is present in this collection.</summary>
     public bool HasLine(TextLines textLines)
     {
         foreach (var line in textLines._lines)

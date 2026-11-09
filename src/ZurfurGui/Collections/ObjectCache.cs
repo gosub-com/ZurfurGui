@@ -14,10 +14,29 @@ public class ObjectCache<T> where T : class, IEquatable<T>
     List<T?> _objectList = new();
     Action<T?, int> _marshal;
 
+    /// <summary>
+    /// Gets the number of cache lookups that found an existing object.
+    /// </summary>
     public long Hits { get; private set; }
+
+    /// <summary>
+    /// Gets the number of cache lookups that added a new object.
+    /// </summary>
     public long Misses { get; private set; }
+
+    /// <summary>
+    /// Gets the total number of objects purged from the cache.
+    /// </summary>
     public long Purged { get; private set; }
+
+    /// <summary>
+    /// Gets the number of objects currently stored in the cache.
+    /// </summary>
     public int Count => _cache.Count;
+
+    /// <summary>
+    /// Gets the total number of cache lookups, including hits and misses.
+    /// </summary>
     public long TotalAccesses => Hits + Misses;
 
     /// <summary>

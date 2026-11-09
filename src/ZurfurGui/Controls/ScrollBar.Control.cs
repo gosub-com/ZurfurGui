@@ -4,6 +4,8 @@ using ZurfurGui.Layout;
 using ZurfurGui.Property;
 using ZurfurGui.Render;
 
+
+
 namespace ZurfurGui.Controls;
 
 public enum ScrollBarHitRegion
@@ -22,6 +24,11 @@ public enum ScrollBarVisibility
     Hidden
 }
 
+/// <summary>
+/// A scrollbar component used by <see cref="ScrollViewer"/> to display and control a scroll range.
+/// See <see href="../../../docs/scroll-viewer.md">docs/scroll-viewer.md</see> for details about its
+/// use in the scroll viewer.
+/// </summary>
 public partial class ScrollBar : Controllable, Renderable
 {
     // Drag state (not in data - pure UI state)
@@ -41,6 +48,9 @@ public partial class ScrollBar : Controllable, Renderable
         // (This static constructor runs before any instances are created)
     }
 
+    /// <summary>
+    /// Initializes a scrollbar and registers its pointer event handlers.
+    /// </summary>
     public ScrollBar()
     {
         InitializeControl();
@@ -354,7 +364,7 @@ public partial class ScrollBar : Controllable, Renderable
     }
 
 
-    public RenderResult Render(View view, RenderContext context, Rect clientClip)
+    RenderResult Renderable.Render(View view, RenderContext context, Rect clientClip)
     {
         var data = DataContext;
         var trackRect = new Rect(new(), view.Size);
@@ -395,9 +405,11 @@ public partial class ScrollBar : Controllable, Renderable
     /// Generate triangle points for an arrow within the given rectangle.
     /// Triangle is inset by 25% padding from edges.
     /// </summary>
-    /// <param name="arrowRect">The rectangle containing the arrow</param>
-    /// <param name="orientation">Scrollbar orientation</param>
-    /// <param name="pointsToStart">True for start arrow (up/left), false for end arrow (down/right)</param>
+    /// <param name="arrowRect">The rectangle containing the arrow.</param>
+    /// <param name="orientation">The scrollbar orientation.</param>
+    /// <param name="pointsToStart">
+    /// True for the start arrow (up/left), false for the end arrow (down/right).
+    /// </param>
     /// <returns>Array of triangle points as [x1, y1, x2, y2, x3, y3]</returns>
     double[] GetArrowTrianglePoints(Rect arrowRect, Orientation orientation, bool pointsToStart)
     {
@@ -445,7 +457,7 @@ public partial class ScrollBar : Controllable, Renderable
         }
     }
 
-    public bool IsHit(View view, HitTestContext context)
+    bool Renderable.IsHit(View view, HitTestContext context)
     {
         var p = view.toClient(context.Contact.DevicePosition);
         return new Rect(new(), view.Size).Contains(p);

@@ -2,8 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 
+
+
 namespace ZurfurGui.Property;
 
+/// <summary>
+/// Specifies how a data property is bound to a view property or style.
+/// </summary>
 public enum ZuiPropertyType : byte
 {
     Data,
@@ -14,6 +19,9 @@ public enum ZuiPropertyType : byte
     AttachedStyle
 }
 
+/// <summary>
+/// Provides helper operations for <see cref="ZuiPropertyType"/> values.
+/// </summary>
 public static class ZuiPropertyTypeExtensions
 {
     extension (ZuiPropertyType bindType)
@@ -25,6 +33,9 @@ public static class ZuiPropertyTypeExtensions
     }
 }
 
+/// <summary>
+/// Describes a property declared in a ZUI data definition.
+/// </summary>
 public record class ZuiPropertyInfo(
     string Name,
     Type BaseType,

@@ -7,8 +7,12 @@
         {
             // Show theme name using the StyleTestSkinHoverTextStyleTestSkinHoverText style
             $controller: "TextView",
-            $name: "debugLabel",
-            TextView.text: "${style.test.text.hover-nothover}",
+            $name: "debugLabel",            
+            text: "Not styled any more",
+
+            // NOTE: We used to allow styling text, but it doesn't seem necessary.
+            // TextView.text: "${style.test.text.hover-nothover}",
+
 
             $borderWidth: 2,
             $borderColor: "Gray"

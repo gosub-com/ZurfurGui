@@ -8,6 +8,11 @@ using ZurfurGui.Windows;
 
 namespace ZurfurGui.Controls;
 
+/// <summary>
+/// A control that lets the user select an item from a drop-down list. See
+/// <see href="../../../docs/combo-box.md">docs/combo-box.md</see> for usage and implementation details.
+/// </summary>
+/// <typeparam name="Item">The type of item displayed in the list.</typeparam>
 public sealed partial class ComboBox<Item> : Controllable
     where Item : IComboBoxItem
 {
@@ -17,6 +22,9 @@ public sealed partial class ComboBox<Item> : Controllable
     View? _dropdownView;
     View? _dismissOverlay;
 
+    /// <summary>
+    /// Initializes a combo box and registers its click and data-change handlers.
+    /// </summary>
     public ComboBox()
     {
         InitializeControl();
@@ -128,8 +136,9 @@ public sealed partial class ComboBox<Item> : Controllable
         }
     }
 
-    public void OnAttach() { }
-    public void OnDetach()
+    void Controllable.OnAttach() { }
+
+    void Controllable.OnDetach()
     {
         CloseDropdown();
     }

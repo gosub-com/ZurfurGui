@@ -1,5 +1,11 @@
-﻿namespace ZurfurGui.Property;
+﻿
 
+namespace ZurfurGui.Property;
+
+
+/// <summary>
+/// A type-safe double that allows its value to be optional.  Defaults to null.
+/// </summary>
 public readonly struct DoubleProp : IMergable<DoubleProp>
 {
     readonly double? _value;

@@ -4,9 +4,12 @@ using ZurfurGui.Platform;
 
 namespace ZurfurGui.Render;
 
+/// <summary>
+/// Records drawing operations for a view during a render pass.
+/// </summary>
 public class RenderContext
 {
-    public struct RenderContextStats
+    internal struct RenderContextStats
     {
         public long FillText;
         public long FillRect;
@@ -35,7 +38,12 @@ public class RenderContext
     OsRenderBuffer _renderBuffer = new();
     int _pushedClips;
 
-    public RenderContextStats RenderStats => _stats;
+    internal RenderContextStats RenderStats => _stats;
+
+
+    /// <summary>
+    /// Gets the measurement context used during this render pass.
+    /// </summary>
     public MeasureContext MeasureContext => _measureContext;
 
     
@@ -58,9 +66,15 @@ public class RenderContext
         PointerDevicePosition = devicePosition;
     }
 
+    /// <summary>
+    /// Fills a rectangle with a brush.
+    /// </summary>
     public void FillRect(Brush brush, Rect r, double radius = 0)
         => FillRect(brush, r.X, r.Y, r.Width, r.Height, radius);
 
+    /// <summary>
+    /// Fills a rectangle at the specified position and size with a brush.
+    /// </summary>
     public void FillRect(in Brush brush, double x, double y, double width, double height, double radius = 0)
     {
         if (brush.Type != BrushType.Solid)
@@ -75,9 +89,15 @@ public class RenderContext
         }
     }
 
+    /// <summary>
+    /// Draws a rectangle outline with a pen.
+    /// </summary>
     public void StrokeRect(in Pen pen, Rect r, double radius = 0)
         => StrokeRect(pen, r.X, r.Y, r.Width, r.Height, radius);
 
+    /// <summary>
+    /// Draws a rectangle outline at the specified position and size with a pen.
+    /// </summary>
     public void StrokeRect(in Pen pen, double x, double y, double width, double height, double radius = 0)
     {
         if (pen.Brush.Type != BrushType.Solid)
@@ -92,9 +112,15 @@ public class RenderContext
         }
     }
 
+    /// <summary>
+    /// Draws text with a font and brush at a point.
+    /// </summary>
     public void FillText(in Font font, in Brush brush, string text, Point p)
         => FillText(font, brush, text, p.X, p.Y);
 
+    /// <summary>
+    /// Draws text with a font and brush at the specified coordinates.
+    /// </summary>
     public void FillText(in Font font, in Brush brush, string text, double x, double y)
     {
         if (brush.Type != BrushType.Solid)
@@ -107,6 +133,9 @@ public class RenderContext
         _renderBuffer.FillText(text, x, y);
     }
 
+    /// <summary>
+    /// Draws a connected series of line segments through the specified points.
+    /// </summary>
     public void StrokePolyLine(Pen pen, ReadOnlySpan<double> points)
     {
         if (points.Length < 4 || points.Length % 2 != 0)
@@ -121,6 +150,9 @@ public class RenderContext
         _renderBuffer.StrokePolyLine(points);
     }
 
+    /// <summary>
+    /// Fills a polygon whose vertices are specified by the given coordinates.
+    /// </summary>
     public void FillPolygon(Brush brush, ReadOnlySpan<double> points)
     {
         if (points.Length < 6 || points.Length % 2 != 0)
@@ -139,6 +171,7 @@ public class RenderContext
     /// Clip to the specified rectangle.
     /// Saves clip state to a stack. Restore is automatic and doesn't need to be done by user code.
     /// </summary>
+    /// <param name="clientClip">The clip rectangle in client coordinates.</param>
     public void PushClip(Rect clientClip)
     { 
         _stats.PushClips++;

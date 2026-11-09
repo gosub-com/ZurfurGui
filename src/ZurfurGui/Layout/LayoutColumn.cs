@@ -15,10 +15,10 @@ public class LayoutColumn : Layoutable
     /// </summary>
     public double Spacing { get; set; } = 5.0;
 
-    public string TypeName => "Column";
+    string Layoutable.TypeName => "Column";
 
 
-    public Size MeasureView(View view, MeasureContext measure, Size available)
+    Size Layoutable.MeasureView(View view, MeasureContext measure, Size available)
     {
         var columnMeasured = new Size();
         var visibleCount = 0;
@@ -38,7 +38,7 @@ public class LayoutColumn : Layoutable
         return columnMeasured;
     }
 
-    public void ArrangeViews(View view, MeasureContext measure)
+    void Layoutable.ArrangeViews(View view, MeasureContext measure)
     {
         var bounds = view.ContentRect;
         var spacing = Spacing;

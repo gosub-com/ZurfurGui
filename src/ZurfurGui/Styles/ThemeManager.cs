@@ -12,10 +12,16 @@ using ZurfurGui.Property;
 namespace ZurfurGui.Styles;
 
 
+/// <summary>
+/// Registers theme sheets and resolves theme variables for view properties.
+/// </summary>
 public static class ThemeManager
 {
     private static readonly Dictionary<string, ThemeSheet> s_themes = new();
 
+    /// <summary>
+    /// Gets the themes currently registered, indexed by theme name.
+    /// </summary>
     public static IReadOnlyDictionary<string, ThemeSheet> RegisteredThemes => s_themes;
 
 

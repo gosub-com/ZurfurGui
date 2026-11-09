@@ -8,6 +8,9 @@ namespace ZurfurGui.Controls;
 /// </summary>
 public sealed partial class ListBoxRow
 {
+    /// <summary>
+    /// Initializes a list box row control.
+    /// </summary>
     public ListBoxRow()
     {
         InitializeControl();

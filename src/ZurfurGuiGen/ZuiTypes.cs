@@ -1,4 +1,4 @@
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 
 namespace ZurfurGuiGen.ZuiTypes;
@@ -134,7 +134,8 @@ internal class ZuiFileInfo
     public bool UserSuppliedControllerClass { get; set; }
 
     /// <summary>
-    /// Set to true if there is a user supplied data class (<ViewName>.Data.cs)
+    /// Set to true if there is a user supplied data class (&lt;ViewName&gt;Data.cs)
+    /// Set to true if there is a user supplied data class (&lt;ViewName&gt;.Data.cs)
     /// </summary>
     public bool UserSuppliedDataClass { get; set; }
 

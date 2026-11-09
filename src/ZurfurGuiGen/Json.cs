@@ -18,8 +18,8 @@ public static class Json
 {
     /// <summary>
     /// Parse a JSON object from a string.  Objects are any of the following:
-    ///     Dictionary<string, object?>
-    ///     List<object?>
+    ///     Dictionary&lt;string, object?&gt;
+    ///     List&lt;object?&gt;
     ///     String
     ///     Double
     ///     Long
@@ -419,7 +419,7 @@ public static class Json
 
     /// <summary>
     /// Serialize a JSON parsed by Json.Parse.  The dictionary must only contain null, string,
-    /// decimal, double, long, bool, Dictionary<string, object?>, or List<object?> values.
+    /// decimal, double, long, bool, Dictionary&lt;string, object?&gt;, or List&lt;object?&gt; values.
     /// </summary>
     public static string Serialize(Dictionary<string, object?> obj)
     {
@@ -472,9 +472,19 @@ public static class Json
 /// </summary>
 public class LocationException : FormatException
 {
+    /// <summary>
+    /// Line number of error
+    /// </summary>
     public int Line { get; }
+
+    /// <summary>
+    /// Column of error
+    /// </summary>
     public int Column { get; }
 
+    /// <summary>
+    /// Syntax error with location info
+    /// </summary>
     public LocationException(string message, int line, int column)
         : base($"{message} (Line {line}, Column {column})")
     {

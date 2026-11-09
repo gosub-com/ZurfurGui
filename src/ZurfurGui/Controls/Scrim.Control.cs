@@ -15,8 +15,14 @@ namespace ZurfurGui.Controls;
 /// </remarks>
 public sealed partial class Scrim : Controllable
 {
+    /// <summary>
+    /// Occurs when the scrim is clicked to dismiss the transient UI.
+    /// </summary>
     public event EventHandler<PointerEvent>? Dismissed;
 
+    /// <summary>
+    /// Initializes a scrim and registers its click gesture handler.
+    /// </summary>
     public Scrim()
     {
         InitializeControl();
@@ -26,8 +32,9 @@ public sealed partial class Scrim : Controllable
     /// <summary>
     /// Shows the Scrim as a full-screen floating panel.
     /// </summary>
-    /// <param name="appWindow">The application window that owns the floating panel.</param>
-    /// <returns>The Scrim view added to the application window. Remove it from its parent to close the Scrim.</returns>
+    /// <returns>
+    /// The Scrim view added to the application window. Remove it from its parent to close the Scrim.
+    /// </returns>
     /// <remarks>
     /// Use the returned view to retain the overlay for later cleanup. For example:
     /// <code>

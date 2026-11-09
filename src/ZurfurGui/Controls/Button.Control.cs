@@ -9,8 +9,14 @@ namespace ZurfurGui.Controls;
 /// </summary>
 public partial class Button : Controllable
 {
+    /// <summary>
+    /// Occurs when the button is activated by a click.
+    /// </summary>
     public event EventHandler? Click;
 
+    /// <summary>
+    /// Initializes a button and registers its click gesture handler.
+    /// </summary>
     public Button()
     {
         InitializeControl();

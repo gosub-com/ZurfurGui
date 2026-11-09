@@ -14,18 +14,25 @@ namespace ZurfurGui.Layout;
 public class LayoutRow : Layoutable
 {
 
+    /// <summary>
+    /// Wrap elements in a row or column.
+    /// </summary>
     public static readonly PropertyKey<bool> Wrap = new("cell.wrap", typeof(LayoutRow), ZuiPropertyType.AttachedStyle, new(), ViewFlags.Measure);
+    
+    /// <summary>
+    /// Spacing between elements in a row or column.
+    /// </summary>
     public static readonly PropertyKey<SizeProp> Spacing = new("cell.spacing", typeof(LayoutRow), ZuiPropertyType.AttachedStyle, new(), ViewFlags.Measure);
 
     readonly Size DEFAULT_SIZE = new Size(5, 5);
 
     List<Rect> _measuredRects = new List<Rect>();
 
-    public string TypeName => "Row";
+    string Layoutable.TypeName => "Row";
 
 
 
-    public Size MeasureView(View view, MeasureContext measure, Size available)
+    Size Layoutable.MeasureView(View view, MeasureContext measure, Size available)
     {
         _measuredRects.Clear();
 
@@ -72,7 +79,7 @@ public class LayoutRow : Layoutable
         return new Size(viewWidth, viewHeight);
     }
 
-    public void ArrangeViews(View view, MeasureContext measure)
+    void Layoutable.ArrangeViews(View view, MeasureContext measure)
     {
         var i = 0;
         var contentRect = view.ContentRect;

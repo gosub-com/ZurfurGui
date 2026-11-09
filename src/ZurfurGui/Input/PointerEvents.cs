@@ -1,7 +1,12 @@
 ﻿using ZurfurGui.Base;
 
+
+
 namespace ZurfurGui.Input;
 
+/// <summary>
+/// Identifies the buttons currently pressed on a pointer device.
+/// </summary>
 [Flags]
 public enum PointerButtons : byte
 {
@@ -13,6 +18,9 @@ public enum PointerButtons : byte
     Forward = 16
 }
 
+/// <summary>
+/// Identifies keyboard modifiers active during a pointer interaction.
+/// </summary>
 [Flags]
 public enum PointerModifiers : byte
 {
@@ -23,6 +31,9 @@ public enum PointerModifiers : byte
     Meta = 8
 }
 
+/// <summary>
+/// Identifies the kind of device that produced a pointer contact.
+/// </summary>
 public enum PointerDeviceKind : byte
 {
     Unknown,
@@ -31,6 +42,9 @@ public enum PointerDeviceKind : byte
     Pen
 }
 
+/// <summary>
+/// Identifies the kind of pointer event reported for a contact.
+/// </summary>
 public enum PointerEventKind : byte
 {
     Unknown,
@@ -42,6 +56,9 @@ public enum PointerEventKind : byte
     Cancel
 }
 
+/// <summary>
+/// Describes the current state and position of a pointer contact.
+/// </summary>
 public readonly record struct PointerContact(
     PointerDeviceKind Device,
     int Id,
@@ -55,13 +72,19 @@ public readonly record struct PointerContact(
     public PointerContactKey Key => new(Device, Id);
 }
 
+/// <summary>
+/// Uniquely identifies a pointer contact by its device and device-specific identifier.
+/// </summary>
 public readonly record struct PointerContactKey(PointerDeviceKind Device, int Id);
 
 /// <summary>
-/// Provides the latest contact state to a long-click callback.
+/// Provides the latest contact state to a long-click callback and indicates whether it was handled.
 /// </summary>
 public sealed class PointerLongClickEventArgs : EventArgs
 {
+    /// <summary>
+    /// Gets the latest state of the pointer contact that triggered the long click.
+    /// </summary>
     public PointerContact Contact { get; }
 
     /// <summary>
@@ -69,6 +92,9 @@ public sealed class PointerLongClickEventArgs : EventArgs
     /// </summary>
     public bool Handled { get; set; }
 
+    /// <summary>
+    /// Creates event arguments for a long-click callback.
+    /// </summary>
     public PointerLongClickEventArgs(PointerContact contact)
     {
         Contact = contact;

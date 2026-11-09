@@ -4,8 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
+
 namespace ZurfurGui.Base;
 
+/// <summary>Specifies horizontal alignment within a layout area.</summary>
 public enum AlignHorizontal : byte
 {
     Stretch,
@@ -14,6 +17,7 @@ public enum AlignHorizontal : byte
     Right
 }
 
+/// <summary>Specifies vertical alignment within a layout area.</summary>
 public enum AlignVertical : byte
 {
     Stretch,

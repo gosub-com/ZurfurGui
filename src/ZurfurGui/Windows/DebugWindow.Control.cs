@@ -4,6 +4,9 @@ using ZurfurGui.Render;
 
 namespace ZurfurGui.Windows;
 
+/// <summary>
+/// Displays rendering, frame timing, and memory statistics for the application window.
+/// </summary>
 public partial class DebugWindow : Controllable
 {
     readonly bool UPDATE_ONCE_PER_SECOND = false;
@@ -20,17 +23,20 @@ public partial class DebugWindow : Controllable
     double _compositeMs = 0;
     double _presentMs = 0;
 
+    /// <summary>
+    /// Initializes a debug window and its statistics display.
+    /// </summary>
     public DebugWindow()
     {
         InitializeControl();
     }
 
 
-    public void OnAttach()
+    void Controllable.OnAttach()
     {
         View.AppWindow!.PreRenderFrame += DebugWindow_PreRenderFrame;
     }
-    public void OnDetach()
+    void Controllable.OnDetach()
     {
         View.AppWindow!.PreRenderFrame -= DebugWindow_PreRenderFrame;
     }

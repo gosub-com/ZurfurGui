@@ -8,7 +8,7 @@ internal static class RenderHelper
     const byte ALPHA_HIT_THRESHOLD = 16; // Must be visible to user before it's a hit
 
     /// <summary>
-    /// Renders a panel with a border & background.
+    /// Renders a panel with a border &amp; background.
     /// </summary>
     public static void RenderBackground(View view, RenderContext context)
     {

@@ -7,6 +7,9 @@ using ZurfurGui.Render;
 
 namespace ZurfurGui.Controls;
 
+/// <summary>
+/// Displays text lines using the configured font and color.
+/// </summary>
 public partial class TextView : Controllable, Layoutable, Renderable
 {
     const double CLIP_ROUNDING_ERROR = 0.0001; // Don't clip because of rounding errors
@@ -16,6 +19,9 @@ public partial class TextView : Controllable, Layoutable, Renderable
     int _renderedFirstLine;
     int _renderedLastLine;
 
+    /// <summary>
+    /// Initializes a text view and assigns its layout and rendering handlers.
+    /// </summary>
     public TextView()
     {
         InitializeControl();
@@ -24,7 +30,7 @@ public partial class TextView : Controllable, Layoutable, Renderable
     }
 
 
-    public Size MeasureView(View view, MeasureContext measure, Size available)
+    Size Layoutable.MeasureView(View view, MeasureContext measure, Size available)
     {
         // Quick exit if text hasn't changed since last measure
         if (!view.Flags.HasFlag(ViewFlags.Measure))
@@ -33,7 +39,7 @@ public partial class TextView : Controllable, Layoutable, Renderable
         var font =  view.GetProperty(FontProperty);
         var fontName = font.Name ?? "Arial";
         var fontSize = font.Size.Or(16.0);
-        var text = view.GetProperty(TextProperty);
+        var text = DataContext.Text;
         var metrics = measure.GetFontMetrics(fontName, fontSize);
 
         var maxWidth = text.Count == 0 ? 0 : text.Max(line => measure.MeasureTextWidth(fontName, fontSize, line));
@@ -46,16 +52,16 @@ public partial class TextView : Controllable, Layoutable, Renderable
         return _lastMeasuredSize;
     }
 
-    public void ArrangeViews(View view, MeasureContext measure)
+    void Layoutable.ArrangeViews(View view, MeasureContext measure)
     {
         if (view.Children.Count != 0)
             throw new InvalidOperationException("Text layout does not support children");
     }
 
-    public RenderResult Render(View view, RenderContext context, Rect clientClip)
+    RenderResult Renderable.Render(View view, RenderContext context, Rect clientClip)
     {
         var color = view.GetProperty(ColorProperty);
-        var text = view.GetProperty(TextProperty);
+        var text = DataContext.Text;
 
         if (text.Count == 0 || color.A == 0)
         {
@@ -124,7 +130,7 @@ public partial class TextView : Controllable, Layoutable, Renderable
             : RenderResult.RenderedClip;
     }
 
-    public bool IsHit(View view, HitTestContext context)
+    bool Renderable.IsHit(View view, HitTestContext context)
     {
         var p = view.toClient(context.Contact.DevicePosition);
         return new Rect(new(0, 0), view.DesiredTotalSize).Contains(p);

@@ -9,8 +9,13 @@ using ZurfurGui.Render;
 using ZurfurGui.Styles;
 using ZurfurGui.Windows;
 
+
+
 namespace ZurfurGui.Base;
 
+/// <summary>
+/// Flags describing work that is pending for a view or its child views.
+/// </summary>
 public enum ViewFlags : short
 {
     None = 0,
@@ -23,6 +28,12 @@ public enum ViewFlags : short
     ClientClipChanged = 1 << 8,
 }
 
+/// <summary>
+/// Represents a node in the control tree and the view owned by a <see cref="Controllable"/>.
+/// A view manages its layout, rendering, input state, and child views. It is one of the library's
+/// main components. See <see href="../../../docs/architecture.md">docs/architecture.md</see> for
+/// more about the control tree and the library architecture.
+/// </summary>
 public sealed class View
 {
     // TBD: Should we be caching style lookups in the properties?
@@ -76,7 +87,7 @@ public sealed class View
     public Layoutable? Layout { get; set; }
 
     /// <summary>
-    /// When null, the control is treated as a panel (i.e. render background & border, performs hit testing, etc.)
+    /// When null, the control is treated as a panel (i.e. render background &amp; border, performs hit testing, etc.)
     /// </summary>
     public Renderable? Render { get; set; }
 
@@ -152,18 +163,47 @@ public sealed class View
     }
 
 
+    /// <summary>
+    /// Creates a view for the specified control.
+    /// </summary>
     public View(Controllable control)
     {
         Controller = control;
     }
 
+    /// <summary>
+    /// Converts a point from view coordinates to device coordinates.
+    /// </summary>
     public Point toDevice(Point p) => new Point(Origin.X + p.X * Scale, Origin.Y + p.Y * Scale);
+
+    /// <summary>
+    /// Converts a size from view coordinates to device coordinates.
+    /// </summary>
     public Size toDevice(Size s) => Scale * s;
+
+    /// <summary>
+    /// Converts a rectangle from view coordinates to device coordinates.
+    /// </summary>
     public Rect toDevice(Rect r) => new Rect(toDevice(r.Position), toDevice(r.Size));
+
+    /// <summary>
+    /// Converts a point from device coordinates to view coordinates.
+    /// </summary>
     public Point toClient(Point p) => new Point((p.X - Origin.X) / Scale, (p.Y - Origin.Y) / Scale);
+
+    /// <summary>
+    /// Converts a size from device coordinates to view coordinates.
+    /// </summary>
     public Size toClient(Size p) => p / Scale;
+
+    /// <summary>
+    /// Converts a rectangle from device coordinates to view coordinates.
+    /// </summary>
     public Rect toClient(Rect r) => new Rect(toClient(r.Position), toClient(r.Size));
 
+    /// <summary>
+    /// Returns a string that identifies this view by its controller type and name.
+    /// </summary>
     public override string ToString()
     {
         var name = GetProperty(Panel.Name);
@@ -371,6 +411,9 @@ public sealed class View
         return key.StyleDefault;
     }
 
+    /// <summary>
+    /// Sets a property on this view and invalidates affected view state.
+    /// </summary>
     public void SetProperty<T>(PropertyKey<T> key, T value)
     {
         VerifyControllerProperty(key);
@@ -383,6 +426,9 @@ public sealed class View
         RaisePropertyChanged(key);
     }
 
+    /// <summary>
+    /// Sets a property by its identifier and invalidates affected view state.
+    /// </summary>
     public void SetPropertyById(PropertyKeyId key, object value)
     {
         if (value is null)
@@ -402,6 +448,9 @@ public sealed class View
         RaisePropertyChanged(info);
     }
 
+    /// <summary>
+    /// Determines whether this view stores the specified property.
+    /// </summary>
     public bool ContainsProperty<T>(PropertyKey<T> key)
     {
         if (!key.PropertyType.IsAttached
@@ -414,6 +463,9 @@ public sealed class View
         return _properties.ContainsKey(key);
     }
 
+    /// <summary>
+    /// Removes the specified property from this view, if present.
+    /// </summary>
     public void RemoveProperty<T>(PropertyKey<T> key)
     {
         VerifyControllerProperty(key);
@@ -425,6 +477,9 @@ public sealed class View
         RaisePropertyChanged(key);
     }
 
+    /// <summary>
+    /// Removes the property identified by the specified identifier, if present.
+    /// </summary>
     public void RemovePropertyById(PropertyKeyId key)
     {
         var info = key.Info ?? throw new ArgumentException("Unknown property key", nameof(key));
@@ -715,6 +770,10 @@ public sealed class View
             view.FindAllByName(name, views);
     }
 
+    /// <summary>
+    /// Adds a view as a child of this view.
+    /// </summary>
+    /// <param name="child">The view to add. It must not already have a parent.</param>
     public void AddChild(View child)
     {
         if (child.Parent != null)
@@ -803,6 +862,9 @@ public sealed class View
     }
 
 
+    /// <summary>
+    /// Moves this view to the end of its parent's child list so it is drawn in front of siblings.
+    /// </summary>
     public void BringToFront()
     {
         var parent = Parent;

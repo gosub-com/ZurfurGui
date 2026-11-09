@@ -9,6 +9,8 @@ internal static class ZuiEmit
 {
     internal static void AppendFileHeader(StringBuilder sb, string sourceFileName)
     {
+        sb.Append("#pragma warning disable CS1591 // Missing XML comment "
+            + "for publicly visible type or member\r\n");
         sb.Append($"// This file is generated from '{sourceFileName}' on {DateTime.Now:yyyy-MM-dd HH:mm:ss}\r\n");
     }
 

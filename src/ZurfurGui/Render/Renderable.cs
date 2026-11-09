@@ -3,6 +3,9 @@ using ZurfurGui.Input;
 
 namespace ZurfurGui.Render;
 
+/// <summary>
+/// Describes whether a renderable's content was discarded, reused, or rendered.
+/// </summary>
 public enum RenderResult : byte
 {
     /// <summary>
@@ -34,6 +37,9 @@ public enum RenderResult : byte
     RenderedClip
 }
 
+/// <summary>
+/// Defines rendering and hit-testing behavior for a view's visual content.
+/// </summary>
 public interface Renderable
 {
     /// <summary>

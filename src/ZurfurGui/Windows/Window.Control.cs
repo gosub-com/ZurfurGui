@@ -15,6 +15,9 @@ public partial class Window : Controllable
     Point _mousePosition;
 
 
+    /// <summary>
+    /// Initializes a window and registers its move, resize, and close interactions.
+    /// </summary>
     public Window()
     {
         InitializeControl();
@@ -115,9 +118,12 @@ public partial class Window : Controllable
         _windowContent.View.AddChild(content);
     }
 
+    /// <summary>
+    /// Set the window title
+    /// </summary>
     public void SetTitle(string title)
     {
-        _title.View.SetProperty(TextView.TextProperty, new (title));
+        _title.DataContext.Text = new TextLines([title]);
     }
 
 }

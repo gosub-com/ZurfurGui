@@ -131,6 +131,8 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
         }));
 
         var sb = new StringBuilder();
+        sb.Append("#pragma warning disable CS1591 // Missing XML comment "
+            + "for publicly visible type or member\r\n");
         sb.Append($"namespace {zurfurMainNamespace};\r\n\r\n");
         sb.Append("// Each project should have a user created partial class named ZurfurMain\r\n");
         sb.Append("// with a function named MainApp that calls InitializeControls.\r\n");

@@ -1,38 +1,36 @@
-﻿using ZurfurGui.Base.Helpers;
+﻿
+
 
 namespace ZurfurGui.Base;
 
-public struct Rect : IEquatable<Rect>
+/// <summary>Represents a mutable axis-aligned rectangle defined by its position and dimensions.</summary>
+public record struct Rect(double X, double Y, double Width, double Height)
 {
-    public double X { get; set; }
-    public double Y { get; set; }
-    public double Width { get; set; }
-    public double Height { get; set; }
-
-    public Rect() { }
-    public Rect(double x, double y, double width, double height) { X = x;  Y = y; Width = width; Height = height; }
-    public Rect(Point location, Size size) { X = location.X;  Y = location.Y;  Width = size.Width; Height = size.Height; }
-    public bool Equals(Rect v) => X == v.X && Y == v.Y && Width == v.Width && Height == v.Height;
-    public override bool Equals(object? obj) => obj is Rect v && Equals(v);
-    public static bool operator ==(Rect a, Rect b) => a.Equals(b);
-    public static bool operator !=(Rect a, Rect b) => !a.Equals(b);
+    public Rect(Point location, Size size) : this(location.X, location.Y, size.Width, size.Height) { }
     public override string ToString() => FormattableString.Invariant($"{X},{Y},{Width},{Height}");
     public string ToString(string f) => FormattableString.Invariant(
         $"{X.ToString(f)},{Y.ToString(f)},{Width.ToString(f)},{Height.ToString(f)}");
-    public override int GetHashCode()
-    {
-        var h = new Hasher(X.GetHashCode());
-        h.Add(Y.GetHashCode());
-        h.Add(Width.GetHashCode());
-        h.Add(Height.GetHashCode());
-        return h.GetHashCode();
-    }
+
+    /// <summary>Gets the rectangle's width and height as a <see cref="Size"/>.</summary>
     public Size Size => new Size(Width, Height);
+
+    /// <summary>Gets the rectangle's top-left position as a <see cref="Point"/>.</summary>
     public Point Position => new Point(X, Y);
+
+    /// <summary>Gets the x-coordinate of the rectangle's right edge.</summary>
     public double Right => X + Width;
+
+    /// <summary>Gets the y-coordinate of the rectangle's bottom edge.</summary>
     public double Bottom => Y + Height;
+
+    /// <summary>Gets a rectangle with zero position, width, and height.</summary>
     public static Rect Empty => new Rect(0, 0, 0, 0);
 
+    /// <summary>Determines whether the rectangle contains a point.</summary>
+    /// <returns>
+    /// <see langword="true"/> if the point is within the rectangle; left and top edges are
+    /// inclusive, while right and bottom edges are exclusive.
+    /// </returns>
     public bool Contains(Point p)
     {
         if (IsEmpty)
@@ -40,8 +38,10 @@ public struct Rect : IEquatable<Rect>
         return p.X >= X && p.X < X + Width && p.Y >= Y && p.Y < Y + Height;
     }
 
+    /// <summary>Determines whether the rectangle has a non-positive width or height.</summary>
     public bool IsEmpty => Width <= 0 || Height <= 0;
 
+    /// <summary>Gets the smallest rectangle that contains this rectangle and another.</summary>
     public Rect Union(Rect r)
     {
         if (IsEmpty && r.IsEmpty)
@@ -57,6 +57,8 @@ public struct Rect : IEquatable<Rect>
         return new Rect(newX, newY, newRight - newX, newBottom - newY);
     }
 
+    /// <summary>Gets the overlapping area between this rectangle and another.</summary>
+    /// <returns>The intersection, or <see cref="Empty"/> if they do not overlap.</returns>
     public Rect Intersect(Rect r)
     {
         if (IsEmpty || r.IsEmpty)
@@ -72,6 +74,7 @@ public struct Rect : IEquatable<Rect>
         return new Rect(newX, newY, width, height);
     }
 
+    /// <summary>Returns a rectangle with non-negative dimensions, adjusting its position as needed.</summary>
     public Rect Normalize()
     {
         var x = X;
@@ -94,11 +97,15 @@ public struct Rect : IEquatable<Rect>
         return new Rect(x, y, width, height);
     }
 
+    /// <summary>Expands the rectangle by the specified thickness on every side.</summary>
+    /// <returns>The expanded rectangle, or <see cref="Empty"/> if its size is empty.</returns>
     public Rect Inflate(double thickness)
     {
         return Inflate(new Thickness(thickness));
     }
 
+    /// <summary>Expands the rectangle by the specified thickness on each side.</summary>
+    /// <returns>The expanded rectangle, or <see cref="Empty"/> if its size is empty.</returns>
     public Rect Inflate(Thickness thickness)
     {
         var size = Size.Inflate(thickness);
@@ -107,11 +114,15 @@ public struct Rect : IEquatable<Rect>
         return new Rect(new Point(X - thickness.Left, Y - thickness.Top), size);
     }
 
+    /// <summary>Contracts the rectangle by the specified thickness on every side.</summary>
+    /// <returns>The contracted rectangle, or <see cref="Empty"/> if its size is empty.</returns>
     public Rect Deflate(double thickness)
     {
         return Deflate(new Thickness(thickness));
     }
 
+    /// <summary>Contracts the rectangle by the specified thickness on each side.</summary>
+    /// <returns>The contracted rectangle, or <see cref="Empty"/> if its size is empty.</returns>
     public Rect Deflate(Thickness thickness)
     {
         var size = Size.Deflate(thickness);
@@ -120,6 +131,7 @@ public struct Rect : IEquatable<Rect>
         return new Rect(new Point(X + thickness.Left, Y + thickness.Top), size);
     }
 
+    /// <summary>Moves the rectangle by a vector while preserving its size.</summary>
     public Rect Move(Vector offset)
     {
         return new Rect(X + offset.X, Y + offset.Y, Width, Height);

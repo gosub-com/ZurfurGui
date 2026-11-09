@@ -1,26 +1,13 @@
-﻿using ZurfurGui.Base.Helpers;
+﻿
+
 
 namespace ZurfurGui.Base;
 
-public struct Vector : IEquatable<Vector>
+/// <summary>Represents a mutable two-dimensional vector.</summary>
+public record struct Vector(double X, double Y)
 {
-    public double X { get; set; }
-    public double Y { get; set; }
-
-    public Vector() { }
-    public Vector(double x, double y) { X = x; Y = y; }
-    public bool Equals(Vector v) => X == v.X && Y == v.Y;
-    public override bool Equals(object? obj) => obj is Vector v && Equals(v);
-    public static bool operator ==(Vector a, Vector b) => a.Equals(b);
-    public static bool operator !=(Vector a, Vector b) => !a.Equals(b);
     public override string ToString() => FormattableString.Invariant($"{X},{Y}");
     public string ToString(string f) => FormattableString.Invariant($"{X.ToString(f)},{Y.ToString(f)}");
-    public override int GetHashCode()
-    {
-        var h = new Hasher(X.GetHashCode());
-        h.Add(Y.GetHashCode());
-        return h.GetHashCode();
-    }
     public Point ToPoint => new Point(X, Y);
     public Size ToSize => new Size(X, Y);
 
@@ -32,12 +19,15 @@ public struct Vector : IEquatable<Vector>
     public static Vector operator /(Vector a, double scale) => new Vector(a.X / scale, a.Y / scale);
     public static Vector operator /(double scale, Vector b) => new Vector(scale / b.X, scale / b.Y);
 
+    /// <summary>Gets a vector with each component limited to zero or greater.</summary>
     public Vector MaxZero => new Vector(Math.Max(X, 0), Math.Max(Y, 0));
 
+    /// <summary>Gets the component-wise minimum of this vector and another vector.</summary>
     public Vector Min(Vector v)
     {
         return new Vector(Math.Min(X, v.X), Math.Min(Y, v.Y));
     }
+    /// <summary>Gets the component-wise maximum of this vector and another vector.</summary>
     public Vector Max(Vector v)
     {
         return new Vector(Math.Max(X, v.X), Math.Max(Y, v.Y));

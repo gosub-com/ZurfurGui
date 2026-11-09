@@ -7,6 +7,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ZurfurGui.Collections;
 
+/// <summary>
+/// A dictionary that maintains a least-recently-used (LRU) ordering of its elements.
+/// </summary>
 public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDictionary<Key, Value> where Key : notnull
 {
     struct Node
@@ -24,8 +27,9 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
     Node[] _nodes = new Node[16];
     int _nodesLength = 0;
 
+    /// <inheritdoc />
     public int Count => _keys.Count;
-    public bool IsReadOnly => false;
+    bool ICollection<KeyValuePair<Key, Value>>.IsReadOnly => false;
 
 
     /// <summary>
@@ -58,6 +62,9 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
         }
     }
 
+    /// <summary>
+    /// Adds a key and value to the dictionary and marks the entry as most recently used.
+    /// </summary>
     public void Add(Key key, Value value)
     {
         if (_keys.ContainsKey(key))
@@ -71,8 +78,12 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
         AddToHead(nodeIndex);
     }
 
+    /// <summary>
+    /// Adds a key-value pair to the dictionary and marks the entry as most recently used.
+    /// </summary>
     public void Add(KeyValuePair<Key, Value> item) => Add(item.Key, item.Value);
 
+    /// <inheritdoc />
     public bool Remove(Key key)
     {
         if (!_keys.TryGetValue(key, out int nodeIndex))
@@ -84,6 +95,7 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
         return true;
     }
 
+    /// <inheritdoc />
     public bool Remove(KeyValuePair<Key, Value> item)
     {
         if (_keys.TryGetValue(item.Key, out int nodeIndex) &&
@@ -94,8 +106,10 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
         return false;
     }
 
+    /// <inheritdoc />
     public bool ContainsKey(Key key) => _keys.ContainsKey(key);
 
+    /// <inheritdoc />
     public bool Contains(KeyValuePair<Key, Value> item)
     {
         if (_keys.TryGetValue(item.Key, out int nodeIndex))
@@ -142,6 +156,7 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
         return new KeyValuePair<Key, Value>(keyToRemove, tailNode.Value);
     }
 
+    /// <inheritdoc />
     public void Clear()
     {
         _keys.Clear();
@@ -152,6 +167,9 @@ public class LruDictionary<Key, Value> : IDictionary<Key, Value>, IReadOnlyDicti
         _freeIndex = -1;
     }
 
+    /// <summary>
+    /// Copies the entries to an array in least-recently-used-first order.
+    /// </summary>
     public void CopyTo(KeyValuePair<Key, Value>[] array, int arrayIndex)
     {
         if (array == null)

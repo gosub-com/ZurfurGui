@@ -2,11 +2,14 @@
 using ZurfurGui.Base.Helpers;
 using ZurfurGui.Property.Serializers;
 
+
+
 namespace ZurfurGui.Base;
 
 
 /// <summary>
 /// Represents a 32 bit color in ABGR format.
+/// The channel masks are a=0xFF000000, b=0x00FF0000, g=0x0000FF00, and r=0x000000FF.
 /// This is compatible with canvas pixel format in webassembly with little endian byte order.
 /// </summary>
 public readonly struct Color : IEquatable<Color>
@@ -15,19 +18,34 @@ public readonly struct Color : IEquatable<Color>
     //      https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas
     readonly uint _abgr;
 
-    public Color(int r, int g, int b, int a = 255) 
+    /// <summary>Initializes a color from its red, green, blue, and optional alpha channels.</summary>
+    /// <param name="r">The red channel, from 0 to 255.</param>
+    /// <param name="g">The green channel, from 0 to 255.</param>
+    /// <param name="b">The blue channel, from 0 to 255.</param>
+    /// <param name="a">The alpha channel, from 0 to 255. Defaults to 255 (opaque).</param>
+    /// <remarks>
+    /// Each channel is stored in its corresponding 8-bit part of the ABGR value. Values outside
+    /// the 0 to 255 range are masked to their low 8 bits.
+    /// </remarks>
+    public Color(int r, int g, int b, int a = 255)
     {
         _abgr = (uint)r&255 | (uint)(g&255) << 8 | (uint)(b&255) << 16 | (uint)((a&255) << 24);
     }
 
+    /// <summary>
+    /// Make a color from the packed 32-bit ABGR format, compatible with WebAssembly canvas pixels on
+    /// little-endian systems.  Same as <see cref="FromAbgr(uint)"/>.
+    /// </summary>
     Color(uint abgr)
     {
         _abgr = abgr;
     }
 
     /// <summary>
-    /// Create color from hex ABGR, a=0xFF000000, b=0x00FF0000, g=0x0000FF00, r=0x000000FF
+    /// Creates a color from the packed 32-bit ABGR format, compatible with WebAssembly canvas
+    /// pixels on little-endian systems.
     /// </summary>
+    /// <param name="abgr">The packed ABGR value, retrievable from <see cref="Abgr"/>.</param>
     public static Color FromAbgr(uint abgr) => new Color(abgr);
 
     /// <summary>
@@ -49,10 +67,23 @@ public readonly struct Color : IEquatable<Color>
             | (webHexColor & 0xFF) << 24); // Alpha
 
 
+    /// <summary>
+    /// Gets the packed 32-bit ABGR value for low-level pixel operations. It is compatible with
+    /// WebAssembly canvas pixels on little-endian systems. Use <see cref="FromAbgr(uint)"/> to
+    /// create a color from this value.
+    /// </summary>
     public uint Abgr => _abgr;
+
+    /// <summary>Gets the alpha channel value, from 0 to 255.</summary>
     public int A => (int)(_abgr >> 24 & 0xff);
+
+    /// <summary>Gets the blue channel value, from 0 to 255.</summary>
     public int B => (int)(_abgr >> 16 & 0xff);
+
+    /// <summary>Gets the green channel value, from 0 to 255.</summary>
     public int G => (int)(_abgr >> 8 & 0xff);
+
+    /// <summary>Gets the red channel value, from 0 to 255.</summary>
     public int R => (int)(_abgr & 0xff);
 
     public bool Equals(Color v) => _abgr == v._abgr;
@@ -61,8 +92,17 @@ public readonly struct Color : IEquatable<Color>
     public static bool operator !=(Color a, Color b) => !a.Equals(b);
     public override string ToString() => $"{R},{G},{B},{A}";
     public override int GetHashCode() => (int)Hasher.HashMix(_abgr);
+
+    /// <summary>Gets the color as a hexadecimal string in <c>#RRGGBBAA</c> format.</summary>
+    /// <remarks>This property always returns a hexadecimal value, never a color name.</remarks>
     public string CssColor => $"#{R:x2}{G:x2}{B:x2}{A:x2}";
 
+    /// <summary>Parses a color from a supported string representation, including named colors.</summary>
+    /// <param name="value">
+    /// A named color, a hexadecimal value in <c>#RRGGBB</c> or <c>#RRGGBBAA</c> format, or
+    /// comma-separated integer channels in <c>r,g,b</c> or <c>r,g,b,a</c> format.
+    /// </param>
+    /// <returns>The parsed color, or <see langword="null"/> if the value is not recognized.</returns>
     public static Color? ParseCss(string value)
     {
         if (string.IsNullOrWhiteSpace(value))

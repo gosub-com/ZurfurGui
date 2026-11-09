@@ -2,24 +2,19 @@
 using System.Collections.Generic;
 using System.Text;
 
+
+
 namespace ZurfurGui.Base;
 
+/// <summary>Specifies the fill style used by a brush.</summary>
 public enum BrushType : byte
 {
     Solid,
 }
 
-public readonly record struct Brush
+/// <summary>Describes a mutable brush by its color and fill type.</summary>
+public record struct Brush(Color Color, BrushType Type = BrushType.Solid)
 {
-    public BrushType Type { get; init; }
-    public Color Color { get; init; }
-
-    // Convenient constructor matching your current design
-    public Brush(Color color, BrushType type = BrushType.Solid)
-    {
-        Color = color;
-        Type = type;
-    }
 
     /// <summary>
     /// Provides a convenient conversion from a Color to a solid Brush.

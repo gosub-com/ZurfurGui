@@ -1,30 +1,13 @@
-﻿using ZurfurGui.Base.Helpers;
+﻿
+
 
 namespace ZurfurGui.Base;
 
-public struct Thickness : IEquatable<Thickness>
+/// <summary>Represents mutable thickness values for the left, top, right, and bottom sides.</summary>
+public record struct Thickness(double Left, double Top, double Right, double Bottom)
 {
-    public double Left { get; set; }
-    public double Top { get; set; }
-    public double Right { get; set; }
-    public double Bottom { get; set; }
-
-    public Thickness() { }
-    public Thickness(double size) { Left = size;  Top = size;  Right = size;  Bottom = size; }
-    public Thickness(double left, double top, double right, double bottom) { Left = left; Top = top; Right = right; Bottom = bottom; }
-    public bool Equals(Thickness v) => Left == v.Left && Top == v.Top && Right == v.Right && Bottom == v.Bottom;
-    public override bool Equals(object? obj) => obj is Thickness v && Equals(v);
-    public static bool operator ==(Thickness a, Thickness b) => a.Equals(b);
-    public static bool operator !=(Thickness a, Thickness b) => !a.Equals(b);
+    public Thickness(double size) : this(size, size, size, size) { }
     public override string ToString() => FormattableString.Invariant($"{Left},{Top},{Right},{Bottom}");
-    public override int GetHashCode()
-    {
-        var h = new Hasher(Left.GetHashCode());
-        h.Add(Top.GetHashCode());
-        h.Add(Right.GetHashCode());
-        h.Add(Bottom.GetHashCode());
-        return h.GetHashCode();
-    }
     public static Thickness operator +(Thickness a, Thickness b)
         => new Thickness(a.Left + b.Left, a.Top + b.Top, a.Right + b.Right, a.Bottom + b.Bottom);
 

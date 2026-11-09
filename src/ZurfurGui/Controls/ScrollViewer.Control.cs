@@ -6,8 +6,13 @@ using ZurfurGui.Property;
 using ZurfurGui.Render;
 using ZurfurGui.Windows;
 
+
+
 namespace ZurfurGui.Controls;
 
+/// <summary>
+/// Specifies which directions a scroll viewer allows content to scroll.
+/// </summary>
 public enum ScrollMode
 {
     Both,
@@ -16,6 +21,10 @@ public enum ScrollMode
     None
 }
 
+/// <summary>
+/// Displays content through a clipped viewport and provides scrolling controls.
+/// See <see href="../../../docs/scroll-viewer.md">docs/scroll-viewer.md</see> for usage and behavior.
+/// </summary>
 public sealed partial class ScrollViewer
 {
     // Flick deceleration: the velocity decays exponentially at this rate (per second).
@@ -35,6 +44,9 @@ public sealed partial class ScrollViewer
     TimeSpan _lastFlickTime;
     Point _flickVelocity;
 
+    /// <summary>
+    /// Initializes a scroll viewer and configures its viewport, scrollbars, and input handlers.
+    /// </summary>
     public ScrollViewer()
     {
         InitializeControl();

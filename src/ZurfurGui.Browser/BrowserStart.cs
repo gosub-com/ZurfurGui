@@ -6,10 +6,18 @@ using ZurfurGui.Windows;
 
 namespace ZurfurGui.Browser;
 
+/// <summary>
+/// Provides entry points for starting ZurfurGui in a browser host. See
+/// <see href="../../docs/architecture.md">docs/architecture.md</see> for details about platform
+/// hosting.
+/// </summary>
 public static partial class BrowserStart
 {
     const string BROWSER_START_SCRIPT_NAME = "ZurfurGui.Browser.BrowserStart.js";
 
+    /// <summary>
+    /// Gets the embedded JavaScript module used to start the browser host.
+    /// </summary>
     [JSExport]
     public static string GetBrowserStartScript()
     {
@@ -31,6 +39,11 @@ public static partial class BrowserStart
         }
     }
 
+    /// <summary>
+    /// Starts the GUI on the specified canvas and begins rendering frames.
+    /// </summary>
+    /// <param name="canvasId">The ID of the HTML canvas element to render into.</param>
+    /// <param name="mainAppEntry">The callback used to initialize the application window.</param>
     public static void Start(string canvasId, Action<AppWindow> mainAppEntry)
     {
         var lastSize = new Base.Size(-1, -1);
