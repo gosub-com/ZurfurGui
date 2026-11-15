@@ -1,7 +1,7 @@
 // A drop down combo box
 {
     $controller: "ComboBox<Item> where Item : IComboBoxItem",
-    $namespace: "ZurfurGui.Controls",
+    $namespace: "ZurfurGui.Controls.ComboBox",
     $borderWidth: "${stroke.width.default}",
     $borderRadius: "${radius.corner.medium}",
     $borderColor: "${color.interactive.primary.stroke}",

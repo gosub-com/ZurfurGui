@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <Content Include="..\..\docs\**\*.md">
+      <Visible>false</Visible>
       <Pack>true</Pack>
       <PackagePath>contentFiles\any\any\docs\</PackagePath>
       <PackageCopyToOutput>false</PackageCopyToOutput>

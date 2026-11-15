@@ -1,0 +1,76 @@
+// A scrolling tree of nodes with optional selection
+{
+    $controller: "TreeView<Item> where Item : ITreeNode<Item>",
+    $namespace: "ZurfurGui.Controls.TreeView",
+    $use: ["ZurfurGui.Controls", "ZurfurGui.Controls.ListBox"],
+    $borderWidth: "${stroke.width.default}",
+    $borderRadius: "${radius.corner.medium}",
+    $borderColor: "${color.input.stroke}",
+    $backgroundColor: "${color.input.background}",
+    TreeView.showLines: "${treeview.show-lines}",
+    TreeView.showExpander: "${treeview.show-expander}",
+    TreeView.indentWidth: "${treeview.indent-width}",
+    TreeView.lineWidth: "${treeview.line-width}",
+    TreeView.expanderStyle: "${treeview.expander-style}",
+    $data: {
+        // The root nodes.  For TreeView<TreeNodeText> the data type is TreeNodeTextData.
+        items: {
+            type: "[]Item",
+            bind: "data"
+        },
+        // None or Single.  Defaults to Single.  Multiple behaves like Single.
+        selectionMode: {
+            type: "SelectionMode",
+            bind: "data",
+            default: "SelectionMode.Single"
+        },
+        // The styled settings below are the tree's drawing style.  The tree reads them and passes
+        // them to the gutters (see TreeView.Control.cs).  They use the measure flag because the
+        // indent width changes the size of every gutter.
+        // Draw the lines connecting the nodes
+        showLines: {
+            type: "bool",
+            bind: "styled",
+            flags: "measure"
+        },
+        // Draw the expander of nodes that have children
+        showExpander: {
+            type: "bool",
+            bind: "styled",
+            flags: "measure"
+        },
+        // Width of each depth level
+        indentWidth: {
+            type: "double",
+            bind: "styled",
+            flags: "measure"
+        },
+        // Thickness of the lines and the expander
+        lineWidth: {
+            type: "double",
+            bind: "styled",
+            flags: "measure"
+        },
+        // Box or Chevron
+        expanderStyle: {
+            type: "TreeExpanderStyle",
+            bind: "styled",
+            flags: "measure"
+        }
+    },
+    $content: [
+        {
+            $controller: "ScrollViewer",
+            $align: "horizontal:stretch,vertical:stretch",
+            scrollMode: "vertical",
+            $content: [
+                {
+                    $name: "_rows",
+                    $controller: "Panel",
+                    $layout: "Column",
+                    cell.spacing: "${treeview.row-spacing}"
+                }
+            ]
+        }
+    ]
+}

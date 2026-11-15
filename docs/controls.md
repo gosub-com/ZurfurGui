@@ -27,7 +27,7 @@ public static void MainApp(AppWindow app)
 The main view and the window content are ordinary generated controls. For example, a simple main view
 can be written as follows:
 
-```json5
+```
 {
     $controller: "MainView",
     $namespace: "MyApp",
@@ -52,7 +52,7 @@ a window with optional title, position, size, and alignment settings. See
 `Panel` is a general-purpose container. Use its `$content` section to contain other controls and use
 `$layout` to arrange those controls. Common layouts include `Row`, `Column`, and `Dock`.
 
-```json5
+```
 {
     $controller: "Panel",
     $layout: "Row",
@@ -67,7 +67,7 @@ When no `$layout` is specified, `Panel` uses its default layout and arranges eac
 Set the qualified `"Panel.Offset"` property on a child to shift its layout position. Its positive right
 and bottom edges contribute to the Panel's measured extent:
 
-```json5
+```
 {
     $controller: "Panel",
     $content: [
@@ -89,7 +89,7 @@ Custom layouts such as `Row`, `Column`, and `Dock` do not use `Panel.Offset`.
 control, and resize handle. Parent `$content` is placed in the clipped `_windowContent` area. Set the
 `title` data property in JSON; it defaults to `"(not set)"` when omitted.
 
-```json5
+```
 {
     $controller: "Window",
     $namespace: "MyApp",
@@ -145,7 +145,7 @@ floating panel rather than as a child of the Scrim, so clicks on that content do
 `TextView` displays text. Its `text` property can be a string or an array of lines. Use styles and layout
 properties to control its appearance and position.
 
-```json5
+```
 {
     $controller: "TextView",
     text: "Hello"
@@ -157,7 +157,7 @@ properties to control its appearance and position.
 `Button` displays a clickable button. Set its `text` property in ZUI. Give it a `$name` when application
 code needs to access it from the generated controller.
 
-```json5
+```
 {
     $name: "buttonSave",
     $controller: "Button",

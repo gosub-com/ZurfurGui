@@ -1,7 +1,7 @@
 // A scrolling list of items with optional selection
 {
     $controller: "ListBox<Item> where Item : IListBoxItem",
-    $namespace: "ZurfurGui.Controls",
+    $namespace: "ZurfurGui.Controls.ListBox",
     $borderWidth: "${stroke.width.default}",
     $borderRadius: "${radius.corner.medium}",
     $borderColor: "${color.input.stroke}",
@@ -29,7 +29,8 @@
                 {
                     $name: "_rows",
                     $controller: "Panel",
-                    $layout: "Column"
+                    $layout: "Column",
+                    cell.spacing: "${listbox.row-spacing}"
                 }
             ]
         }

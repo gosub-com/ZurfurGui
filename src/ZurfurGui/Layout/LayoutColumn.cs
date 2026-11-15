@@ -11,7 +11,7 @@ public class LayoutColumn : Layoutable
 {
 
     /// <summary>
-    /// Space between elements
+    /// Default space between elements, used when the view has no <c>cell.spacing</c> style.
     /// </summary>
     public double Spacing { get; set; } = 5.0;
 
@@ -34,14 +34,14 @@ public class LayoutColumn : Layoutable
             columnMeasured.Width = Math.Max(columnMeasured.Width, childMeasured.Width);
             columnMeasured.Height += childMeasured.Height;
         }
-        columnMeasured.Height += Math.Max(0, visibleCount - 1) * Spacing;
+        columnMeasured.Height += Math.Max(0, visibleCount - 1) * GetSpacing(view);
         return columnMeasured;
     }
 
     void Layoutable.ArrangeViews(View view, MeasureContext measure)
     {
         var bounds = view.ContentRect;
-        var spacing = Spacing;
+        var spacing = GetSpacing(view);
         foreach (var childView in view.Children)
         {
             bounds.Height = childView.DesiredTotalSize.Height;
@@ -49,5 +49,14 @@ public class LayoutColumn : Layoutable
             childView.Arrange(bounds, measure);
             bounds.Y += childView.DesiredTotalSize.Height + spacing;
         }
+    }
+
+    /// <summary>
+    /// Vertical space between children.  The <c>cell.spacing</c> style (the same one LayoutRow
+    /// uses, so a theme can set it) wins, otherwise fall back to <see cref="Spacing"/>.
+    /// </summary>
+    double GetSpacing(View view)
+    {
+        return view.GetProperty(LayoutRow.Spacing).Height.Or(Spacing);
     }
 }

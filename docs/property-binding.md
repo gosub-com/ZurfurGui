@@ -26,7 +26,7 @@ so write `"100"`. | `"100"`, `"Orientation.horizontal"`, `"new Color(128, 128, 1
 
 For example:
 
-```json5
+```
 $data: {
     // Current application value; not mirrored to a view property.
     value: {
@@ -206,7 +206,7 @@ JSON time format, for example `"00:00:00.5"` for half a second.
 
 A collection uses `[]Type` and must use `bind: "data"`:
 
-```json5
+```
 $data: {
     // Items shown by the control.
     items: {
@@ -267,7 +267,7 @@ file:
 ```csharp
 namespace MyApp.Controls;
 
-public sealed partial class ComboBoxItemBadgeData : global::ZurfurGui.Controls.IComboBoxItem
+public sealed partial class ComboBoxItemBadgeData : global::ZurfurGui.Controls.ComboBox.IComboBoxItem
 {
 }
 ```

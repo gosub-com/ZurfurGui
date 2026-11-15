@@ -35,14 +35,18 @@ for what is generated and how files are discovered.
    - `ZurfurMain.MainApp()` must call the generated `InitializeControls()` method before creating
      controls.
    - The generated method:
-     - runs static constructors for property registration, including discovered closed generic
-       controls;
+     - runs static constructors for property registration, including open generic controls;
      - registers ordinary controls for creation from ZUI controller names;
+     - registers open generic controls (e.g. `ComboBox<>`) under their bare class name, so closed
+       usages can be resolved later by name;
      - registers concrete data types to controller factories;
-     - registers closed generic controller usages discovered in ZUI files; and
+     - registers closed generic controller usages discovered in ZUI files, resolving the base
+       generic control and item controller by bare name at runtime (see
+       [Loader registration and lookup](#loader-registration-and-lookup)); and
      - registers themes.
    - If using third-party libraries or plugins, call their `ZurfurMain.InitializeControls()` methods
-     at this stage too.
+     at this stage too, before any of your own closed generic usages of their controls are
+     registered or loaded.
 
 5. **Application logic**
    - After all required initialization methods return, the callback can create windows and controls,
@@ -143,9 +147,14 @@ known ordering gap.
 
 - `RegisterControl` maps a controller name to a `Controllable` type and factory. ZUI controller
   lookup tries the fully qualified name, the containing control's namespace, its `$use` namespaces,
-  and then `ZurfurGui.Controls`. A missing `$controller` resolves to `Panel`. Closed generic
-  usages are registered under the `ZurfurGui.Controls.` namespace. Re-registering
-  type throws.
+  and then `ZurfurGui.Controls`. A missing `$controller` resolves to `Panel`. Re-registering the
+  same controller name with a different type throws.
+  - Closed generic usages (e.g. `ComboBox<ComboBoxItemBadge>`) found in a project's ZUI files are
+    also registered with `RegisterControl`, under the literal usage string. The generator resolves
+    the base control and item controller names to their namespaces at generation time and emits
+    the closed type directly (`new ComboBox<ComboBoxItemBadgeData>()`), after running that closed
+    type's static constructor. No reflection creates the closed type, so AOT compilation and
+    trimming keep its constructor. See [Code generation](code-generation.md).
 - `RegisterDataController` maps a concrete data type to a factory. Lookup uses the exact runtime
   type; duplicate data-type registration throws. The factory receives and assigns the same data
   instance to the controller's `DataContext`.

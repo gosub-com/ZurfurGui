@@ -2,7 +2,7 @@
 {
     $controller: "FormTestListBox",
     $namespace: "TestApp.Test",
-    $use: [ "TestApp.Test.Controls" ],
+    $use: [ "TestApp.Test.Controls", "ZurfurGui.Controls.ListBox" ],
     $layout: "Column",
     $padding: "left:16,top:16,right:16,bottom:16",
     $content: [

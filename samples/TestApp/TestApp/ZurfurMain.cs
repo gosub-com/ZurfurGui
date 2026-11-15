@@ -63,6 +63,10 @@ public static partial class ZurfurMain
             location: new PointProp(60, 60),
             sizeRequst: new SizeProp(780, 480));
 
+        app.ShowWindow(new FormTestTreeView(), "TreeView Test",
+            location: new PointProp(90, 90),
+            sizeRequst: new SizeProp(700, 480));
+
         app.ShowWindow(new FormTestScrollViewer(), "ScrollViewer Test",
             location: new PointProp(450, 165));
 

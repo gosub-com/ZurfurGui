@@ -1,0 +1,27 @@
+// The header of a tree node: the gutter followed by the node content.  It draws the hover,
+// pressed, and selected background.  The TreeView creates these, they are not meant to be used
+// directly.
+{
+    $controller: "TreeNodeRow",
+    $namespace: "ZurfurGui.Controls.TreeView",
+    $accessModifier: "internal",
+    $backgroundColor: "${color.treeview.row.background}",
+    $hitTest: "Always",
+    $layout: "Row",
+    $data: {
+        // True when the node is selected.  The theme uses it as the condition TreeNodeRow.isSelected.
+        isSelected: {
+            type: "Bool",
+            bind: "property",
+            default: false,
+            flags: "style,render"
+        }
+    },
+    $content: [
+        {
+            $name: "gutter",
+            $controller: "TreeGutter",
+            $align: "vertical:stretch"
+        }
+    ]
+}

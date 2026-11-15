@@ -1,12 +1,12 @@
 using ZurfurGui.Base;
 
-namespace ZurfurGui.Controls;
+namespace ZurfurGui.Controls.ListBox;
 
 /// <summary>
 /// A row inside a <see cref="ListBox{Item}"/>.  It hosts one item control and draws the hover,
 /// pressed, and selected background.  The list box creates these.
 /// </summary>
-public sealed partial class ListBoxRow
+internal sealed partial class ListBoxRow
 {
     /// <summary>
     /// Initializes a list box row control.

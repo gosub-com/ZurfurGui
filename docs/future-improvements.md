@@ -308,8 +308,15 @@ Other documents link here instead of describing them, so they do not become stal
   on the generated code rather than by a generator diagnostic.
 - **Numeric `default` values.** In `$data`, a `default` that is a bare JSON number is silently
   ignored; only strings and booleans are used. This should be accepted or diagnosed.
-- **Closed generic registration scope.** Closed generic usages discovered in ZUI files are always
-  registered under the `ZurfurGui.Controls.` namespace key, regardless of the declaring namespace.
+- **Closed generic registration scope (fixed).** Closed generic usages (e.g.
+  `ComboBox<ComboBoxItemText>`) are resolved by bare class name at generation time. The generator
+  looks the base control and item controller up in this project's ZUI files, then in the public types
+  of referenced assemblies, and emits the fully qualified closed type (`new ComboBox<...Data>()`).
+  This works regardless of which project or library declares the controls, with no namespace
+  guessing. An earlier design resolved the names at runtime with `MakeGenericType` and
+  `Activator.CreateInstance`; that failed in WebAssembly AOT builds (`Arg_NoDefCTor`) because the
+  trimmer could not see the closed type. Control class names that are missing or ambiguous across
+  the project and its references are reported as diagnostic ZUI006.
 - **Detach lifecycle.** `Controllable.OnDetach` is documented as not actually called yet. See
   Priority 3.
 - **Stale source comments.** The `Loader.CreateControl` summary says the context is not yet used for

@@ -4,7 +4,7 @@ using System.ComponentModel;
 using ZurfurGui.Base;
 using ZurfurGui.Input;
 
-namespace ZurfurGui.Controls;
+namespace ZurfurGui.Controls.ListBox;
 
 /// <summary>
 /// How a <see cref="ListBox{Item}"/> lets the user select items.

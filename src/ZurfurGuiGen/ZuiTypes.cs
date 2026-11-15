@@ -124,6 +124,12 @@ internal class ZuiFileInfo
     public string Implements { get; set; } = "";
 
     /// <summary>
+    /// C# access modifier ("public" or "internal") for the generated controller and data
+    /// classes, from the optional JSON `$accessModifier` key. Defaults to "public".
+    /// </summary>
+    public string AccessModifier { get; set; } = "public";
+
+    /// <summary>
     /// Data bindings extracted from the JSON `.data` section.
     /// </summary>
     public List<DataBinding> Bindings { get; set; } = new();

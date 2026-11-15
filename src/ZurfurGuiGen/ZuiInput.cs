@@ -32,6 +32,7 @@ internal static class ZuiInput
         var userSuppliedDataClass = false;
         var use = new List<string>();
         var implements = "";
+        var access = "public";
         var dataBindings = new List<DataBinding>();
         var typeParam = "";
         var typeParamConstraint = "";
@@ -50,6 +51,7 @@ internal static class ZuiInput
 
                 use = GetUsingLines(jsonDocument);
                 implements = GetOptionalJsonValue(jsonDocument, "$implements");
+                access = GetAccessModifier(jsonDocument);
 
                 // Try to find the .cs file with the same name as the JSON file (code-behind)
                 var csTree = syntax.FirstOrDefault(tree =>
@@ -122,6 +124,7 @@ internal static class ZuiInput
             Namespace = nameSpace,
             Use = use,
             Implements = implements,
+            AccessModifier = access,
             Bindings = dataBindings,
             UserSuppliedControllerClass = userSuppliedControllerClass,
             UserSuppliedDataClass = userSuppliedDataClass,
@@ -155,9 +158,10 @@ internal static class ZuiInput
         throw new Exception("The JSON '.use' key must be an array of strings");
     }
 
-    // Matches "ClassName<TypeParam> where TypeParam : Constraint"
+    // Matches "ClassName<TypeParam> where TypeParam : Constraint", where the constraint may be
+    // a generic type such as "ITreeNode<Item>"
     static readonly Regex s_genericControllerRegex =
-        new Regex(@"^(\w+)<(\w+)>\s+where\s+\w+\s*:\s*(\w+)$", RegexOptions.Compiled);
+        new Regex(@"^(\w+)<(\w+)>\s+where\s+\w+\s*:\s*(.+)$", RegexOptions.Compiled);
 
     /// <summary>
     /// Find and validate the controller name from the json.
@@ -214,6 +218,20 @@ internal static class ZuiInput
         if (value is not string stringValue || string.IsNullOrWhiteSpace(stringValue))
             throw new Exception($"The JSON '{key}' key must be a non-empty string");
         return stringValue;
+    }
+
+    /// <summary>
+    /// Retrieve and validate the optional '$accessModifier' key, which sets the C# access
+    /// modifier of the generated controller and data classes. Defaults to "public" when absent.
+    /// </summary>
+    static string GetAccessModifier(Dictionary<string, object?> jsonDocument)
+    {
+        var value = GetOptionalJsonValue(jsonDocument, "$accessModifier");
+        if (value == "")
+            return "public";
+        if (value != "public" && value != "internal")
+            throw new Exception($"The JSON '$accessModifier' key must be 'public' or 'internal', but is '{value}' instead");
+        return value;
     }
 
     static string GetMatchingJsonFileName(string fileName, Dictionary<string, object?> jsonDocument)

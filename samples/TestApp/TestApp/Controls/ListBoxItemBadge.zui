@@ -4,6 +4,7 @@
 {
     $controller: "ListBoxItemBadge",
     $namespace: "TestApp.Test.Controls",
+    $use: ["ZurfurGui.Controls.ListBox"],
     $implements: "IListBoxItem",
     $padding: "${spacing.horizontal.small | spacing.vertical.extra-small}",
     $layout: "Row",

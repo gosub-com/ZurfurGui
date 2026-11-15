@@ -831,6 +831,10 @@ public sealed class View
         }
         _children.RemoveAt(index);
         child.Parent = null;
+
+        // Like AddChild: the remaining children must be measured and arranged again, even when
+        // this was the last child.  Without this the desired size of this view stays stale.
+        SetFlags(ViewFlags.Render | ViewFlags.Measure | ViewFlags.Moved);
     }
 
     static void ExpandRemovedChildDirtyRect(View view)

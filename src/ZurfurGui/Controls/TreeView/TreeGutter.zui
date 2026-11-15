@@ -1,0 +1,17 @@
+// The left side of a tree node row.  It draws the connecting lines and the expander.  The
+// TreeView creates these, they are not meant to be used directly.
+{
+    $controller: "TreeGutter",
+    $namespace: "ZurfurGui.Controls.TreeView",
+    $accessModifier: "internal",
+    TreeGutter.lineColor: "${color.treeview.line}",
+    $data: {
+        // Color of the lines and the expander
+        lineColor: {
+            type: "Color",
+            bind: "styled",
+            flags: "render"
+        }
+    },
+    $content: []
+}

@@ -2,7 +2,8 @@
 // background.  The ListBox creates these, they are not meant to be used directly.
 {
     $controller: "ListBoxRow",
-    $namespace: "ZurfurGui.Controls",
+    $namespace: "ZurfurGui.Controls.ListBox",
+    $accessModifier: "internal",
     $backgroundColor: "${color.listbox.item.background}",
     $hitTest: "Always",
     $data: {

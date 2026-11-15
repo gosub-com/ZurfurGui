@@ -24,7 +24,7 @@ The key components are:
 architecture documentation: they are essentially JSON with comments and dictionary keys do not need
 quotes. Each theme has a name and a dictionary of variables.
 
-```json5
+```
 {
     name: "ZurfurDefault",
     variables: {
@@ -42,7 +42,7 @@ quotes. Each theme has a name and a dictionary of variables.
 **Conditional expressions**: Tokens can respond to view states using
 `condition ? value; alternativeValue` syntax:
 
-```json5
+```
 color.interactive.primary.background: "isPressed ? #A6D2F2; isPointerOver ? #D2E8FA; #C6E0F7"
 ```
 
@@ -58,7 +58,7 @@ properties are invalid conditions.
 
 For example, scrollbar themes can use the effective expanded state instead of the physical pointer state:
 
-```json5
+```
 color.scroll.thumb.background:
     "isPressed ? #005A9E; ScrollBar.isExpanded ? #6A9FD0; #8BB4DC80"
 ```
@@ -75,7 +75,7 @@ condition is found. The last value (without a condition) serves as the default.
 together using the `IMergable` interface. For example, spacing tokens can define
 individual edges:
 
-```json5
+```
 spacing.horizontal.medium: "left:8,right:8",
 spacing.vertical.small: "top:4,bottom:4"
 ```
@@ -102,7 +102,7 @@ below).
 In `.zui` files, wrap token names with `${}` to reference theme tokens.
 remain supported:
 
-```json5
+```
 {
     $controller: "Button",
     $borderWidth: "${stroke.width.default}",
@@ -122,7 +122,7 @@ Multiple token names can be specified with `|`. This is critical for third-party
 controls that define their own tokens but want to fall back to standard system tokens if
 the user's theme doesn't define the custom ones:
 
-```json5
+```
 $padding: "${spacing.my-control-inner-padding | spacing.horizontal.small | spacing.vertical.extra-small}"
 ```
 
@@ -134,7 +134,7 @@ token fully resolves the property, the rest are ignored.
 
 **Example from Window title text color**:
 
-```json5
+```
 TextView.color: "${color.window.menu | color.window.title.foreground}"
 ```
 
@@ -143,7 +143,7 @@ This tries `color.window.menu` first (custom token), then falls back to
 
 The `|` operator combined with `IMergable` properties enables powerful composition:
 
-```json5
+```
 TextView.font: "${style.test.font.c1 | style.test.font.c2}"
 ```
 
@@ -157,7 +157,7 @@ mapping and include a fallback token that is defined by the built-in themes. Thi
 consumers override a control-specific token without requiring every theme to define it. If the
 optional token is absent, the fallback supplies a usable value:
 
-```json5
+```
 {
     ScrollBar.thumbEdgeInset: "${size.scrollbar.thumb.edge-inset | spacing.extra-small}",
     $data: {
@@ -281,7 +281,7 @@ To create a custom theme:
 
 2. **Define a unique name and variables**:
 
-```json5
+```
 {
     name: "MyBrandTheme",
     variables: {
@@ -294,7 +294,7 @@ To create a custom theme:
 
 3. **Reference your tokens in `.zui` files**:
 
-```json5
+```
 $backgroundColor: "${my.custom.accent | color.interactive.primary.background}"
 ```
 

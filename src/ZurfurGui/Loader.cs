@@ -81,6 +81,7 @@ public static class Loader
             Converters = {
             // Add custom converters
             new PropertiesJsonConverter(),
+            new BoolJsonConverter(),
             new DoublePropJsonConverter(),
             new TextLinesJsonConverter(),
             new ColorJsonConverter(),

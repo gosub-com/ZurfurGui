@@ -187,3 +187,5 @@ Paths are relative to `src/`. For the generator source files, see the source map
 - `docs/combo-box.md`: how the ComboBox control works, how to use it, and how to create custom item
   renderers.
 - `docs/list-box.md`: how the ListBox control works, how to use it, and how to create custom items.
+- `docs/tree-view.md`: how the TreeView control works, how to use it, and how to create custom
+  tree nodes.

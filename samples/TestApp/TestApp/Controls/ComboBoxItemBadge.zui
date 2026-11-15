@@ -4,6 +4,7 @@
 {
     $controller: "ComboBoxItemBadge",
     $namespace: "TestApp.Test.Controls",
+    $use: ["ZurfurGui.Controls.ComboBox"],
     $implements: "IComboBoxItem",
     $padding: "${spacing.horizontal.small | spacing.vertical.extra-small}",
     $backgroundColor: "${color.interactive.item.background}",

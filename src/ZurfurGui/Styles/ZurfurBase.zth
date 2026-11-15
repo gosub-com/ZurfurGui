@@ -77,6 +77,17 @@
     stroke.width.default: "1",
     stroke.width.medium: "2",
 
+    // TreeView: connecting lines and expander
+    treeview.show-lines: "true",
+    treeview.show-expander: "true",
+    treeview.indent-width: "16", // Width of each depth level
+    treeview.line-width: "1", // Thickness of the lines and the expander
+    treeview.expander-style: "box", // box (plus and minus) or chevron
+    treeview.row-spacing: "0", // Space between rows.  Lines only connect when this is 0
+
+    // ListBox: rows touch so the hover and selected backgrounds have no gaps
+    listbox.row-spacing: "0",
+
     size.window.min: "width:160,height:80",
     size.text-edit.min: "width:80",
 

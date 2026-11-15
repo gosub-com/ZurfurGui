@@ -42,6 +42,7 @@ JSON5 escape forms, and `null` values.
 | `$controller` | Yes | The controller name, which must match the file name. May use the generic form `Name<T> where T : Constraint`. |
 | `$use` | No | An array of strings naming extra namespaces searched when resolving child controller names. |
 | `$implements` | No | A handwritten C# interface the generated data class implements, such as `IComboBoxItem`. |
+| `$accessModifier` | No | The C# access modifier (`public` or `internal`) of the generated controller and data classes. Defaults to `public`. |
 | `$data` | No | Declares the view's data shape. See [Property binding](property-binding.md). |
 | `$content` | No | The array of child controls that make up the control's own template. |
 
@@ -60,8 +61,9 @@ appropriate:
 - A comment at the top of the file, before the top-level object, is emitted as the `<summary>` of
   the generated controller and data classes.
 
-Generator-only metadata (`#comment`, `$namespace`, `$use`, and `$data`) is removed from the JSON
-before it is embedded in the generated controller, so it is not seen by the runtime loader.
+Generator-only metadata (`#comment`, `$namespace`, `$use`, `$data`, and `$accessModifier`) is removed
+from the JSON before it is embedded in the generated controller, so it is not seen by the runtime
+loader.
 
 ## `.zth` theme files
 

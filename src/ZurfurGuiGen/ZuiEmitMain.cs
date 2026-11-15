@@ -57,11 +57,13 @@ internal static void GenerateZurfurMain(
 
         // Generate source code
         var zurfurMainNamespace = zurfurMainClass.ContainingNamespace.ToDisplayString();
-        var zurfurMainSource = GenerateZurfurMainSource(zurfurMainNamespace, generatedControls, generatedThemes);
+        var zurfurMainSource = GenerateZurfurMainSource(sourceProductionContext, compilation,
+            zurfurMainNamespace, generatedControls, generatedThemes);
         sourceProductionContext.AddSource("ZurfurMain.g.cs", SourceText.From(zurfurMainSource, System.Text.Encoding.UTF8));
     }
 
-internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
+internal static string GenerateZurfurMainSource(SourceProductionContext sourceProductionContext,
+    Compilation compilation, string zurfurMainNamespace,
     IEnumerable<ZuiFileInfo> generatedControls, IEnumerable<ZuiFileInfo> generatedThemes)
     {
         var controlList = generatedControls.ToList();
@@ -103,25 +105,41 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
         // Scan all JSON documents recursively for closed generic controller usages
         // (e.g. "$controller": "ComboBox<ComboBoxItemText>" at a usage site).
         // Open generic definitions (e.g. "ComboBox<Item>") are skipped.
-        // The dictionary maps JSON name (used as Loader key) -> C# type name (for typeof/new).
-        // Control names in type args are translated to their concrete data class names
-        // (e.g. ComboBoxItemText -> ComboBoxItemTextData) using controlList.
-        var closedGenerics = new SortedDictionary<string, string>();
+        // The dictionary maps the literal usage string (used directly as the Loader key, with no
+        // namespace prefix) -> (base control bare name, item controller bare name). Both names are
+        // resolved to their real namespaces here, at generation time, so the generated code names
+        // the closed generic type directly (e.g. new ComboBox<ComboBoxItemTextData>()). The
+        // compiler and AOT/trimming tools can then see the type and keep its constructor, which
+        // is not possible when the closed type is only created with reflection at runtime.
+        var closedGenerics = new SortedDictionary<string, (string BaseName, string ItemName)>();
         foreach (var fileInfo in controlList)
         {
-            CollectClosedGenerics(fileInfo.JsonDocument, fileInfo, controlList, closedGenerics);
+            CollectClosedGenerics(fileInfo.JsonDocument, fileInfo, closedGenerics);
         }
 
-        var registerClosedGenerics = closedGenerics.Count == 0 ? "" : string.Join("\r\n",
-            closedGenerics.Select(kvp =>
+        var resolver = new ZuiTypeResolver(controlList, compilation);
+        var registerClosedGenerics = string.Join("\r\n", closedGenerics.Select(kvp =>
+        {
+            var loaderKey = kvp.Key;            // e.g. "ComboBox<ComboBoxItemText>", used as-is
+            var baseType = resolver.Resolve(kvp.Value.BaseName, 1, out var baseError);
+            var itemType = resolver.Resolve(kvp.Value.ItemName, 0, out var itemError);
+            if (baseType == null || itemType == null)
             {
-                var jsonName = kvp.Key;   // e.g. "ComboBox<ComboBoxItemText>"
-                var csName = kvp.Value;   // e.g. "ComboBox<ComboBoxItemTextData>"
-                // Registration key uses namespace + json name so the loader resolves it
-                var loaderKey = $"ZurfurGui.Controls.{jsonName}";
-                return $"        // Closed generic: registered from usage site, not from the generic definition.\r\n"
-                    + $"        global::ZurfurGui.Generated.ZuiRuntime.RegisterControl(\"{loaderKey}\", typeof(global::ZurfurGui.Controls.{csName}), () => new global::ZurfurGui.Controls.{csName}());";
-            }));
+                sourceProductionContext.ReportDiagnostic(ZuiDiagnostics.GetDiagnostic(Location.None,
+                    "ZUI006", "Unresolved Generic Control",
+                    $"Cannot generate closed generic control '{loaderKey}'. {baseError}{itemError}"));
+                return "";
+            }
+
+            // The generated data class of the item controller, e.g. ComboBoxItemText -> ComboBoxItemTextData
+            var closedType = $"global::{baseType}<global::{itemType}Data>";
+
+            // Closed generic static fields are per-closed-type, so the static constructor is run
+            // for this specific closed type before its PropertyKey fields are used (e.g. by themes).
+            return $"        // Closed generic: registered from usage site, not from the generic definition.\r\n"
+                + $"        global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof({closedType}).TypeHandle);\r\n"
+                + $"        global::ZurfurGui.Generated.ZuiRuntime.RegisterControl(\"{loaderKey}\", typeof({closedType}), () => new {closedType}());";
+        }).Where(s => s != ""));
 
         var registerThemes = string.Join("\r\n", generatedThemes.Select(t =>
         {
@@ -144,16 +162,6 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
         sb.AppendIndentedLine(2, "// Run static constructors to register control properties");
         if (!string.IsNullOrWhiteSpace(runStaticConstructors))
             sb.Append(runStaticConstructors).Append("\r\n");
-        // Also run static constructors for closed generics — open generic static fields
-        // are per-closed-type, so PropertyKey registrations only fire on a closed type.
-        if (closedGenerics.Count > 0)
-        {
-            foreach (var kvp in closedGenerics)
-            {
-                var csName = kvp.Value; // e.g. "ComboBox<global::ZurfurGui.Controls.ComboBoxItemTextData>"
-                sb.AppendIndentedLine(2, $"global::System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(global::ZurfurGui.Controls.{csName}).TypeHandle);");
-            }
-        }
         sb.Append("\r\n");
         sb.AppendIndentedLine(2, "// Register non-generic controls");
         if (!string.IsNullOrWhiteSpace(registerControls))
@@ -180,13 +188,12 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
     /// Recursively scan a JSON document for $controller values that are closed generics
     /// (e.g. "$controller": "ComboBox&lt;ComboBoxItemText&gt;" at a usage site).
     /// Skips open generic definitions where the type argument matches the source file's own TypeParam.
-    /// Translates the control-name type argument to its concrete data class name using controlList
-    /// (e.g. ComboBoxItemText -> ComboBoxItemTextData), producing the C# type name for registration.
-    /// The dictionary key is the JSON name (Loader lookup key) and the value is the C# type name.
+    /// The dictionary key is the literal usage string (the Loader lookup key, used verbatim) and the
+    /// value is the (base control, item controller) bare class names. The caller resolves both
+    /// names to their namespaces with ZuiTypeResolver.
     /// </summary>
     static void CollectClosedGenerics(Dictionary<string, object?> json,
-        ZuiFileInfo sourceFile, List<ZuiFileInfo> controlList,
-        SortedDictionary<string, string> result)
+        ZuiFileInfo sourceFile, SortedDictionary<string, (string BaseName, string ItemName)> result)
     {
         foreach (var kvp in json)
         {
@@ -199,25 +206,17 @@ internal static string GenerateZurfurMainSource(string zurfurMainNamespace,
                     var typeArg = match.Groups[2].Value;    // e.g. "ComboBoxItemText"
                     // Skip the open generic definition's own controller value
                     if (typeArg != sourceFile.TypeParam && !result.ContainsKey(controllerValue))
-                    {
-                        // Look up the namespace of the type arg control in controlList
-                        var typeArgInfo = controlList.FirstOrDefault(c => c.ControllerName == typeArg);
-                        var typeArgNs = typeArgInfo != null ? typeArgInfo.Namespace : "ZurfurGui.Controls";
-                        // Fully qualify the concrete data class: ComboBoxItemText -> global::ZurfurGui.Controls.ComboBoxItemTextData
-                        var csTypeArg = $"global::{typeArgNs}.{typeArg}Data";
-                        var csName = $"{baseName}<{csTypeArg}>";
-                        result[controllerValue] = csName;
-                    }
+                        result[controllerValue] = (baseName, typeArg);
                 }
             }
 
             if (kvp.Value is Dictionary<string, object?> nested)
-                CollectClosedGenerics(nested, sourceFile, controlList, result);
+                CollectClosedGenerics(nested, sourceFile, result);
 
             if (kvp.Value is List<object?> list)
                 foreach (var item in list)
                     if (item is Dictionary<string, object?> listItem)
-                        CollectClosedGenerics(listItem, sourceFile, controlList, result);
+                        CollectClosedGenerics(listItem, sourceFile, result);
         }
     }
 }

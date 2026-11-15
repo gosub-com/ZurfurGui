@@ -39,7 +39,7 @@ internal static class ZuiEmitData
         sb.Append(ZuiEmit.GenerateUsingCode(data));
         sb.Append("#nullable enable\r\n\r\n");
         sb.Append($"namespace {data.Namespace};\r\n\r\n");
-        sb.Append($"public sealed {partialKeyword}class {className}{genericSuffix} : INotifyPropertyChanged{implements}{genericConstraint}\r\n{{\r\n");
+        sb.Append($"{data.AccessModifier} sealed {partialKeyword}class {className}{genericSuffix} : INotifyPropertyChanged{implements}{genericConstraint}\r\n{{\r\n");
 
         foreach (var binding in bindings)
             sb.AppendIndentedLine(1, $"static readonly PropertyChangedEventArgs s_{binding.Name}EventArgs = new(nameof({binding.PascalName}));");

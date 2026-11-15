@@ -11,7 +11,7 @@ offset, and scrollbar-range behavior, but several standard GUI features remain u
 A ScrollViewer is a container control. Put the content to be scrolled in its `$content` section, just
 as content is supplied to a `Panel` or another container control.
 
-```json5
+```
 {
     $controller: "ScrollViewer",
     $content: [
@@ -36,7 +36,7 @@ A parent layout must provide a finite viewport when the application needs a boun
 example, a dock layout can place a toolbar at the top and make the final ScrollViewer child fill the
 remaining area:
 
-```json5
+```
 {
     $controller: "Panel",
     $layout: "Dock",
@@ -187,7 +187,7 @@ Fractional wheel deltas from precision touchpads scroll proportionally.
 `wheelSteps` is a styled property. It comes from the `scroll.wheel.steps` variable in the base theme
 (`ZurfurBase`, default 3) and can be overridden on an individual ScrollViewer:
 
-```json5
+```
 {
 	$controller: "ScrollViewer",
 	wheelSteps: 5

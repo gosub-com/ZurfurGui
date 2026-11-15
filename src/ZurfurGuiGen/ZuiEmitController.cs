@@ -33,7 +33,7 @@ internal static class ZuiEmitController
         if (data.TypeParam != "")
         {
             sb.Append($"/// <summary>Non-generic companion holding PropertyKey fields for {data.ControllerName}&lt;{data.TypeParam}&gt;.</summary>\r\n");
-            sb.Append($"public static partial class {data.ControllerName}\r\n{{\r\n");
+            sb.Append($"{data.AccessModifier} static partial class {data.ControllerName}\r\n{{\r\n");
             if (newBindings.Count > 0)
             {
                 sb.AppendIndentedLine(1, "// Property Keys");
@@ -60,13 +60,13 @@ internal static class ZuiEmitController
         {
             // Generic controllers use a concrete data type parameter with a handwritten constraint.
             var constraintInterface = ZuiEmit.GetConstraintType(data.TypeParamConstraint);
-            sb.Append($"public sealed {partialKeyword}class {data.FileName}<{data.TypeParam}>"
+            sb.Append($"{data.AccessModifier} sealed {partialKeyword}class {data.FileName}<{data.TypeParam}>"
                 + " : global::ZurfurGui.Generated.ZuiControllable\r\n");
             sb.Append($"    where {data.TypeParam} : {constraintInterface}\r\n{{\r\n");
         }
         else
         {
-            sb.Append($"public sealed {partialKeyword}class {data.FileName}"
+            sb.Append($"{data.AccessModifier} sealed {partialKeyword}class {data.FileName}"
                 + " : global::ZurfurGui.Generated.ZuiControllable\r\n{\r\n");
         }
 
@@ -123,7 +123,7 @@ internal static class ZuiEmitController
         sb.Append("\r\n");
 
         // Create named control variables
-        Json.RemoveKeys(data.JsonDocument, new List<string> { "#comment", "$namespace", "$use", "$data" });
+        Json.RemoveKeys(data.JsonDocument, new List<string> { "#comment", "$namespace", "$use", "$data", "$accessModifier" });
         var zuiJsonContent = Json.Serialize(data.JsonDocument).Replace("\"", "\"\"");
         var controlNames = namedControlsDict.Keys.OrderBy(n => n);
         sb.AppendIndentedLine(1, "// Named controls (public unless name starts with '_')");

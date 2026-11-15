@@ -1,0 +1,46 @@
+// A tree node that shows an optional icon (text) followed by text.
+{
+    $controller: "TreeNodeText",
+    $namespace: "ZurfurGui.Controls.TreeView",
+    $implements: "ITreeNode<TreeNodeTextData>",
+    $padding: "${spacing.horizontal.small | spacing.vertical.small}",
+    $layout: "Row",
+    $data: {
+        // The child nodes
+        children: {
+            type: "[]TreeNodeText",
+            bind: "data"
+        },
+        // True when the children are shown
+        isExpanded: {
+            type: "Bool",
+            bind: "data"
+        },
+        // True when the node is selected
+        isSelected: {
+            type: "Bool",
+            bind: "data"
+        },
+        // Optional icon, shown before the text
+        icon: {
+            type: "TextLines",
+            bind: "data:_icon.text"
+        },
+        text: {
+            type: "TextLines",
+            bind: "data:_text.text"
+        }
+    },
+    $content: [
+        {
+            $name: "_icon",
+            $controller: "TextView",
+            TextView.color: "${color.text.primary}"
+        },
+        {
+            $name: "_text",
+            $controller: "TextView",
+            TextView.color: "${color.text.primary}"
+        }
+    ]
+}

@@ -56,6 +56,11 @@ items. Generated files are placed under the build-generated source directory (fo
   exposes named child controls as fields (based on `$name` in the JSON).
 - If you provide a matching hand-written `<ViewName>.Control.cs`, the generated class becomes
   `partial` so you can add code-behind without editing generated code.
+- The class is `public` unless `$accessModifier: "internal"` is set, which is for controls that are
+  only ever created by another control in the same project and are not meant to be used directly
+  (for example `TreeNodeView`, `TreeNodeRow`, `TreeGutter`, and `ListBoxRow`). A hand-written
+  `<ViewName>.Control.cs` partial must declare the same access modifier, or the compiler reports a
+  conflicting accessibility error.
 - When the view has bindings, the controller also contains the strongly typed `DataContext`
   property, the `Properties` accessor, `OnDataContextPropertyChanged`, `SyncAllPropertiesToView`,
   `CreateDefaultDataContext`, and `SetDataProperty`. Their behavior is described in
@@ -68,6 +73,7 @@ items. Generated files are placed under the build-generated source directory (fo
 - If you provide a matching hand-written `<ViewName>.Data.cs`, the generated data class is emitted
   as `partial` so you can extend it.
 - If the view declares `$implements`, the generated data class implements that interface.
+- The data class uses the same `$accessModifier` modifier as the controller class.
 - There are no generated `I<ViewName>Data` contracts.
 
 ### 3) Per-project registry (`*.zui` + `*.zth` → `ZurfurMain.g.cs`)
@@ -75,14 +81,25 @@ items. Generated files are placed under the build-generated source directory (fo
 The generator collects all views (`*.zui`) and themes (`*.zth`) in the project. It emits a
 `static partial class ZurfurMain` with an `InitializeControls()` method that:
 
-- runs static constructors for control property registration, including open and discovered closed
-  generic controls, and the non-generic companion class of each generic control;
+- runs static constructors for control property registration, including open generic controls, and
+  the non-generic companion class of each generic control;
 - registers ordinary controls with `ZuiRuntime.RegisterControl(...)` using their namespace/name string;
 - registers each concrete data-bearing control with `ZuiRuntime.RegisterDataController(...)`, mapping its
   generated data type to a factory that assigns the same data instance to the new controller's
   `DataContext`;
-- registers closed generic control usages discovered in ZUI files; and
+- registers closed generic control usages discovered in ZUI files (e.g. `ComboBox<ComboBoxItemText>`)
+  with `ZuiRuntime.RegisterControl(...)` under the usage string, after running the closed type's static
+  constructor. The generator resolves the bare class names of the base control and item controller to
+  their namespaces (from this project's ZUI files, or from the public types of referenced libraries)
+  and emits the closed type directly, e.g. `new ComboBox<ComboBoxItemTextData>()`. The closed type
+  must be visible to the compiler so AOT compilation and trimming keep its constructor; creating it
+  with reflection (`MakeGenericType`/`Activator`) fails in WebAssembly AOT builds. An unresolved or
+  ambiguous class name is reported as diagnostic ZUI006; and
 - registers themes with `ThemeManager.RegisterTheme(...)`.
+
+Because closed generic resolution works by bare class name, every control's bare class name must be
+unique across all libraries loaded by the application, regardless of namespace. `Loader.RegisterControl`
+enforces this and throws if two different types are registered under the same bare name.
 
 The project must contain a hand-written `static partial class ZurfurMain` with a `MainApp()` method
 that calls `InitializeControls()`. If the project contains generated controls or themes but no
@@ -94,12 +111,14 @@ in `src/ZurfurGui/ZurfurMain.cs`.
 Controls can be made generic by using a type parameter and `where` constraint in the `$controller`
 field:
 
-```json5
+```
 { $controller: "ComboBox<Item> where Item : IComboBoxItem" }
 ```
 
 The generator accepts exactly one type parameter and one constraint. The constraint is a normal
-handwritten C# type, not a generated data contract. The generated controller uses it directly:
+handwritten C# type, not a generated data contract. It may itself be a generic type that uses the
+type parameter, such as `TreeView<Item> where Item : ITreeNode<Item>`. The generated controller
+uses it directly, and `$implements` is passed through unchanged:
 
 ```csharp
 public sealed partial class ComboBox<Item> : Controllable
@@ -135,9 +154,10 @@ controller remain strongly typed end-to-end.
 ### Constraint types
 
 A generic constraint should be a real C# type available to the generated controller. For ComboBox,
-the library provides the minimal handwritten marker `ZurfurGui.Controls.IComboBoxItem`. An item view
-normally supplies the marker with `$implements: "IComboBoxItem"` in its ZUI definition, causing the
-generated data class to implement it.
+the library provides the minimal handwritten marker
+`ZurfurGui.Controls.ComboBox.IComboBoxItem`. An item view normally supplies the marker with
+`$implements: "IComboBoxItem"` in its ZUI definition, causing the generated data class to implement
+it.
 
 The marker does not define generated data properties or create inheritance between item data
 classes. Each item view declares its own `$data` properties.
@@ -249,8 +269,9 @@ The generator reports these diagnostics:
 - `ZurfurGuiGen/ZuiEmitData.cs`: emits `<ViewName>Data` concrete data classes; handles generic data
   classes and top-level doc comment propagation.
 - `ZurfurGuiGen/ZuiEmitMain.cs`: emits `ZurfurMain.InitializeControls()` — control registration,
-  concrete data-controller factory registration, theme registration, and `RunClassConstructor`
-  calls for open generic types and each closed generic instantiation.
+  concrete data-controller factory registration, open generic control registration (by bare name),
+  closed generic control registration (by bare name, resolved at runtime), theme registration, and
+  `RunClassConstructor` calls for open generic types.
 - `ZurfurGuiGen/ZuiEmit.cs`: shared code-emission helpers.
 - `ZurfurGuiGen/ZuiDiagnostic.cs`: diagnostic creation.
 - `ZurfurGuiGen/Json.cs`: generator JSON parser (does not use `System.Text.Json`); captures

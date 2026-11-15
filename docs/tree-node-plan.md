@@ -19,7 +19,7 @@ build the list box first and the tree view second. Priority: **keep things simpl
 - Each item renderer declares its own view-shaped data (icons are just data fields).
 - At runtime `Loader.CreateDataController` maps the concrete data type to a controller factory. This is
   already a type-keyed template mechanism.
-- Selection is owned by the container (`SelectedIndex`), not by items.
+- Selection was owned by the container (`SelectedIndex`). It is now a per-item `IsSelected`.
 
 ### Conclusions
 
@@ -34,15 +34,21 @@ build the list box first and the tree view second. Priority: **keep things simpl
   data for text, icon, and so on. Leaf versus non-leaf is derived from `Children.Count` (or a
   visibility flag in the node view). The runtime lookup by concrete data type already allows mixed
   types later, so do not make decisions that prevent it, but build nothing extra for it.
-- **Selection policy differs by control.** `ListBox` items carry no `IsSelected` (the list box
-  owns selection as indices). `TreeView` nodes carry `IsSelected` in their data (see below).
+- **Selection is a per-item `IsSelected` flag in D, for both `ListBox` and `TreeView`.** The flag is
+  declared as a plain `$data` field in the item's `.zui` and required by the item's marker
+  interface. The controls never store selection themselves. They watch `PropertyChanged` on the
+  items and react. See the selection model below.
 - **One marker interface per container** (`IComboBoxItem`, `IListBoxItem`, `ITreeNode`), kept
   separate (see below).
 - **App-level control replacement (checkboxes, etc.) is out of scope.** Plain controls such as
   `CheckBox` do not use the item machinery. The by-name `$controller` registration is enough if this is
   revisited, so nothing is decided now.
-- **Tree owns layout rows.** The tree wraps each node renderer in a row with indent and expander, and
-  flattens visible nodes into a list. The item renderer only draws content.
+- **Tree owns layout rows, and the views are nested rather than flattened.** The tree wraps each
+  node renderer in a row: a header (indent by depth, expander, then the node content) above a
+  child stack that exists only while the node is expanded. The item renderer only draws content.
+  Selection and expansion come from hooks on the data, not from the views, so collapsed branches
+  need no views. Keyboard navigation walks the visible nodes in the data. Virtualization would
+  need a flattened list later, which is out of scope.
 - **`IsExpanded` lives in node data.** D is the state, so it is serializable and the app can set it.
   The tree listens to `PropertyChanged`.
 - **Keep `IComboBoxItem`, `IListBoxItem`, and `ITreeNode<TSelf>` separate.** The list and combo
@@ -68,23 +74,58 @@ build the list box first and the tree view second. Priority: **keep things simpl
   - *Generic pass-through (chosen).* The only generator change is to allow a generic type in the
     `where` constraint. Everything else is existing `$implements` and `$data` behavior. Errors (a
     missing member or a wrong name in `$implements`) surface as ordinary C# compile errors.
-  - Costs accepted: the author writes the node's own name twice and declares three fields; the
-    self-referential constraint is a little harder to read; and a tree of mixed node types would be
-    harder later, because there is no non-generic common type. Mixed trees are out of scope.
-- **Selection policy is per control.** `ListBox` keeps selection as indices in its D (`SelectedIndex`,
-  like `ComboBox`). The app relates indices to items itself through `Items`. Items never know about
-  selection, and there are no attached properties and no separate selection model class. `TreeView`
-  keeps selection as an `IsSelected` flag in each node's data (see the next bullet). It shares only
-  `SelectionMode` with the list box.
-- **TreeView selection is `IsSelected` in node data (option B).** `ITreeNode` requires
-  `bool IsSelected { get; set; }` and `bool IsExpanded { get; set; }`, declared as plain `$data`
-  fields in the node's `.zui`. The tree listens to `PropertyChanged` on each node (already needed for
-  `IsExpanded`). It caches the last selected node and exposes it as `SelectedNode` for convenience.
-  In `Single` mode a click clears the old node's flag and sets the new one. `SelectionChanged` is
-  raised when a flag flips, from user input or app code, and when a selected node is removed (the
-  cached reference is cleared). `SelectedNodes` is a computed walk of the tree, not stored. The row
-  binds to the flag through the style system, like `ListBoxRow.isSelected`. If the app sets flags
-  that break the mode (two selected in `Single`), the tree tolerates or repairs it.
+  - Costs accepted: the node author must declare the flag, the same data shown in two trees shares
+  selection, and the control must repair invalid flag combinations.
+  - *Other libraries.* WPF keeps `IsSelected` and `IsExpanded` on the control, but apps nearly
+  always bind them to view model properties so state can be saved, restored, and set from code.
+  WinForms keeps selection on the control (`SelectedNode`). Qt, Avalonia, and WinUI keep it in a
+  view-owned selection model. Control-owned selection is the purer design for a generic library,
+  because selection belongs to the (view, node) pair and the control owns the mode policy.
+  - *Consistency with MDV.* D is view-shaped data generated from what the view declares, so
+  `isSelected` and `isExpanded` in `$data` are legitimate. A bool does not reference a control,
+  so the rule that data never references controls holds. The concern that UI state leaks into
+  the domain model applies only if D is reused as M, which is optional. An app that needs a
+  separate M keeps its own model and maps it to and from a custom D (a partial class of the
+  generated data), so UI flags never enter M.
+  - *Why not control-owned (a `HashSet` with reference equality plus a row `isSelected`).* It is
+  the more generic choice, but it adds the set, cleanup on removal (including whole subtrees),
+  a `tree.IsSelected(node)` query instead of `node.IsSelected`, and no way to set selection from
+  `.zui` or JSON. Simplicity wins. If sharing one data set across several trees becomes a real
+  need, add a tree-owned set as an alternative mode later.
+  - *ListBox follows the same model (changed from indices).* The first plan kept `SelectedIndex`
+  and `SelectedIndices` in the list box. The generator cannot declare an integer collection in
+  `$data`, so the built version kept them in the controller. That meant no initial selection
+  from `.zui`, no `PropertyChanged` signal, and index remapping on every insert and remove. A
+  per-item flag removes all of that and LINQ replaces the index API. The cost is that item types
+  must declare `isSelected` and the same item objects cannot be selected independently in two
+  lists.
+- **Selection model.** D is the single source of truth for `IsSelected` and `IsExpanded`.
+  - Setting or clearing selection, and expanding or collapsing a node, is done by writing the flag
+    in D (code, `.zui`, or JSON). There is no `Select(node)`, `ClearSelection()`, or
+    `SelectNearest()`. The control writes the same flags when the user clicks, so there is one
+    path. Apps that want neighbor selection after a removal do it in `SelectionChanged`.
+  - The control hooks `PropertyChanged` on every item, including items in collapsed branches and
+    items with no view, so a flag change anywhere in the data reaches the control's
+    `SelectionChanged`. The control keeps no selected set of its own, only a private cached
+    reference to the selected node (`Single` mode) so it can clear the old flag in O(1).
+  - Queries are plain LINQ over the app's own data, such as `list.Items.Where(i => i.IsSelected)`.
+    The tree adds `SelectedNode` (cached) and a `SelectedNodes` convenience walk, because a tree
+    needs a recursive walk.
+  - Hooks follow the data, not the views. Adding a subtree hooks every node in it (a walk), and
+    any node already flagged `IsSelected` is treated as a new selection (mode rules below, then
+    `SelectionChanged`). Removing a subtree unhooks every node in it (a walk) and, if one was
+    selected, clears the cached node and raises `SelectionChanged`. Removed nodes keep their
+    flags, so the control never writes into data the app has removed (a remove followed by an
+    insert elsewhere keeps the flag).
+  - `Reset` gives no list of old items, so the control keeps a private snapshot of the nodes it
+    hooked for each child collection and unhooks from that.
+  - Mode rules. `None`: a flag set to true is cleared again. `Single`: setting a flag to true
+    clears the cached old node's flag (last writer wins). When several flags are found at once
+    (attach, or an inserted subtree), an existing selection wins, otherwise the first in tree
+    order wins, and the rest are cleared. Repairs run under a re-entrancy guard and raise one
+    `SelectionChanged`.
+  - Selection never expands or scrolls. An app that wants a selected node visible sets
+    `IsExpanded` on its ancestors itself.
 - **Rationale for `IsSelected` in node data.** Alternatives considered:
   - *Tree owns a set of node references.* Keeps D pure, but selection cannot be set from JSON or
     `.zui`, is not observable through D, needs a reference set, and removing a node requires
@@ -94,34 +135,42 @@ build the list box first and the tree view second. Priority: **keep things simpl
   - *Index path.* Shifts under edits like list box indices, and is harder to maintain.
   - *Flag in D (chosen).* Selection is plain serializable data, can be set from `.zui` or JSON,
     and needs no cleanup on removal because a removed node takes its flag with it. It is consistent
-    with `IsExpanded`, makes multi-select and Shift ranges over the flattened list trivial, and
+    makes multi-select and Shift ranges simple (the flags are just data), and
     lets the app walk its own data (`if (node.IsSelected)`). WPF developers commonly add
     `IsSelected` and `IsExpanded` to tree view models for the same reason.
+  - *Other libraries.* WPF keeps `IsSelected` and `IsExpanded` on the control, but apps nearly
+    always bind them to view model properties so state can be saved, restored, and set from code.
+    WinForms keeps selection on the control (`SelectedNode`). Qt, Avalonia, and WinUI keep it in a
+    view-owned selection model. Control-owned selection is the purer design for a generic library,
+    because selection belongs to the (view, node) pair and the control owns the mode policy.
+  - *Consistency with MDV.* D is view-shaped data generated from what the view declares, so
+    `isSelected` and `isExpanded` in `$data` are legitimate. A bool does not reference a control,
+    so the rule that data never references controls holds. The concern that UI state leaks into
+    the domain model applies only if D is reused as M, which is optional. An app that needs a
+    separate M keeps its own model and maps it to and from a custom D (a partial class of the
+    generated data), so UI flags never enter M.
+  - *Why not control-owned (a `HashSet` with reference equality plus a row `isSelected`).* It is
+    the more generic choice, but it adds the set, cleanup on removal (including whole subtrees),
+    a `tree.IsSelected(node)` query instead of `node.IsSelected`, and no way to set selection from
+    `.zui` or JSON. Simplicity wins. If sharing one data set across several trees becomes a real
+    need, add a tree-owned set as an alternative mode later.
   - Costs accepted: the tree and list box use different models, the same data shown in two trees
-    shares selection, and the tree must repair invalid flag combinations.
+    shares selection, the node author must declare the flag, and the tree must repair invalid
+    flag combinations.
   - *Why `ListBox` keeps indices:* list items have no identity and an index is a simple handle, and
     the tree's problem (no stable index) does not exist there. Revisit if initial selection from
     `.zui` is wanted for lists. Then add `IsSelected` to `IListBoxItem` and keep the index API as a
     computed view.
-- **Selection mode.** `SelectionMode` is `None`, `Single`, or `Multiple`. `ListBox` version 1
-  implements all three. `SelectedIndices` is in D for `Multiple`, with `SelectedIndex` as the
-  focus/anchor item (the last item clicked). In `Single` mode `SelectedIndices` holds the same one
-  item as `SelectedIndex`, or nothing. In `None` mode clicks and keys do nothing and both stay empty.
-  `TreeView` version 1 implements only `None` and `Single`.
-- **Removing the selected item de-selects it by default.** `SelectedIndex` becomes `null`. Removing
-  an item before the selection shifts the index down, and inserting at or before it shifts it up.
-  Reset sets it to `null` and clears `SelectedIndices`. For multi-select, the removed index leaves
-  `SelectedIndices` and higher indices shift, with no neighbor auto-selected. The focus/anchor moves
-  to the nearest remaining selected index, or `null`.
-- **Auto-select next is easy but opt-in.** The control provides one function, for example
-  `SelectNearest(int index)`, that selects the item at `index` (clamped to the last item, or `null`
-  if empty). An app calls it from `SelectionChanged` when it wants neighbor selection. In `Multiple`
-  mode it replaces the selection with that one item.
-- **`SelectionChanged` fires only when the selected item changes.** It fires on user input, when the
-  app selects a different item, and when the selected item is removed. It does not fire when an index
-  merely shifts because of an insert or remove elsewhere. In `Multiple` mode it fires when the set of
-  selected items changes. `PropertyChanged` on `SelectedIndex` or `SelectedIndices` is the raw data
-  signal and can fire on a shift without a selection change.
+- **Selection mode.** `SelectionMode` is `None`, `Single`, or `Multiple`, a field in the control's D.
+  `ListBox` version 1 implements all three and `TreeView` version 1 implements only `None` and
+  `Single`. In `None` mode clicks do nothing and flags set to true are cleared. In `Multiple` mode
+  the list box keeps a private anchor (the last item clicked) for Shift ranges.
+- **Removing the selected item de-selects it.** The item is unhooked and `SelectionChanged` is
+  raised. No neighbor is selected, and nothing shifts because there are no indices to remap.
+- **`SelectionChanged` fires when the set of selected items changes.** It is a plain event on the
+  control with no arguments (the app reads D). It fires on user input, when app code flips a flag,
+  when a flagged item is added, and when a selected item is removed or the list is reset. A repair
+  that flips several flags raises it once.
 - **Reset and rebuild first.** Both controls start with the full-rebuild strategy. Diffing is later
   work (Priority 1 in future-improvements.md). No stable item keys for now.
 - **Separate the collection synchronizer from row creation.** Collection handling is a small piece
@@ -134,110 +183,21 @@ build the list box first and the tree view second. Priority: **keep things simpl
 - **Icons in version 1 are a `TextLines` data field.** There is no image control yet. It will be added
   later as a separate task and would add an image field to the node data.
 
-## 2. Plan: ListBox (implemented and tested first)
+## ListBox implementation details
 
-Manual testing only. No automated test cases.
-
-### Design
-
-- `ListBox<Item>` is a generic list, modeled on `ComboBox<Item>`, with a selection mode.
-- Data: `ListBoxData<TItem>` with `Items` (`ObservableCollection<TItem>`), `SelectedIndex`
-  (`int?`, `null` means no selection), `SelectedIndices` (`ObservableCollection<int>`, kept sorted,
-  used in `Multiple` mode), and `SelectionMode` (default `Single`). The app gets the selected item
-  with `Items[SelectedIndex.Value]`, or the selected items by mapping `SelectedIndices`.
-- The control listens to `PropertyChanged` on its D, so the app can set `SelectedIndex` and the
-  highlight follows. Clicks and keys write `SelectedIndex` back to D, which is the single source of
-  truth.
-- Items must implement `IListBoxItem`, declared in the item view with `$implements: "IListBoxItem"`.
-- Built-in item renderer `ListBoxItemText` with a `Text` data field.
-- The list box shows all items in a vertical stack inside a scroll viewer, with a highlight on the
-  selected row (every selected row in `Multiple` mode). Clicking a row sets `SelectedIndex`. Arrow
-  keys move the selection.
-- Multiple mode input, kept in one small helper: click selects only that row, Ctrl+click toggles a
-  row, Shift+click selects the range from the anchor, Shift+arrow extends the range, and Ctrl+A
-  selects all.
-- No virtualization in the first version. Keep the row-hosting code isolated so the tree can reuse it.
-
-### Steps
-
-1. Study `ComboBox.zui`, `ComboBox.Control.cs`, `ComboBoxItem.cs`, `ComboBoxItemText.zui`, and the
-   generator's generic handling. `IListBoxItem` stays separate from `IComboBoxItem`.
-2. Add `src/ZurfurGui/Controls/ListBoxItem.cs` with the minimal marker interface.
-3. Add `src/ZurfurGui/Controls/ListBoxItemText.zui` (text item renderer, data shape, and
-   `$implements: "IListBoxItem"`).
-(generic view and `$data` with `Items`,
-   `SelectedIndex`, `SelectedIndices`, and `SelectionMode`), reusing the scroll viewer.
-5. Add `src/ZurfurGui/Controls/ListBox.Control.cs`:
-   - Create item controllers from each data object through one private method that calls
-     `Loader.CreateDataController`.
-   - Put collection handling in a small separate synchronizer (add, remove, replace, move, reset)
-     that the tree can reuse. The list box responds with a full rebuild.
-   - Unsubscribe from the collection and items on detach.
-   - Selection policy: removing the selected item sets `SelectedIndex` to `null`. In `Multiple`
-     mode the removed index leaves `SelectedIndices` and higher indices shift. Index shifts from
-     add or remove elsewhere do not raise `SelectionChanged`.
-   - Provide `SelectNearest(int index)` so an app can opt in to neighbor selection from
-     `SelectionChanged`.
-   - Handle pointer click to set `SelectedIndex`, and arrow, Home, and End keys to move it. Apply
-	 the Ctrl, Shift, and Ctrl+A rules in `Multiple` mode. Do nothing in `None` mode.
-   - Update the selected row highlight when `SelectedIndex` or `SelectedIndices` change.
-   - Factor row hosting (item to row view, highlight, hit test) into a small reusable helper for the
-	 tree.
-6. Confirm `ListBox.zui` and `ListBoxItemText.zui` are included as `AdditionalFiles` so the generator
-   registers them.
-7. Add `FormListBoxTest` to `samples/TestApp/TestApp/Test/` (a `.zui` plus `.Control.cs`, following
-   `FormTestComboBox`), and register it in the test app's form list:
-   - Four list boxes side by side:
-     - Three using the built-in `ListBoxItemText`, each populated with a few dozen items, with
-       `SelectionMode` set to `None`, `Single`, and `Multiple` respectively.
-     - One using a custom item (such as `ListBoxItemBadge`, badge plus text) defined in the test app,
-       not in the main library, similar to `ComboBoxItemBadge`, with `Multiple` selection.
-   - Each list box has a label showing its `SelectedIndex` (and `SelectedIndices` where used).
-   - Buttons to add an item, remove the selected item(s), and set the selection programmatically.
-     The buttons act on the list box chosen by the user, or each list box has its own buttons.
-   - A check of `SelectNearest` called from `SelectionChanged` on one list box (for example the
-     `Single` one), toggled by a check box.
-8. Build, then manually test in the Windows and Browser hosts: click selection, keyboard selection,
-   Ctrl and Shift selection in the `Multiple` boxes, no selection in the `None` box, add and remove
-   while selected (including items before the selection), empty list, scrolling with many items.
-9. Add `docs/list-box.md` modeled on `docs/combo-box.md`, and link it from the documentation map in
-   `docs/architecture.md`.
-
-## Implemented list box details
-
-This section records how the list box port went. The behavior is documented in
+This section records how the list box port went, before the move to per-item `IsSelected`
+(section 3). Index, `Select`, and `SelectNearest` details below are historical. The behavior is
+documented in
 [list-box.md](list-box.md).
 
 ### Overview
 
 The list box was built close to the plan, modeled on `ComboBox<Item>`. New files in
-`src/ZurfurGui/Controls`: `ListBox.zui`, `ListBox.Control.cs`, `ListBoxRow.zui`,
+`src/ZurfurGui/Controls/ListBox`: `ListBox.zui`, `ListBox.Control.cs`, `ListBoxRow.zui`,
 `ListBoxRow.Control.cs`, `ListBoxItem.cs`, and `ListBoxItemText.zui`. Each theme got a
 `color.listbox.item.background` variable. The test form is `FormTestListBox` in the test app, with a
 custom `ListBoxItemBadge` item. All of it builds. It was not run, so manual testing is still
 needed.
-
-### Differences from the plan
-
-- **Selection is controller state, not data.** The plan put `SelectedIndex` and `SelectedIndices`
-  in D. The generator turns `[]int` into `ObservableCollection<intData>`, so an integer collection
-  cannot be declared in `$data`. Rather than change the generator, the selection is a private
-  sorted list in the controller. `SelectedIndices` is public and read-only, and `SelectedIndex` is
-  derived (the index when exactly one item is selected, otherwise `null`). Consequences:
-  `PropertyChanged` is not a selection signal (use `SelectionChanged`), and a `.zui` file cannot set
-  the initial selection. If the tree needs selection in D, the generator needs primitive
-  collection support first.
-- **`SelectedIndex` has no setter.** Code selects with `Select`, `SetSelectedIndices`,
-  `ClearSelection`, and `SelectNearest`.
-- **No separate collection synchronizer.** The plan wanted a reusable synchronizer and a reusable
-  row-hosting helper. Since the tree is not being built now, both live inside `ListBox` as small
-  private methods (`AdjustSelection`, `RemapSelection`, `RebuildRows`). Extract them when the tree
-  needs them.
-- **No keyboard or focus.** There is no focus concept yet, so the arrow, Home, End, and Ctrl+A
-  rules were dropped. Only pointer input exists.
-- **Hover and selected colors.** The plan did not cover them. See the first problem below.
-- **Test form.** There is no `SelectNearest` check box because `CheckBox` has no click event. The
-  add and delete buttons act on all four list boxes instead of a chosen one.
 
 ### Problems and how they were solved
 
@@ -266,37 +226,82 @@ needed.
   handled it, and JSON strings such as `"multiple"` work because the loader uses a camel-case string
   enum converter.
 
-### Carry-over for the tree
+- Primitive collection support in the generator is not needed, because selection (list box and
+  tree) is a bool flag in item data.
+- Extract the collection synchronizer and row building from `ListBox` when the tree needs them.
+  The index remapping goes away with the rework below.
 
-- Reuse `SelectionMode` and the `ListBoxRow` idea (a row control with a theme-visible bool).
-- Primitive collection support in the generator is not needed, because tree selection is a bool
-  flag in node data.
-- Extract the collection remapping and row building from `ListBox` when the tree needs them.
 
-## 3. Plan: TreeView
+## 4. Plan: TreeView
 
 ### What the tree adds beyond the list box
 
 | Area | ListBox | TreeView |
 |------|---------|----------|
 | Item shape | Flat `Items` | Each node has `Children` of its own type, plus `IsExpanded` |
-| Marker interface | `IListBoxItem` | `ITreeNode<TSelf>`, requires `Children`, `IsExpanded`, and `IsSelected` |
+| Marker interface | `IListBoxItem`, requires `IsSelected` | `ITreeNode<TSelf>`, requires `Children`, `IsExpanded`, and `IsSelected` |
 | Generated data | `Items` typed to the item | Node data class with `Children` typed to itself, declared by the author in `$data` (`[]MyNode`) |
-| Rows | One row per item | One row per visible node: indent by depth, expander, then content |
-| Row source | The items collection | A flattened list of visible nodes, rebuilt on change |
-| Collection changes | Watch `Items` | Watch `Items` and every expanded node's `Children` |
-| State | `SelectedIndex` in the controller | Per-node `IsSelected` and `IsExpanded` in node data. The control has computed `SelectedNode` (cached) and `SelectedNodes` (tree walk), nothing stored in the tree's own D |
+| Rows | One row per item | One row per visible node: a header (indent by depth, expander, content) above a child stack while expanded |
+| Row source | The items collection | Nested views built from the data, with children created on expand and destroyed on collapse |
+| Collection changes | Hook `Items` and every item | Hook `Items` and every node's `Children`, collapsed or not |
+| State | `IsSelected` per item in D, `SelectionMode` in D | `IsSelected` and `IsExpanded` per node in D. The control has a cached `SelectedNode` and a computed `SelectedNodes`, nothing else stored |
 | Keyboard | Up, Down, Home, End | Also Left (collapse or go to parent), Right (expand or go to child) |
-| Pointer | Click selects | Click selects, expander click toggles, optional double-click toggles |
-| Leaf handling | None | Leaf is `Children.Count == 0`, expander hidden |
+| Click (gesture) selects, expander click (gesture) toggles, optional double-click toggles |
+| Leaf handling | None | Leaf is `Children.Count == 0`, expander hidden (width kept) |
+| Tree drawing | None | The tree draws the expander and the connecting lines itself |
 
-Not added in the tree (to keep it simple): mixed node types, templates, virtualization, drag and drop,
-multi-select (version 1 supports `None` and `Single`), and lazy-loading children.
-virtualization is possible later because rows come from a flattened list.
+Not added in the tree (to keep it simple): mixed node types, templates, virtualization (it would
+need a flattened list), drag and drop, multi-select (version 1 supports `None` and `Single`), and
+lazy-loading children, and named external controls for the expander (deferred, see below).
+
+### Drawing the expander and lines
+
+The tree draws the expander and the lines itself. They are not external controls. The tree owns
+the row layout, and only the tree knows the depth and sibling information the lines need. A
+property naming an external control would be a second templating mechanism, which this plan
+rejects. Named external expander controls are deferred. If they are needed later, the existing
+by-name `$controller` registration can be used, so nothing is built for it now.
+
+- **Row header layout.** `[indent area][expander cell][node content]`. The indent area is
+  `depth * IndentWidth` wide. The expander cell has a fixed width, so content lines up whether or
+  not a node is a leaf.
+- **Expander.** A small view the tree creates in each row header. It draws a box with `+` (collapsed)
+  or `-` (expanded) using the existing drawing primitives. It is hidden for leaves but still takes
+  A click gesture on it (see gestures and scrolling) toggles `IsExpanded` and does not change
+    selection.
+  `IsExpanded` through the same `PropertyChanged` hook the tree already uses.
+- **Lines.** Controlled by `ShowLines`. Each row draws a horizontal stub to its expander or
+  content, and a vertical line at its own level that runs to the next sibling only if one exists
+  (half height for the last child). For each ancestor level, the row draws a pass-through vertical
+  line only if that ancestor has later siblings. The tree builds the rows, so each row is given
+  its depth and an `isLast` flag for itself and each ancestor. Rows touch with no gaps, so the
+  vertical lines join up across the nested rows. When a sibling is added or removed after the
+  last one, the affected rows redraw their lines.
+- **Styled properties on `TreeView` (version 1):**
+  - `ShowLines` (bool). Draw connecting lines.
+  - `ShowExpander` (bool). Draw the expander boxes.
+  - `IndentWidth`. Width of each depth level.
+  - `LineWidth`. Line thickness.
+  - `ExpanderStyle`. Box with `+` and `-`, or a chevron.
+
+  These are `styled` properties whose defaults come from `ZurfurBase.zth`. The line color is a
+  styled property of the gutter. Lines are always solid. Add more styling later only if needed.
+- **Pointer and keyboard.** Expander click toggles. Content click selects. Right expands, or
+  moves to the first child if already expanded. Left collapses, or moves to the parent if
+  already collapsed or a leaf.
+
+### Gestures and scrolling
+
+- **Clicks use the existing `ClickRecognizer`** (`View.AddGestureRecognizer`), as `Button`,
+  `ComboBox`, and `ListBox` do, as-is. The tree does not know or care whether it is inside another
+  scroll viewer. The expander has its own recognizer, so an expander click does not also select.
+- **The tree hosts a `ScrollViewer`.** `TreeView.zui` declares a `ScrollViewer` as its content,
+  and the row stack is the scroll viewer's content. The tree does no scrolling itself. Expose only
+  what is needed in v1 (such as `scrollMode`).
 
 ### Steps
 
-1. Review the list box implementation and the row-hosting helper. Fix any friction found while
+1. Review the list box
    testing the list box before building on it.
 2. Loosen the generator's `$controller` regex so the `where` constraint may be a generic type. In
    `src/ZurfurGuiGen/ZuiInput.cs`, `s_genericControllerRegex` is
@@ -315,33 +320,49 @@ virtualization is possible later because rows come from a flattened list.
 4. Update `docs/code-generation.md` to say the `where` constraint may be a generic type, with the
    `TreeView<Item> where Item : ITreeNode<Item>` example, and that `$implements` is passed through
    unchanged.
-5. Add `src/ZurfurGui/Controls/TreeNode.cs` with `ITreeNode<TSelf>` (it is not empty, unlike the other
+5. Add `src/ZurfurGui/Controls/TreeView/TreeNode.cs` with `ITreeNode<TSelf>` (it is not empty, unlike the other
    item interfaces) and its XML comments.
-6. Finish `src/ZurfurGui/Controls/TreeNodeText.zui`, the built-in node renderer. Declare
+6. Finish `src/ZurfurGui/Controls/TreeView/TreeNodeText.zui`, the built-in node renderer. Declare
    `$implements: "ITreeNode<TreeNodeTextData>"` and `$data` fields `children` (`[]TreeNodeText`),
    `isExpanded`, `isSelected` (all `bind: "data"`), `text`, and an optional `icon` (`TextLines`).
-7. Add `src/ZurfurGui/Controls/TreeView.zui`: `$controller: "TreeView<Item> where Item :
-   ITreeNode<Item>"`, with `Items` (`[]Item`, root nodes) and `SelectionMode` (`None` or `Single`).
-   Selection is the `IsSelected` flag in node data. The control exposes a cached `SelectedNode`, a
-   computed `SelectedNodes`, a `SelectionChanged` event, and `Select(node)` and `ClearSelection()`.
-   Removing the selected node clears the cached reference and raises `SelectionChanged`, and the
-   `SelectNearest` opt-in applies. A selected node inside a collapsed parent stays selected and
-   hidden (decided), and the tree does not move the selection. To select a node from code, the tree
-   expands its ancestors using a private node-to-parent map built while flattening. In `Single` mode
-   with several flags set, keep the first selected node in tree order, as `ListBox` does.
-8. Add `src/ZurfurGui/Controls/TreeView.Control.cs`:
-   - Flatten the visible nodes (roots, then children of expanded nodes) into a list of rows.
-   - Use the shared collection synchronizer once per child collection, with reset and rebuild.
-   - Subscribe to `PropertyChanged` (`IsExpanded`, `IsSelected`) on nodes as they enter or leave the
-	 flattened list, and unsubscribe everything on detach.
+7. Add `src/ZurfurGui/Controls/TreeView/TreeView.zui`: `$controller: "TreeView<Item> where Item :
+   ITreeNode<Item>"`, with `Items` (`[]Item`, root nodes) and `SelectionMode` (`None` or
+   `Single`). Selection and expansion are the `IsSelected` and `IsExpanded` flags in node data,
+   and D is the only place they are set (see the selection model). The control exposes a cached
+   `SelectedNode`, a computed `SelectedNodes`, and a `SelectionChanged` event. There is no
+   `Select`, `ClearSelection`, or `SelectNearest`. A selected node inside a collapsed parent stays
+   selected and hidden (decided).
+8. Add `src/ZurfurGui/Controls/TreeView/TreeView.Control.cs`:
+   - Hooks follow the data. Keep one small private hook object per node: the node, its depth, a
+   snapshot of its children, and its handlers. Hooking a node subscribes to its
+   `PropertyChanged` (`IsExpanded`, `IsSelected`) and its `Children` collection changes, then
+   hooks its children. Unhooking walks the snapshot, so `Reset` is handled.
+   - Use the shared collection synchronizer once per child collection. Add hooks the new subtree
+   and applies the mode rules to any flagged nodes. Remove unhooks the subtree and raises
+   `SelectionChanged` if a selected node left. Replace is remove plus add. Move reorders the
+   child views only.
+   - Build views from the data. A node row is a header (indent by depth, lines, expander hidden
+   for leaves, node content) above a child stack. The tree draws the lines and expander (see
+   drawing the expander and lines), using `ShowLines`, `LineColor`, `LineWidth`,
+   `IndentWidth`, and `ExpanderStyle`.
+   becomes true and destroyed when it becomes false. Collapsed branches have hooks but no views.
    - Create node controllers through the same single item-creation method used by the list box.
-   - Build each row as indent by depth, then the expander (hidden for leaves), then the node content.
-   - Handle click, expander click, and keyboard navigation from the table above.
-   - Selection lives in node data, so rebuilds preserve it automatically. In `Single` mode a click
-	 clears the old node's flag and sets the new one, and invalid flag combinations are repaired.
+   - Clicks use `ClickRecognizer` on each row's content and expander. The tree's content is a
+   `ScrollViewer` holding the row stack.
+   - A click writes `IsSelected`
+   expander click writes `IsExpanded`. Nothing else changes state. Keyboard navigation walks
+   the visible nodes in the data, per the table above.
+   - Mode repairs and the cached `SelectedNode` run under a re-entrancy guard, so flag writes made
+   during a repair do not trigger further repairs. `SelectionChanged` is raised once after the
+   guard is released.
+   - Attach and detach. `OnAttach` walks the data, hooks every node, resolves the initial
+   selection under the mode rules (without raising `SelectionChanged`), and builds the views.
+   `OnDetach` unhooks every node and drops the views and snapshots, so the tree does not leak
+   through data that outlives it (Priority 3 in future-improvements.md). Changes made while
+   detached are picked up by the next attach walk. This mirrors the list box.
 9. Add `FormTreeViewTest` to the test app:
    - A tree with a few levels of text nodes, some expanded in data.
-   - Buttons to add a child, remove the selected node, expand all, and collapse all.
+   - Buttons to add a child, remove the selected nodes, expand all, and collapse all.
    - A label showing the selected node.
    - A custom node renderer with an icon, written the way a user would (see the custom nodes
      section in step 12).
@@ -376,17 +397,26 @@ virtualization is possible later because rows come from a flattened list.
 - **Collapsing a parent that contains the selected node.** Decided: the selection stays on the
   hidden node and is not moved. `SelectedNode` and its flag are unchanged.
 - Does the icon use an image control that exists today, or does the tree need one first?
-- **Which selection property is authoritative.** The `IsSelected` flags in node data. `SelectedNode`
-  is the cached last-selected node. If the app sets a flag that breaks the mode (two selected in
-  tree order,
-    clearing the others' flags.
 - **Changing `SelectionMode` at runtime.** Proposal: to `Single` keeps only the cached
   `SelectedNode`, and to `None` clears all flags. Each raises `SelectionChanged` only if the
   selected nodes changed.
-- **`SelectionChanged` shape.** Decide whether it is a plain event on the control with no arguments
-  (the app reads D) or carries old and new selections. Proposal: no arguments, to stay simple.
-- **Re-entrancy.** `SelectNearest` is called from inside `SelectionChanged`, which changes the
-  selection again. Proposal: the control raises the nested event normally, and guards its own
-  `PropertyChanged` handler against feedback loops.
-- **Move and replace in children.** Proposal: replace of a selected node is a remove of that node
-  (it raises `SelectionChanged`), and move needs no selection work because flags travel with nodes.
+- **Re-entrancy.** Resolved: repairs run under a guard (see the selection model). A
+  `SelectionChanged` handler that writes flags runs after the guard is released, so its writes are
+  handled normally and may raise a nested `SelectionChanged`.
+- **Move and replace in children.** Replace is remove plus add (a selected node removed raises
+  `SelectionChanged`). Move needs no selection work because flags travel with nodes, only the
+  child views are reordered.
+- **Node identity.** A node object must appear once, in one tree, and the data must not contain
+  cycles. A cycle makes the hook walk endless, and a duplicate node would be hooked twice. These
+  are not detected in version 1 and should be stated in `docs/tree-view.md`.
+- **Shared data.** The same node objects shown in two trees share selection and expansion, and
+  each tree hooks them independently. Accepted.
+- **Hook cost.** Every node is hooked, including collapsed ones, so cost and memory grow with the
+  whole data size rather than the visible size. Acceptable for version 1 and the reason lazy
+  loading is out of scope. An app that lazy-loads can still use `IsExpanded` to trigger loading.
+- **Removed nodes keep `IsSelected`.** Decided, so the control never writes into data the app has
+  removed. If the removed node is inserted again in a `Single` tree that already has a selection,
+  the existing selection wins and the inserted flag is cleared.
+- **Generator impact.** Adding a node type needs no generator change. The one library-side change
+  is loosening the `where` regex in step 2, and step 3 checks the self-referencing collection. The
+  `ListBox` rework needs no generator change.

@@ -1,0 +1,52 @@
+// Manual test form for TreeView: a text tree and a custom badge tree.
+{
+    $controller: "FormTestTreeView",
+    $namespace: "TestApp.Test",
+    $use: [ "TestApp.Test.Controls", "ZurfurGui.Controls.TreeView", "ZurfurGui.Controls.ListBox" ],
+    $layout: "Column",
+    $padding: "left:16,top:16,right:16,bottom:16",
+    $content: [
+        {
+            $layout: "Row",
+            $content: [
+                { $name: "buttonAddChild", $controller: "Button", text: [ "Add child" ] },
+                { $name: "buttonRemove", $controller: "Button", text: [ "Remove selected" ] },
+                { $name: "buttonExpandAll", $controller: "Button", text: [ "Expand all" ] },
+                { $name: "buttonCollapseAll", $controller: "Button", text: [ "Collapse all" ] }
+            ]
+        },
+        {
+            $layout: "Row",
+            $padding: "left:0,top:12,right:0,bottom:0",
+            $content: [
+                {
+                    $layout: "Column",
+                    $padding: "left:0,top:0,right:12,bottom:0",
+                    $content: [
+                        { $controller: "TextView", text: [ "Text nodes" ] },
+                        {
+                            $name: "_treeText",
+                            $controller: "TreeView<TreeNodeText>",
+                            $sizeRequest: "width:260,height:320",
+                            selectionMode: "multiple"
+                        },
+                        { $name: "_labelText", $controller: "TextView", text: [ "Selected: " ] }
+                    ]
+                },
+                {
+                    $layout: "Column",
+                    $content: [
+                        { $controller: "TextView", text: [ "Custom badge nodes, chevron expander" ] },
+                        {
+                            $name: "_treeBadge",
+                            $controller: "TreeView<TreeNodeBadge>",
+                            $sizeRequest: "width:300,height:320",
+                            expanderStyle: "chevron"
+                        },
+                        { $name: "_labelBadge", $controller: "TextView", text: [ "Selected: " ] }
+                    ]
+                }
+            ]
+        }
+    ]
+}

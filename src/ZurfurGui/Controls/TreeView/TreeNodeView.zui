@@ -1,0 +1,21 @@
+// One node of a tree: the header row above a stack holding the child nodes.  The TreeView
+// creates these, they are not meant to be used directly.
+{
+    $controller: "TreeNodeView",
+    $namespace: "ZurfurGui.Controls.TreeView",
+    $accessModifier: "internal",
+    $layout: "Column",
+    cell.spacing: "${treeview.row-spacing}",
+    $content: [
+        {
+            $name: "header",
+            $controller: "TreeNodeRow"
+        },
+        {
+            $name: "childStack",
+            $controller: "Panel",
+            $layout: "Column",
+            cell.spacing: "${treeview.row-spacing}"
+        }
+    ]
+}

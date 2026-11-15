@@ -1,4 +1,4 @@
-namespace ZurfurGui.Controls;
+namespace ZurfurGui.Controls.ListBox;
 
 /// <summary>
 /// Marker interface for data items shown in a <see cref="ListBox{Item}"/>.  An item control

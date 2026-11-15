@@ -28,6 +28,9 @@
         color.interactive.item.background: "isPressed ? #381520; isPointerOver ? #633044; #00000000",
         // Items in a ListBox.  Selected rows use the pressed color.
         color.listbox.item.background: "isPressed ? #381520; ListBoxRow.isSelected ? #381520; isPointerOver ? #633044; #00000000",
+        // Rows in a TreeView, and the lines connecting them.  Selected rows use the pressed color.
+        color.treeview.row.background: "isPressed ? #381520; TreeNodeRow.isSelected ? #381520; isPointerOver ? #633044; #00000000",
+        color.treeview.line: "#808080",
 
         // Text box, etc.
         color.input.background: "#38222C",

@@ -4,9 +4,13 @@
 is chosen by the item's data type, for example `ListBox<ListBoxItemText>`. Items know nothing about
 selection; the list box owns it.
 
+The C# namespace for the control and its marker types is `ZurfurGui.Controls.ListBox`. Add that
+namespace to `$use` in the form ZUI that uses the control and the item ZUI that implements
+`IListBoxItem`.
+
 ## Using it in a ZUI file
 
-```json
+```
 {
 	$name: "_names",
 	$controller: "ListBox<ListBoxItemText>",
@@ -70,10 +74,11 @@ then implements `IListBoxItem`, and `ListBox<MyItem>` works. Do not set a backgr
 because the row behind it draws the hover and selected colors. See
 `samples/TestApp/TestApp/Controls/ListBoxItemBadge.zui`.
 
-```json
+```
 {
 	$controller: "ListBoxItemBadge",
 	$namespace: "TestApp.Test.Controls",
+	$use: ["ZurfurGui.Controls.ListBox"],
 	$implements: "IListBoxItem",
 	$data: {
 		text: { type: "TextLines", bind: "data:_text.text" }
@@ -87,16 +92,16 @@ the form's ZUI file when it is not the same namespace.
 
 ## How it works
 
-Files, all in `src/ZurfurGui/Controls` unless noted:
+Files are in `src/ZurfurGui/Controls/ListBox` unless noted:
 
 | File | Purpose |
 |---|---|
 | `ListBox.zui` | Generic view. `$data` has `items` (`[]Item`) and `selectionMode`. Content is a vertical `ScrollViewer` holding a `Column` panel named `_rows`. |
 | `ListBox.Control.cs` | Behavior: rows, selection, click handling, collection changes. Also declares the `SelectionMode` enum. |
-| `ListBoxRow.zui`, `ListBoxRow.Control.cs` | One row per item. Hosts the item view, draws the background, and has the `IsSelected` property. |
+| `ListBoxRow.zui`, `ListBoxRow.Control.cs` | Internal. One row per item. Hosts the item view, draws the background, and has the `IsSelected` property. |
 | `ListBoxItem.cs` | The empty `IListBoxItem` marker interface. |
 | `ListBoxItemText.zui` | Built-in text item with a `text` field. |
-| `Styles/*.zth` | Theme variable `color.listbox.item.background`. |
+| `src/ZurfurGui/Styles/*.zth` | Theme variable `color.listbox.item.background`. |
 
 Key points for modifying it:
 

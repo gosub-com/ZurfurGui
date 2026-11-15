@@ -9,16 +9,19 @@ individual items.
 
 | File | Purpose |
 |------|---------|
-| `src/ZurfurGui/Controls/ComboBox.zui` | Generic view definition and data shape |
-| `src/ZurfurGui/Controls/ComboBox.Control.cs` | Dropdown lifecycle, item creation, and selection synchronization |
-| `src/ZurfurGui/Controls/ComboBoxItem.cs` | Minimal handwritten marker constraint |
-| `src/ZurfurGui/Controls/ComboBoxItemText.zui` | Built-in text item renderer, data shape, and marker declaration |
+| `src/ZurfurGui/Controls/ComboBox/ComboBox.zui` | Generic view definition and data shape |
+| `src/ZurfurGui/Controls/ComboBox/ComboBox.Control.cs` | Dropdown lifecycle, item creation, and selection synchronization |
+| `src/ZurfurGui/Controls/ComboBox/ComboBoxItem.cs` | Minimal handwritten marker constraint |
+| `src/ZurfurGui/Controls/ComboBox/ComboBoxItemText.zui` | Built-in text item renderer, data shape, and marker declaration |
+
+The C# namespace for these types is `ZurfurGui.Controls.ComboBox`. A view that uses the control
+should include that namespace in its `$use` list.
 
 ## Using ComboBox in a view
 
 Because `ComboBox` is generic, use the item controller name in a concrete closed form in `.zui`:
 
-```json5
+```
 {
     $name: "_themeComboBox",
     $controller: "ComboBox<ComboBoxItemText>",
@@ -80,10 +83,11 @@ generated data class satisfies the generic constraint.
 
 For example, `ComboBoxItemBadge.zui` declares `Badge` and `Text` data:
 
-```json5
+```
 {
     $controller: "ComboBoxItemBadge",
     $namespace: "TestApp.Test.Controls",
+    $use: ["ZurfurGui.Controls.ComboBox"],
     $implements: "IComboBoxItem",
     $data: {
         badge: {
@@ -101,7 +105,7 @@ For example, `ComboBoxItemBadge.zui` declares `Badge` and `Text` data:
 
 Use the item in a view with the controller name, not the generated data class name:
 
-```json5
+```
 {
     $name: "_badgeCombo",
     $controller: "ComboBox<ComboBoxItemBadge>",
