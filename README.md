@@ -1,4 +1,4 @@
-# Zurfur Gui
+# ZurfurGui
 
 While working on [Zurfur](https://github.com/gosub-com/Zurfur) and
 porting the GUI from WinForms to Avalonia, I got to thinking what it would be
@@ -6,37 +6,41 @@ like to implement a GUI without using inheritance.  I also wanted to see how big
 a minimal C# WebAssembly GUI would be.  So far, the full download is only about 
 3.1 megabytes of compressed data.  
 
-You can see the result here: https://gosub.com/zurfurgui
+See the [live demo](https://gosub.com/zurfurgui).
 
 This project is exploring **MDV** as an alternative to **MVVM**.  
 
+## Using with AI Assistants
+
+To give AI coding assistants (Cursor, Windsurf, Copilot, Claude, etc.) complete context
+on ZurfurGui's MDV architecture, ZUI JSON5 syntax, and controls:
+
+* **Single-file context (recommended):** Point your AI or `@Docs` indexer to
+  [`llms-full.txt`](https://github.com/gosub-com/ZurfurGui/blob/main/llms-full.txt)
+* **Lightweight index:** Point your AI to
+  [`llms.txt`](https://github.com/gosub-com/ZurfurGui/blob/main/llms.txt)
+
+
 ## Documentationm
 
-To get started, have your AI read [Controls](docs/controls.md)
-and [Architecture](docs/architecture.md) first.
-
-
-The following docs cover the internals of this project:
-
-- [Architecture](docs/architecture.md) â€” MDV architecture overview and documentation map
-- [Controls](docs/controls.md) â€” basic application setup and control usage
-- [ZUI Format](docs/zui-format.md) â€” ZUI/ZTH file syntax and naming conventions
-- [Code Generation](docs/code-generation.md) â€” Source generator behavior, outputs, and diagnostics
-- [Initialization](docs/initialization.md) â€” Startup and initialization procedure for applications using
+- [Architecture](docs/architecture.md) — **MDV** architecture overview and documentation map
+- [Controls](docs/controls.md) — basic application setup and control usage
+- [ZUI Format](docs/zui-format.md) — ZUI/ZTH file syntax and naming conventions
+- [Code Generation](docs/code-generation.md) — Source generator behavior, outputs, and diagnostics
+- [Initialization](docs/initialization.md) — Startup and initialization procedure for applications using
   ZurfurGui
-- [Property Binding](docs/property-binding.md) â€” Property binding system
-- [Styles and Themes](docs/styles-and-themes.md) â€” Style and theme system (style sheets, selectors, pseudo-classes, and
+- [Property Binding](docs/property-binding.md) — Property binding system
+- [Styles and Themes](docs/styles-and-themes.md) — Style and theme system (style sheets, selectors, pseudo-classes, and
   property resolution)
-- [Input and Pointer Events](docs/input-events.md) â€” Pointer input ingress, hit testing, capture,
+- [Input and Pointer Events](docs/input-events.md) — Pointer input ingress, hit testing, capture,
   routing, and clicks
-- [Gesture Recognizer](docs/gesture-recognizer.md) â€” Gesture recognizer system and gesture events
-- [ScrollViewer](docs/scroll-viewer.md) â€” ScrollViewer control: usage, styling, and internals
-- [ListBox](docs/list-box.md) â€” ListBox control: usage, generic item types, styling, and internals
-- [ComboBox](docs/combo-box.md) â€” ComboBox control: usage, generic item types, styling, and internals
-- [TreeView](docs/tree-view.md) â€” TreeView control: hierarchical data, selection, expansion, and styling
-- [Future Plans and Improvements](docs/future-improvements.md) â€” Future plans and
-  improvements
-- [Cleanup](docs/cleanup.md) â€” Bug list and cleanup tasks (instead of Jira)
+- [Gesture Recognizer](docs/gesture-recognizer.md) — Gesture recognizer system and gesture events
+- [ScrollViewer](docs/scroll-viewer.md) — ScrollViewer control: usage, styling, and internals
+- [ListBox](docs/list-box.md) — ListBox control: usage, generic item types, styling, and internals
+- [ComboBox](docs/combo-box.md) — ComboBox control: usage, generic item types, styling, and internals
+- [TreeView](docs/tree-view.md) — TreeView control: hierarchical data, selection, expansion, and styling
+- [Future Plans and Improvements](docs/future-improvements.md) — Future plans, improvements, known issues,
+  and random cleanup work
 
 ## Design Goals
 
@@ -45,9 +49,9 @@ Zurfur Gui is an experiment to see what a minimal C# WebAssembly `Canvas` GUI mi
 * Runs in browsers and natively on Windows
 * Quick and easy to whip up small GUI applications (tools, etc.)
 * Uses **JSON5** instead of XML
-* Small download â€” uses the built-in platform drawing API (i.e. `Canvas`)
+* Small download — uses the built-in platform drawing API (i.e. `Canvas`)
 
-## Model Data View (MDV)	
+## Model Data View (MDV)
 
 Zurfur Gui uses a **Model Data View (MDV)** pattern.  The view **(V)** declares the data it needs
 in the ZUI JSON `$data` section, and then build-time code generation via the `ZurfurGuiGen` source

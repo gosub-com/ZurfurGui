@@ -70,15 +70,9 @@
         {
             $name: "_resizeHandle",
             $align: "horizontal:right,vertical:bottom",
-            $margin: "left:0,top:0,right:-5,bottom:-13",
-            $content: [
-                {
-                    $controller: "TextView",
-                    text: "◢",
-                    $visualOffset: "x:-0.5,y:-1",
-                    font: "size:32"
-                }
-            ]
+            $margin: "left:0,top:0,right:0,bottom:0",
+            $sizeRequest: "width:16,height:16",
+            $borderColor: "${color.surface.overlay.stroke}"
         }
     ]
 }

@@ -1,18 +1,11 @@
 # ComboBox
 
+## Overview
+
 `ComboBox<Item>` is a generic single-selection dropdown control. In ZUI, `Item` is written as the item
 controller name, but generated C# closes the generic controller with that control's concrete data class.
-The item data class contains the data needed by its renderer; selection state belongs to the combo box rather than
-individual items.
-
-## Files
-
-| File | Purpose |
-|------|---------|
-| `src/ZurfurGui/Controls/ComboBox/ComboBox.zui` | Generic view definition and data shape |
-| `src/ZurfurGui/Controls/ComboBox/ComboBox.Control.cs` | Dropdown lifecycle, item creation, and selection synchronization |
-| `src/ZurfurGui/Controls/ComboBox/ComboBoxItem.cs` | Minimal handwritten marker constraint |
-| `src/ZurfurGui/Controls/ComboBox/ComboBoxItemText.zui` | Built-in text item renderer, data shape, and marker declaration |
+The item data class contains the data needed by its renderer; selection state belongs to the combo box
+rather than individual items.
 
 The C# namespace for these types is `ZurfurGui.Controls.ComboBox`. A view that uses the control
 should include that namespace in its `$use` list.
@@ -29,14 +22,8 @@ Because `ComboBox` is generic, use the item controller name in a concrete closed
 }
 ```
 
-The generator translates this to the C# controller type `ComboBox<ComboBoxItemTextData>`. Its generated
-data context is `ComboBoxData<ComboBoxItemTextData>`, with an
-`ObservableCollection<ComboBoxItemTextData>` for `Items`.
-
 The item data class must implement `IComboBoxItem`. An item view normally declares this with
-`$implements: "IComboBoxItem"`; the generator emits the interface on the generated data class. The
-generator emits `ComboBoxItemTextData` and `ComboBoxItemText` registrations during
-`ZurfurMain.InitializeControls()`.
+`$implements: "IComboBoxItem"` in its ZUI definition.
 
 ## Populating and using ComboBox from code
 
@@ -50,9 +37,7 @@ foreach (var label in new[] { "Zurfur Light", "Zurfur Dark", "Cherry Light", "Ch
 _themeComboBox.DataContext.SelectedIndex = 0;
 ```
 
-`Items` is a live `ObservableCollection<T>`. The generated controller does not synchronize collection
-changes by itself; `ComboBox.Control.cs` creates item controllers when it synchronizes the selected item
-or opens the dropdown. Each item controller receives the same data object through its `DataContext`.
+`Items` is a live `ObservableCollection<T>`.
 
 ### Reacting to selection changes
 
@@ -77,9 +62,8 @@ _themeComboBox.DataContext.SelectedIndex = 2;
 
 ## Adding a ComboBox item renderer
 
-A new item renderer declares its own view-shaped data. It does not inherit a generated data contract. If
-the item is used with `ComboBox`, its ZUI definition declares `$implements: "IComboBoxItem"` so the
-generated data class satisfies the generic constraint.
+A new item renderer declares its own view-shaped data. If the item is used with `ComboBox`, its ZUI
+definition declares `$implements: "IComboBoxItem"`.
 
 For example, `ComboBoxItemBadge.zui` declares `Badge` and `Text` data:
 
@@ -127,17 +111,31 @@ _badgeCombo.DataContext.Items.Add(new ComboBoxItemBadgeData
 also do not receive common `IsEnabled` or `Tag` properties automatically; add such properties to the
 item's own data shape only when the application requires them.
 
-## Runtime item creation
+<!-- INTERNAL -->
 
-The source generator registers each non-generic data-bearing item controller with its concrete data class. For
-example, `ComboBoxItemBadgeData` is registered with `ComboBoxItemBadge`.
+## Implementation Section
 
-`ComboBox<TItem>` looks up the factory by the runtime concrete data type and passes the existing data
-object to it. The factory creates the controller and assigns that object to `DataContext`. Runtime
-lookup does not use an item interface; `$implements` only makes the generated data class satisfy the
-compile-time generic constraint.
+### Files
 
-If a new item type is not registered, opening the dropdown or synchronizing the selected item fails
-because `Loader.CreateDataController` cannot find a factory for its runtime data type. Ensure the item
-has a ZUI file with a `$data` section, is included as an `AdditionalFiles` input, and declares
-`$implements: "IComboBoxItem"`.
+| File | Purpose |
+|------|---------|
+| `src/ZurfurGui/Controls/ComboBox/ComboBox.zui` | Generic view definition and data shape |
+| `src/ZurfurGui/Controls/ComboBox/ComboBox.Control.cs` | Dropdown lifecycle, item creation, and selection synchronization |
+| `src/ZurfurGui/Controls/ComboBox/ComboBoxItem.cs` | Minimal handwritten marker constraint |
+| `src/ZurfurGui/Controls/ComboBox/ComboBoxItemText.zui` | Built-in text item renderer, data shape, and marker declaration |
+
+### Generated types and item registration
+
+The generator translates `ComboBox<ComboBoxItemText>` to the C# controller type
+`ComboBox<ComboBoxItemTextData>`. Its generated data context is
+`ComboBoxData<ComboBoxItemTextData>`, with an `ObservableCollection<ComboBoxItemTextData>` for `Items`.
+The generator emits `IComboBoxItem` on the generated data class and registers it during
+`ZurfurMain.InitializeControls()`.
+
+The generated controller does not synchronize collection changes by itself. `ComboBox.Control.cs`
+creates item controllers when it synchronizes the selected item or opens the dropdown. Each item
+controller receives the same data object through its `DataContext`.
+
+Include each custom item ZUI file as an `AdditionalFiles` input so initialization can register its
+concrete data type. Without that registration, creating an item controller fails. See
+[Initialization](initialization.md).

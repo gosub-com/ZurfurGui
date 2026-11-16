@@ -1,5 +1,7 @@
 # Code Generation
 
+## Overview
+
 This repo uses a Roslyn incremental source generator (`src/ZurfurGuiGen/GenerateZui.cs`) to turn
 ZUI and ZTH files into C#. The generator targets `netstandard2.0`, and the code it generates targets
 `.NET 10`. For the file syntax, see [ZUI and ZTH file format](zui-format.md). For the `$data`
@@ -26,10 +28,18 @@ The project must also reference the generator as an analyzer:
 ```
 
 If the generator does not pick up a file, check its build action or the project's `AdditionalFiles`
-items. Generated files are placed under the build-generated source directory (for example,
+items.
+
+<!-- INTERNAL -->
+
+## Implementation Section
+
+### Generated file location
+
+Generated files are placed under the build-generated source directory (for example,
 `obj/Debug/net10.0/generated/ZurfurGuiGen/ZurfurGuiGen.GenerateZui/`) and must not be edited by hand.
 
-## Naming and detection rules
+### Naming and detection rules
 
 - A view is identified by a `*.zui` filename (for example, `Button.zui` → `<ViewName>` is `Button`).
 - The generated controller type name is exactly `<ViewName>` (it is not suffixed).
@@ -44,9 +54,9 @@ items. Generated files are placed under the build-generated source directory (fo
   `ComboBoxData<Item>`.
 - A theme is identified by a `*.zth` filename, and its top-level `name` must match the filename.
 
-## Outputs
+### Outputs
 
-### 1) Per-view controller (`*.zui` → `<ViewName>.Control.g.cs`)
+#### 1) Per-view controller (`*.zui` → `<ViewName>.Control.g.cs`)
 
 - Each `*.zui` file describes a view/control.
 - The generator emits a sealed controller class named after the file (for example,
@@ -66,7 +76,7 @@ items. Generated files are placed under the build-generated source directory (fo
   `CreateDefaultDataContext`, and `SetDataProperty`. Their behavior is described in
   [Property binding](property-binding.md).
 
-### 2) Per-view data class (`*.zui` → `<ViewName>.Data.g.cs`)
+#### 2) Per-view data class (`*.zui` → `<ViewName>.Data.g.cs`)
 
 - If a view declares a `$data` section, the generator emits the concrete, sealed `<ViewName>Data`
   class implementing `INotifyPropertyChanged`.
@@ -76,7 +86,7 @@ items. Generated files are placed under the build-generated source directory (fo
 - The data class uses the same `$accessModifier` modifier as the controller class.
 - There are no generated `I<ViewName>Data` contracts.
 
-### 3) Per-project registry (`*.zui` + `*.zth` → `ZurfurMain.g.cs`)
+#### 3) Per-project registry (`*.zui` + `*.zth` → `ZurfurMain.g.cs`)
 
 The generator collects all views (`*.zui`) and themes (`*.zth`) in the project. It emits a
 `static partial class ZurfurMain` with an `InitializeControls()` method that:
@@ -106,7 +116,7 @@ that calls `InitializeControls()`. If the project contains generated controls or
 `ZurfurMain` class, the generator reports error `ZUI005`. The library itself provides this class
 in `src/ZurfurGui/ZurfurMain.cs`.
 
-## Generic controls
+### Generic controls
 
 Controls can be made generic by using a type parameter and `where` constraint in the `$controller`
 field:
@@ -139,7 +149,7 @@ public sealed class ComboBoxData<Item> : INotifyPropertyChanged
 When a collection binding type is the type parameter (`[]Item`), the generator preserves `Item`,
 producing a strongly typed collection such as `ObservableCollection<Item>`.
 
-### MDV with generic controls
+#### MDV with generic controls
 
 Generic controls follow the same MDV pattern as non-generic ones. The container (`ComboBox<Item>`)
 owns a `DataContext` of type `ComboBoxData<Item>`, which exposes the item collection as
@@ -151,7 +161,7 @@ to instantiate the right item controller for each element. The generic container
 because the lookup is keyed by the runtime concrete data type, while the generated item data and
 controller remain strongly typed end-to-end.
 
-### Constraint types
+#### Constraint types
 
 A generic constraint should be a real C# type available to the generated controller. For ComboBox,
 the library provides the minimal handwritten marker
@@ -162,7 +172,7 @@ it.
 The marker does not define generated data properties or create inheritance between item data
 classes. Each item view declares its own `$data` properties.
 
-### Concrete item controls
+#### Concrete item controls
 
 A concrete item control declares its own `$data` section, and its generated `<ViewName>Data` class
 is a concrete type. If it is a ComboBox item, its ZUI definition also declares
@@ -177,7 +187,7 @@ This design avoids generated data interfaces, interface-based factory lookup, in
 bindings, and cross-assembly `$implements` synthesis. Shared behavior should be expressed through
 handwritten C# types or explicit composition rather than generator metadata.
 
-### Property keys and generics
+#### Property keys and generics
 
 In C#, static fields on a generic class are per closed type — `ComboBox<A>` and `ComboBox<B>` each
 have their own copy. This would cause duplicate `PropertyKey` registration exceptions at startup.
@@ -199,7 +209,7 @@ Hand-written static members can be added through a matching partial companion wh
 needs them. The generated `InitializeControls()` runs the static constructor of both the open
 generic type and its companion so keys are registered before style sheets are parsed.
 
-## Generated-code surface
+### Generated-code surface
 
 Generated code is compiled into the application's assembly, so the library members it uses must be
 public. They are isolated in the `ZurfurGui.Generated` namespace and marked
@@ -215,7 +225,7 @@ These are not an application API. The generator and library ship in the same pac
 application always gets matching versions. Members may change before 1.0. `Loader` itself keeps only
 the JSON serialization members public, and its other members are internal.
 
-### Compatibility policy
+#### Compatibility policy
 
 A third-party control library is compiled with the generator, so its generated code is baked into its
 DLL and may run against a newer ZurfurGui than it was built with. After 1.0, the types below are
@@ -233,7 +243,7 @@ additive-only: never remove members or change signatures, add new overloads or m
 
 Everything else is internal and can change freely.
 
-### Planned version check
+#### Planned version check
 
 Not implemented yet; planned before 1.0. `ZuiRuntime.Version` is a constant that is bumped whenever
 generated-code surface is added. The generator emits an assembly attribute with the minimum runtime
@@ -242,7 +252,7 @@ greater than `ZuiRuntime.Version`, and otherwise throws an error telling the use
 ZurfurGui. Older generated code on a newer library is allowed because the surface is additive-only.
 This turns a `MissingMethodException` in the middle of loading into one clear message at startup.
 
-## Diagnostics
+### Diagnostics
 
 The generator reports these diagnostics:
 
@@ -254,7 +264,7 @@ The generator reports these diagnostics:
 | `ZUI004` | An exception while emitting the controller or data class. |
 | `ZUI005` | The project has generated code but no `ZurfurMain` class. |
 
-## Source map
+### Source map
 
 - `ZurfurGuiGen/GenerateZui.cs`: source generator entry point; wires up ZUI and ZTH pipelines.
 - `ZurfurGuiGen/ZuiInput.cs`: collects data from `.zui` / `.zth` files into `ZuiFileInfo`; parses

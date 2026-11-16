@@ -5,45 +5,13 @@ ZUI JSON5 files and loaded into generated C# controller classes. A view with nam
 for those controls in its generated controller, and application behavior can be added in the matching
 `.Control.cs` partial class.
 
-For the generated data model, property binding categories, and initialization details, see
-[Architecture](architecture.md) and [Property Binding](property-binding.md).
+For generated data and binding behavior, see [Property Binding](property-binding.md).
 
 ## Application setup
 
-Each application provides a partial `ZurfurMain` class with a `MainApp` method. Call
-`InitializeControls` before creating controls. Use `SetMainappWindow` to set the main application
-content, and `ShowWindow` to display an additional window.
-
-```csharp
-public static void MainApp(AppWindow app)
-{
-    InitializeControls();
-
-    app.SetMainappWindow(new MainView());
-    app.ShowWindow(new SettingsView(), "Settings");
-}
-```
-
-The main view and the window content are ordinary generated controls. For example, a simple main view
-can be written as follows:
-
-```
-{
-    $controller: "MainView",
-    $namespace: "MyApp",
-    $backgroundColor: "#202020",
-    $content: [
-        {
-            $controller: "TextView",
-            text: "Welcome to ZurfurGui"
-        }
-    ]
-}
-```
-
-`SetMainappWindow` places the control in the application's main window. `ShowWindow` wraps a control in
-a window with optional title, position, size, and alignment settings. See
-[Initialization](initialization.md) for more about application startup.
+Applications call generated `InitializeControls` before creating controls. Use
+`SetMainappWindow` for the main content and `ShowWindow` for additional windows. See
+[Initialization](initialization.md) for the startup example.
 
 ## ZUI controls
 
@@ -120,26 +88,6 @@ The optional `location` sets the window's `Panel.Offset`. Dragging the window up
 The window content area clips overflow but does not scroll automatically. Put a `ScrollViewer` in the
 content when the window body needs to scroll. The title bar remains outside that content area.
 
-### Scrim
-
-`Scrim` displays a themed, full-screen overlay for transient UI such as dropdowns, menus, and modal
-content. Its background uses the active theme's `color.surface.overlay.scrim` token.
-
-Call `Show` with the current `AppWindow` to display the Scrim. It returns the `View` added to the
-floating-window layer. Subscribe to `Dismissed` to close the transient UI, then remove the returned view
-from its parent:
-
-```csharp
-View? scrimView = null;
-var scrim = new Scrim();
-scrim.Dismissed += (_, _) => scrimView?.RemoveFromParent();
-scrimView = scrim.Show(appWindow);
-```
-
-The caller owns the Scrim's lifetime. Remove its returned view when the transient UI closes. Also remove
-it when the owning control is detached. Content displayed above the Scrim should be added as a separate
-floating panel rather than as a child of the Scrim, so clicks on that content do not dismiss the Scrim.
-
 ### TextView
 
 `TextView` displays text. Its `text` property can be a string or an array of lines. Use styles and layout
@@ -184,6 +132,26 @@ public partial class MainView
 }
 ```
 
+### Scrim
+
+`Scrim` displays a themed, full-screen overlay for transient UI such as dropdowns, menus, and modal
+content. Its background uses the active theme's `color.surface.overlay.scrim` token.
+
+Call `Show` with the current `AppWindow` to display the Scrim. It returns the `View` added to the
+floating-window layer. Subscribe to `Dismissed` to close the transient UI, then remove the returned view
+from its parent:
+
+```csharp
+View? scrimView = null;
+var scrim = new Scrim();
+scrim.Dismissed += (_, _) => scrimView?.RemoveFromParent();
+scrimView = scrim.Show(appWindow);
+```
+
+The caller owns the Scrim's lifetime. Remove its returned view when the transient UI closes. Also remove
+it when the owning control is detached. Content displayed above the Scrim should be added as a separate
+floating panel rather than as a child of the Scrim, so clicks on that content do not dismiss the Scrim.
+
 ### ScrollBar
 
 `ScrollBar` displays and changes a numeric scroll value between its `minimum` and `maximum` values. Its
@@ -200,12 +168,7 @@ scrollbar behavior, see [ScrollViewer](scroll-viewer.md).
 scrolling. Put the content to scroll in its `$content` section. The combined visible offset is available
 through `ScrollOffset`.
 
-```csharp
-var offset = scrollViewer.ScrollOffset;
-scrollViewer.ScrollOffset = new Point(offset.X, offset.Y + 8);
-```
-
-For layout, scrollbar visibility, range behavior, and detailed usage, see
+For layout, scrolling, scrollbar visibility, range behavior, and detailed usage, see
 [ScrollViewer](scroll-viewer.md).
 
 ### ListBox
@@ -219,22 +182,9 @@ selection APIs, runtime collection updates, and custom items, see [ListBox](list
 `ComboBox<Item>` displays a single-selection dropdown. Populate its generated `DataContext.Items`
 collection with item data objects and set `DataContext.SelectedIndex` to select an item.
 
-```csharp
-_themeComboBox.DataContext.Items.Add(
-    new ComboBoxItemTextData { Text = new TextLines("Light") });
-_themeComboBox.DataContext.SelectedIndex = 0;
-```
+For population, selection, and custom item renderers, see [ComboBox](combo-box.md).
 
-Selection changes are reported through `DataContext.PropertyChanged` for the `SelectedIndex` property.
-For generic item requirements, item renderers, and detailed usage, see [ComboBox](combo-box.md).
+### TreeView
 
-### TextEdit
-
-`TextEdit` has not been implemented yet.
-
-## Generated controller access
-
-A `$name` in a ZUI file creates a named control field on the generated controller, available to the
-matching `.Control.cs` partial class. Data declared in `$data` is available through the generated
-`DataContext`. See [Architecture](architecture.md) and [Property Binding](property-binding.md) for the
-generated data model and change notifications.
+`TreeView<Item>` displays a vertically scrolling tree with optional single or multiple selection.
+For item types, selection APIs, runtime collection updates, and custom items, see [ListBox](list-box.md).

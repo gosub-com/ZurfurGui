@@ -1,5 +1,7 @@
 # ScrollViewer
 
+## Overview
+
 `ScrollViewer` displays content through a clipped viewport and allows the user or application code to
 change the visible offset with horizontal and vertical scrollbars.
 
@@ -103,8 +105,7 @@ Changing a scrollbar's `DataContext.Value` has the same effect:
 scrollViewer.verticalScrollBar.DataContext.Value += 8;
 ```
 
-Scrollbar values and `ScrollOffset` are synchronized in both directions. Internal synchronization is
-guarded so updating one side does not recursively update the other.
+Scrollbar values and `ScrollOffset` are synchronized in both directions.
 
 ## Scrollbar data and visibility
 
@@ -120,14 +121,12 @@ Each scrollbar has the following range-related data:
 | `largeChange` | The page movement amount; the viewer sets it to the viewport size. |
 | `visibility` | Whether the viewer displays the scrollbar automatically, always, or never. |
 
-`visibility` uses `ScrollBarVisibility`:
+`visibility` uses `ScrollBarVisibility`; its default is `Auto`. The overlay section below describes how
+each visibility setting affects rendering.
 
 - `Visible` always displays the scrollbar.
 - `Hidden` does not display the scrollbar, but the range and value can still be used programmatically.
 - `Auto` displays the scrollbar only when its calculated maximum is greater than its minimum.
-
-The current default is `Auto`, so scrollbars are hidden when their content fits and shown when their
-content overflows. Applications can set a different policy through the scrollbar data when needed.
 
 ## Overlay scrollbar behavior
 
@@ -135,37 +134,17 @@ ScrollViewer uses overlay scrollbars. The scrollbars are drawn above the clipped
 consume viewport space. Showing or hiding either scrollbar therefore does not change the content width,
 content height, or the content extent used to calculate the scroll range.
 
-The intended visibility behavior is:
-
-- `Auto` hides a scrollbar when its content fits and shows it when its maximum range is greater than
-  zero.
-- `Visible` shows the scrollbar even when its range is zero. In that state it has no scrollable thumb
-  movement.
-- `Hidden` does not render the scrollbar, but its range and value remain available to application code.
-
 When only one scrollbar is visible, it uses the full corresponding edge of the viewport. When both are
 visible, the horizontal scrollbar is shortened by the vertical scrollbar's thickness and the vertical
 scrollbar is shortened by the horizontal scrollbar's thickness. This leaves an empty, non-scrollable
 corner where the two bars meet. No corner control or gutter is added yet.
 
+`Auto` hides a bar with no scrollable range, `Visible` keeps it rendered, and `Hidden` suppresses it
+without removing its range or value.
+
 Scrollbar visibility is evaluated from the content extent and the unchanged viewport size. The
 appearance of a scrollbar does not reduce the size used to measure content, so visibility does not
 require the iterative two-axis measurement used by traditional scrollbars that consume layout space.
-
-ScrollViewer configures its internal scrollbars with `expandOnHover: true`. When an overflowing
-scrollbar is not hovered, it renders only a thin translucent thumb near the outer edge. The thumb keeps
-its normal calculated position and length along the scroll direction, so it indicates the portion of
-content currently visible without covering the full content edge. The scrollbar's full outer rectangle
-remains available as an invisible pointer target.
-
-When the pointer enters that outer rectangle, the scrollbar renders its partially opaque track, opaque
-thumb, and arrow indicators. The thumb becomes thicker and moves toward the center of the scrollbar.
-Pressing or dragging also uses the expanded appearance. Arrow space remains reserved even while the
-arrow indicators are not drawn, so the scroll range and layout do not change between visual states.
-
-Scrollbar theme colors use the effective `ScrollBar.isExpanded` condition rather than relying only on
-`isPointerOver`. This keeps colors synchronized with the expanded geometry during hover, press, and drag
-states.
 
 The standard range model is:
 
@@ -194,14 +173,6 @@ Fractional wheel deltas from precision touchpads scroll proportionally.
 }
 ```
 
-The ScrollViewer subscribes to the `Panel.PointerWheel` event. The wheel is not part of the pointer
-preview and bubble routing. Instead, the router gives the event to the first view with a `PointerWheel`
-handler, starting at the view under the pointer and walking toward the root, until a handler sets
-`WheelEvent.Handled`. See `input-events.md`.
-
-The ScrollViewer sets `HitTest` to `Always`, so it is the hit target for any point in its viewport
-that no child claims. This includes empty space and gaps between transparent children.
-
 - Wheel over any part of the ScrollViewer works, including its content, empty space, and its
   scrollbars.
 - Shift+wheel scrolls horizontally when the device reports only vertical movement.
@@ -222,11 +193,6 @@ down and positive X scrolls right. Scrolling is therefore `notches * wheelSteps 
 
 ## Panning and flick
 
-The ScrollViewer owns a `PanRecognizer` (see `gesture-recognizer.md`) that takes part in the gesture
-arena, so buttons and other controls inside the viewer still receive clicks. A click wins if the contact
-is released before it moves past the slop; the pan wins if it moves past the slop first, which cancels
-the child's click and captures the contact for the viewer.
-
 - Touch and pen pan with any contact. The mouse pans only with the right button by default.
 - Panning moves `ScrollOffset`, clamped to the scrollbar ranges. The content does not jump when the pan
   starts; the slop distance is ignored.
@@ -238,15 +204,6 @@ the child's click and captures the contact for the viewer.
   all does not take part, so an ancestor viewer pans instead. A viewer that can scroll an axis takes the
   pan when movement along that axis passes the slop, even when it is at its limit.
 
-The ScrollViewer, not the `PanRecognizer`, owns the flick. The recognizer only reports the release
-velocity (measured from the last 100 ms of finger movement) and applies no motion after release. The
-viewer converts that velocity to scroll units and animates it on each frame (`PreRenderFrame`): the speed
-decays exponentially (friction of 3 per second), the frame time is capped at 50 ms so a stalled frame
-does not jump, the flick ends when the speed drops below 10 units per second, and an axis stops as soon
-as the offset reaches its minimum or maximum. These values are constants in the viewer and are not yet
-configurable. `PanOptions.Flick`, `MinFlickVelocity`, and `MaxFlickVelocity` only control whether and how
-fast a release reports a velocity.
-
 Configure it through `ScrollViewer.PanOptions`:
 
 ```csharp
@@ -257,10 +214,8 @@ scrollViewer.PanOptions.Flick = false;                         // Stop when rele
 
 `Slop` is in layout units (scaled by the DPR) and defaults to the app window's movement slop for the
 device.
-overscroll, a delayed pressed visual for children inside a scrolling viewer, and rejecting a touch click
-that moved past the slop.
 
-## Sizing and limitations
+## Sizing and known limitations
 
 The ScrollViewer has no default `$sizeRequest` or `$sizeMax`. Its content is measured separately so it
 can be larger than the viewport. The viewer reports the smaller of the content's natural size and the
@@ -272,18 +227,61 @@ the overflow. If a parent measures with unconstrained space, the ScrollViewer ma
 because no finite viewport has been established. Applications should provide a finite constraint
 through the viewer's parent when a bounded viewport is required.
 
-Other current limitations include:
+Current limitations include:
 
-- No mouse-wheel scrolling.
 - No keyboard scrolling.
-- No touch or pointer panning of content.
 - No accessibility metadata or automation support.
-- No nested-scroll input routing.
 - No configurable content alignment; content starts at the top-left.
 - No configurable scrollbar gutter or overlay inset.
 - The overlay corner is currently empty and is not yet represented by a dedicated corner control.
-- There are no convenience `HorizontalOffset` or `VerticalOffset` properties yet.
-- Extent and viewport sizes are not currently exposed as public ScrollViewer properties.
+- There are no convenience horizontal/vertical offset or extent/viewport properties.
+
+<!-- INTERNAL -->
+
+## Implementation Section
+
+### Overlay rendering
+
+ScrollViewer configures its internal scrollbars with `expandOnHover: true`. When an overflowing
+scrollbar is not hovered, it renders only a thin translucent thumb near the outer edge. The thumb keeps
+its normal calculated position and length along the scroll direction, so it indicates the portion of
+content currently visible without covering the full content edge. The scrollbar's full outer rectangle
+remains available as an invisible pointer target.
+
+When the pointer enters that outer rectangle, the scrollbar renders its partially opaque track, opaque
+thumb, and arrow indicators. The thumb becomes thicker and moves toward the center of the scrollbar.
+Pressing or dragging also uses the expanded appearance. Arrow space remains reserved even while the
+arrow indicators are not drawn, so the scroll range and layout do not change between visual states.
+
+Scrollbar theme colors use the effective `ScrollBar.isExpanded` condition rather than relying only on
+`isPointerOver`. This keeps colors synchronized with the expanded geometry during hover, press, and drag
+states.
+
+### Mouse-wheel routing
+
+The ScrollViewer subscribes to the `Panel.PointerWheel` event. The wheel is not part of the pointer
+preview and bubble routing. Instead, the router gives the event to the first view with a `PointerWheel`
+handler, starting at the view under the pointer and walking toward the root, until a handler sets
+`WheelEvent.Handled`. See [Input events](input-events.md).
+
+The ScrollViewer sets `HitTest` to `Always`, so it is the hit target for any point in its viewport
+that no child claims. This includes empty space and gaps between transparent children.
+
+### Panning and flick
+
+The ScrollViewer owns a `PanRecognizer` (see [Gesture recognizer](gesture-recognizer.md)) that takes
+part in the gesture arena, so buttons and other controls inside the viewer still receive clicks. A
+click wins if the contact is released before it moves past the slop; the pan wins if it moves past the
+slop first, which cancels the child's click and captures the contact for the viewer.
+
+The ScrollViewer, not the `PanRecognizer`, owns the flick. The recognizer only reports the release
+velocity (measured from the last 100 ms of finger movement) and applies no motion after release. The
+viewer converts that velocity to scroll units and animates it on each frame (`PreRenderFrame`): the
+speed decays exponentially (friction of 3 per second), the frame time is capped at 50 ms so a stalled
+frame does not jump, the flick ends when the speed drops below 10 units per second, and an axis stops
+as soon as the offset reaches its minimum or maximum. These values are constants in the viewer and are
+not yet configurable. `PanOptions.Flick`, `MinFlickVelocity`, and `MaxFlickVelocity` only control
+whether and how fast a release reports a velocity.
 
 ## Current visual structure
 
@@ -304,50 +302,8 @@ content instead of being clipped with it.
 The content window is the control-owned host for user content. User content supplied through the
 ScrollViewer's parent `$content` is placed in this host rather than directly beside the scrollbars.
 
-## Content loading implementation
-
-The loader distinguishes between a control's own template content and content supplied by its parent.
-The calls occur in this order:
-
-```text
-ScrollViewer constructor
-        |
-        +--> ZuiRuntime.Load(ScrollViewer, ScrollViewer's own ZUI JSON)
-        |       |
-        |       +--> add template content
-        |               |
-        |               +--> add _contentViewport to ScrollViewer.View
-        |               +--> add horizontalScrollBar to ScrollViewer.View
-        |               +--> add verticalScrollBar to ScrollViewer.View
-        |               +--> _contentWindow is created under _contentViewport
-        |
-        +--> generated named fields are initialized
-        +--> ScrollViewer-specific layout and scrollbar setup completes
-
-Parent creates the ScrollViewer from its $content
-        |
-        +--> Loader.CreateControl(ScrollViewer properties, context)
-                |
-                +--> construct ScrollViewer and complete the sequence above
-                +--> add parent content
-                        |
-                        +--> ContentHost returns _contentWindow.View
-                        +--> the loader adds user content there
-```
-
-`Loader.Load` adds the ScrollViewer's own ZUI children to its main view as template content. These children
-create the content viewport, content window, and scrollbars directly on the ScrollViewer. Later,
-`Loader.CreateControl` adds the parent's content to the control's `ContentHost`.
-ScrollViewer's `ContentHost` points to `_contentWindow`, so application content is added inside the
-clipped content subtree.
-
-Template content is always added to the main view, while parent content is added to `ContentHost`, which is the
-main view by default. ScrollViewer only needs to provide the content host; it no
-longer infers the loading phase from `View.Children.Count`.
-
-The separate phases are also useful for future controls with templates or named content hosts. Those
-controls can direct ordinary parent content through an appropriate content host without adding special
-cases to the loader.
+For the distinction between template content and parent-supplied content, see
+[Initialization](initialization.md).
 
 ## Measurement and arrangement
 
@@ -395,56 +351,10 @@ It then updates `Minimum`, `Maximum`, `ViewportSize`, and `LargeChange`. The cur
 after the range is updated. This ensures that shrinking content cannot leave the content window displaced
 past its new maximum.
 
+Scrollbar values and `ScrollOffset` are synchronized in both directions. A guard prevents updating one
+side from recursively updating the other.
+
 Range synchronization also applies the scrollbar visibility policy. With the default `Auto` policy, a
 bar is hidden when its measured range is zero. An explicitly `Visible` bar remains displayed in that
 state, while the renderer omits its thumb and arrow indicators because there is no scrollable range in
 that axis.
-
-## What has been implemented
-
-The current implementation includes:
-
-- A generated ScrollViewer control and ZUI structure.
-- Normal parent `$content` support.
-- A separate clipped content viewport.
-- A content window that hosts all user content.
-- Natural content measurement using unbounded measurement for the content window.
-- Child `Panel.Offset` values included in the default Panel layout's measured content extent.
-- Arrangement of content at its natural desired size.
-- Content translation through the existing `$visualOffset` property.
-- Public `ScrollOffset` access.
-- Horizontal and vertical scrollbar instances exposed by generated names.
-- Scrollbar range synchronization.
-- Safe clamping of values and offsets without exceptions.
-- Programmatic offset changes through the sample's `Offset +` and `Offset -` buttons.
-- Scrollbar value changes connected back to `ScrollOffset`.
-- Auto scrollbar visibility based on content overflow.
-
-## Remaining work
-
-The following work is intentionally left for later:
-
-1. Add `HorizontalOffset`, `VerticalOffset`, `ExtentWidth`, `ExtentHeight`, `ViewportWidth`, and
-   `ViewportHeight` convenience properties.
-2. Add scrollbar auto-repeat, keyboard input, mouse-wheel scrolling, touch panning, and nested-scroll
-   event routing.
-3. Add accessibility and automation metadata for orientation, range, value, and viewport size.
-4. Add configurable top-left, centered, and other content alignment behavior.
-5. Improve loader lifecycle APIs so internal control content and parent content are distinct operations.
-6. Add tests for content that fits, content that overflows horizontally, content that overflows vertically,
-   content that overflows in both directions, and content that shrinks after scrolling.
-
-## Current continuation point
-
-The current implementation has completed content loading, clipping, content-sized measurement,
-offset translation, scrollbar range synchronization, and scrollbar-value synchronization.
-
-The next validation target is the `FormTestScrollViewer` sample. Verify horizontal movement,
-vertical overflow, thumb rendering, range clamping, and overlay placement.
-
-The sample now relies on the ScrollViewer's content-sized measurement. Its content may not exceed the
-available viewport in one axis, so a missing scrollbar may be expected rather than a control failure.
-
-The next likely implementation task is configurable overlay gutter behavior.
-Do not begin mouse-wheel, keyboard, touch, accessibility, or nested-scroll work until the
-two-axis layout behavior is stable.

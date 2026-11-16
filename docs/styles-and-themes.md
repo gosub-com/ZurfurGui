@@ -1,9 +1,8 @@
 # Style and Theming System
 
-This document describes how the ZurfurGui style system works — aimed at both human
-developers and AI code assistants working in this repository.
-
 ## Overview
+
+This document explains how theme tokens are declared, applied, and resolved.
 
 ZurfurGui uses a **theme token system** where visual properties reference named tokens
 defined in theme files. Theme tokens are resolved at runtime by walking up the view
@@ -20,9 +19,8 @@ The key components are:
 
 ## Theme Files (`.zth`)
 
-`.zth` means Zurfur Theme. Theme files use the modified JSON5 configuration format described in the
-architecture documentation: they are essentially JSON with comments and dictionary keys do not need
-quotes. Each theme has a name and a dictionary of variables.
+`.zth` means Zurfur Theme. Theme files use the modified JSON5 syntax described in
+[ZUI and ZTH File Format](zui-format.md). Each theme has a name and a dictionary of variables.
 
 ```
 {
@@ -43,7 +41,8 @@ quotes. Each theme has a name and a dictionary of variables.
 `condition ? value; alternativeValue` syntax:
 
 ```
-color.interactive.primary.background: "isPressed ? #A6D2F2; isPointerOver ? #D2E8FA; #C6E0F7"
+color.interactive.primary.background: "isPressed ? #A6D2F2; isPointerOver ? #D2E8FA; #C6E0F7",
+color.scroll.thumb.background: "isPressed ? #005A9E; ScrollBar.isExpanded ? #6A9FD0; #8BB4DC80"
 ```
 
 Supported conditions:
@@ -55,18 +54,6 @@ Supported conditions:
 Registered boolean property conditions read the control's current runtime value rather than resolving
 the property as a style. Conditions must name a property exactly; unknown properties and non-boolean
 properties are invalid conditions.
-
-For example, scrollbar themes can use the effective expanded state instead of the physical pointer state:
-
-```
-color.scroll.thumb.background:
-    "isPressed ? #005A9E; ScrollBar.isExpanded ? #6A9FD0; #8BB4DC80"
-```
-
-`ScrollBar.isExpanded` is true when the scrollbar is expanded because it is hovered, pressed, or
-configured not to expand only on hover. The property is generated from the control's
-`bind: "property"` declaration and is set by the control at runtime, allowing themes to style the
-effective visual state without changing the meaning of `isPointerOver`.
 
 Multiple expressions are separated by semicolons, evaluated in order until a matching
 condition is found. The last value (without a condition) serves as the default.
@@ -99,8 +86,7 @@ below).
 
 ## Using Theme Tokens in Views
 
-In `.zui` files, wrap token names with `${}` to reference theme tokens.
-remain supported:
+In `.zui` files, wrap token names with `${}` to reference theme tokens:
 
 ```
 {
@@ -112,9 +98,7 @@ remain supported:
 }
 ```
 
-When the view is loaded, `"${token.name}"` properties are stored separately in a
-`ThemeTokens` dictionary on the view, then resolved at runtime through
-`ThemeManager.FindStyle`.
+When a view requests a property, its token expression is resolved using the active themes.
 
 ### Token Fallback with `|`
 
@@ -131,15 +115,6 @@ supplied the token, it is taken.  If not, the next tokens are tried in order. If
 `spacing.horizontal.small` provides a partial value (e.g., only `left` and `right`), 
 `spacing.vertical.extra-small` can complete it by providing `top` and `bottom`. If the first 
 token fully resolves the property, the rest are ignored.
-
-**Example from Window title text color**:
-
-```
-TextView.color: "${color.window.menu | color.window.title.foreground}"
-```
-
-This tries `color.window.menu` first (custom token), then falls back to
-`color.window.title.foreground` if not defined.
 
 The `|` operator combined with `IMergable` properties enables powerful composition:
 
@@ -179,10 +154,8 @@ exists in a built-in theme, so the control works when the optional token is not 
 This guidance is specific to `styled` properties. Keep `default` values on ordinary data, `styledData`,
 or `property` bindings when they need an initial runtime value, such as a control's default orientation.
 
-Use `bind: "property"` for view properties that should not resolve theme values. Controls access their
-own `property` bindings through generated `control.Properties.Name` members; these read from the view
-property or `PropertyKey` default without resolving theme values. Use the same accessor to set a control's
-own `styled` or `property` binding.
+For the distinction between `styled` and `property` bindings, see
+[Property Binding](property-binding.md).
 
 ## Selecting and Activating Themes
 
@@ -192,25 +165,11 @@ To set the theme for the entire application, use the top-level `View`'s `ActiveT
 property:
 
 ```csharp
-var appWindow = view.AppWindow;
-if (appWindow != null)
-{
-    appWindow.View.ActiveThemes = ["ZurfurDefault"];
-}
+view.ActiveThemes = ["MyCustomTheme", "ZurfurDefault"];
 ```
 
-`ActiveThemes` is a `TextLines?` property (essentially a list of strings). You can
-activate multiple themes at once; the first theme in the list has the highest priority:
-
-```csharp
-appWindow.View.ActiveThemes = ["MyCustomTheme", "ZurfurDefault"];
-```
-
-In this case, token resolution will search `MyCustomTheme` first, then `ZurfurDefault`,
-before falling back to `ZurfurBase`.
-
-**Note**: The collection initializer syntax `["ThemeName"]` requires `TextLines` to be
-publicly accessible. This was fixed by making `TextLinesBuilder` public.
+The first theme has highest priority. Theme resolution then falls back to `ZurfurDefault` and
+`ZurfurBase`.
 
 ### Setting Themes on Subviews
 
@@ -223,55 +182,13 @@ myPanel.View.ActiveThemes = ["SpecialPanelTheme"];
 Child controls will use this theme (and any themes further up the chain) when resolving
 tokens.
 
-## Theme Resolution Algorithm
+## Resolution behavior
 
-When a view requests a themed property (e.g., `backgroundColor` mapped to
-`"${color.surface.canvas}"`), the `ThemeManager` resolves it as follows:
-
-1. **Check explicitly set properties**: If the property was set in code (via
-   `View.SetProperty`), use that value (unless it's an incomplete `IMergable`).
-
-2. **Look up the token expression**: Retrieve the token expression from the view's
-   `ThemeTokens` dictionary. If it contains `|`, process the token candidates in order.
-
-3. **Resolve each token candidate completely before trying the next**:
-   - Starting from the current view, walk up the `Parent` chain. At each view, check its
-     `ActiveThemes` in order, with the first theme having the highest priority.
-   - If a token is found, deserialize its value. If it contains conditional expressions
-     (`isPressed ? ...`), evaluate the condition against the view's state.
-   - If the result is an incomplete `IMergable`, merge it with any partial value already
-     found and continue searching themes and parent views.
-   - After the view hierarchy, check `ZurfurDefault` then `ZurfurBase` if the value is
-     still incomplete.
-   - If the value is still missing or incomplete, try the next token candidate.
-
-   **Token candidate order takes precedence over theme priority**: the first candidate is
-   searched through the full hierarchy and built-in fallbacks before the second candidate
-   is considered. Thus, a first candidate found in a built-in theme can take precedence
-   over a later candidate found in an active custom theme.
-
-4. **Return the final value**: If no candidate resolves to a value, throw an exception.
-   Otherwise, return the resolved (possibly merged) value.
-
-
-## Theme Registration
-
-Themes are registered at application startup via the generated
-`ZurfurMain.InitializeControls()` method. The source generator scans all `.zth`
-files in the project and emits:
-
-```csharp
-ThemeManager.RegisterTheme(/* embedded JSON string */);
-```
-
-This happens automatically—developers just need to ensure `.zth` files are marked as
-`AdditionalFiles` in the project:
-
-```xml
-<ItemGroup>
-  <AdditionalFiles Include="**\*.zth" />
-</ItemGroup>
-```
+An explicitly set property takes precedence over a theme value. Otherwise, each token candidate is
+searched through the view's active themes, its parent views, and the built-in fallbacks. Candidate
+order takes precedence over theme priority: the first candidate is fully resolved before the next is
+tried. Partial `IMergable` values can combine across themes and token candidates. If no candidate
+provides a value, resolution fails.
 
 ## Creating Custom Themes
 
@@ -307,66 +224,41 @@ The `|` fallback ensures your control still works in themes that don't define
 appWindow.View.ActiveThemes = ["MyBrandTheme"];
 ```
 
-## Best Practices
+<!-- INTERNAL -->
 
-- **Use `|` for custom tokens**: Always provide a fallback to `ZurfurBase` or
-  `ZurfurDefault` tokens so third-party users can use your controls without defining all
-  your custom tokens.
+## Implementation Section
 
-- **Do not set `default` on `styled` properties**: Map each styled-only property to an optional
-  control-specific token followed by a compatible token defined in `ZurfurBase` or `ZurfurDefault`.
-  Reserve `default` for data, `styledData`, and `property` bindings that need an initial runtime
-  value.
+### Theme resolution algorithm
 
-- **Organize tokens semantically**: Use namespacing like `color.surface.canvas`,
-  `spacing.horizontal.medium`, `font.size.base.300`.
+When a view requests a property, its token expression is resolved using the active themes:
 
-- **Leverage `IMergable` for composability**: Properties like `Thickness`, `Font`,
-  `SizeRequest` support partial definitions that merge together, enabling flexible token
-  reuse.
+1. **Check explicitly set properties**: If the property was set in code (via
+   `View.SetProperty`), use that value (unless it's an incomplete `IMergable`).
 
-- **State-based theming**: Use conditional expressions (`isPointerOver ? ...`) for
-  interactive states rather than hard-coding them in code-behind.
+2. **Look up the token expression**: Retrieve the token expression from the view's
+   `ThemeTokens` dictionary. If it contains `|`, process the token candidates in order.
 
-- **Set themes at the appropriate level**: Application-wide themes go on
-  `AppWindow.View.ActiveThemes`, but you can override at any level for special panels or dialogs.
+3. **Resolve each token candidate completely before trying the next**:
+   - Starting from the current view, walk up the `Parent` chain. At each view, check its
+     `ActiveThemes` in order, with the first theme having the highest priority.
+   - If a token is found, deserialize its value. If it contains conditional expressions
+     (`isPressed ? ...`), evaluate the condition against the view's state.
+   - If the result is an incomplete `IMergable`, merge it with any partial value already
+     found and continue searching themes and parent views.
+   - After the view hierarchy, check `ZurfurDefault` then `ZurfurBase` if the value is
+     still incomplete.
+   - If the value is still missing or incomplete, try the next token candidate.
 
-- **Theme inheritance**: Child views automatically inherit themes from parent views, so
-  you rarely need to set themes more than once.
+   **Token candidate order takes precedence over theme priority**: the first candidate is
+   searched through the full hierarchy and built-in fallbacks before the second candidate
+   is considered. Thus, a first candidate found in a built-in theme can take precedence
+   over a later candidate found in an active custom theme.
 
-## Example: Theme Switcher
+4. **Return the final value**: If no candidate resolves to a value, throw an exception.
+   Otherwise, return the resolved (possibly merged) value.
 
-```csharp
-void ThemeComboBox_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-{
-    if (e.PropertyName != "SelectedIndex")
-        return;
+### Theme registration
 
-    var appWindow = View.AppWindow;
-    if (appWindow == null)
-        return;
-
-    switch (_themeComboBox.DataContext.SelectedIndex)
-    {
-        case 0: appWindow.View.ActiveThemes = ["ZurfurDefault"]; break;
-        case 1: appWindow.View.ActiveThemes = ["ZurfurDefaultDark"]; break;
-        case 2: appWindow.View.ActiveThemes = ["ZurfurCherry"]; break;
-        case 3: appWindow.View.ActiveThemes = ["ZurfurCherryDark"]; break;
-    }
-}
-```
-
-## Summary
-
-The ZurfurGui theme system provides:
-
-- **Centralized design tokens** in `.zth` files
-- **Flexible activation** via `View.ActiveThemes` at any hierarchy level
-- **Graceful fallbacks** using `|` for third-party control compatibility
-- **State-driven styling** with conditional expressions
-- **Composable properties** through `IMergable` and token merging
-- **Automatic resolution** that walks the view hierarchy and falls back to base themes
-
-This system replaces the older style sheet system with a simpler, more powerful
-token-based approach.
+Themes are registered by generated startup code. See [Code Generation](code-generation.md) and
+[Initialization](initialization.md).
 

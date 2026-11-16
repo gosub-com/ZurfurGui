@@ -302,9 +302,15 @@ public sealed partial class ListBox<Item> : Controllable
 
         var modifiers = e.Contact.Modifiers;
         var isShift = (modifiers & PointerModifiers.Shift) != 0;
-        var isControl = (modifiers & PointerModifiers.Control) != 0;
+        var isControl = (modifiers & PointerModifiers.Control) != 0
+            || e.Contact.Device == PointerDeviceKind.Touch;
 
-        if (mode == SelectionMode.Multiple && isShift && _anchor is int anchor)
+        if (_selected.Count == 1 && _selected[0] == index)
+        {
+            _anchor = null;
+            ApplySelection(new List<int>());
+        }
+        else if (mode == SelectionMode.Multiple && isShift && _anchor is int anchor)
         {
             var first = Math.Min(anchor, index);
             var last = Math.Max(anchor, index);

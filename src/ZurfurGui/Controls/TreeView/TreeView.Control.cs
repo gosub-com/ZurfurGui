@@ -415,7 +415,16 @@ public sealed partial class TreeView<Item> : Controllable, Layoutable
 
         var modifiers = e.Contact.Modifiers;
         var isShift = (modifiers & PointerModifiers.Shift) != 0;
-        var isControl = (modifiers & PointerModifiers.Control) != 0;
+        var isControl = (modifiers & PointerModifiers.Control) != 0
+            || e.Contact.Device == PointerDeviceKind.Touch;
+
+        if (_selectedNodes.Count == 1 && _selectedNodes.Contains(state.Node!))
+        {
+            _anchor = null;
+            ApplySelection(Array.Empty<NodeState>());
+            FlushSelectionChanged();
+            return;
+        }
 
         if (mode == SelectionMode.Multiple && isShift && SelectRange(state))
             return;

@@ -1,5 +1,7 @@
 # ListBox
 
+## Overview
+
 `ListBox<Item>` is a scrolling, vertical list of items with optional selection. The item controller
 is chosen by the item's data type, for example `ListBox<ListBoxItemText>`. Items know nothing about
 selection; the list box owns it.
@@ -43,8 +45,11 @@ _names.SelectionChanged += (s, e) => Show(_names.SelectedIndices);
 - `SelectNearest(index)`: selects `index` clamped to the last item, or clears if the list is empty.
   Call it from `SelectionChanged` to select the neighbor of a removed item.
 
-User input: click selects one item. In `multiple` mode Ctrl+click toggles an item and Shift+click
-selects the range from the last item clicked without Shift. There is no keyboard support yet.
+User input: clicking the sole selected item clears the selection in either selection mode. Otherwise,
+a click selects that item. In `multiple` mode Ctrl+click and touch click toggle an item, while
+Shift+click selects the range from the last item clicked without Shift. There is no keyboard support
+yet.
+Initial selection cannot be set in a `.zui` file; use `Select` or `SetSelectedIndices` in code.
 
 ## Adding and removing items at runtime
 
@@ -90,7 +95,13 @@ because the row behind it draws the hover and selected colors. See
 Use it with `$controller: "ListBox<ListBoxItemBadge>"`, and add `$use` for the item's namespace in
 the form's ZUI file when it is not the same namespace.
 
-## How it works
+Not implemented yet: keyboard input, focus, virtualization, fixed row heights, and diffing.
+
+<!-- INTERNAL -->
+
+## Implementation Section
+
+### How it works
 
 Files are in `src/ZurfurGui/Controls/ListBox` unless noted:
 
@@ -137,8 +148,5 @@ The test form is `samples/TestApp/TestApp/Test/FormTestListBox.zui`. It has one 
 mode, one with a custom item, and buttons to add at the start, add at the end, and delete the
 selected items.
 
-Not implemented yet: keyboard input, focus, virtualization, fixed row heights, and diffing.
 The test form also has no check box that calls `SelectNearest` from `SelectionChanged`, because
 `CheckBox` has no click event yet. The method itself is implemented.
-A `.zui` file cannot set the initial selection, because the selection is not part of the generated
-data (see the first key point above). Set it in code with `Select` or `SetSelectedIndices`.

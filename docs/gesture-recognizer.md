@@ -1,80 +1,10 @@
 # Gesture recognizers
 
-## Status
+## Overview
 
-ZurfurGui now has a shared gesture-recognition layer over the raw pointer router. The first gesture using
-it is `ClickRecognizer`, including its optional long-click callback. The layer is intended to arbitrate
-competing gestures per pointer contact; `PanRecognizer` adds dragging with an optional release velocity for
-flick (see below).
-
-This document describes the current implementation and records the proposed next phase. Implemented
-behavior and future design are called out separately so proposals are not mistaken for existing API.
-
-## Design overview
-
-Platform adapters deliver normalized low-level pointer input to `PointerRouter`. The router hit-tests
-and routes raw `PointerEvent`s (preview and bubble), and for each uncaptured pointer-down it also starts
-a gesture arena. A recognizer attached to a view takes part in that arena to claim the interaction, such
-as a click or, in the future, a pan.
-
-### The gesture arena
-
-The gesture arena decides which gesture owns a pointer contact. A contact is one finger, pen, or mouse pointer from
-the moment it goes down until it goes up or is canceled. The arena exists because one touch can mean several things:
-pressing a button inside a scrolling list might be a click or the start of a pan, and nothing is known when the
-finger lands. The arena lets every interested recognizer watch the same contact and settle the question as more
-input arrives.
-
-How it works:
-
-1. When a contact goes down and is not already captured, the router starts an arena for it. The arena
-   walks from the hit view up to the root and asks each recognizer attached along the way to create a
-   session. A session is that recognizer's private state for this one contact. The sessions are the
-   candidates.
-2. While the contact is down, every candidate sees copies of the down, move, and up events. Each stays
-   pending until it calls `Accept()` (this is my gesture) or `Reject()` (this is not my gesture). A click,
-   for example, waits for pointer-up and accepts only if the pointer is released inside its view.
-3. The first candidate to accept wins and the others are canceled. If the contact is still down, the
-   winner's view receives exclusive logical capture, so it keeps getting the contact's input even after
-   the pointer leaves it. If the winner accepts on pointer-up there is nothing left to capture, but it
-   still wins and performs its action.
-4. If every candidate rejects, the arena ends with no winner and only raw pointer events were delivered.
-5. The arena ends when the contact goes up, the platform cancels it, or the winner is decided and
-   finishes. Each contact has its own arena, and a new pointer-down starts a new one.
-
-For example, a button sits inside a pannable list. The button's click recognizer and the list's pan
-recognizer are both candidates on pointer-down. If the finger lifts in place, the click accepts and
-wins. If the finger moves past the pan threshold first, the pan accepts, the click candidate is
-canceled, and the list captures the contact.
-
-Things that are useful to know:
-
-- A recognizer must accept explicitly. The last remaining candidate does not win just because the
-  others rejected.
-- When more than one candidate accepts on the same input, the one closest to the hit view goes first.
-- The arena runs alongside raw events. Preview and bubble routing continue as usual while candidates are
-  pending. A raw handler that calls `View.SetCapture` cancels the arena: raw capture wins over pending
-  gesture recognition.
-- When a gesture wins before pointer-up, views that were pressed under the contact are sent
-  `PointerCaptureLost`. If it wins during the pointer-down, that down is routed to the winner's view
-  instead of the original hit chain.
-- A candidate is canceled when the platform cancels the contact, an uncaptured contact leaves, its
-  recognizer is removed from the view, its view is removed from the tree or becomes hidden, or another
-  candidate wins. `OnCancelled` is not called for a winner that completes normally on pointer-up.
-- Each candidate gets its own copy of the event. Setting `Handled` on it does not affect raw routing or another
-  candidate.
-- If recognizer code throws, the arena is canceled (a winner's capture is released) and the exception
-  is rethrown to the router's caller. A recognizer may call `Accept()` or `Reject()` from inside
-  `CreateSession`; the arena applies it right after the session receives its pointer-down.
-- Gesture APIs are UI-thread only. Call `Accept` and `Reject` from the UI thread, for example from a
-  `PreRenderFrame` callback.
-
-Processing order matters: the arena starts and sends pointer-down to candidates before raw down routing.
-For move and up, raw routing happens first, then the arena. A raw handler can therefore request capture
-before a pending recognizer sees that move or release.
-
-Known gaps (tracked in `src/ZurfurGui/Input/gestures-cleanup.md`): the arena is single-contact, so no
-recognizer can use two contacts.
+Gesture recognizers turn pointer input into higher-level interactions such as clicks and pans. A
+recognizer can accept or reject an interaction, allowing controls to compose gestures such as a button
+inside a scrolling list. The current system supports one pointer contact per gesture.
 
 ## Public API
 
@@ -97,10 +27,10 @@ recognizer and its view normally share a lifetime, so detaching is only needed t
 ### Attached and candidate views
 
 The attached view is the view a recognizer was added to. The recognizer does not know it. The candidate
-view is the view for one recognizer/contact attempt, found by the arena as it walks the hit chain, and
-it is exposed as `GestureSessionContext.CandidateView`. They are the same view; a recognizer instance
-added to more than one view gets a separate candidate for each of those views in the hit chain. If a
-session accepts before pointer-up, its candidate view receives the capture.
+view is the view associated with one recognizer/contact attempt and is exposed as
+`GestureSessionContext.CandidateView`. They are the same view; a recognizer instance added to more than
+one view gets a separate candidate for each participating view. If a session accepts before pointer-up,
+its candidate view receives the capture.
 
 The arena gives each candidate a `GestureSessionContext` with the `CandidateView`, the initial `Contact`
 snapshot, the derived `ContactKey`, and the `Accept()` and `Reject()` operations. The context becomes
@@ -187,12 +117,9 @@ and cancels the click session.
 
 ### `PanRecognizer`
 
-In short: attach a `PanRecognizer` to a view, subscribe to `PanMoved` and apply each `Delta` to your
-content. The recognizer waits until the contact moves past the slop, then wins the arena and captures the
-contact. On release, `PanEnded` reports the finger's final velocity. The recognizer only measures that
-velocity; it does not move anything after release. To make a flick, the owner starts its own animation
-from that velocity, and owns the deceleration, the stop speed, and stopping at the content limits.
-`ScrollViewer` does exactly this (see `scroll-viewer.md`).
+`PanRecognizer` recognizes dragging after the contact moves past its slop. It reports movement and release
+velocity; the owner applies movement and, if desired, animates a flick. `ScrollViewer` is an example
+([details](scroll-viewer.md)).
 
 ```csharp
 var pan = view.AddGestureRecognizer(new PanRecognizer());
@@ -200,21 +127,16 @@ pan.PanMoved += (s, e) => content.Offset += e.Delta;       // Device pixels
 pan.PanEnded += (s, e) => StartMyFlick(e.Velocity);        // Zero unless a touch/pen flicked
 ```
 
-`PanRecognizer` recognizes dragging.
-owner applies the movement and decides what to do after release. `ScrollViewer` uses it, and other
-controls can attach it with `View.AddGestureRecognizer(new PanRecognizer(options))`.
-
 The session stays pending until the contact moves farther than the slop from the down point along an
 enabled axis, then accepts, which cancels competing candidates (such as a child's click) and captures the
 contact. A release before that rejects, so a click can still win.
 
-- `PanStarted` reports `SlopDelta`, the movement from the down point to where the pan started. Moves after
-  that arrive in `PanMoved` as `Delta`, relative to the start, so the content does not jump unless the
-  All distances are device pixels except slop, which is in layout units scaled by the DPR.
+- `PanStarted` reports `SlopDelta`, the movement from the down point to where the pan started. Later
+  movement arrives in `PanMoved` as `Delta`, relative to the pan start. Distances are device pixels
+  except slop, which is in layout units scaled by the DPR.
 - `PanEnded` reports the release `Velocity` (device pixels per second), or `Cancelled`. Velocity is
-  estimated by a least-squares fit over the last 100 ms of positions from a ring buffer, using event
-  timestamps. It is zero for a contact that was stationary before release, for the mouse, when `Flick` is
-  off, or below `MinFlickVelocity`, and is limited to `MaxFlickVelocity`.
+  zero for a contact that was stationary before release, for the mouse, when `Flick` is off, or below
+  `MinFlickVelocity`, and is limited to `MaxFlickVelocity`.
 - `PanOptions`: `Axes`, `Slop` (null uses the app window's per-device movement slop; zero or one pans
   almost immediately), `TouchPans`, `PenPans`, `MouseButtons` (default right button), `Flick`,
   `MinFlickVelocity`, `MaxFlickVelocity`.
@@ -223,5 +145,70 @@ contact. A release before that rejects, so a click can still win.
 - `CatchOnDown` lets the owner say that earlier motion (a flick) is still running. The pan then accepts
   immediately on pointer-down, so the touch stops the motion and does not also click.
 
-Slop is in layout units and scaled by the DPR. Axis
+<!-- INTERNAL -->
+
+## Implementation Section
+
+### The gesture arena
+
+Platform adapters deliver normalized low-level pointer input to `PointerRouter`. The router hit-tests
+and routes raw `PointerEvent`s (preview and bubble), and for each uncaptured pointer-down it also starts
+a gesture arena. A recognizer attached to a view takes part in that arena to claim the interaction.
+
+The arena decides which gesture owns a pointer contact, from pointer-down until pointer-up or
+cancellation. For example, a touch on a button inside a scrolling list might become either a click or a
+pan; the arena lets both recognizers observe the contact until one accepts.
+
+How it works:
+
+1. When a contact goes down and is not already captured, the router starts an arena for it. The arena
+   walks from the hit view up to the root and asks each recognizer attached along the way to create a
+   session. A session is that recognizer's private state for this one contact. The sessions are the
+   candidates.
+2. While the contact is down, every candidate sees copies of the down, move, and up events. Each stays
+   pending until it calls `Accept()` or `Reject()`. A click, for example, waits for pointer-up and
+   accepts only if the pointer is released inside its view.
+3. The first candidate to accept wins and the others are canceled. If the contact is still down, the
+   winner's view receives exclusive logical capture, so it keeps getting the contact's input even after
+   the pointer leaves it. If the winner accepts on pointer-up there is nothing left to capture, but it
+   still wins and performs its action.
+4. If every candidate rejects, the arena ends with no winner and only raw pointer events were delivered.
+5. The arena ends when the contact goes up, the platform cancels it, or the winner is decided and
+   finishes. Each contact has its own arena, and a new pointer-down starts a new one.
+
+For example, a button sits inside a pannable list. The button's click recognizer and the list's pan
+recognizer are both candidates on pointer-down. If the finger lifts in place, the click accepts and
+wins. If the finger moves past the pan threshold first, the pan accepts, the click candidate is
+canceled, and the list captures the contact.
+
+Things that are useful to know:
+
+- A recognizer must accept explicitly. The last remaining candidate does not win just because the
+  others rejected.
+- When more than one candidate accepts on the same input, the one closest to the hit view goes first.
+- The arena runs alongside raw events. Preview and bubble routing continue as usual while candidates are
+  pending. A raw handler that calls `View.SetCapture` cancels the arena: raw capture wins over pending
+  gesture recognition.
+- When a gesture wins before pointer-up, views that were pressed under the contact are sent
+  `PointerCaptureLost`. If it wins during the pointer-down, that down is routed to the winner's view
+  instead of the original hit chain.
+- A candidate is canceled when the platform cancels the contact, an uncaptured contact leaves, its
+  recognizer is removed from the view, its view is removed from the tree or becomes hidden, or another
+  candidate wins. `OnCancelled` is not called for a winner that completes normally on pointer-up.
+- Each candidate gets its own copy of the event. Setting `Handled` on it does not affect raw routing or
+  another candidate.
+- If recognizer code throws, the arena is canceled (a winner's capture is released) and the exception
+  is rethrown to the router's caller. A recognizer may call `Accept()` or `Reject()` from inside
+  `CreateSession`; the arena applies it right after the session receives its pointer-down.
+- Gesture APIs are UI-thread only. Call `Accept` and `Reject` from the UI thread, for example from a
+  `PreRenderFrame` callback.
+
+Processing order matters: the arena starts and sends pointer-down to candidates before raw down routing.
+For move and up, raw routing happens first, then the arena. A raw handler can therefore request capture
+before a pending recognizer sees that move or release.
+
+### Pan velocity estimation
+
+`PanRecognizer` estimates release velocity using a least-squares fit over the last 100 ms of positions
+from a ring buffer, using event timestamps.
 

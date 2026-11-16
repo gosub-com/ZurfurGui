@@ -1,27 +1,20 @@
 # Property Binding
 
-ZurfurGUI uses a property system that connects concrete view data, controls, and styles. A ZUI `$data`
-declaration tells the source generator which values belong in the generated data class and how changes
-should reach the view or style system.
+## Overview
+
+ZurfurGUI's property system connects application data, controls, and styles. A ZUI `$data` declaration
+defines the values a control exposes and how they interact with its view and styles.
 
 ## The `$data` section
 
-Controls declare their data properties in the `$data` section of a `.zui` file. The generator
-`INotifyPropertyChanged`, a strongly typed `DataContext` property when data bindings exist, and
-`PropertyKey`s for view-facing bindings. Controllers expose view-facing properties through a generated
-`Properties` accessor, for example `control.Properties.ThumbColor`.
-
-There are no generated `I<ViewName>Data` contracts. If application code needs to extend a generated
-data class, add a matching `<ViewName>.Data.cs` partial class in the same namespace. A handwritten
-partial can also implement an application interface such as `IComboBoxItem`.
-
-Each `$data` entry specifies `type`, `bind`, and optional `default` and `flags` values:
+Declare data properties in a `.zui` file's `$data` section. Each entry specifies `type`, `bind`, and
+optional `default` and `flags` values:
 
 | Field | Required | Description | Example |
 |---|---|---|---|
 | `type` | Yes | The property type. Prefix with `?` for nullable types and `[]` for collections. | `Color`, `?string`, `[]Item` |
 | `bind` | Yes | Controls whether the value is data-only, style-aware, style-only, view-only, attached, or forwarded. | `data`, `styledData`, `styled`, `property`, `attachedProperty`, `attachedStyle` |
-so write `"100"`. | `"100"`, `"Orientation.horizontal"`, `"new Color(128, 128, 128)"` |
+| `default` | No | Initial value expressed as a C# expression. | `"100"`, `"Orientation.horizontal"`, `"new Color(128, 128, 128)"` |
 | `flags` | No | Comma-separated `ViewFlags` used when the property changes. | `draw`, `measure`, `styleThis`, `styleDown` |
 
 For example:
@@ -49,23 +42,54 @@ $data: {
 }
 ```
 
+## Binding category summary
+
+| `bind` value | Purpose |
+|---|---|
+| `data` | Application state stored in `DataContext`, not mirrored to the view. |
+| `styledData` | A data value that can override a style-provided view value. |
+| `styled` | Themeable view configuration that is not application data. |
+| `property` | A view property read directly without style resolution. |
+| `data:<target>` | A parent data value forwarded to a child control's data property. |
+| `attachedProperty` | A non-style-aware view property that can be set on other controls. |
+| `attachedStyle` | A style-aware view property that can be set on other controls. |
+
+Use `DataContext` for `data`, forwarded values, and writes to `styledData`. Use `Properties` for
+view-facing values, and read `styledData` through `Properties` to get its effective style value.
+Setting nullable styled values to `null` removes the local override.
+
+Collections use `[]Type` and must use `bind: "data"`. They cannot be nullable or forwarded. A generic
+type parameter can be used by data and forwarded bindings, but not by bindings that generate
+view-facing property keys.
+
+<!-- INTERNAL -->
+
+## Implementation Section
+
+### Generated data contract
+
+The generator emits a concrete data class implementing `INotifyPropertyChanged`, a strongly typed
+`DataContext` property when bindings exist, and `PropertyKey`s for view-facing bindings. Controllers
+expose view-facing values through a generated `Properties` accessor. There are no generated
+`I<ViewName>Data` contracts; extend a generated data class with a matching `<ViewName>.Data.cs` partial
+class in the same namespace.
+
 The generator normalizes simple aliases such as `Int`, `Bool`, `Double`, and `String` to their C#
 equivalents. Property names are camelCase in ZUI and become PascalCase C# properties.
 
-In a generic control, a type parameter can be used by `data` and forwarded bindings. It cannot be used by
-a binding that emits a `PropertyKey` (`styledData`, `styled`, `property`, `attachedProperty`, or
-`attachedStyle`), because generic controls emit those keys on a non-generic companion class. The
-generated key cannot refer to the control's type parameter. This restriction applies to scalar and
-nullable type-parameter values; `[]T` remains data-only under the collection rules below. A generic
-control may still declare view-facing bindings whose types do not use `T`; the open generic owner key
-for those bindings is valid on matching closed controller types.
+In a generic control, a type parameter can be used by `data` and forwarded bindings. It cannot be used
+by a binding that emits a `PropertyKey` (`styledData`, `styled`, `property`, `attachedProperty`, or
+`attachedStyle`), because generic controls emit those keys on a non-generic companion class. This
+restriction applies to scalar and nullable type-parameter values; `[]T` remains data-only under the
+collection rules below. A generic control may still declare view-facing bindings whose types do not use
+`T`; the open generic owner key for those bindings is valid on matching closed controller types.
 
-Line comments immediately above a binding in `$data` are emitted as XML documentation on the generated
+Line comments immediately above a binding in `$data` are emitted as XML documentation on generated
 members for that binding. Comments are omitted where a binding does not generate a member; for example,
 a `data` binding has no `Properties` member. A `styledData` comment can appear on both its generated
 data property and its read-only `Properties` member.
 
-## Binding categories
+### Binding category details
 
 `View.GetStyle` is private. Use `Control.Properties` to read a property or style when the property is
 not attached and the control is known at compile time. Use `View.GetProperty` when the property is
@@ -74,7 +98,7 @@ kinds (`styledData`, `styled`, `attachedStyle`) and reads the view property dire
 and `attachedProperty`. The generated `Properties` getters call `View.GetProperty`, so the
 "`GetStyle`" entries below mean the style-resolving read.
 
-### 1. Data
+#### 1. Data
 
 - **Syntax:** `bind: "data"`
 - **Generated output:** A property in the concrete data class; no `PropertyKey` or `Properties` member.
@@ -82,7 +106,7 @@ and `attachedProperty`. The generated `Properties` getters call `View.GetPropert
   Read and write it through `DataContext`; code-behind observes `INotifyPropertyChanged` directly.
 - **Use for:** Application state such as `SelectedIndex`, `IsChecked`, or a collection of items.
 
-### 2. Styled data
+#### 2. Styled data
 
 - **Syntax:** `bind: "styledData"`
 - **Generated output:** A property in the concrete data class and a `PropertyKey<T>` on the controller.
@@ -94,7 +118,7 @@ and `attachedProperty`. The generated `Properties` getters call `View.GetPropert
   `null`, allowing the active style or theme to supply a fallback.
 - **Use for:** Visual values that application data may override, such as text color or orientation.
 
-### 3. Style-only
+#### 3. Style-only
 
 - **Syntax:** `bind: "styled"`
 - **Generated output:** A `PropertyKey<T>` and no property in the concrete data class or `DataContext`.
@@ -105,7 +129,7 @@ and `attachedProperty`. The generated `Properties` getters call `View.GetPropert
 - **Use for:** Visual configuration that should not be application data, such as scrollbar thickness or a control's
   default visual color.
 
-### 4. View property
+#### 4. View property
 
 - **Syntax:** `bind: "property"`
 - **Generated output:** A `PropertyKey<T>` and no property in the concrete data class or `DataContext`.
@@ -114,7 +138,7 @@ and `attachedProperty`. The generated `Properties` getters call `View.GetPropert
   generated `Properties` accessor uses `GetProperty` for reads and `View.SetProperty` for writes.
 - **Use for:** A view property that is not style-aware and should be read directly from the view property collection.
 
-### 5. Forwarded
+#### 5. Forwarded
 
 - **Syntax:** `bind: "data:<target>"`, normally `bind: "data:_childName.propertyName"`.
 - **Generated output:** A property in the concrete parent data class, but no `PropertyKey` or
@@ -137,9 +161,8 @@ are valid. With a colon, the prefix must be `data` and the target must be non-em
 must begin with the name of a child control and include a property (`_child.property`); a target
 without a `.` is accepted but generates no forwarding code (see
 [Future improvements](future-improvements.md)).
-compiler when it compiles the generated forwarding assignment.
 
-### 6. Attached property
+#### 6. Attached property
 
 - **Syntax:** `bind: "attachedProperty"`
 - **Generated output:** A `PropertyKey<T>` and a `Properties` member, but no property in the concrete
@@ -151,7 +174,7 @@ compiler when it compiles the generated forwarding assignment.
   to the operation, with no routing to another control.
 - **Use for:** A property that can be set on controls that do not own its key.
 
-### 7. Attached style
+#### 7. Attached style
 
 - **Syntax:** `bind: "attachedStyle"`
 - **Generated output:** A `PropertyKey<T>` and a `Properties` member, but no property in the concrete
@@ -163,12 +186,17 @@ compiler when it compiles the generated forwarding assignment.
   no additional routing to another control.
 - **Use for:** A style-aware property that can be used on controls that do not own its key.
 
-## DataContext and Properties
+### DataContext and Properties
 
-`DataContext` and `Properties` serve different purposes. Use `DataContext` for application data and
-forwarded values, including writes to `styledData`. Use `Properties` for view-facing properties and
-**always use it to read `styledData`**: it returns the effective value after style and theme resolution.
-`Properties` is generated around the control's `View`; data and forwarded bindings are not exposed there.
+Use `DataContext` for application data and forwarded values, including writes to `styledData`. Use
+`Properties` for view-facing values, and always read `styledData` through it to get the effective value
+after style and theme resolution.
+
+For nullable `styledData`, assigning `null` through `DataContext` updates the data value and removes the
+local view property. A subsequent `Properties` read resolves the available style or theme value. Do not
+read `styledData` from `DataContext` when you need the effective visual value. Nullable `styled` and
+`property` accessors remove their local view property when assigned `null`. Data-only null assignments
+remain data assignments and never call `RemoveProperty`.
 
 | Binding | `Properties` getter | `Properties` setter | Notes |
 |---|---|---|---|
@@ -180,13 +208,7 @@ forwarded values, including writes to `styledData`. Use `Properties` for view-fa
 | `attachedStyle` | `GetStyle` | `SetProperty` | Uses the target view's style lookup; the key is allowed on non-owner views. |
 | `attachedProperty` | `GetProperty` | `SetProperty` | Stores a value on the target view; the key is allowed on non-owner views. |
 
-For nullable `styledData`, assigning `null` through `DataContext` updates the data value and removes the
-local view property. A subsequent `Properties` read resolves the available style or theme value. Do not
-read `styledData` from `DataContext` when you need the effective visual value. Nullable `styled` and
-`property` accessors remove their local view property when assigned `null`. Data-only null assignments
-remain data assignments and never call `RemoveProperty`.
-
-## Property ownership
+### Property ownership
 
 For non-attached keys, `View` checks that the key owner is the controller type, an assignable base or
 interface, or an open generic definition matching the controller's generic type. Attached keys bypass
@@ -202,7 +224,7 @@ applied by the loader using their `PropertyKeyId`; attached kinds use the target
 path. Data and forwarded metadata have no view property key. A `TimeSpan` theme value uses the standard
 JSON time format, for example `"00:00:00.5"` for half a second.
 
-## Collections
+### Collections
 
 A collection uses `[]Type` and must use `bind: "data"`:
 
@@ -228,18 +250,11 @@ Rules:
 - The generated controller does not synchronize collection contents with the view.
   Handwritten code-behind must react to collection changes and refresh the relevant visual controls.
 
-## Runtime behavior and initialization
+### Runtime behavior
 
 When a generated controller assigns its `DataContext`, it subscribes to `PropertyChanged` and
-synchronizes applicable styled-data properties to the view. During initialization:
-
-1. `Loader.Load` deserializes the embedded ZUI JSON, builds the control tree, and applies data properties
-   recursively, children before parents.
-2. After `Loader.Load` returns, generated initialization resolves named child controls and creates the control's
-   default `DataContext`.
-3. Parent-supplied child properties are included in the parent loader's recursive pass after the child
-   controller has initialized.
-4. Data property names are converted from camelCase to PascalCase before `SetDataProperty` dispatch.
+syncs applicable styled-data properties to the view. The complete startup and loading order is
+described in [Initialization](initialization.md).
 
 Unknown data properties, invalid types, and null values for non-nullable properties produce errors.
 Direct JSON data values should match the generated concrete property types.
@@ -258,21 +273,5 @@ Additional runtime details:
 - Property key fields are named after the binding with a `Property` suffix (for example,
   `LongClickDurationProperty`), except `$`-prefixed Panel properties such as `Panel.Name`.
 
-## Generated data classes and code-behind
-
-Generated files are placed under the build-generated source directory and must not be edited manually.
-Change the ZUI schema or generator instead. Add behavior or marker interfaces in a matching partial
-file:
-
-```csharp
-namespace MyApp.Controls;
-
-public sealed partial class ComboBoxItemBadgeData : global::ZurfurGui.Controls.ComboBox.IComboBoxItem
-{
-}
-```
-
-The corresponding ZUI file should declare the control's own `$data` properties and should not rely on
-inherited generated data contracts. A marker interface can be supplied either with this handwritten
-partial or with `$implements` in the ZUI file (see [ComboBox](combo-box.md)), not both.
+Generated file and partial-class conventions are described in [Code Generation](code-generation.md).
 

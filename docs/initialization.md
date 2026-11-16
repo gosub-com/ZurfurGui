@@ -5,14 +5,12 @@ Windows and browser targets.
 
 ## Overview
 
-ZurfurGui is a library distributed as a DLL. Applications start the platform, initialize the
-library, and call generated registration code before creating or manipulating controls.
 
 The source generator emits a `ZurfurMain.InitializeControls()` method for each project containing
 ZUI or theme files. It registers control types, concrete data-controller factories, closed generic
 control usages, property keys, and themes. Each project must declare a `static partial class
 ZurfurMain` (the generator reports `ZUI005` otherwise). See [Code generation](code-generation.md)
-for what is generated and how files are discovered.
+for details.
 
 ## Startup Sequence
 
@@ -94,52 +92,7 @@ BrowserStart.Start("main", appWindow =>
 });
 ```
 
-## Generated data-controller registration
-
-For each non-generic data-bearing control, generated initialization contains a registration
-equivalent to:
-
-```csharp
-ZuiRuntime.RegisterDataController(
-    typeof(ComboBoxItemTextData),
-    itemData =>
-    {
-        var controller = new ComboBoxItemText();
-        controller.DataContext = (ComboBoxItemTextData)itemData;
-        return controller;
-    });
-```
-
-The concrete data type is the registry key. The lambda receives the actual data object as `object`,
-creates the matching controller, assigns that same object to `DataContext`, and returns the
-controller.
-Controls such as `ComboBox<Item>` call `Loader.CreateDataController(itemData)` when they need to
-render an item.
-
 ## Loader and control initialization
-
-### Per-control initialization
-
-Generated `InitializeControl()` creates the view, loads the control's own ZUI definition, then
-caches named child controls and creates the default `DataContext` when the control has data
-bindings:
-
-1. `View = new(this)` attaches the controller to its view.
-2. `ZuiRuntime.Load(this, _zuiJsonContent)` (which forwards to `Loader.Load`) builds
-   properties.
-3. Generated fields for named controls are assigned using `View.FindByName(...)`.
-4. `DataContext = CreateDefaultDataContext()` creates the data object.
-
-The default data context initializes ordinary values from declared defaults or type defaults. A
-binding to a named child control uses that child's already-created `DataContext`; forwarded scalar
-bindings initialize from the target child property to preserve template values. Other non-null data
-values are initialized with a new instance of their declared type when no explicit or implicit
-default applies. Template child controllers finish initialization before the parent data context is
-created, so explicitly declared references can use their child contexts.
-
-`Loader.Load` calls `ApplyDataProperties` before generated `InitializeControl()` assigns the
-current control's default `DataContext`. See [Future improvements](future-improvements.md) for the
-known ordering gap.
 
 ### Loader registration and lookup
 
@@ -149,22 +102,14 @@ known ordering gap.
   lookup tries the fully qualified name, the containing control's namespace, its `$use` namespaces,
   and then `ZurfurGui.Controls`. A missing `$controller` resolves to `Panel`. Re-registering the
   same controller name with a different type throws.
-  - Closed generic usages (e.g. `ComboBox<ComboBoxItemBadge>`) found in a project's ZUI files are
-    also registered with `RegisterControl`, under the literal usage string. The generator resolves
-    the base control and item controller names to their namespaces at generation time and emits
-    the closed type directly (`new ComboBox<ComboBoxItemBadgeData>()`), after running that closed
-    type's static constructor. No reflection creates the closed type, so AOT compilation and
-    trimming keep its constructor. See [Code generation](code-generation.md).
+  - Closed generic usages found in ZUI files are registered under their usage string. The generator
+    resolves and emits those types directly; see [Code generation](code-generation.md).
 - `RegisterDataController` maps a concrete data type to a factory. Lookup uses the exact runtime
   type; duplicate data-type registration throws. The factory receives and assigns the same data
   instance to the controller's `DataContext`.
 
-`Loader.Init` calls `ZurfurMain.MainApp()`, which must perform generated and required third-party
-A generated controller then calls `ZuiRuntime.Load`;
-controllers are resolved through the control registry. Data-item controller lookup occurs later,
-when a data-driven control such as `ComboBox` creates an item controller.
-
-For how the generator discovers `.zui` and `.zth` files and emits the registration code, see
+Generated controllers load through the control registry. Data-item controller lookup occurs when a
+data-driven control such as `ComboBox` creates an item controller. For generated registrations, see
 [Code generation](code-generation.md).
 
 ## Control content loading
@@ -210,14 +155,11 @@ Loader.CreateControl(child properties, context)
         +--> add parent content: create children and add their Views to ContentHost
 ```
 
-`Loader.Load` adds the control's own ZUI content (the template content) by creating each child and
-adding that child's view to the control's `View`.
-`Loader.CreateControl` first constructs and initializes the child; it then applies the parent's
-instance properties and layout and adds the parent's content to the child's `ContentHost`.
-
 `ContentHost` determines where parent-supplied content is placed, not the call order or content
 ownership. It is `View` by default. Template content is control-owned structure, while parent content
 is supplied by the parent.
+
+For `DataContext` defaults and binding behavior, see [Property Binding](property-binding.md).
 
 `ScrollViewer` uses the default template-loading behavior: its own ZUI content defines the clipped
 viewport, content window, and overlay scrollbars. Its `ContentHost` is `_contentWindow`, so parent
@@ -230,23 +172,3 @@ This explicit distinction avoids inferring the loading phase from the current ch
 supports controls with templates or named content hosts without loader-specific phase detection.
 For measurement, arrangement, sizing, and content-extent behavior, see
 [ScrollViewer](scroll-viewer.md).
-
-## Notes and best practices
-
-- Call every required `InitializeControls()` method before creating or manipulating GUI elements.
-- Call a library's generated initialization only once unless the library explicitly supports
-  repeated registration.
-- Keep generated `.g.cs` files out of manual edits; change ZUI, code-behind, or generator code
-  instead.
-- A ZUI file must be included as an `AdditionalFiles` input for the generator to see it (see
-  [Code generation](code-generation.md#file-discovery)).
-- A ComboBox item data class must implement `IComboBoxItem`, and its concrete data/controller
-  registration must be generated before the item is added to a ComboBox.
-- `Loader.Init` invokes the application's `ZurfurMain.MainApp()` before it invokes the platform
-  callback. Do not assume the callback is where generated registration occurs unless the
-  application's startup path is designed that way.
-- The application is responsible for ordering third-party initialization and ensuring that all
-  controls used by the application are registered before they are created.
-
-For more details, see `WinStart`, `BrowserStart`, `Loader`, and the generated
-`ZurfurMain.InitializeControls()` method.

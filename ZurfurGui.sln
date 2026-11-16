@@ -28,7 +28,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		.gitattributes = .gitattributes
 		.gitignore = .gitignore
+		build-llms-docs.ps1 = build-llms-docs.ps1
 		LICENSE.md = LICENSE.md
+		llms-full.txt = llms-full.txt
+		llms.txt = llms.txt
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -37,7 +40,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{364462A5-2DD0-4477-BB03-D6466DBAC47F}"
 	ProjectSection(SolutionItems) = preProject
 		docs\architecture.md = docs\architecture.md
-		docs\cleanup.md = docs\cleanup.md
 		docs\code-generation.md = docs\code-generation.md
 		docs\combo-box.md = docs\combo-box.md
 		docs\controls.md = docs\controls.md
@@ -49,7 +51,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{364462A5-2
 		docs\property-binding.md = docs\property-binding.md
 		docs\scroll-viewer.md = docs\scroll-viewer.md
 		docs\styles-and-themes.md = docs\styles-and-themes.md
-		docs\tree-node-plan.md = docs\tree-node-plan.md
 		docs\tree-view.md = docs\tree-view.md
 		docs\zui-format.md = docs\zui-format.md
 	EndProjectSection

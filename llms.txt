@@ -1,0 +1,43 @@
+# ZurfurGui
+
+> ZurfurGui is a minimal, inheritance-free C# GUI framework for WebAssembly and Windows desktop,
+> using HTML5 Canvas and native drawing APIs.
+
+## Getting Started and Usage
+
+- [Project overview](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/README.md): Project
+  introduction and usage information.
+- [Architecture](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/architecture.md):
+  Framework structure and design principles.
+- [ZUI format](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/zui-format.md):
+  Declarative UI file format.
+- [Property binding](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/property-binding.md):
+  Data bindings and view properties.
+- [Styles and themes](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/styles-and-themes.md):
+  Styling and theme tokens.
+
+## Input and Interaction
+- [Input events](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/input-events.md):
+  Pointer and wheel event behavior.
+- [Gesture recognizers](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/gesture-recognizer.md):
+  Click, pan, and custom gesture behavior.
+
+## Controls
+
+- [Controls](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/controls.md):
+  Application setup and built-in controls.
+- [List box](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/list-box.md):
+  ListBox usage and behavior.
+- [Combo box](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/combo-box.md):
+  ComboBox usage and behavior.
+- [Tree view](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/tree-view.md):
+  TreeView usage and behavior.
+- [Scroll viewer](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/scroll-viewer.md):
+  Scrollable content and viewer behavior.
+
+## Setup and Reference
+
+- [Initialization](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/initialization.md):
+  Application startup and control registration.
+- [Code generation](https://raw.githubusercontent.com/gosub-com/ZurfurGui/main/docs/code-generation.md):
+  Source generator behavior and generated outputs.

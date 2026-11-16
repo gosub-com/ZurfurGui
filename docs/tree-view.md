@@ -67,11 +67,13 @@ background is `color.treeview.row.background`, which uses the condition `TreeNod
 
 - Click a row to select its node. Click the expander to expand or collapse it. Clicking the
   expander does not change the selection.
-- In `multiple` mode, Ctrl+click toggles a node, and Shift+click selects the visible nodes from the
-  last node clicked without Shift to the clicked node, replacing the selection. Shift wins over
-  Ctrl. If the start node is gone or hidden, the selected visible node nearest to the click is the
-  start. Nodes inside collapsed branches are skipped by the range. A plain click or a Shift range
-  also deselects selected nodes that are hidden in collapsed branches. In `single` and `none`
+- Clicking the sole selected node clears the selection in either selection mode. Otherwise, a row
+  click selects that node.
+- In `multiple` mode, Ctrl+click and touch click toggle a node, and Shift+click selects the visible
+  nodes from the last node clicked without Shift to the clicked node, replacing the selection. Shift
+  wins over Ctrl. If the start node is gone or hidden, the selected visible node nearest to the click
+  is the start. Nodes inside collapsed branches are skipped by the range. A plain click or a Shift
+  range also deselects selected nodes that are hidden in collapsed branches. In `single` and `none`
   mode the modifier keys are ignored.
 - To change the state from code, write the flag: `node.IsSelected = true` or
   `node.IsExpanded = false`. There is no `Select` or `Expand` method. The tree writes the same
@@ -127,6 +129,8 @@ Rules:
 - Do not set a background on the node, because the row draws the hover and selected colors.
 - A node object must appear once, in one tree, and the data must not contain cycles. These are not
   detected.
+
+<!-- INTERNAL -->
 
 ## Implementation details
 

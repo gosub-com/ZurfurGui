@@ -2,6 +2,7 @@
 using ZurfurGui.Controls;
 using ZurfurGui.Input;
 using ZurfurGui.Property;
+using ZurfurGui.Render;
 
 namespace ZurfurGui.Windows;
 
@@ -12,6 +13,30 @@ namespace ZurfurGui.Windows;
 /// </summary>
 public partial class Window : Controllable
 {
+    // Draws the window resize affordance without exposing a separate control type.
+    private sealed class ResizeHandleTriangle : Renderable
+    {
+        // Draws a triangle in the resize handle's lower-right corner.
+        public RenderResult Render(View view, RenderContext context, Rect clientClip)
+        {
+            var points = new double[]
+            {
+                view.Size.Width, 0,
+                view.Size.Width, view.Size.Height,
+                0, view.Size.Height
+            };
+            context.FillPolygon(new Brush(view.GetProperty(Panel.BorderColor)), points);
+            return RenderResult.RenderedAll;
+        }
+
+        // Makes the full resize handle area available for pointer input.
+        public bool IsHit(View view, HitTestContext context)
+        {
+            var position = view.toClient(context.Contact.DevicePosition);
+            return new Rect(new(), view.Size).Contains(position);
+        }
+    }
+
     Point _mousePosition;
 
 
@@ -21,6 +46,7 @@ public partial class Window : Controllable
     public Window()
     {
         InitializeControl();
+        _resizeHandle.View.Render = new ResizeHandleTriangle();
 
         // Click on any control brings window to foreground
         View.AddEvent(Panel.PreviewPointerDown, (s, e) =>

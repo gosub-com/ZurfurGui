@@ -1,0 +1,1769 @@
+# ZurfurGui Documentation (User Guide)
+> Minimal, inheritance-free C# WebAssembly & Desktop GUI framework using Model Data View (MDV) and JSON5.
+
+================================================================================
+FILE: docs/architecture.md
+================================================================================
+# Architecture
+
+## Overview
+
+This repo experiments with a minimal C# GUI stack (WebAssembly + native Windows) using
+a **Model Data View (MDV)** approach. This document describes the design direction and the shape of
+the system. Details live in the documents listed under [Documentation map](#documentation-map).
+
+## Design direction (MDV)
+
+Goal: replace **MVVM** style runtime bindings with **generated, compile-time view data shapes**.
+
+- The **View (V)** declares the **data (D)** it needs (in ZUI JSON `$data` section).
+- Code generation produces:
+  - Code-behind partial controller class (`*.zui` → `<ViewName>.Control.g.cs`)
+  - A strongly typed data class (`*.zui` → `<ViewName>.Data.g.cs`)
+  - Library initialization `ZurfurMain.cs` partial class, constructed from `*.zui` and `*.zth` files.
+- You can:
+  - use the generated data class as-is (for example, deserialize or populate it directly), or
+  - extend it as a `partial` class to map to/from the domain **model (M)**.
+- Avoid runtime reflection for MDV/data propagation and bindings. Prefer code generation (or other
+  compile-time mechanisms) so updates are strongly typed, AOT-friendly, and trimming-safe.
+
+## Terminology
+
+- **Model (M):** domain logic/types; should remain UI-agnostic when practical.
+- **Data (D):** view-shaped data generated from the view's declared needs.
+- **View (V):** the renderer/layout/input layer that consumes the generated data class.
+
+## Two-tree architecture
+
+MDV keeps the **control tree** and the **data graph** independent:
+
+- **Control tree:** the hierarchy of views and controls.
+   - Each control has a `View` that owns its layout, draw, and input handlers.
+   - Each control has a `DataContext` that is a concrete instance of the generated data class.
+- **Data graph:** the data objects that supply values to the views.
+   - Never reference controls or views.
+   - May include references to sub-control `DataContext` objects
+   - May optionally be used as the DTO, or may include user conversions to/from the model. 
+
+**Key principle:** Controls reference data; data may reference other data objects—but **data never
+references controls**. The control tree and data graph are independent; the data graph shape is
+determined by what the view declares in `$data`.
+
+The generated controller and its generated data type are intentionally related: a view-specific
+controller consuming a view-specific data shape is the MDV relationship. The required decoupling is
+between data and controls, not between a controller and the data contract it renders.
+
+### Relation to MVVM
+
+This resembles MVVM's visual tree plus ViewModel graph, but MDV does not assume a 1:1 tree shape. The
+data side should not reach into controls; integration should happen through declared bindings.
+
+## Visibility and the platform boundary
+
+Application code should use the GUI API. The operating-system and browser integration is an
+implementation detail behind the platform boundary.
+
+================================================================================
+FILE: docs/initialization.md
+================================================================================
+# Initialization Procedure
+
+This document describes startup and initialization for applications using ZurfurGui, including
+Windows and browser targets.
+
+## Overview
+
+
+The source generator emits a `ZurfurMain.InitializeControls()` method for each project containing
+ZUI or theme files. It registers control types, concrete data-controller factories, closed generic
+control usages, property keys, and themes. Each project must declare a `static partial class
+ZurfurMain` (the generator reports `ZUI005` otherwise). See [Code generation](code-generation.md)
+for details.
+
+## Startup Sequence
+
+1. **Application entry point**
+   - The application starts in its own `Program.Main` or equivalent entry point.
+
+2. **Platform startup**
+   - The application calls the platform-specific entry point:
+     - **Windows:** `WinStart.Start(userCallback)`
+     - **Browser:** `BrowserStart.Start(canvasId, userCallback)`
+   - The callback receives the created `AppWindow`. `Loader.Init` calls
+     `ZurfurMain.MainApp()` before invoking this callback.
+
+3. **Library initialization**
+   - `WinStart.Start` or `BrowserStart.Start` calls `Loader.Init(...)`.
+   - `Loader.Init` initializes built-in layouts, calls the application's `ZurfurMain.MainApp()`,
+     creates an `AppWindow`, and finally invokes the platform callback with that window.
+
+4. **Generated registration**
+   - `ZurfurMain.MainApp()` must call the generated `InitializeControls()` method before creating
+     controls.
+   - The generated method:
+     - runs static constructors for property registration, including open generic controls;
+     - registers ordinary controls for creation from ZUI controller names;
+     - registers open generic controls (e.g. `ComboBox<>`) under their bare class name, so closed
+       usages can be resolved later by name;
+     - registers concrete data types to controller factories;
+     - registers closed generic controller usages discovered in ZUI files, resolving the base
+       generic control and item controller by bare name at runtime (see
+       [Loader registration and lookup](#loader-registration-and-lookup)); and
+     - registers themes.
+   - If using third-party libraries or plugins, call their `ZurfurMain.InitializeControls()` methods
+     at this stage too, before any of your own closed generic usages of their controls are
+     registered or loaded.
+
+5. **Application logic**
+   - After all required initialization methods return, the callback can create windows and controls,
+     populate concrete data objects, and set the main application window.
+
+## Example startup code
+
+`Loader.Init` invokes `ZurfurMain.MainApp()` for library and generated registration. The platform
+callback is separate and receives the `AppWindow` used to set up the main application control.
+For Windows:
+
+```csharp
+[STAThread]
+static void Main()
+{
+    WinStart.Start(appWindow =>
+    {
+        appWindow.SetMainappWindow(new MyMainForm());
+    });
+}
+```
+
+The application's `ZurfurMain` class must be partial and call generated registration before
+application logic:
+
+```csharp
+public static partial class ZurfurMain
+{
+    public static void MainApp()
+    {
+        InitializeControls();
+
+        // Register controls and themes supplied by third-party libraries.
+        // ThirdPartyDll.ZurfurMain.InitializeControls();
+    }
+}
+```
+
+For browser targets, pass the canvas id and an `AppWindow` callback:
+
+```csharp
+BrowserStart.Start("main", appWindow =>
+{
+    appWindow.SetMainappWindow(new MyMainForm());
+});
+```
+
+## Loader and control initialization
+
+### Loader registration and lookup
+
+`Loader` keeps separate registries for controls and concrete data-item controllers:
+
+- `RegisterControl` maps a controller name to a `Controllable` type and factory. ZUI controller
+  lookup tries the fully qualified name, the containing control's namespace, its `$use` namespaces,
+  and then `ZurfurGui.Controls`. A missing `$controller` resolves to `Panel`. Re-registering the
+  same controller name with a different type throws.
+  - Closed generic usages found in ZUI files are registered under their usage string. The generator
+    resolves and emits those types directly; see [Code generation](code-generation.md).
+- `RegisterDataController` maps a concrete data type to a factory. Lookup uses the exact runtime
+  type; duplicate data-type registration throws. The factory receives and assigns the same data
+  instance to the controller's `DataContext`.
+
+Generated controllers load through the control registry. Data-item controller lookup occurs when a
+data-driven control such as `ComboBox` creates an item controller. For generated registrations, see
+[Code generation](code-generation.md).
+
+## Control content loading
+
+Controls load two kinds of content: template content is the control's own ZUI-defined visual
+structure, while parent content is supplied by the containing control through the child control's
+`$content`.
+
+The loader and generated initialization call in this order:
+
+```text
+Control constructor (generated or hand-written)
+        |
+        v
+Generated InitializeControl()
+        |
+        +--> View = new(this)
+        |
+        +--> ZuiRuntime.Load(control, control's own ZUI JSON)
+                |
+                +--> merge template properties and apply template layout to View
+                |
+                +--> add template content: create children and add their Views to View
+                |
+                +--> ApplyDataProperties recursively, children before parent
+        |
+        +--> cache named child controls
+        |
+        +--> create the control's default DataContext, if it has data bindings
+
+Parent creates a child from its $content
+        |
+        v
+Loader.CreateControl(child properties, context)
+        |
+        +--> resolve and invoke the child controller factory
+        |       child constructor completes its own InitializeControl sequence
+        |
+        +--> merge parent-supplied instance properties onto the child's View
+        |
+        +--> apply parent-supplied layout to the child's ContentHost
+        |
+        +--> add parent content: create children and add their Views to ContentHost
+```
+
+`ContentHost` determines where parent-supplied content is placed, not the call order or content
+ownership. It is `View` by default. Template content is control-owned structure, while parent content
+is supplied by the parent.
+
+For `DataContext` defaults and binding behavior, see [Property Binding](property-binding.md).
+
+`ScrollViewer` uses the default template-loading behavior: its own ZUI content defines the clipped
+viewport, content window, and overlay scrollbars. Its `ContentHost` is `_contentWindow`, so parent
+content is routed separately from the scrollbars. `Window` uses the same pattern: its template
+defines the title bar, clipped `_windowContent`, and resize handle, and its `ContentHost` routes
+parent content to `_windowContent`. Its `title` data property forwards to the title `TextView`'s
+`text` property.
+
+This explicit distinction avoids inferring the loading phase from the current child count and
+supports controls with templates or named content hosts without loader-specific phase detection.
+For measurement, arrangement, sizing, and content-extent behavior, see
+[ScrollViewer](scroll-viewer.md).
+
+================================================================================
+FILE: docs/zui-format.md
+================================================================================
+# ZUI and ZTH File Format
+
+`.zui` files are Zurfur UI configuration files, and `.zth` files are Zurfur Theme configuration
+files. Both use a small modified JSON5 format. This document describes the syntax and the reserved
+keys. For what the generator does with these files, see [Code generation](code-generation.md). For
+the `$data` section, see [Property binding](property-binding.md). For theme files, see
+[Styles and themes](styles-and-themes.md).
+
+## Syntax
+
+The format is essentially JSON with comments, and dictionary keys do not need quotes. It is parsed
+by `ZurfurGuiGen/Json.cs` in the generator and by `System.Text.Json` at runtime. In addition to
+standard JSON, the generator parser supports these JSON5 features:
+
+- **`//` line comments and `/* */` block comments** — a comment outside a string value is skipped.
+- **Trailing commas** — a comma after the last property in an object or the last element in an
+  array is silently accepted. This matches the JSONC convention used by `tsconfig.json`, VS Code
+  `settings.json`, etc.
+- **Unquoted dictionary keys** — ASCII identifier keys, including keys beginning with `$` and
+  containing `.` or `-`, do not need quotes.
+- **Single-quoted strings.**
+- **Relaxed decimal numbers** — `+5`, `.5`, and `5.` are accepted.
+
+Not supported: `NaN`, `Infinity`, hexadecimal numbers, the full Unicode identifier grammar, uncommon
+JSON5 escape forms, and `null` values.
+
+## Naming conventions
+
+- Keys beginning with `$` are global symbols reserved by ZurfurGUI, such as `$controller`, `$name`,
+  `$margin`, and `$width`.
+- Type names are PascalCase (including built-in aliases like `Int`, `Bool`, `String`, etc.).
+- Field names are camelCase.
+- The source generator converts from JSON style to C# style when generating code. Field and property
+  names become PascalCase in C#, and built-in type aliases are normalized to the corresponding C#
+  keywords.
+
+## Top-level keys of a `.zui` file
+
+| Key | Required | Description |
+|---|---|---|
+| `$namespace` | Yes | The C# namespace of the generated controller and data classes. |
+| `$controller` | Yes | The controller name, which must match the file name. May use the generic form `Name<T> where T : Constraint`. |
+| `$use` | No | An array of strings naming extra namespaces searched when resolving child controller names. |
+| `$implements` | No | A handwritten C# interface the generated data class implements, such as `IComboBoxItem`. |
+| `$accessModifier` | No | The C# access modifier (`public` or `internal`) of the generated controller and data classes. Defaults to `public`. |
+| `$data` | No | Declares the view's data shape. See [Property binding](property-binding.md). |
+| `$content` | No | The array of child controls that make up the control's own template. |
+
+`$use` must be an array of strings. A single string is an error.
+
+Top-level `$data` entries whose names begin with `$` are only allowed in `Panel.zui`, which defines
+the library's global `$`-prefixed properties.
+
+## Comments in generated code
+
+Comments are collected by the generator and emitted into generated code as XML doc comments where
+appropriate:
+
+- `//` line comments immediately preceding a `$data` property are emitted as `<summary>` XML doc
+  comments on the members generated for that binding.
+- A comment at the top of the file, before the top-level object, is emitted as the `<summary>` of
+  the generated controller and data classes.
+
+Generator-only metadata (`#comment`, `$namespace`, `$use`, `$data`, and `$accessModifier`) is removed
+from the JSON before it is embedded in the generated controller, so it is not seen by the runtime
+loader.
+
+## `.zth` theme files
+
+A `.zth` file uses the same syntax. Its top-level `name` key must be present and must match the
+file name without its extension. Themes are registered by the generated
+`ZurfurMain.InitializeControls()`. The token syntax is described in
+[Styles and themes](styles-and-themes.md).
+
+## Configuration preference
+
+Prefer setting view properties (for example `$hitTest`, `$layout`, and styled values) in the `*.zui`
+file rather than in code-behind. Declarative configuration can be overridden by parents and themes,
+while constructor code cannot. Keep code-behind for behavior such as events and layout logic.
+
+================================================================================
+FILE: docs/code-generation.md
+================================================================================
+# Code Generation
+
+## Overview
+
+This repo uses a Roslyn incremental source generator (`src/ZurfurGuiGen/GenerateZui.cs`) to turn
+ZUI and ZTH files into C#. The generator targets `netstandard2.0`, and the code it generates targets
+`.NET 10`. For the file syntax, see [ZUI and ZTH file format](zui-format.md). For the `$data`
+section and binding categories, see [Property binding](property-binding.md). For how the generated
+registration code is used at startup, see [Initialization](initialization.md).
+
+## File discovery
+
+The generator processes `.zui` and `.zth` files included as project `AdditionalFiles`. In Visual
+Studio, set the build action to `C# analyzer` / `AdditionalFiles`, or add the files in the project:
+
+```xml
+<ItemGroup>
+	<AdditionalFiles Include="**\*.zui" />
+	<AdditionalFiles Include="**\*.zth" />
+</ItemGroup>
+```
+
+The project must also reference the generator as an analyzer:
+
+```xml
+<ProjectReference Include="..\ZurfurGuiGen\ZurfurGuiGen.csproj"
+				  OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+```
+
+If the generator does not pick up a file, check its build action or the project's `AdditionalFiles`
+items.
+
+================================================================================
+FILE: docs/property-binding.md
+================================================================================
+# Property Binding
+
+## Overview
+
+ZurfurGUI's property system connects application data, controls, and styles. A ZUI `$data` declaration
+defines the values a control exposes and how they interact with its view and styles.
+
+## The `$data` section
+
+Declare data properties in a `.zui` file's `$data` section. Each entry specifies `type`, `bind`, and
+optional `default` and `flags` values:
+
+| Field | Required | Description | Example |
+|---|---|---|---|
+| `type` | Yes | The property type. Prefix with `?` for nullable types and `[]` for collections. | `Color`, `?string`, `[]Item` |
+| `bind` | Yes | Controls whether the value is data-only, style-aware, style-only, view-only, attached, or forwarded. | `data`, `styledData`, `styled`, `property`, `attachedProperty`, `attachedStyle` |
+| `default` | No | Initial value expressed as a C# expression. | `"100"`, `"Orientation.horizontal"`, `"new Color(128, 128, 128)"` |
+| `flags` | No | Comma-separated `ViewFlags` used when the property changes. | `draw`, `measure`, `styleThis`, `styleDown` |
+
+For example:
+
+```
+$data: {
+    // Current application value; not mirrored to a view property.
+    value: {
+        type: "double",
+        bind: "data"
+    },
+    // Initial orientation, with a style-aware view value.
+    orientation: {
+        type: "Orientation",
+        bind: "styledData",
+        default: "Orientation.horizontal"
+    },
+    // Themeable visual configuration that is not application data.
+    thumbColor: {
+        type: "Color",
+        bind: "styled",
+        default: "new Color(128, 128, 128)",
+        flags: "draw"
+    }
+}
+```
+
+## Binding category summary
+
+| `bind` value | Purpose |
+|---|---|
+| `data` | Application state stored in `DataContext`, not mirrored to the view. |
+| `styledData` | A data value that can override a style-provided view value. |
+| `styled` | Themeable view configuration that is not application data. |
+| `property` | A view property read directly without style resolution. |
+| `data:<target>` | A parent data value forwarded to a child control's data property. |
+| `attachedProperty` | A non-style-aware view property that can be set on other controls. |
+| `attachedStyle` | A style-aware view property that can be set on other controls. |
+
+Use `DataContext` for `data`, forwarded values, and writes to `styledData`. Use `Properties` for
+view-facing values, and read `styledData` through `Properties` to get its effective style value.
+Setting nullable styled values to `null` removes the local override.
+
+Collections use `[]Type` and must use `bind: "data"`. They cannot be nullable or forwarded. A generic
+type parameter can be used by data and forwarded bindings, but not by bindings that generate
+view-facing property keys.
+
+================================================================================
+FILE: docs/styles-and-themes.md
+================================================================================
+# Style and Theming System
+
+## Overview
+
+This document explains how theme tokens are declared, applied, and resolved.
+
+ZurfurGui uses a **theme token system** where visual properties reference named tokens
+defined in theme files. Theme tokens are resolved at runtime by walking up the view
+hierarchy, allowing flexible theming at any level—from the entire application down to
+individual controls.
+
+The key components are:
+
+- **Theme files** (`.zth`) define named tokens (color, spacing, fonts, etc.)
+- **View files** (`.zui`) reference tokens using `"${token.name}"` syntax
+- **Theme resolution** walks up the view chain searching for active themes
+- **Token fallbacks** using the `|` operator enable third-party controls to gracefully
+  degrade
+
+## Theme Files (`.zth`)
+
+`.zth` means Zurfur Theme. Theme files use the modified JSON5 syntax described in
+[ZUI and ZTH File Format](zui-format.md). Each theme has a name and a dictionary of variables.
+
+```
+{
+    name: "ZurfurDefault",
+    variables: {
+        color.surface.canvas: "#EAF4FB",
+        color.text.primary: "#1F1F1F",
+        spacing.medium: "8",
+        radius.corner.medium: "4",
+        color.interactive.primary.stroke: "isPressed ? #005A9E; isPointerOver ? #0078D4; #909090"
+    }
+}
+```
+
+### Token Features
+
+**Conditional expressions**: Tokens can respond to view states using
+`condition ? value; alternativeValue` syntax:
+
+```
+color.interactive.primary.background: "isPressed ? #A6D2F2; isPointerOver ? #D2E8FA; #C6E0F7",
+color.scroll.thumb.background: "isPressed ? #005A9E; ScrollBar.isExpanded ? #6A9FD0; #8BB4DC80"
+```
+
+Supported conditions:
+- `isPointerOver` / `!isPointerOver`
+- `isPressed` / `!isPressed`
+- Any registered boolean property using its exact name, such as `ScrollBar.isExpanded`
+- A leading `!` negates any supported condition
+
+Registered boolean property conditions read the control's current runtime value rather than resolving
+the property as a style. Conditions must name a property exactly; unknown properties and non-boolean
+properties are invalid conditions.
+
+Multiple expressions are separated by semicolons, evaluated in order until a matching
+condition is found. The last value (without a condition) serves as the default.
+
+**Property merging**: Tokens can contain partial property specifications that merge
+together using the `IMergable` interface. For example, spacing tokens can define
+individual edges:
+
+```
+spacing.horizontal.medium: "left:8,right:8",
+spacing.vertical.small: "top:4,bottom:4"
+```
+
+These merge when both are referenced via `|`, creating
+`"left:8,right:8,top:4,bottom:4"`.
+
+### Built-in Themes
+
+ZurfurGui includes several base themes:
+
+- **ZurfurBase**: Common tokens that rarely change (spacing, corner radii, stroke
+  widths, default sizes)
+- **ZurfurDefault**: Light theme with Fluent 2-inspired colors
+- **ZurfurDefaultDark**: Dark variant
+- **ZurfurCherry**: Alternative light theme
+- **ZurfurCherryDark**: Alternative dark theme
+
+`ZurfurBase` and `ZurfurDefault` act as ultimate fallbacks during token resolution (see
+below).
+
+## Using Theme Tokens in Views
+
+In `.zui` files, wrap token names with `${}` to reference theme tokens:
+
+```
+{
+    $controller: "Button",
+    $borderWidth: "${stroke.width.default}",
+    $borderRadius: "${radius.corner.medium}",
+    $borderColor: "${color.interactive.primary.stroke}",
+    $backgroundColor: "${color.interactive.primary.background}"
+}
+```
+
+When a view requests a property, its token expression is resolved using the active themes.
+
+### Token Fallback with `|`
+
+Multiple token names can be specified with `|`. This is critical for third-party
+controls that define their own tokens but want to fall back to standard system tokens if
+the user's theme doesn't define the custom ones:
+
+```
+$padding: "${spacing.my-control-inner-padding | spacing.horizontal.small | spacing.vertical.extra-small}"
+```
+
+First, the custom token `spacing.my-control-inner-padding` is tried.  If the application has
+supplied the token, it is taken.  If not, the next tokens are tried in order. If 
+`spacing.horizontal.small` provides a partial value (e.g., only `left` and `right`), 
+`spacing.vertical.extra-small` can complete it by providing `top` and `bottom`. If the first 
+token fully resolves the property, the rest are ignored.
+
+The `|` operator combined with `IMergable` properties enables powerful composition:
+
+```
+TextView.font: "${style.test.font.c1 | style.test.font.c2}"
+```
+
+If `font.c1` defines `size:28` and `font.c2` defines `name:Times New Roman`, the
+resolved font has both size and name.
+
+### Providing Defaults for `styled` Properties
+
+For a control property declared with `bind: "styled"`, provide its value through the control's theme-token
+mapping and include a fallback token that is defined by the built-in themes. This lets
+consumers override a control-specific token without requiring every theme to define it. If the
+optional token is absent, the fallback supplies a usable value:
+
+```
+{
+    ScrollBar.thumbEdgeInset: "${size.scrollbar.thumb.edge-inset | spacing.extra-small}",
+    $data: {
+        thumbEdgeInset: {
+            type: "Double",
+            bind: "styled",
+            flags: "render"
+        }
+    }
+}
+```
+
+Here, `size.scrollbar.thumb.edge-inset` is an optional, control-specific token; `spacing.extra-small` is
+the guaranteed fallback defined in `ZurfurBase`. The styled-only data item has no `default`: its
+value comes from the token mapping. For every `styled` property, use this pattern rather than
+putting a `default` on the data item. Choose a fallback with a compatible value type and ensure it
+exists in a built-in theme, so the control works when the optional token is not defined.
+
+This guidance is specific to `styled` properties. Keep `default` values on ordinary data, `styledData`,
+or `property` bindings when they need an initial runtime value, such as a control's default orientation.
+
+For the distinction between `styled` and `property` bindings, see
+[Property Binding](property-binding.md).
+
+## Selecting and Activating Themes
+
+### Setting Application-Wide Themes
+
+To set the theme for the entire application, use the top-level `View`'s `ActiveThemes`
+property:
+
+```csharp
+view.ActiveThemes = ["MyCustomTheme", "ZurfurDefault"];
+```
+
+The first theme has highest priority. Theme resolution then falls back to `ZurfurDefault` and
+`ZurfurBase`.
+
+### Setting Themes on Subviews
+
+You can set `ActiveThemes` on any `View` in the hierarchy to apply themes locally:
+
+```csharp
+myPanel.View.ActiveThemes = ["SpecialPanelTheme"];
+```
+
+Child controls will use this theme (and any themes further up the chain) when resolving
+tokens.
+
+## Resolution behavior
+
+An explicitly set property takes precedence over a theme value. Otherwise, each token candidate is
+searched through the view's active themes, its parent views, and the built-in fallbacks. Candidate
+order takes precedence over theme priority: the first candidate is fully resolved before the next is
+tried. Partial `IMergable` values can combine across themes and token candidates. If no candidate
+provides a value, resolution fails.
+
+## Creating Custom Themes
+
+To create a custom theme:
+
+1. **Create a `.zth` file** in your project (mark as AdditionalFiles).
+
+2. **Define a unique name and variables**:
+
+```
+{
+    name: "MyBrandTheme",
+    variables: {
+        color.surface.canvas: "#F0F0FF",
+        color.text.primary: "#000033",
+        my.custom.accent: "#FF6600"
+    }
+}
+```
+
+3. **Reference your tokens in `.zui` files**:
+
+```
+$backgroundColor: "${my.custom.accent | color.interactive.primary.background}"
+```
+
+The `|` fallback ensures your control still works in themes that don't define
+`my.custom.accent`.
+
+4. **Activate your theme** at runtime:
+
+```csharp
+appWindow.View.ActiveThemes = ["MyBrandTheme"];
+```
+
+================================================================================
+FILE: docs/controls.md
+================================================================================
+# Controls
+
+This guide gives a short introduction to the controls provided by ZurfurGui. Controls are declared in
+ZUI JSON5 files and loaded into generated C# controller classes. A view with named controls gets fields
+for those controls in its generated controller, and application behavior can be added in the matching
+`.Control.cs` partial class.
+
+For generated data and binding behavior, see [Property Binding](property-binding.md).
+
+## Application setup
+
+Applications call generated `InitializeControls` before creating controls. Use
+`SetMainappWindow` for the main content and `ShowWindow` for additional windows. See
+[Initialization](initialization.md) for the startup example.
+
+## ZUI controls
+
+### Panel
+
+`Panel` is a general-purpose container. Use its `$content` section to contain other controls and use
+`$layout` to arrange those controls. Common layouts include `Row`, `Column`, and `Dock`.
+
+```
+{
+    $controller: "Panel",
+    $layout: "Row",
+    $content: [
+        { $controller: "TextView", text: "Name:" },
+        { $controller: "Button", text: "Edit" }
+    ]
+}
+```
+
+When no `$layout` is specified, `Panel` uses its default layout and arranges each child independently.
+Set the qualified `"Panel.Offset"` property on a child to shift its layout position. Its positive right
+and bottom edges contribute to the Panel's measured extent:
+
+```
+{
+    $controller: "Panel",
+    $content: [
+        {
+            $controller: "Window",
+            Panel.Offset: "x:24,y:32"
+        }
+    ]
+}
+```
+
+Negative offsets do not move the Panel's `(0, 0)` content origin and may place content outside its
+measured bounds.
+Custom layouts such as `Row`, `Column`, and `Dock` do not use `Panel.Offset`.
+
+### Window
+
+`Window` provides window chrome around parent-supplied content. Its template includes a title bar, close
+control, and resize handle. Parent `$content` is placed in the clipped `_windowContent` area. Set the
+`title` data property in JSON; it defaults to `"(not set)"` when omitted.
+
+```
+{
+    $controller: "Window",
+    $namespace: "MyApp",
+    $use: ["ZurfurGui.Windows"],
+    title: "Settings",
+    $content: [
+        {
+            $controller: "Panel",
+            $layout: "Column",
+            $content: [
+                { $controller: "TextView", text: "Settings content" }
+            ]
+        }
+    ]
+}
+```
+
+For a standard floating window, use `AppWindow.ShowWindow` to wrap a control in a `Window` and set its
+title from C#:
+
+```csharp
+app.ShowWindow(new SettingsView(), "Settings", location: new PointProp(24, 32));
+```
+
+The optional `location` sets the window's `Panel.Offset`. Dragging the window updates the same position. Use
+`$visualOffset` to move a view without changing the measured content extent.
+
+The window content area clips overflow but does not scroll automatically. Put a `ScrollViewer` in the
+content when the window body needs to scroll. The title bar remains outside that content area.
+
+### TextView
+
+`TextView` displays text. Its `text` property can be a string or an array of lines. Use styles and layout
+properties to control its appearance and position.
+
+```
+{
+    $controller: "TextView",
+    text: "Hello"
+}
+```
+
+### Button
+
+`Button` displays a clickable button. Set its `text` property in ZUI. Give it a `$name` when application
+code needs to access it from the generated controller.
+
+```
+{
+    $name: "buttonSave",
+    $controller: "Button",
+    text: "Save"
+}
+```
+
+Subscribe to the button's `Click` event in the view's `.Control.cs` partial class. Use the public
+`Click` event instead of low-level pointer events:
+
+```csharp
+public partial class MainView
+{
+    public MainView()
+    {
+        InitializeControl();
+        buttonSave.Click += ButtonSave_Click;
+    }
+
+    private void ButtonSave_Click(object? sender, EventArgs e)
+    {
+        // Execute the save operation.
+    }
+}
+```
+
+### Scrim
+
+`Scrim` displays a themed, full-screen overlay for transient UI such as dropdowns, menus, and modal
+content. Its background uses the active theme's `color.surface.overlay.scrim` token.
+
+Call `Show` with the current `AppWindow` to display the Scrim. It returns the `View` added to the
+floating-window layer. Subscribe to `Dismissed` to close the transient UI, then remove the returned view
+from its parent:
+
+```csharp
+View? scrimView = null;
+var scrim = new Scrim();
+scrim.Dismissed += (_, _) => scrimView?.RemoveFromParent();
+scrimView = scrim.Show(appWindow);
+```
+
+The caller owns the Scrim's lifetime. Remove its returned view when the transient UI closes. Also remove
+it when the owning control is detached. Content displayed above the Scrim should be added as a separate
+floating panel rather than as a child of the Scrim, so clicks on that content do not dismiss the Scrim.
+
+### ScrollBar
+
+`ScrollBar` displays and changes a numeric scroll value between its `minimum` and `maximum` values. Its
+`value` property is data, so application code can read or change it through the generated `DataContext`.
+
+Scrollbars are commonly managed by `ScrollViewer` rather than created directly. Direct scrollbar usage
+is useful when an application needs to provide its own scrolling behavior. Set `expandOnHover` to
+`true` to use the compact appearance until the scrollbar is hovered, pressed, or dragged. For automatic
+scrollbar behavior, see [ScrollViewer](scroll-viewer.md).
+
+### ScrollViewer
+
+`ScrollViewer` displays content through a clipped viewport and provides horizontal and vertical
+scrolling. Put the content to scroll in its `$content` section. The combined visible offset is available
+through `ScrollOffset`.
+
+For layout, scrolling, scrollbar visibility, range behavior, and detailed usage, see
+[ScrollViewer](scroll-viewer.md).
+
+### ListBox
+
+`ListBox<Item>` displays a vertically scrolling list with optional single or multiple selection. Its
+items are data objects, and `SelectionChanged` reports changes to the selected items. For item types,
+selection APIs, runtime collection updates, and custom items, see [ListBox](list-box.md).
+
+### ComboBox
+
+`ComboBox<Item>` displays a single-selection dropdown. Populate its generated `DataContext.Items`
+collection with item data objects and set `DataContext.SelectedIndex` to select an item.
+
+For population, selection, and custom item renderers, see [ComboBox](combo-box.md).
+
+### TreeView
+
+`TreeView<Item>` displays a vertically scrolling tree with optional single or multiple selection.
+For item types, selection APIs, runtime collection updates, and custom items, see [ListBox](list-box.md).
+
+================================================================================
+FILE: docs/input-events.md
+================================================================================
+# Input and pointer events
+
+## Overview
+
+This document describes the current high-level path for mouse and pointer input through ZurfurGui. It
+starts after platform or browser input has been received; operating-system input processing is outside
+the GUI layer.
+
+The main processing phases are:
+
+1. **Find the hit target and build the view chain.** Hit testing identifies the target and its ancestors,
+   unless the contact is captured.
+2. **Preview routing.** Uncaptured pointer events travel from the root toward the hit target.
+3. **Bubble routing.** Uncaptured pointer events travel from the hit target back toward the root unless
+   preview handling stopped the route.
+4. **Action and state updates.** The system completes gestures and updates hover, pressed, and capture
+   state, including cleanup on release or cancellation.
+
+## Public API and behavior
+
+### Common pointer events
+
+| Event | Delivery | When it is raised |
+| --- | --- | --- |
+| `PreviewPointerDown` | Routed, root to target | A pointer-down input is processed. |
+| `PointerDown` | Routed, target to root | After preview unless handled or cancelled. |
+| `PreviewPointerMove` | Routed, root to target | A pointer-move input is processed. |
+| `PointerMove` | Routed, target to root | After preview unless handled or cancelled. |
+| `PreviewPointerUp` | Routed, root to target | A pointer-up input is processed. |
+| `PointerUp` | Routed, target to root | After preview unless handled or cancelled. |
+| `PointerEntered` | Direct to each entering view | Its per-contact hover-chain membership begins. |
+| `PointerExited` | Direct to each exiting view | Its per-contact hover-chain membership ends. |
+| `PointerCaptureLost` | Direct to affected views | Capture ends or a gesture cancels their press; carries the contact key. |
+
+For down, move, and up, the hit chain is used unless the contact is captured; then only its capture owner
+receives the event. Captured contacts are still hit-tested for hover. Enter and exit are not routed or
+redirected by capture.
+
+`Panel.PointerEntered` and `Panel.PointerExited` are direct per-view notifications, not preview/bubble
+routed events. They are raised when the router updates the hover chain and finds changed membership.
+This normally occurs when the hit view changes; down and up also refresh the chain:
+
+- A view receives `PointerEntered` when it joins that contact's hover chain. Entries are notified from ancestor to target.
+- A view receives `PointerExited` when it leaves that contact's hover chain. Exits are notified from target to ancestor.
+- Views shared by the old and new chains receive neither notification.
+- The event's `Kind` is `Enter` or `Leave`, respectively. Both carry the `PointerContact` from the
+  input that caused the chain change.
+- The contact includes device, ID, position, dimensions, buttons, and modifiers. On platform leave, position fields
+  may be outside the canvas or unsuitable as an in-view position.
+- These notifications are independent of capture. A captured contact still updates its hit-tested hover chain.
+- Platform enter can cause control enters if the hover chain gains views. Platform leave exits the
+  chain's current members.
+- The router updates hover state and `IsPointerOver` before invoking enter/exit handlers.
+
+Register handlers with `View.AddEvent(Panel.PointerEntered, handler)` and
+`View.AddEvent(Panel.PointerExited, handler)`. These direct notifications do not use `Handled` to stop
+other views from being notified. `Handled` and `Cancelled` affect routed down, move, and up dispatch;
+they do not undo a hover-chain change that has already been applied.
+
+### Pointer state and capture
+
+The router tracks the current hover target independently from pointer capture:
+
+- `IsPointerOver` is true when at least one tracked contact's hover chain contains the view, unless any
+  mouse button is down or a touch contact is active. In those cases it is false for every view.
+- `IsPressed` represents the active press relationship.
+- Capture lets a control continue receiving pointer events after the pointer leaves its normal bounds.
+
+Each contact has independent hover, press, and capture state, with at most one capture owner. An
+uncaptured event routes through its current hit chain. When capture is active, only the owner receives
+the event; it is not also sent through the current hit chain. A new capture request replaces the previous
+owner and raises `PointerCaptureLost` on that view. The previous press is cancelled, preventing affected
+views from remaining pressed or activating on pointer-up; `PointerCaptureLost` is also raised on those
+views, except the new capture owner. The normal hit test still runs, but `IsPointerOver` remains false
+while any mouse button is down or a touch contact is active.
+
+While capture is active:
+
+- Down, move, and up events are routed only to the capture owner. Ancestors are not added automatically.
+- The owner receives pointer-up even if the pointer has moved outside its bounds.
+- A pointer leave changes hover state but does not release capture.
+- A platform pointer cancel uses the capture/press cleanup path, not normal preview/bubble routing. The
+  capture owner receives `PointerCaptureLost`, and the contact's hover and state are removed.
+
+Without capture, `IsPressed` is true only for views shared by the current hover chain and the press chain
+recorded on pointer-down. It clears for a view when the pointer leaves that chain and becomes true again
+if the pointer returns while the press is still active. The capture owner remains pressed while capture
+is active, even outside that chain.
+
+Controls that start a drag or similar interaction generally capture during pointer-down and use capture
+loss to clean up. This is important because a release can occur outside the original target, and capture
+can end without a normal pointer-up reaching that control.
+
+Gesture recognizers observe contacts alongside raw pointer routing. Pending recognition is not capture;
+an accepted recognizer can receive exclusive logical capture. See
+[Gesture Recognizers](gesture-recognizer.md) for the arena and recognizer behavior.
+
+Hover and pressed pseudo-properties are updated as chains and capture state change. This allows styles
+and controls to react to pointer state without requiring every control to maintain its own hover
+bookkeeping.
+
+### Using pointer capture
+
+Pointer capture is for controls that must continue an interaction after the pointer leaves their normal
+hit area. Typical examples are dragging a thumb, resizing a window, or implementing a gesture. A
+control requests capture by calling its view's `SetCapture` method during its `PointerDown` handler,
+passing the contact key:
+
+```csharp
+void OnPointerDown(object? sender, PointerEvent e)
+{
+    View.SetCapture(e.Contact.Key, true);
+}
+```
+
+Release capture explicitly with `SetCapture` when the interaction ends early:
+
+```csharp
+View.SetCapture(e.Contact.Key, false);
+```
+
+Controls that capture should also handle `Panel.PointerCaptureLost`. Capture can end without a normal
+pointer-up, for example when a contact is cancelled or another control takes over capture. View removal
+currently requires the control's own detach cleanup; automatic router cleanup is future work. Use the
+handler to clear drag and pressed state, and make the cleanup safe to run more than once:
+
+```csharp
+View.AddEvent(Panel.PointerCaptureLost, OnPointerCaptureLost);
+
+void OnPointerCaptureLost(object? sender, PointerContactKey contactKey)
+{
+    isDragging = false;
+    View.SetProperty(Panel.IsPressed, false);
+}
+```
+
+When adding or changing a captured interaction, verify these transitions: press inside and release
+inside, press and drag outside before release, pointer leave while captured, and capture loss without a
+normal pointer-up event.
+
+Capture is contact-aware: use `e.Contact.Key` to identify the contact. Setting capture for a key that is
+not currently tracked throws; releasing an untracked key is a no-op. `ClearCaptures()` releases all
+contacts owned by that view. Capture is not a general-purpose way to make a button clickable. Buttons
+should normally use the higher-level `Click` event. Capture keeps low-level pointer events together for
+an interaction, but it does not by itself make a click valid when the pointer is released outside the
+original press target.
+
+### Clicks and gestures
+
+The router does not synthesize a generic click event. Controls use `ClickRecognizer` or another gesture
+recognizer for higher-level actions. See [Gesture Recognizers](gesture-recognizer.md) for click, long-click,
+pan, and custom recognizer behavior.
+
+### Wheel events
+
+Mouse wheel input is separate from pointer events. It does not use capture, hover, press, or the gesture
+arena, and has no preview or bubble phase.
+
+Views can handle wheel input with `Panel.PointerWheel`. If a handler leaves `WheelEvent.Handled` false,
+the event continues toward parent views. `ScrollViewer` sets `Handled` whenever it can scroll in the
+wheel's direction (even at the end of its range), so a wheel only reaches a parent scroller when the
+child cannot scroll that way.
+
+Deltas use the browser's pixel-mode convention. One detent of a typical mouse wheel is 100 units
+(`WheelEvent.UnitsPerNotch`), positive `DeltaY` scrolls down, and positive `DeltaX` scrolls right.
+
+### Timestamps
+
+`PointerEvent.Timestamp` is the event time in milliseconds from a monotonic clock. Only differences
+between events of one contact are meaningful. Recognizers use it to measure velocity.
+
+================================================================================
+FILE: docs/gesture-recognizer.md
+================================================================================
+# Gesture recognizers
+
+## Overview
+
+Gesture recognizers turn pointer input into higher-level interactions such as clicks and pans. A
+recognizer can accept or reject an interaction, allowing controls to compose gestures such as a button
+inside a scrolling list. The current system supports one pointer contact per gesture.
+
+## Public API
+
+### `IGestureRecognizer` and `IGestureRecognizerSession`
+
+Implement `IGestureRecognizer` to provide a gesture attached to a view. Its `CreateSession` method
+receives a `GestureSessionContext` and returns independent state for that recognizer/contact candidate.
+Implement `IGestureRecognizerSession` for that contact-specific state and respond to the pointer-down,
+move, up, and cancellation callbacks. The session interface does not expose a view; use the context's
+`CandidateView` for the candidate view.
+
+Attach a recognizer with `View.AddGestureRecognizer`, which returns the recognizer, and detach it with
+`View.RemoveGestureRecognizer`. A recognizer is considered for every contact whose hit path includes a
+view it is attached to. Removing a recognizer cancels its live sessions: a pending session is rejected,
+and a winner cancels the arena and releases its capture. The exception is a winner that is receiving
+pointer-up, such as a click handler that removes its own recognizer; it is already completing normally.
+Recognizers own nothing that needs disposal, so `IGestureRecognizer` is not `IDisposable`. A
+recognizer and its view normally share a lifetime, so detaching is only needed to stop recognition early.
+
+### Attached and candidate views
+
+The attached view is the view a recognizer was added to. The recognizer does not know it. The candidate
+view is the view associated with one recognizer/contact attempt and is exposed as
+`GestureSessionContext.CandidateView`. They are the same view; a recognizer instance added to more than
+one view gets a separate candidate for each participating view. If a session accepts before pointer-up,
+its candidate view receives the capture.
+
+The arena gives each candidate a `GestureSessionContext` with the `CandidateView`, the initial `Contact`
+snapshot, the derived `ContactKey`, and the `Accept()` and `Reject()` operations. The context becomes
+inactive when the session completes or is canceled, so later calls have no effect. It can be used from
+a timer callback while the contact is active. Later pointer updates arrive as the `PointerEvent` copies
+passed to the session (kind, contact, and cancellation flag; `Handled` is independent of raw routed
+events).
+
+A custom recognizer can use this general shape:
+
+```csharp
+sealed class ExampleRecognizer : IGestureRecognizer
+{
+    public IGestureRecognizerSession? CreateSession(GestureSessionContext context) =>
+        new ExampleSession(context);
+}
+
+// Attach: view.AddGestureRecognizer(new ExampleRecognizer());
+
+sealed class ExampleSession : IGestureRecognizerSession
+{
+    readonly GestureSessionContext _context;
+
+    public ExampleSession(GestureSessionContext context)
+    {
+        _context = context;
+    }
+
+    public void OnPointerDown(PointerEvent e) { }
+    public void OnPointerMove(PointerEvent e) { }
+
+    public void OnPointerUp(PointerEvent e)
+    {
+        if (/* this interaction matched */)
+            _context.Accept();
+        else
+            _context.Reject();
+    }
+
+    public void OnCancelled() { }
+}
+```
+
+Use `_context.CandidateView` to access the candidate view and `_context.Contact` for the initial
+contact snapshot.
+
+### `ClickRecognizer`
+
+`ClickRecognizer` is the first concrete `IGestureRecognizer`. It is used by `Button`, `ComboBox`,
+`Scrim`, and other controls. Construct it with the callback and add it to the view that owns the
+interaction. The view owns the recognizer, so the control does not keep a reference or remove it when it
+detaches; a control that is moved to a new parent keeps working:
+
+```csharp
+public ExampleControl()
+{
+    InitializeControl();
+    View.AddGestureRecognizer(new ClickRecognizer(OnClick));
+}
+
+void OnClick(object? sender, PointerEvent e)
+{
+    // Perform the control action.
+}
+```
+
+A click is accepted on pointer-up if the contact is not canceled and its device position is inside the
+attached view's `OriginRect`. It remains a candidate while down; it does not capture or mark raw pointer
+events handled while pending. Thus raw pointer handlers, including handlers on ancestors, continue to
+receive events unless they handle them or request direct capture. A click callback runs after the raw
+pointer-up route for that input.
+
+By default a mouse click requires the left button. Pass a `mouseButtons` argument to change it, for
+example `new ClickRecognizer(OnClick, null, PointerButtons.Right)`, or `PointerButtons.None` to prevent
+the mouse from clicking. A mouse button that does not match never becomes a candidate. Touch and pen
+are not affected.
+
+The optional long-click callback uses `AppWindow.Properties.LongClickDuration` and
+`LongClickMovementTolerance`. Moving farther than the tolerance stops long-click eligibility but does
+not by itself reject the ordinary click. If the long-click callback sets
+`PointerLongClickEventArgs.Handled`, the session accepts and captures its view and suppresses the click
+on release. If the callback calls `SetCapture` on another view, that direct capture preempts the arena
+and cancels the click session.
+
+### `PanRecognizer`
+
+`PanRecognizer` recognizes dragging after the contact moves past its slop. It reports movement and release
+velocity; the owner applies movement and, if desired, animates a flick. `ScrollViewer` is an example
+([details](scroll-viewer.md)).
+
+```csharp
+var pan = view.AddGestureRecognizer(new PanRecognizer());
+pan.PanMoved += (s, e) => content.Offset += e.Delta;       // Device pixels
+pan.PanEnded += (s, e) => StartMyFlick(e.Velocity);        // Zero unless a touch/pen flicked
+```
+
+The session stays pending until the contact moves farther than the slop from the down point along an
+enabled axis, then accepts, which cancels competing candidates (such as a child's click) and captures the
+contact. A release before that rejects, so a click can still win.
+
+- `PanStarted` reports `SlopDelta`, the movement from the down point to where the pan started. Later
+  movement arrives in `PanMoved` as `Delta`, relative to the pan start. Distances are device pixels
+  except slop, which is in layout units scaled by the DPR.
+- `PanEnded` reports the release `Velocity` (device pixels per second), or `Cancelled`. Velocity is
+  zero for a contact that was stationary before release, for the mouse, when `Flick` is off, or below
+  `MinFlickVelocity`, and is limited to `MaxFlickVelocity`.
+- `PanOptions`: `Axes`, `Slop` (null uses the app window's per-device movement slop; zero or one pans
+  almost immediately), `TouchPans`, `PenPans`, `MouseButtons` (default right button), `Flick`,
+  `MinFlickVelocity`, `MaxFlickVelocity`.
+- With `Axes` of `None` the recognizer creates no session, so an ancestor can pan. Being at the owner's
+  scroll limit does not matter to the recognizer.
+- `CatchOnDown` lets the owner say that earlier motion (a flick) is still running. The pan then accepts
+  immediately on pointer-down, so the touch stops the motion and does not also click.
+
+================================================================================
+FILE: docs/scroll-viewer.md
+================================================================================
+# ScrollViewer
+
+## Overview
+
+`ScrollViewer` displays content through a clipped viewport and allows the user or application code to
+change the visible offset with horizontal and vertical scrollbars.
+
+The current implementation is an early control. It supports the core content, measurement, clipping,
+offset, and scrollbar-range behavior, but several standard GUI features remain unfinished.
+
+## How to use ScrollViewer
+
+A ScrollViewer is a container control. Put the content to be scrolled in its `$content` section, just
+as content is supplied to a `Panel` or another container control.
+
+```
+{
+    $controller: "ScrollViewer",
+    $content: [
+        {
+            $controller: "Panel",
+            $content: [
+                {
+                    $controller: "TextView",
+                    text: "Scrollable content"
+                }
+            ]
+        }
+    ]
+}
+```
+
+The ScrollViewer should normally receive its size from its parent layout. The scrollable content should
+not normally have a `$sizeRequest`, because its natural measured size is used to calculate the scroll
+range.
+
+A parent layout must provide a finite viewport when the application needs a bounded scrolling area. For
+example, a dock layout can place a toolbar at the top and make the final ScrollViewer child fill the
+remaining area:
+
+```
+{
+    $controller: "Panel",
+    $layout: "Dock",
+    $content: [
+        {
+            $layout: "Row",
+            dock.align: "top",
+            $content: [
+                {
+                    $controller: "TextView",
+                    text: "Toolbar"
+                }
+            ]
+        },
+        {
+            $controller: "ScrollViewer",
+            $content: [
+                {
+                    $controller: "Panel",
+                    $content: [
+                        // Content that may be larger than the viewport.
+                    ]
+                }
+            ]
+        }
+    ]
+}
+```
+
+The final visible child of the current `Dock` layout receives the remaining space. The ScrollViewer
+should therefore be the last child when it is intended to fill the area below a top row.
+
+## Public control access
+
+The generated ScrollViewer controller exposes the named scrollbar controls:
+
+```csharp
+public ScrollBar horizontalScrollBar;
+public ScrollBar verticalScrollBar;
+```
+
+It also exposes the combined offset:
+
+```csharp
+public Point ScrollOffset { get; set; }
+```
+
+The offset is expressed in content coordinates. Increasing `X` moves the content left, and increasing
+`Y` moves the content up, revealing content farther to the right or below the viewport.
+
+For example:
+
+```csharp
+var offset = scrollViewer.ScrollOffset;
+scrollViewer.ScrollOffset = new Point(offset.X, offset.Y + 8);
+```
+
+The setter clamps both coordinates to the current scrollbar ranges. Setting an offset outside the valid
+range does not throw; it is normalized to the nearest valid value.
+
+Changing a scrollbar's `DataContext.Value` has the same effect:
+
+```csharp
+scrollViewer.verticalScrollBar.DataContext.Value += 8;
+```
+
+Scrollbar values and `ScrollOffset` are synchronized in both directions.
+
+## Scrollbar data and visibility
+
+Each scrollbar has the following range-related data:
+
+| Property | Meaning |
+|---|---|
+| `minimum` | The minimum offset, normally `0`. |
+| `maximum` | The largest valid offset, calculated as content extent minus viewport extent. |
+| `value` | The current offset along the scrollbar's orientation. |
+| `viewportSize` | The visible size used to calculate the thumb size. |
+| `smallChange` | The small movement amount; the default is currently `0` unless configured. |
+| `largeChange` | The page movement amount; the viewer sets it to the viewport size. |
+| `visibility` | Whether the viewer displays the scrollbar automatically, always, or never. |
+
+`visibility` uses `ScrollBarVisibility`; its default is `Auto`. The overlay section below describes how
+each visibility setting affects rendering.
+
+- `Visible` always displays the scrollbar.
+- `Hidden` does not display the scrollbar, but the range and value can still be used programmatically.
+- `Auto` displays the scrollbar only when its calculated maximum is greater than its minimum.
+
+## Overlay scrollbar behavior
+
+ScrollViewer uses overlay scrollbars. The scrollbars are drawn above the clipped content and do not
+consume viewport space. Showing or hiding either scrollbar therefore does not change the content width,
+content height, or the content extent used to calculate the scroll range.
+
+When only one scrollbar is visible, it uses the full corresponding edge of the viewport. When both are
+visible, the horizontal scrollbar is shortened by the vertical scrollbar's thickness and the vertical
+scrollbar is shortened by the horizontal scrollbar's thickness. This leaves an empty, non-scrollable
+corner where the two bars meet. No corner control or gutter is added yet.
+
+`Auto` hides a bar with no scrollable range, `Visible` keeps it rendered, and `Hidden` suppresses it
+without removing its range or value.
+
+Scrollbar visibility is evaluated from the content extent and the unchanged viewport size. The
+appearance of a scrollbar does not reduce the size used to measure content, so visibility does not
+require the iterative two-axis measurement used by traditional scrollbars that consume layout space.
+
+The standard range model is:
+
+```plaintext
+Minimum = 0
+Maximum = max(0, contentExtent - viewportExtent)
+Value   = clamped current offset
+```
+
+When content fits in an axis, that axis has a maximum of zero and no scrollable thumb is rendered.
+
+## Mouse wheel
+
+ScrollViewer handles the mouse wheel. It moves the content by `wheelSteps` scroll steps for each wheel
+detent. One step is `scrollSize` (16 pixels by default), so the default is 3 x 16 = 48 pixels per
+detent.
+Fractional wheel deltas from precision touchpads scroll proportionally.
+
+`wheelSteps` is a styled property. It comes from the `scroll.wheel.steps` variable in the base theme
+(`ZurfurBase`, default 3) and can be overridden on an individual ScrollViewer:
+
+```
+{
+	$controller: "ScrollViewer",
+	wheelSteps: 5
+}
+```
+
+- Wheel over any part of the ScrollViewer works, including its content, empty space, and its
+  scrollbars.
+- Shift+wheel scrolls horizontally when the device reports only vertical movement.
+- Horizontal wheel events scroll horizontally.
+- Ctrl is ignored by the ScrollViewer. The browser and the WinForms form use Ctrl+wheel for
+  magnification, so the platform adapters do not forward it.
+- An axis disabled by `scrollMode` ignores its wheel movement.
+- The offset is clamped like any other `ScrollOffset` change.
+- The ScrollViewer sets `Handled` whenever it can scroll in the wheel's direction according to
+  `scrollMode`, even at the end of its range, so a ScrollViewer inside another ScrollViewer does not let
+  the parent see that wheel. If it cannot scroll in the wheel's direction (for example a vertical wheel
+  over a horizontal-only viewer), it leaves the event unhandled so a parent can scroll. Ctrl is always
+  marked handled. Controls inside the viewer can handle the wheel first by setting `Handled` themselves.
+
+Wheel deltas follow the browser's pixel-mode convention: one detent is 100 units, positive Y scrolls
+down and positive X scrolls right. Scrolling is therefore `notches * wheelSteps * scrollSize`, added to
+`ScrollOffset`.
+
+## Panning and flick
+
+- Touch and pen pan with any contact. The mouse pans only with the right button by default.
+- Panning moves `ScrollOffset`, clamped to the scrollbar ranges. The content does not jump when the pan
+  starts; the slop distance is ignored.
+- On release, a touch or pen contact flicks: the content keeps moving and slows down. The mouse never
+  flicks. The viewer stops the flick at the scroll limit on each axis, and touching the viewer during a
+  flick stops it without clicking the content under the finger. The wheel, scrollbar changes, and a new
+  pan also stop it.
+- The viewer pans only on axes it can scroll according to `scrollMode`. A viewer that cannot scroll at
+  all does not take part, so an ancestor viewer pans instead. A viewer that can scroll an axis takes the
+  pan when movement along that axis passes the slop, even when it is at its limit.
+
+Configure it through `ScrollViewer.PanOptions`:
+
+```csharp
+scrollViewer.PanOptions.Slop = 1;                              // Pan almost immediately
+scrollViewer.PanOptions.MouseButtons = PointerButtons.Left;    // Left button pans with the mouse
+scrollViewer.PanOptions.Flick = false;                         // Stop when released
+```
+
+`Slop` is in layout units (scaled by the DPR) and defaults to the app window's movement slop for the
+device.
+
+## Sizing and known limitations
+
+The ScrollViewer has no default `$sizeRequest` or `$sizeMax`. Its content is measured separately so it
+can be larger than the viewport. The viewer reports the smaller of the content's natural size and the
+available parent size.
+
+When content is smaller than the available parent size, the ScrollViewer sizes to the content. When
+content is larger, the viewer uses the available size as its finite viewport and scrollbars represent
+the overflow. If a parent measures with unconstrained space, the ScrollViewer may grow toward its content
+because no finite viewport has been established. Applications should provide a finite constraint
+through the viewer's parent when a bounded viewport is required.
+
+Current limitations include:
+
+- No keyboard scrolling.
+- No accessibility metadata or automation support.
+- No configurable content alignment; content starts at the top-left.
+- No configurable scrollbar gutter or overlay inset.
+- The overlay corner is currently empty and is not yet represented by a dedicated corner control.
+- There are no convenience horizontal/vertical offset or extent/viewport properties.
+
+================================================================================
+FILE: docs/list-box.md
+================================================================================
+# ListBox
+
+## Overview
+
+`ListBox<Item>` is a scrolling, vertical list of items with optional selection. The item controller
+is chosen by the item's data type, for example `ListBox<ListBoxItemText>`. Items know nothing about
+selection; the list box owns it.
+
+The C# namespace for the control and its marker types is `ZurfurGui.Controls.ListBox`. Add that
+namespace to `$use` in the form ZUI that uses the control and the item ZUI that implements
+`IListBoxItem`.
+
+## Using it in a ZUI file
+
+```
+{
+	$name: "_names",
+	$controller: "ListBox<ListBoxItemText>",
+	$sizeRequest: "width:160,height:300",
+	selectionMode: "multiple",
+	items: [
+		{ text: [ "One" ] },
+		{ text: [ "Two" ] }
+	]
+}
+```
+
+- `items` is a list of the item's data class (`ListBoxItemTextData` here).
+- `selectionMode` is `none`, `single` (the default), or `multiple`.
+- Give the list box a height, otherwise it is as tall as its content.
+- Use `SelectionChanged` in code-behind to react to the user:
+
+```csharp
+_names.SelectionChanged += (s, e) => Show(_names.SelectedIndices);
+```
+
+### Selection API
+
+- `SelectedIndices`: the selected indices in ascending order.
+- `SelectedIndex`: the index if exactly one item is selected, otherwise `null`.
+- `SelectionChanged`: raised when the set of selected items changes (user input, code, or removal
+  of a selected item). It is not raised when an index only shifts because of an add or remove
+  elsewhere.
+- `Select(index)`, `SetSelectedIndices(indices)`, `ClearSelection()`: change the selection from code.
+- `SelectNearest(index)`: selects `index` clamped to the last item, or clears if the list is empty.
+  Call it from `SelectionChanged` to select the neighbor of a removed item.
+
+User input: clicking the sole selected item clears the selection in either selection mode. Otherwise,
+a click selects that item. In `multiple` mode Ctrl+click and touch click toggle an item, while
+Shift+click selects the range from the last item clicked without Shift. There is no keyboard support
+yet.
+Initial selection cannot be set in a `.zui` file; use `Select` or `SetSelectedIndices` in code.
+
+## Adding and removing items at runtime
+
+`DataContext.Items` is an `ObservableCollection`. Change it and the list box updates:
+
+```csharp
+_names.DataContext.Items.Add(new ListBoxItemTextData() { Text = new TextLines("Three") });
+_names.DataContext.Items.Insert(0, new ListBoxItemTextData() { Text = new TextLines("Zero") });
+_names.DataContext.Items.RemoveAt(2);
+```
+
+Selection follows the items. Inserting at or before a selected item shifts its index up, and
+removing before it shifts it down. Removing a selected item deselects it (no neighbor is selected
+automatically) and raises `SelectionChanged`. Clearing the collection deselects everything.
+Assigning a new `Items` collection also clears the selection. To delete the selected items, remove
+from the highest index down:
+
+```csharp
+foreach (var index in _names.SelectedIndices.Reverse().ToList())
+	_names.DataContext.Items.RemoveAt(index);
+```
+
+## Creating your own list box items
+
+An item is a normal ZUI view that declares `$implements: "IListBoxItem"`. Its generated data class
+then implements `IListBoxItem`, and `ListBox<MyItem>` works. Do not set a background on the item,
+because the row behind it draws the hover and selected colors. See
+`samples/TestApp/TestApp/Controls/ListBoxItemBadge.zui`.
+
+```
+{
+	$controller: "ListBoxItemBadge",
+	$namespace: "TestApp.Test.Controls",
+	$use: ["ZurfurGui.Controls.ListBox"],
+	$implements: "IListBoxItem",
+	$data: {
+		text: { type: "TextLines", bind: "data:_text.text" }
+	},
+	$content: [ { $name: "_text", $controller: "TextView" } ]
+}
+```
+
+Use it with `$controller: "ListBox<ListBoxItemBadge>"`, and add `$use` for the item's namespace in
+the form's ZUI file when it is not the same namespace.
+
+Not implemented yet: keyboard input, focus, virtualization, fixed row heights, and diffing.
+
+================================================================================
+FILE: docs/combo-box.md
+================================================================================
+# ComboBox
+
+## Overview
+
+`ComboBox<Item>` is a generic single-selection dropdown control. In ZUI, `Item` is written as the item
+controller name, but generated C# closes the generic controller with that control's concrete data class.
+The item data class contains the data needed by its renderer; selection state belongs to the combo box
+rather than individual items.
+
+The C# namespace for these types is `ZurfurGui.Controls.ComboBox`. A view that uses the control
+should include that namespace in its `$use` list.
+
+## Using ComboBox in a view
+
+Because `ComboBox` is generic, use the item controller name in a concrete closed form in `.zui`:
+
+```
+{
+    $name: "_themeComboBox",
+    $controller: "ComboBox<ComboBoxItemText>",
+    $align: { horizontal: "left" }
+}
+```
+
+The item data class must implement `IComboBoxItem`. An item view normally declares this with
+`$implements: "IComboBoxItem"` in its ZUI definition.
+
+## Populating and using ComboBox from code
+
+Add data objects, not item controllers, to the collection:
+
+```csharp
+foreach (var label in new[] { "Zurfur Light", "Zurfur Dark", "Cherry Light", "Cherry Dark" })
+{
+    _themeComboBox.DataContext.Items.Add(new ComboBoxItemTextData { Text = new TextLines(label) });
+}
+_themeComboBox.DataContext.SelectedIndex = 0;
+```
+
+`Items` is a live `ObservableCollection<T>`.
+
+### Reacting to selection changes
+
+Subscribe to `DataContext.PropertyChanged` and check for `SelectedIndex`:
+
+```csharp
+_themeComboBox.DataContext.PropertyChanged += (s, e) =>
+{
+    if (e.PropertyName != "SelectedIndex")
+        return;
+    var idx = _themeComboBox.DataContext.SelectedIndex;
+    // idx is int? -- null means no selection
+};
+```
+
+`SelectedIndex` is `null` when nothing is selected. Set it programmatically to change the displayed
+item:
+
+```csharp
+_themeComboBox.DataContext.SelectedIndex = 2;
+```
+
+## Adding a ComboBox item renderer
+
+A new item renderer declares its own view-shaped data. If the item is used with `ComboBox`, its ZUI
+definition declares `$implements: "IComboBoxItem"`.
+
+For example, `ComboBoxItemBadge.zui` declares `Badge` and `Text` data:
+
+```
+{
+    $controller: "ComboBoxItemBadge",
+    $namespace: "TestApp.Test.Controls",
+    $use: ["ZurfurGui.Controls.ComboBox"],
+    $implements: "IComboBoxItem",
+    $data: {
+        badge: {
+            type: "TextLines",
+            bind: "_badge.text"
+        },
+        text: {
+            type: "TextLines",
+            bind: "_text.text"
+        }
+    },
+    $layout: "Row"
+}
+```
+
+Use the item in a view with the controller name, not the generated data class name:
+
+```
+{
+    $name: "_badgeCombo",
+    $controller: "ComboBox<ComboBoxItemBadge>",
+    $align: { horizontal: "left" }
+}
+```
+
+Populate it with the concrete generated data class:
+
+```csharp
+_badgeCombo.DataContext.Items.Add(new ComboBoxItemBadgeData
+{
+    Badge = new("A"),
+    Text = new("Pick 1")
+});
+```
+
+`IsSelected` is not an item property. Selection is owned by `ComboBoxData<TItem>.SelectedIndex`. Items
+also do not receive common `IsEnabled` or `Tag` properties automatically; add such properties to the
+item's own data shape only when the application requires them.
+
+================================================================================
+FILE: docs/tree-view.md
+================================================================================
+# TreeView
+
+## Overview
+
+`TreeView<Item>` shows a scrolling tree of nodes. Each node has text (and optionally an icon or other
+content), can have child nodes, and can be expanded, collapsed, and selected. The node controller is
+chosen by the concrete node data type, for example `TreeView<TreeNodeText>`.
+
+The tree draws the connecting lines and the expander (a box with `+` and `-`, or a chevron) itself.
+Selection and expansion are plain flags in the node data, so the app can read and change them
+without calling the tree.
+
+The files are in `src/ZurfurGui/Controls/TreeView`, in the `ZurfurGui.Controls.TreeView` namespace.
+The test form is `FormTestTreeView` in the test app.
+
+| File | Purpose |
+|------|---------|
+| `TreeView.zui`, `TreeView.Control.cs` | The tree control. |
+| `TreeNode.cs` | The `ITreeNode<TSelf>` data contract every node must satisfy. |
+| `TreeNodeText.zui` | The built-in node: an optional icon and text. |
+| `TreeNodeView.zui` | Internal. One node: a header row above a stack of child nodes. |
+| `TreeNodeRow.zui` | Internal. The header, which draws the hover and selected background. |
+| `TreeGutter.zui`, `TreeGutter.Control.cs` | Internal. Draws the lines and the expander. |
+
+## Using the tree
+
+### Building the data
+
+Add root nodes to `DataContext.Items` and child nodes to each node's `Children`:
+
+```csharp
+var node = new TreeNodeTextData() { Text = new TextLines("Parent"), IsExpanded = true };
+node.Children.Add(new TreeNodeTextData() { Text = new TextLines("Child") });
+tree.DataContext.Items.Add(node);
+```
+
+The collections are `ObservableCollection`, so the tree updates when nodes are added, removed,
+replaced, moved, or cleared at any depth.
+
+### Declaring the tree in a `.zui` file
+
+Include `ZurfurGui.Controls.TreeView` and `ZurfurGui.Controls.ListBox` in the form's `$use` list.
+The tree namespace provides the control and node contract; the list-box namespace provides the
+shared `SelectionMode` enum.
+
+```
+{ $controller: "TreeView<TreeNodeText>", selectionMode: "single", showLines: false }
+```
+
+`selectionMode` is data. The other settings are styles, so a theme can change them for every tree,
+and a value in the `.zui` file or in code applies to that one tree only. The defaults are theme
+variables in `ZurfurBase.zth`.
+
+| Setting | Theme variable | Default | Meaning |
+|---------|----------------|---------|---------|
+| `selectionMode` | (data) | single | `none`, `single`, or `multiple`. |
+| `showLines` | `treeview.show-lines` | true | Draw the lines connecting nodes. |
+| `showExpander` | `treeview.show-expander` | true | Draw the expander of nodes that have children. |
+| `indentWidth` | `treeview.indent-width` | 16 | Width of each depth level. |
+| `lineWidth` | `treeview.line-width` | 1 | Thickness of the lines and the expander. |
+| `expanderStyle` | `treeview.expander-style` | box | `box` (plus and minus) or `chevron`. |
+
+The lines are always solid. The line color is the theme variable `color.treeview.line`. The row
+background is `color.treeview.row.background`, which uses the condition `TreeNodeRow.isSelected`.
+
+### Selecting and expanding
+
+- Click a row to select its node. Click the expander to expand or collapse it. Clicking the
+  expander does not change the selection.
+- Clicking the sole selected node clears the selection in either selection mode. Otherwise, a row
+  click selects that node.
+- In `multiple` mode, Ctrl+click and touch click toggle a node, and Shift+click selects the visible
+  nodes from the last node clicked without Shift to the clicked node, replacing the selection. Shift
+  wins over Ctrl. If the start node is gone or hidden, the selected visible node nearest to the click
+  is the start. Nodes inside collapsed branches are skipped by the range. A plain click or a Shift
+  range also deselects selected nodes that are hidden in collapsed branches. In `single` and `none`
+  mode the modifier keys are ignored.
+- To change the state from code, write the flag: `node.IsSelected = true` or
+  `node.IsExpanded = false`. There is no `Select` or `Expand` method. The tree writes the same
+  flags when the user clicks.
+- `SelectedNodes` walks the data and returns every node whose flag is set, in tree order,
+  including nodes in collapsed branches. It is lazy, so flags may be changed while enumerating, and
+  it works while the tree is detached.
+- `ClearSelection()` deselects every node and `SelectAll()` selects every node (only in `multiple`
+  mode, while attached). Each raises `SelectionChanged` once.
+- `SelectionChanged` is raised when the selected set changes. It has no arguments, so read the
+  data. It is raised for user input, for flag changes made by app code, when a flagged node is
+  added, and when a selected node is removed. A click, `ClearSelection`, and `SelectAll` raise it
+  once however many flags they write, but flags written by app code raise it once per flag.
+- Selecting a node does not expand its ancestors or scroll to it. An app that wants the selected
+  node to be visible sets `IsExpanded` on the ancestors itself.
+- Collapsing a parent of the selected node leaves the selection on the hidden node.
+- Removing the selected node de-selects it. No neighbor is selected. An app that wants one can
+  select it in `SelectionChanged`.
+
+### Creating your own tree nodes
+
+Copy this `.zui` and change the names and the content. The test app has a complete example in
+`Controls/TreeNodeBadge.zui`.
+
+```
+{
+    $controller: "MyNode",
+    $namespace: "MyApp",
+    $use: ["ZurfurGui.Controls.TreeView"],
+    $implements: "ITreeNode<MyNodeData>",
+    $data: {
+        children: { type: "[]MyNode", bind: "data" },
+        isExpanded: { type: "Bool", bind: "data" },
+        isSelected: { type: "Bool", bind: "data" },
+        text: { type: "TextLines", bind: "data:_text.text" }
+    },
+    $content: [
+        { $name: "_text", $controller: "TextView" }
+    ]
+}
+```
+
+Rules:
+
+- `$implements` is `ITreeNode<` plus the node's own data class name (the controller name plus
+  `Data`), for example `ITreeNode<MyNodeData>`.
+- `$data` must declare `children` as `[]` plus the node's own controller name, and `isExpanded` and
+  `isSelected` as bools, all with `bind: "data"`.
+- Add `$use` for the node's namespace in the form's `.zui` when it differs.
+- Use it as `TreeView<MyNode>`.
+- A missing member or a misspelled name shows up as an ordinary C# error that the interface is not
+  implemented.
+- Do not set a background on the node, because the row draws the hover and selected colors.
+- A node object must appear once, in one tree, and the data must not contain cycles. These are not
+  detected.
+

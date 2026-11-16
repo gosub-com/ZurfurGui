@@ -1,32 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
-	<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
+        <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\ZurfurGuiGen\ZurfurGuiGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <AdditionalFiles Include="**\*.zui" />
-    <AdditionalFiles Include="**\*.zth" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="..\..\docs\**\*.md">
-      <Visible>false</Visible>
-      <Pack>true</Pack>
-      <PackagePath>contentFiles\any\any\docs\</PackagePath>
-      <PackageCopyToOutput>false</PackageCopyToOutput>
-      <BuildAction>None</BuildAction>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <InternalsVisibleTo Include="ZurfurGui.WinForms" />
-    <InternalsVisibleTo Include="ZurfurGui.Browser" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+        <ProjectReference Include="..\ZurfurGuiGen\ZurfurGuiGen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <AdditionalFiles Include="**\*.zui" />
+        <AdditionalFiles Include="**\*.zth" />
+        <InternalsVisibleTo Include="ZurfurGui.WinForms" />
+        <InternalsVisibleTo Include="ZurfurGui.Browser" />
+    </ItemGroup>
 
 </Project>

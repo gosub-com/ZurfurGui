@@ -1,5 +1,7 @@
 # Architecture
 
+## Overview
+
 This repo experiments with a minimal C# GUI stack (WebAssembly + native Windows) using
 a **Model Data View (MDV)** approach. This document describes the design direction and the shape of
 the system. Details live in the documents listed under [Documentation map](#documentation-map).
@@ -27,18 +29,15 @@ Goal: replace **MVVM** style runtime bindings with **generated, compile-time vie
 
 ## Two-tree architecture
 
-MDV creates **two parallel, independent graphs**:
+MDV keeps the **control tree** and the **data graph** independent:
 
-1. **Control tree** (`Controllable` → `View` → child `View` nodes)
-   - Built depth-first by `Loader.Load()` deserializing ZUI JSON
-   - Each control has a `View` with optional children, layout, and draw handlers
-   - Hierarchy: parent `View` → `_children` list → child `View` instances
-
-2. **DataContext tree** (strongly typed concrete data objects implementing `INotifyPropertyChanged`)
-   - Built after control tree initialization
-   - Uses `INotifyPropertyChanged` for reactivity
-   - May include references to sub-control `DataContext` objects, but only when explicitly declared
-	 by the view's `$data` section
+- **Control tree:** the hierarchy of views and controls.
+   - Each control has a `View` that owns its layout, draw, and input handlers.
+   - Each control has a `DataContext` that is a concrete instance of the generated data class.
+- **Data graph:** the data objects that supply values to the views.
+   - Never reference controls or views.
+   - May include references to sub-control `DataContext` objects
+   - May optionally be used as the DTO, or may include user conversions to/from the model. 
 
 **Key principle:** Controls reference data; data may reference other data objects—but **data never
 references controls**. The control tree and data graph are independent; the data graph shape is
@@ -55,15 +54,36 @@ data side should not reach into controls; integration should happen through decl
 
 ## Visibility and the platform boundary
 
-Application code (for example `TestApp`) should see only the GUI API: controls, views, properties,
-input events, and the loader entry points. The pieces that connect the library to an operating
-system or browser are an implementation detail shared by the library and its platform hosts.
+Application code should use the GUI API. The operating-system and browser integration is an
+implementation detail behind the platform boundary.
+
+
+<!-- INTERNAL -->
+
+## Implementation Section
+
+### Generated code and runtime graphs
+
+Code generation produces:
+
+- Code-behind partial controller class (`*.zui` → `<ViewName>.Control.g.cs`)
+- A strongly typed data class (`*.zui` → `<ViewName>.Data.g.cs`)
+- Library initialization `ZurfurMain.cs` partial class, constructed from `*.zui` and `*.zth` files.
+
+The control tree is built depth-first by `Loader.Load()` deserializing ZUI JSON. Each control has a
+`View` with optional children, layout, and draw handlers; a parent `View` holds child views in its
+`_children` list.
+
+The DataContext graph is built after control tree initialization from strongly typed concrete data
+objects implementing `INotifyPropertyChanged`. It uses `INotifyPropertyChanged` for reactivity and
+may include references to sub-control `DataContext` objects, but only when explicitly declared by the
+view's `$data` section.
+
+### Platform boundary and visibility
 
 Hosts are the platform projects: `ZurfurGui.WinForms` and `ZurfurGui.Browser`. Each is referenced
 only by the platform stub of an application (for example `TestApp.Windows` and `TestApp.Browser`),
 never by the shared application project (`TestApp`).
-
-### What is hidden
 
 These types are `internal` to `ZurfurGui` and are not part of the public API:
 
@@ -79,23 +99,19 @@ These types are `internal` to `ZurfurGui` and are not part of the public API:
 - The `MeasureContext` constructor. The `MeasureContext` class itself is public because any
   control may measure text, but only the renderer creates one.
 
-### What is visible
-
 Everything a control or application uses stays public: `View`, `Controllable`, `AppWindow`,
 `MeasureContext` (its members), `RenderContext`, the pointer, wheel, and gesture types, and the
 base types such as `Point`, `Size`, `Rect`, and `Color`.
 
-### How it works
+`ZurfurGui.csproj` declares `InternalsVisibleTo` for `ZurfurGui.WinForms` and
+`ZurfurGui.Browser`. Those two assemblies can use the internal types. No other assembly can. The
+host classes that implement the `Os*` interfaces (for example `WinCanvas` and `BrowserCanvas`) must
+be `internal`, because a public type cannot implement an internal interface. A public member must
+never expose an internal type; the compiler enforces this (CS0051 and related errors), so the build
+catches any leak.
 
-- `ZurfurGui.csproj` declares `InternalsVisibleTo` for `ZurfurGui.WinForms` and
-  `ZurfurGui.Browser`. Those two assemblies can use the internal types. No other assembly can.
-- The host classes that implement the `Os*` interfaces (for example `WinCanvas` and
-  `BrowserCanvas`) must be `internal`, because a public type cannot implement an internal
-  interface.
-- A public member must never expose an internal type. The compiler enforces this (CS0051 and
-  related errors), so the build catches any leak.
-- Hosts start the library by creating a `Renderer` and calling `RenderFrame` from the platform's
-  frame timer. See `ZurfurGui.WinForms/FormZurfurGui.cs` and `ZurfurGui.Browser/BrowserStart.cs`.
+Hosts start the library by creating a `Renderer` and calling `RenderFrame` from the platform's frame
+timer. See `ZurfurGui.WinForms/FormZurfurGui.cs` and `ZurfurGui.Browser/BrowserStart.cs`.
 
 ### Generated-code contract
 
@@ -118,8 +134,17 @@ The generator and library are versioned together. See [Code generation](code-gen
 
 A new platform must be added to the `InternalsVisibleTo` list in `ZurfurGui.csproj` and must
 implement `OsWindow`, `OsCanvas`, and `OsContext`. Third-party platforms outside this repo are not
-supported yet. Supporting them would need a separate public platform project. See the A1 to A3
-items in [cleanup.md](cleanup.md) and [Future improvements](future-improvements.md).
+supported yet. Supporting them would need a separate public platform project.
+
+## Editing guidelines
+
+- Prefer minimal allocations and small payloads (WASM download size matters).
+- Avoid adding new dependencies unless necessary.
+- The source generator (i.e `ZurfurGuiGen`) targets `netstandard2.0`
+- The generated code targets `.net 10`
+- Update the owning document (see the table above) when behavior changes. Put anything that is not
+  yet implemented, deferred, or likely to become stale in
+  [Future improvements](future-improvements.md) and link to it.
 
 ## Documentation map
 
@@ -138,33 +163,6 @@ Each fact has one owning document. Other documents link to it rather than repeat
 | [ComboBox](combo-box.md), [ListBox](list-box.md), [ScrollViewer](scroll-viewer.md) | Control-specific behavior. |
 | [Future improvements](future-improvements.md) | Everything not yet implemented, deferred, or likely to change. |
 
-## Subsystem summary
-
-- **Configuration and code generation.** `.zui` and `.zth` files are parsed by a Roslyn source
-  generator at build time into controllers, data classes, and a per-project registry. See
-  [ZUI and ZTH file format](zui-format.md) and [Code generation](code-generation.md).
-- **Binding.** A view's `$data` section declares data-only, style-aware, view-only, and forwarded
-  values. Data flows through the concrete data class, and the generated controller mirrors
-  style-aware values to the view. See [Property binding](property-binding.md).
-- **Startup and loading.** The application starts the platform, `Loader.Init` calls the generated
-  registration, and `Loader.Load` builds each control's tree from its embedded JSON. See
-  [Initialization](initialization.md).
-- **Input.** Platform input is converted to logical pointer events and routed through the same view
-  tree that is rendered. Controls that continue an interaction after the pointer leaves their bounds
-  must use pointer capture and clean up in `PointerCaptureLost`. See
-  [Input and pointer events](input-events.md).
-- **Styles and themes.** Theme tokens resolve style-aware properties at read time. See
-  [Styles and themes](styles-and-themes.md).
-
-## Editing guidelines
-
-- Prefer minimal allocations and small payloads (WASM download size matters).
-- Avoid adding new dependencies unless necessary.
-- The source generator (i.e `ZurfurGuiGen`) targets `netstandard2.0`
-- The generated code targets `.net 10`
-- Update the owning document (see the table above) when behavior changes. Put anything that is not
-  yet implemented, deferred, or likely to become stale in
-  [Future improvements](future-improvements.md) and link to it.
 
 ## Where to look first (for AI agents)
 
@@ -189,3 +187,6 @@ Paths are relative to `src/`. For the generator source files, see the source map
 - `docs/list-box.md`: how the ListBox control works, how to use it, and how to create custom items.
 - `docs/tree-view.md`: how the TreeView control works, how to use it, and how to create custom
   tree nodes.
+
+
+

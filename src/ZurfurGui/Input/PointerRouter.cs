@@ -84,7 +84,12 @@ internal class PointerRouter
             state.UpdateHover(hit, chain);
             UpdateViewChain(previousHoverChain.ToList(), state.HoverChain, Panel.IsPointerOver);
             UpdateViewChain(previousPressChain, state.CurrentPressChain, Panel.IsPressed);
+            RecomputePointerOverProperties();
             NotifyHoverChainChanges(previousHoverChain, state.HoverChain, ev);
+        }
+        else
+        {
+            RecomputePointerOverProperties();
         }
 
         if (ev.Kind == PointerEventKind.Down && !wasCaptured && state.CapturedView is null)
@@ -208,11 +213,22 @@ internal class PointerRouter
     private void RecomputeViewProperty(View view, PropertyKey<bool> property)
     {
         var value = property.Id == Panel.IsPointerOver.Id
-            ? _contactStates.Values.Any(state => state.HoverChain.Contains(view))
+            ? !HasActiveMouseOrTouchPress()
+                && _contactStates.Values.Any(state => state.HoverChain.Contains(view))
             : _contactStates.Values.Any(state =>
                 state.CurrentPressChain.Contains(view) || state.CapturedView == view);
 
         view.SetProperty(property, value);
+    }
+
+    private bool HasActiveMouseOrTouchPress() => _contactStates.Values.Any(state =>
+        state.Contact.Device == PointerDeviceKind.Touch
+        || state.Contact.Device == PointerDeviceKind.Mouse && state.Contact.Buttons != PointerButtons.None);
+
+    private void RecomputePointerOverProperties()
+    {
+        foreach (var view in _contactStates.Values.SelectMany(state => state.HoverChain).Distinct())
+            RecomputeViewProperty(view, Panel.IsPointerOver);
     }
 
     private void RemoveContactState(PointerContact contact, PointerContactState state)
@@ -227,6 +243,7 @@ internal class PointerRouter
         foreach (var view in affectedViews)
             RecomputeViewProperty(view, Panel.IsPressed);
 
+        RecomputePointerOverProperties();
         NotifyPointerCaptureLost(capturedView, state.Contact.Key);
     }
 
